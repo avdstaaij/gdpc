@@ -41,7 +41,6 @@ dmag = dmag.astype('uint8')
 cv2.imshow('dst', dmag)
 
 # Display the images
-cv2.imshow('a', img)
-cv2.waitKey(0)
+cv2.imshow('a', img); cv2.waitKey(0)
 
 cv2.destroyAllWindows()

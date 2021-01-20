@@ -38,13 +38,19 @@ class BitArray:
 
    
 
-   def getPosOfLong(self, index):
-    #   i = Integer.toUnsignedong(self.field_232983_g_)
-      i = self.someKindaInterval % (1<<64)
-    #   j = Integer.toUnsignedong(self.field_232984_h_)
-      j = self.lengthyBits % (1<<64)
-      return index * i + j >> 32 >> self.lengthyBitOffset
+   # def getPosOfLong(self, index):
+   #  #   i = Integer.toUnsignedong(self.field_232983_g_)
+   #    i = self.someKindaInterval % (1<<64)
+   #  #   j = Integer.toUnsignedong(self.field_232984_h_)
+   #    j = self.lengthyBits % (1<<64)
+   #    return (index * i + j >> 32 >> self.lengthyBitOffset) % (1<<32)
    
+   
+   def getPosOfLong(self, index):
+      return int(index / self.entriesPerLong)
+      # i = self.someKindaInterval % (1<<64)
+      # j = self.lengthyBits % (1<<64)
+      # return (int)(((index * i) % (1<<64) + j) % (1<<64) >> 32 >> self.lengthyBitOffset);
 
    def swapAt(self, index, value):
       inclusiveBetween(0, (self.arraySize - 1), index)
@@ -75,6 +81,7 @@ class BitArray:
    def getAt(self, index):
       inclusiveBetween(0, (self.arraySize - 1), index)
       i = self.getPosOfLong(index)
+      # print("%i > %i" % (index, i))
       j = self.longArray[i]
       k = (index - i * self.entriesPerLong) * self.bitsPerEntry
       return (j >> k & self.maxEntryValue)

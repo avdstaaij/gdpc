@@ -8,17 +8,24 @@ def getChunks(x, z, dx, dz, rtype = 'text'):
     print("getting chunks %i %i %i %i " % (x, z, dx, dz))
     
     url = 'http://localhost:9000/chunks?x=%i&z=%i&dx=%i&dz=%i' % (x, z, dx, dz)
-    print(url)
+    print("request url: %s" % url)
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
     response = requests.get(url, headers={"Accept": acceptType})
-    print(response.status_code)
+    print("result: %i" % response.status_code)
     if response.status_code >= 400:
-        print(response.text)
+        print("error: %s" % response.text)
     
     if rtype == 'text':
         return response.text
     elif rtype == 'bytes':
         return response.content
+
+
+def setBlock(x, y, z, str):
+    url = 'http://localhost:9000/setblock?x=%i&y=%i&z=%i' % (x, y, z)
+    # print(url)
+    response = requests.post(url, str)
+    # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
 
 class CachedSection:
     def __init__(self, palette, blockStatesBitArray):
@@ -27,45 +34,60 @@ class CachedSection:
 
 class WorldSlice:
     # TODO format this to blocks
-    def __init__(self, rect):
+    def __init__(self, rect, heightmapTypes=["MOTION_BLOCKING", "MOTION_BLOCKING_NO_LEAVES", "OCEAN_FLOOR", "WORLD_SURFACE"]):
         self.rect = rect
-        self.chunkRect = (rect[0] >> 4, rect[1] >> 4, (rect[2] >> 4) + 1, (rect[2] >> 4) + 1)
+        self.chunkRect = (
+            rect[0] >> 4, 
+            rect[1] >> 4, 
+            ((rect[0] + rect[2] - 1) >> 4) - (rect[0] >> 4) + 1, 
+            ((rect[1] + rect[3] - 1) >> 4) - (rect[1] >> 4) + 1
+        )
+        self.heightmapTypes = heightmapTypes
 
         bytes = getChunks(*self.chunkRect, rtype='bytes')
         file_like = BytesIO(bytes)
 
+        print("parsing NBT")
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)
 
+        rectOffset = [rect[0] % 16, rect[1] % 16]
+
         # heightmaps
-        self.heightmap = [[0 for z in range(rect[3])] for x in range(rect[2])]
-        self.heightmap2 = [[0 for z in range(rect[3])] for x in range(rect[2])]
+        self.heightmaps = {}
+        for hmName in self.heightmapTypes:
+            self.heightmaps[hmName] = [[0 for z in range(rect[3])] for x in range(rect[2])]
 
         # Sections are in x,z,y order!!! (reverse minecraft order :p)
         self.sections = [[[None for i in range(16)] for z in range(self.chunkRect[3])] for x in range(self.chunkRect[2])]
+
+
+        # heightmaps
+        print("extracting heightmaps")
+        
+        for x in range(self.chunkRect[2]):
+            for z in range(self.chunkRect[3]):
+                chunkID = x + z * self.chunkRect[2]
+
+                hms = self.nbtfile['Chunks'][chunkID]['Level']['Heightmaps']
+                for hmName in self.heightmapTypes:
+                    # hmRaw = hms['MOTION_BLOCKING']
+                    hmRaw = hms[hmName]
+                    heightmapBitArray = BitArray(9, 16*16, hmRaw)
+                    heightmap = self.heightmaps[hmName]
+                    for cz in range(16):
+                        for cx in range(16):
+                            try:
+                                heightmap[-rectOffset[0] + x * 16 + cx][-rectOffset[1] + z * 16 + cz] = heightmapBitArray.getAt(cz * 16 + cx)
+                            except IndexError: 
+                                pass
+
+        # sections
+        print("extracting chunk sections")
 
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
                 chunkSections = self.nbtfile['Chunks'][chunkID]['Level']['Sections']
-
-                # heightmap
-                hms = self.nbtfile['Chunks'][chunkID]['Level']['Heightmaps']
-                # hmRaw = hms['MOTION_BLOCKING']
-                hmRaw = hms['MOTION_BLOCKING_NO_LEAVES']
-                hmRaw2 = hms['OCEAN_FLOOR']
-                # hmRaw = hms['WORLD_SURFACE']
-                heightmapBitArray = BitArray(9, 16*16, hmRaw)
-                heightmapBitArray2 = BitArray(9, 16*16, hmRaw2)
-                for cz in range(16):
-                    for cx in range(16):
-                        try:
-                            self.heightmap[x * 16 + cx][z * 16 + cz] = heightmapBitArray.getAt(cz * 16 + cx)
-                        except IndexError:
-                            pass
-                        try:
-                            self.heightmap2[x * 16 + cx][z * 16 + cz] = heightmapBitArray2.getAt(cz * 16 + cx)
-                        except IndexError:
-                            pass
 
                 for section in chunkSections:
                     y = section['Y'].value
@@ -79,6 +101,8 @@ class WorldSlice:
                     blockStatesBitArray = BitArray(bitsPerEntry, 16*16*16, rawBlockStates)
 
                     self.sections[x][z][y] = CachedSection(palette, blockStatesBitArray)
+        
+        print("done")
 
 
 

@@ -6,8 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # rect = (-64, -92 - 218-92, 80+64, 218-92)
-rect = (-256, -256, 512, 512)
-# rect = (-32, -32, 64, 64)
+# rect = (-256, -256, 512, 512)
+rect = (-32, -32, 64, 64)
 
 slice = WorldSlice(rect)
 # heightmap = np.zeros((rect[2],rect[3]), dtype = np.uint8)
@@ -27,7 +27,6 @@ heightmap2 = np.array(slice.heightmap2, dtype = np.uint8)
 
 watermap = 255 - ((heightmap+1 >> 6) % 2) * 255
 
-img = heightmap
 
 
 # # clip and convert. Simulates minecraft conditions (0 - 255, terrain between 64 and 128)
@@ -43,6 +42,7 @@ img = heightmap
 # first derivative building criterium
 # Scharr: 32 is about 1 steepness, i think
 # for i in range(4):
+img = heightmap
 dx = cv2.Scharr(img, cv2.CV_16S, 1, 0)
 dy = cv2.Scharr(img, cv2.CV_16S, 0, 1)
 dmag = np.absolute(dx) + np.absolute(dy)
@@ -64,8 +64,8 @@ atan = cv2.merge((
     ))
 atan = cv2.cvtColor(atan, cv2.COLOR_HSV2RGB)
 
-atan = atan.clip(0, 255)
-atan = atan.astype('uint8')
+# atan = atan.clip(0, 255)
+# atan = atan.astype('uint8')
 # Display the images
 
 
@@ -79,18 +79,18 @@ atan = atan.astype('uint8')
 plt_image = cv2.cvtColor(atan, cv2.COLOR_BGR2RGB)
 imgplot = plt.imshow(plt_image)
 
-plt.figure()
-plt_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-imgplot = plt.imshow(plt_image)
+# plt.figure()
+# plt_image = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+# imgplot = plt.imshow(plt_image)
 
-plt.figure()
-plt_image = cv2.cvtColor(watermap, cv2.COLOR_BGR2RGB)
-imgplot = plt.imshow(plt_image)
+# plt.figure()
+# plt_image = cv2.cvtColor(watermap, cv2.COLOR_BGR2RGB)
+# imgplot = plt.imshow(plt_image)
 
-plt.figure()
-hmdiff = heightmap - heightmap2 + 128
-plt_image = cv2.cvtColor(hmdiff, cv2.COLOR_BGR2RGB)
-imgplot = plt.imshow(plt_image)
+# plt.figure()
+# hmdiff = heightmap - heightmap2 + 128
+# plt_image = cv2.cvtColor(hmdiff, cv2.COLOR_BGR2RGB)
+# imgplot = plt.imshow(plt_image)
 
 plt.show()
 
