@@ -1,14 +1,16 @@
 from matplotlib.pyplot import plot
 from numpy import random
 from numpy.lib.function_base import diff
+import requests
 from worldLoader import WorldSlice, setBlock
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from math import atan2, ceil, log2
 
-
 rng = np.random.default_rng()
+
+minecraft_colors  = ["white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"]
 
 
 def fractalnoise(shape, minFreq=0, maxFreq=0):
@@ -66,3 +68,33 @@ def angleToCenter(shape):
 
 def normalize(array):
     return (array - array.min()) / (array.max() - array.min())
+
+
+# BLOCK BUFFER STUFF
+
+blockBuffer = ""
+
+# clear the block buffer
+def clearBlockBuffer():
+    global blockBuffer
+    blockBuffer = ""
+
+# write a block update to the buffer
+def registerSetBlock(x, y, z, str):
+    global blockBuffer
+    blockBuffer += '~%i ~%i ~%i %s \n' % (x, y, z, str)
+
+# send the buffer to the server and clear it
+def sendBlocks(x, y, z):
+    global blockBuffer
+    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i&doBlockUpdates=false' % (x, y, z)
+    response = requests.put(url, blockBuffer)
+    blockBuffer = ""
+    return response.text
+
+
+def runCommand(command):
+    # print("running cmd %s" % command)
+    url = 'http://localhost:9000/command'
+    response = requests.post(url, bytes(command, "utf-8"))
+    return response.text

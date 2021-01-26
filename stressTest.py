@@ -23,11 +23,11 @@ async def _main():
         urls = []
         for dx in range(0, rect[2]):
             for dz in range(0, rect[3]):
-                urls.append('http://localhost:9000/setblock?x=%i&y=%i&z=%i' % (x + dx, y, z + dz))
+                urls.append('http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x + dx, y, z + dz))
 
         rs = []
         for url in urls:
-            rs.append(await session.post(url, data=block))
+            rs.append(await session.put(url, data=block))
         # print(rs)
 
 

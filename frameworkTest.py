@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-# rect = (-64, -92 - 218-92, 80+64, 218-92)
-# rect = (-256, -256, 512, 512)
+# you can edit the area here
+# (x, y, width, height)
 rect = (-32, -32, 64, 64)
 
 slice = WorldSlice(rect)
