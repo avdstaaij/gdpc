@@ -13,11 +13,11 @@ i = 0
 
 runCommand("say starting")
 
-startPos = [40, 64, 127]
+startPos = [-21, 105, 74]
 
 for k in range(0,7):
     # pos = [0, 95, -165]
-    pos = startPos
+    pos = startPos[:]
     d = random.random() * m.pi * 2
 
     for i in range(0, 32):

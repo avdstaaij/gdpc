@@ -22,8 +22,8 @@ slice = WorldSlice(rect)
 #                 heightmap[lx, lz] = y # + random.uniform(0, 16)
 #                 break
 
-heightmap = np.array(slice.heightmap, dtype = np.uint8)
-heightmap2 = np.array(slice.heightmap2, dtype = np.uint8)
+heightmap = np.array(slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype = np.uint8)
+heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype = np.uint8)
 
 watermap = 255 - ((heightmap+1 >> 6) % 2) * 255
 
