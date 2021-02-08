@@ -1,15 +1,48 @@
-from mapUtils import distanceToCenter, fractalnoise, normalize, registerSetBlock, runCommand, sendBlocks, minecraft_colors
+import cv2
+from matplotlib import pyplot as plt
+from mapUtils import distanceToCenter, fractalnoise, normalize, registerSetBlock, runCommand, sendBlocks, minecraft_colors, visualize
 from worldLoader import WorldSlice
 import numpy as np
 import random
 
-area = np.array([-53, 3, 128, 128])
+area = np.array([10000, 2000, 256, 256])
 slice = WorldSlice(area)
 
-heightmap1 = np.array(slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype = np.uint8)
+hm_mbnl = np.array(slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype = np.uint8)
 heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype = np.uint8)
+heightmap3 = np.array(slice.heightmaps["MOTION_BLOCKING"], dtype = np.uint8)
+heightmap4 = np.array(slice.heightmaps["WORLD_SURFACE"], dtype = np.uint8)
 
-heightmap = np.minimum(heightmap1, heightmap2)
+# for key in slice.heightmaps.keys():
+#     hm = np.array(slice.heightmaps[key])
+#     hm = hm.astype(np.uint8)
+    
+#     plt.figure()
+#     plt.title(key)
+#     plt_image = cv2.cvtColor(hm, cv2.COLOR_BGR2RGB)
+#     imgplot = plt.imshow(plt_image)
+
+# plt.show()
+
+# input()
+# testm = np.zeros(mbnl.shape, dtype=np.uint8)
+heightmapNoTrees = hm_mbnl[:]
+
+for x in range(area[2]):
+    for z in range(area[3]):
+        while True:
+            y = heightmapNoTrees[x, z]
+            block = slice.getBlockAt((area[0] + x, y - 1, area[1] + z))
+            if block[-4:] == '_log':
+                heightmapNoTrees[x,z] -= 1
+            else:
+                break
+
+
+heightmap = np.minimum(hm_mbnl, heightmapNoTrees)
+
+
+
 watermap = heightmap - heightmap2 + 128
 
 # setup
@@ -152,16 +185,43 @@ testspace = (distToCenter < 0.4)
 ps = listWhere(testspace)
 
 thickness = 12
-chasm = (largenoise > 0.9) & (heightmap2 > 62)
+cutoff = np.percentile(largenoise, random.randint(25, 75))
+chasm = (largenoise > cutoff)
 offset = (~chasm) * thickness
-startheight = heightmap2 - offset
+startheight = heightmapNoTrees - offset
 endheight = 20 + distToCenter * 20
+endheight = endheight.astype(np.uint8)
 
-for p in ps:
-    sh = int(startheight[tuple(p)])
-    eh = int(endheight[tuple(p)])
-    for i in range(sh, eh, -1):
-        placeBlockBatched(p[0], i, p[1], "air")
+visualisation = testspace * endheight
+
+# finalHM	= cv2.dilate(finalHM, kernel)
+kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
+
+imgChasm = chasm.astype(np.uint8) & testspace
+innerBorder = imgChasm - cv2.erode(imgChasm, kernel)
+imgTestspace = testspace.astype(np.uint8)
+outerBorder = imgTestspace - cv2.erode(imgTestspace, kernel)
+border = innerBorder | outerBorder
+
+
+# visualize(border)
+# visualize(outerBorder)
+# visualize(border, outerBorder, outerBorder * border)
+
+# exit()
+
+
+for y in range(startheight.max(), endheight.min(), -1):
+    for p in ps:
+        sh = int(startheight[tuple(p)])
+        eh = int(endheight[tuple(p)])
+        if y in range(eh+1, sh):
+            isWall = border[tuple(p)] if y >= sh - thickness else outerBorder[tuple(p)]
+            block = "light_gray_concrete" if isWall else "air"
+            placeBlockBatched(p[0], y, p[1], block)
+        if y == sh-1 and ~chasm[tuple(p)]:
+            placeBlockBatched(p[0], y, p[1], "light_gray_concrete")
+
 
 sendRemainingBlocks()
 

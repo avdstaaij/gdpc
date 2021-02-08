@@ -98,3 +98,15 @@ def runCommand(command):
     url = 'http://localhost:9000/command'
     response = requests.post(url, bytes(command, "utf-8"))
     return response.text
+
+def visualize(*arrays, title=None, autonormalize=True):
+    for array in arrays:
+        if autonormalize:
+            array = (normalize(array) * 255).astype(np.uint8)
+
+        plt.figure()
+        if title:
+            plt.title("trees bro")
+        plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+        imgplot = plt.imshow(plt_image)
+    plt.show()
