@@ -23,7 +23,7 @@ def getChunks(x, z, dx, dz, rtype = 'text'):
 
 def setBlock(x, y, z, str):
     url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
-    print('setting block %s at %i %i %i' % (str, x, y, z))
+    # print('setting block %s at %i %i %i' % (str, x, y, z))
     response = requests.put(url, str)
     return response.text
     # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
@@ -115,7 +115,7 @@ class WorldSlice:
 
 
 
-    def getBlockAt(self, blockPos):
+    def getBlockCompoundAt(self, blockPos):
         # chunkID = relativeChunkPos[0] + relativeChunkPos[1] * self.chunkRect[2]
 
         # section = self.nbtfile['Chunks'][chunkID]['Level']['Sections'][(blockPos[1] >> 4)+1]
@@ -140,3 +140,10 @@ class WorldSlice:
         
         blockIndex = (blockPos[1] % 16) * 16*16 + (blockPos[2] % 16) * 16 + blockPos[0] % 16
         return palette[bitarray.getAt(blockIndex)]
+
+    def getBlockAt(self, blockPos):
+        blockCompound = self.getBlockCompoundAt(blockPos)
+        if blockCompound == None:
+            return "minecraft:air"
+        else:
+            return blockCompound["Name"].value

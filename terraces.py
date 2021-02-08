@@ -100,7 +100,7 @@ for dx in range(rect[2]):
             z = rect[1] + dz
             y = int(heightmap1[(dx,dz)]) - dy
 
-            blockCompound = slice.getBlockAt((x,y,z))
+            blockCompound = slice.getBlockCompoundAt((x,y,z))
             
             if blockCompound != None:
                 blockID = blockCompound["Name"].value
