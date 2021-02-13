@@ -1,12 +1,21 @@
-from matplotlib.pyplot import plot
-from numpy import random
-import requests
-from worldLoader import WorldSlice
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+import mapUtils
+from worldLoader import WorldSlice
 
 rect = (108, -119, 128, 128)
+
+buildArea = mapUtils.requestBuildArea()
+if buildArea != -1:
+    x1 = buildArea["xFrom"]
+    z1 = buildArea["zFrom"]
+    x2 = buildArea["xTo"]
+    z2 = buildArea["zTo"]
+    print(buildArea)
+    rect = (x1, z1, x2-x1, z2-z1)
+    print(rect)
 
 slice = WorldSlice(rect)
 
@@ -23,16 +32,9 @@ atan = np.arctan2(dx, dy, dtype=np.float64) * 5 / 6.283
 atan = atan % 5
 atan = atan.astype('uint8')
 
-# finalHM = bHM + ((bHM.astype('int8') - 4 + 2) % 5 - 2) * -1
-# # finalHM = bHM
-# kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-# finalHM	= cv2.dilate(finalHM, kernel)
-# finalHM	= cv2.erode(finalHM, kernel)
-
 finalHM = cv2.medianBlur(heightmap, 7)
 
 diffmap = finalHM.astype('float64') - heightmap.astype('float64')
-# diffmap = diffmap * perlin
 diffmap = np.round(diffmap)
 diffmap = diffmap.astype('int8')
 
@@ -122,22 +124,3 @@ plt_image = cv2.cvtColor(topcolor, cv2.COLOR_BGR2RGB)
 imgplot = plt.imshow(plt_image)
 
 plt.show()
-
-# plt.figure()
-# topmap = topmap.astype('uint8')
-# plt_image = cv2.cvtColor(topmap * 16, cv2.COLOR_BGR2RGB)
-# imgplot = plt.imshow(plt_image)
-
-
-# plotting
-# diffmap_d = 128 + diffmap * (127 / 5)
-# perlin_d = perlin * 255
-
-# plt.figure()
-# plt_image = cv2.cvtColor(diffmap_d.astype('uint8') + 128, cv2.COLOR_BGR2RGB)
-# imgplot = plt.imshow(plt_image)
-
-
-# plt_image = cv2.cvtColor(perlin_d.astype('uint8'), cv2.COLOR_BGR2RGB)
-# imgplot = plt.imshow(plt_image)
-
