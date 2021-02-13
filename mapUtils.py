@@ -3,7 +3,7 @@ from numpy import random
 from numpy.core.shape_base import block
 from numpy.lib.function_base import diff
 import requests
-from worldLoader import WorldSlice, setBlock
+from worldLoader import WorldSlice
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -72,6 +72,20 @@ def normalize(array):
     return (array - array.min()) / (array.max() - array.min())
 
 
+def setBlock(x, y, z, str):
+    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
+    # print('setting block %s at %i %i %i' % (str, x, y, z))
+    response = requests.put(url, str)
+    return response.text
+    # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
+
+def getBlock(x, y, z):
+    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
+    # print(url)
+    response = requests.get(url)
+    return response.text
+    # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
+
 # BLOCK BUFFER STUFF
 
 blockBuffer = []
@@ -91,7 +105,7 @@ def registerSetBlock(x, y, z, str):
 def sendBlocks(x=0, y=0, z=0, retries=5):
     global blockBuffer
     body = str.join("\n", ('~%i ~%i ~%i %s' % bp for bp in blockBuffer))
-    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i&doBlockUpdates=false' % (x, y, z)
+    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
     try:
         response = requests.put(url, body)
         clearBlockBuffer()
@@ -150,3 +164,11 @@ def calcGoodHeightmap(worldSlice):
                     break
 
     return np.array(np.minimum(hm_mbnl, heightmapNoTrees))
+
+def requestBuildArea():
+    response = requests.get('http://localhost:9000/buildarea')
+    if response.ok:
+        return response.json()
+    else:
+        print(response.text)
+        return -1

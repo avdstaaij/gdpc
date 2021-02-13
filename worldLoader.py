@@ -20,21 +20,6 @@ def getChunks(x, z, dx, dz, rtype = 'text'):
     elif rtype == 'bytes':
         return response.content
 
-
-def setBlock(x, y, z, str):
-    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
-    # print('setting block %s at %i %i %i' % (str, x, y, z))
-    response = requests.put(url, str)
-    return response.text
-    # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
-
-def getBlock(x, y, z):
-    url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
-    # print(url)
-    response = requests.get(url)
-    return response.text
-    # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
-
 class CachedSection:
     def __init__(self, palette, blockStatesBitArray):
         self.palette = palette
