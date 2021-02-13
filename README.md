@@ -8,9 +8,7 @@ You need to have Minecraft running, the mod installed and a world open for this 
 
 Scripts:
 
-**frameworkTest**: This is an example of loading a bunch of chunks and displaying a bunch of heightmaps
-
-**simpleAgentTest**: This is an example purely build on the command interface. It doesn't requite matplotlib or numpy or OpenCV to be installed. You need to put sensible coordinates into the startPos variable and it'll build a bunch of tree roots.
+**generate_map**: Displays a map of the minecraft world, using OpenCV
 
 ### License
 

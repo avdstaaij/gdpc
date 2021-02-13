@@ -1,5 +1,6 @@
 from matplotlib.pyplot import plot
 from numpy import random
+from numpy.core.shape_base import block
 from numpy.lib.function_base import diff
 import requests
 from worldLoader import WorldSlice, setBlock
@@ -7,6 +8,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from math import atan2, ceil, log2
+import time
 
 rng = np.random.default_rng()
 
@@ -72,26 +74,38 @@ def normalize(array):
 
 # BLOCK BUFFER STUFF
 
-blockBuffer = ""
+blockBuffer = []
 
 # clear the block buffer
 def clearBlockBuffer():
     global blockBuffer
-    blockBuffer = ""
+    blockBuffer = []
 
 # write a block update to the buffer
 def registerSetBlock(x, y, z, str):
     global blockBuffer
-    blockBuffer += '~%i ~%i ~%i %s \n' % (x, y, z, str)
+    # blockBuffer += () '~%i ~%i ~%i %s' % (x, y, z, str)
+    blockBuffer.append((x, y, z, str))
 
 # send the buffer to the server and clear it
-def sendBlocks(x, y, z):
+def sendBlocks(x=0, y=0, z=0, retries=5):
     global blockBuffer
+    body = str.join("\n", ('~%i ~%i ~%i %s' % bp for bp in blockBuffer))
     url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i&doBlockUpdates=false' % (x, y, z)
-    response = requests.put(url, blockBuffer)
-    blockBuffer = ""
-    return response.text
+    try:
+        response = requests.put(url, body)
+        clearBlockBuffer()
+        return response.text
+    except ConnectionError:
+        if retries > 0:
+            return sendBlocks(x,y,z, retries - 1)
 
+def placeBlockBatched(x, y, z, str, limit=50):
+    registerSetBlock(x, y, z, str)
+    if len(blockBuffer) >= limit:
+        return sendBlocks(0, 0, 0)
+    else:
+        return None
 
 def runCommand(command):
     # print("running cmd %s" % command)
@@ -110,3 +124,29 @@ def visualize(*arrays, title=None, autonormalize=True):
         plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
         imgplot = plt.imshow(plt_image)
     plt.show()
+
+# def showAnimationFrame(array, title=None, autonormalize=True):
+#     time.sleep(0.05)
+#     if autonormalize:
+#         array = (normalize(array) * 255).astype(np.uint8)
+#     # frame = cv2.resize(frame, (500,500), interpolation=cv2.INTER_NEAREST)
+#     cv2.imshow(title, array)
+    # cv2.waitKey()
+    # cv2.destroyAllWindows()
+
+def calcGoodHeightmap(worldSlice):    
+    hm_mbnl = np.array(worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype = np.uint8)
+    heightmapNoTrees = hm_mbnl[:]
+    area = worldSlice.rect
+
+    for x in range(area[2]):
+        for z in range(area[3]):
+            while True:
+                y = heightmapNoTrees[x, z]
+                block = worldSlice.getBlockAt((area[0] + x, y - 1, area[1] + z))
+                if block[-4:] == '_log':
+                    heightmapNoTrees[x,z] -= 1
+                else:
+                    break
+
+    return np.array(np.minimum(hm_mbnl, heightmapNoTrees))

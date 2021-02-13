@@ -1,4 +1,4 @@
-from asyncOperations import setBlockAsync
+from playground.asyncOperations import setBlockAsync
 from numpy.core.defchararray import array
 from mapUtils import distanceToCenter
 from math import cos, sin
