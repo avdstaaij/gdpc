@@ -134,7 +134,7 @@ def visualize(*arrays, title=None, autonormalize=True):
 
         plt.figure()
         if title:
-            plt.title("trees bro")
+            plt.title(title)
         plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
         imgplot = plt.imshow(plt_image)
     plt.show()
