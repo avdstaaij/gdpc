@@ -1,6 +1,6 @@
 ## python client scripts for the Minecraft HTTP Interface Mod
 
-This a collection of scripts for demonstrating the [Minecraft HTTP Interface Mod](https://github.com/nilsgawlik/gdmc_http_interface) build for the GDMC competition.
+This a collection of scripts to use with the [Minecraft HTTP Interface Mod](https://github.com/nilsgawlik/gdmc_http_interface) built for the GDMC competition.
 
 Requirements are in requirements.txt. Feel free to use different versions, the versions are just what is installed on my machine.
 
