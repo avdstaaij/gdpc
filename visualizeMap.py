@@ -2,12 +2,12 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mapUtils
+import interfaceUtils
 from worldLoader import WorldSlice
 
 rect = (108, -119, 128, 128)
 
-buildArea = mapUtils.requestBuildArea()
+buildArea = interfaceUtils.requestBuildArea()
 if buildArea != -1:
     x1 = buildArea["xFrom"]
     z1 = buildArea["zFrom"]

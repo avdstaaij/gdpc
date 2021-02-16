@@ -1,6 +1,7 @@
 import random
 
 import mapUtils
+import interfaceUtils
 from worldLoader import WorldSlice
 
 # x position, z position, x size, z size
@@ -8,7 +9,7 @@ area = (0, 0, 128, 128) # default build area
 
 # see if a build area has been specified
 # you can set a build area in minecraft using the /setbuildarea command
-buildArea = mapUtils.requestBuildArea()
+buildArea = interfaceUtils.requestBuildArea()
 if buildArea != -1:
     x1 = buildArea["xFrom"]
     z1 = buildArea["zFrom"]
@@ -38,9 +39,9 @@ def heightAt(x, z):
 USE_BATCHING = True
 def setBlock(x, y, z, block):
     if USE_BATCHING:
-        mapUtils.placeBlockBatched(x, y, z, block, 100)
+        interfaceUtils.placeBlockBatched(x, y, z, block, 100)
     else:
-        mapUtils.setBlock(x, y, z, block)
+        interfaceUtils.setBlock(x, y, z, block)
 
 # function that builds a small house
 def buildHouse(x1, y1, z1, x2, y2, z2):
@@ -106,8 +107,8 @@ def rectanglesOverlap(r1, r2):
 
 houses = []
 for i in range(100):
-    houseSizeX = random.randrange(5,10)
-    houseSizeZ = random.randrange(5,10)
+    houseSizeX = random.randrange(5,25)
+    houseSizeZ = random.randrange(5,25)
     houseX = random.randrange(area[0] + houseSizeX + 1, area[0] + area[2] - houseSizeX - 1)
     houseZ = random.randrange(area[1] + houseSizeZ + 1, area[1] + area[3] - houseSizeZ - 1)
     houseRect = (houseX, houseZ, houseSizeX, houseSizeZ)
@@ -135,4 +136,4 @@ for i in range(100):
 
 if USE_BATCHING:
     # we need to send remaining blocks in the buffer at the end of the program, when using batching
-    mapUtils.sendBlocks()
+    interfaceUtils.sendBlocks()
