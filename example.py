@@ -7,6 +7,9 @@ from worldLoader import WorldSlice
 # x position, z position, x size, z size
 area = (0, 0, 128, 128) # default build area
 
+# Do we send blocks in batches to speed up the generation process?
+USE_BATCHING = True
+
 # see if a build area has been specified
 # you can set a build area in minecraft using the /setbuildarea command
 buildArea = interfaceUtils.requestBuildArea()
@@ -23,7 +26,10 @@ print("Build area is at position %s, %s with size %s, %s" % area)
 # load the world data
 # this uses the /chunks endpoint in the background
 worldSlice = WorldSlice(area)
-# heightmap = worldSlice.heightmaps["WORLD_SURFACE"] # simple heightmap, includes trees
+heightmap = worldSlice.heightmaps["MOTION_BLOCKING"]
+heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
+heightmap = worldSlice.heightmaps["OCEAN_FLOOR"]
+heightmap = worldSlice.heightmaps["WORLD_SURFACE"]
 # caclulate a heightmap that ignores trees:
 heightmap = mapUtils.calcGoodHeightmap(worldSlice)
 
@@ -36,12 +42,33 @@ def heightAt(x, z):
     return heightmap[(x - area[0], z - area[1])]
 
 # a wrapper function for setting blocks
-USE_BATCHING = True
 def setBlock(x, y, z, block):
     if USE_BATCHING:
         interfaceUtils.placeBlockBatched(x, y, z, block, 100)
     else:
         interfaceUtils.setBlock(x, y, z, block)
+
+# build a fence around the perimeter
+for x in range(area[0], area[0] + area[2]):
+    z = area[1]
+    y = heightAt(x, z)
+    setBlock(x, y-1, z, "cobblestone")
+    setBlock(x, y,   z, "oak_fence")
+for z in range(area[1], area[1] + area[3]):
+    x = area[0]
+    y = heightAt(x, z)
+    setBlock(x, y-1, z, "cobblestone")
+    setBlock(x, y  , z, "oak_fence")
+for x in range(area[0], area[0] + area[2]):
+    z = area[1] + area[3] - 1
+    y = heightAt(x, z)
+    setBlock(x, y-1, z, "cobblestone")
+    setBlock(x, y,   z, "oak_fence")
+for z in range(area[1], area[1] + area[3]):
+    x = area[0] + area[2] - 1
+    y = heightAt(x, z)
+    setBlock(x, y-1, z, "cobblestone")
+    setBlock(x, y  , z, "oak_fence")
 
 # function that builds a small house
 def buildHouse(x1, y1, z1, x2, y2, z2):
@@ -83,20 +110,6 @@ def buildHouse(x1, y1, z1, x2, y2, z2):
             for z in range(z1 + halfI, z2 - halfI):
                 for x in range(x1, x2):
                     setBlock(x, y2 + halfI, z, "bricks")
-
-# build a fence around the perimeter
-for i in range(2):
-    for x in range(area[0], area[0] + area[2]):
-        z = area[1] + i * (area[3] - 1)
-        y = heightAt(x, z)
-        setBlock(x, y-1, z, "cobblestone")
-        setBlock(x, y,   z, "oak_fence")
-    for z in range(area[1], area[1] + area[3]):
-        x = area[0] + i * (area[2] - 1)
-        y = heightAt(x, z)
-        setBlock(x, y-1, z, "cobblestone")
-        setBlock(x, y  , z, "oak_fence")
-
 
 # build up to a hundred random houses and remember them to avoid overlaps
 def rectanglesOverlap(r1, r2):

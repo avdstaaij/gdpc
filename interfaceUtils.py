@@ -3,14 +3,20 @@ import requests
 def setBlock(x, y, z, str):
     url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
     # print('setting block %s at %i %i %i' % (str, x, y, z))
-    response = requests.put(url, str)
+    try:
+        response = requests.put(url, str)
+    except ConnectionError:
+        return "0"
     return response.text
     # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
 
 def getBlock(x, y, z):
     url = 'http://localhost:9000/blocks?x=%i&y=%i&z=%i' % (x, y, z)
     # print(url)
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except ConnectionError:
+        return "minecraft:void_air"
     return response.text
     # print("%i, %i, %i: %s - %s" % (x, y, z, response.status_code, response.text))
 
@@ -53,7 +59,10 @@ def placeBlockBatched(x, y, z, str, limit=50):
 def runCommand(command):
     # print("running cmd %s" % command)
     url = 'http://localhost:9000/command'
-    response = requests.post(url, bytes(command, "utf-8"))
+    try:
+        response = requests.post(url, bytes(command, "utf-8"))
+    except ConnectionError:
+        return "connection error"
     return response.text
 
 def requestBuildArea():

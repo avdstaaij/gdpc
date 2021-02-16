@@ -11,7 +11,3 @@ Scripts:
 **`example.py`**: Demonstrates all of the basic gdmc-http functionality by building a very simple village. It uses the utility functions implemented in `worldLoader.py` and `mapUtils.py`.
 
 **`visualizeMap.py`**: Displays a map of the minecraft world, using OpenCV
-
-### License
-
-License is MIT, except for the bitarray class which is ported from the Minecraft source, so copyright might be in a gray area for now.
