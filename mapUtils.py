@@ -37,7 +37,7 @@ def calcGoodHeightmap(worldSlice):
     Returns:
         any: numpy array containing the calculated heightmap
     """
-    hm_mbnl = np.array(worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype = np.uint8)
+    hm_mbnl = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
     heightmapNoTrees = hm_mbnl[:]
     area = worldSlice.rect
 

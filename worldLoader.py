@@ -3,6 +3,7 @@ from bitarray import BitArray
 from io import BytesIO
 import requests
 import nbt
+import numpy as np
 
 def getChunks(x, z, dx, dz, rtype = 'text'):
     print("getting chunks %i %i %i %i " % (x, z, dx, dz))
@@ -48,7 +49,7 @@ class WorldSlice:
         # heightmaps
         self.heightmaps = {}
         for hmName in self.heightmapTypes:
-            self.heightmaps[hmName] = [[0 for z in range(rect[3])] for x in range(rect[2])]
+            self.heightmaps[hmName] = np.zeros((rect[2], rect[3]), dtype=np.int)
 
         # Sections are in x,z,y order!!! (reverse minecraft order :p)
         self.sections = [[[None for i in range(16)] for z in range(self.chunkRect[3])] for x in range(self.chunkRect[2])]
@@ -70,7 +71,7 @@ class WorldSlice:
                     for cz in range(16):
                         for cx in range(16):
                             try:
-                                heightmap[-rectOffset[0] + x * 16 + cx][-rectOffset[1] + z * 16 + cz] = heightmapBitArray.getAt(cz * 16 + cx)
+                                heightmap[-rectOffset[0] + x * 16 + cx, -rectOffset[1] + z * 16 + cz] = heightmapBitArray.getAt(cz * 16 + cx)
                             except IndexError: 
                                 pass
 

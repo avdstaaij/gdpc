@@ -26,10 +26,11 @@ print("Build area is at position %s, %s with size %s, %s" % area)
 # load the world data
 # this uses the /chunks endpoint in the background
 worldSlice = WorldSlice(area)
-heightmap = worldSlice.heightmaps["MOTION_BLOCKING"]
-heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
-heightmap = worldSlice.heightmaps["OCEAN_FLOOR"]
-heightmap = worldSlice.heightmaps["WORLD_SURFACE"]
+# heightmap = worldSlice.heightmaps["MOTION_BLOCKING"]
+# heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
+# heightmap = worldSlice.heightmaps["OCEAN_FLOOR"]
+# heightmap = worldSlice.heightmaps["WORLD_SURFACE"]
+
 # caclulate a heightmap that ignores trees:
 heightmap = mapUtils.calcGoodHeightmap(worldSlice)
 
