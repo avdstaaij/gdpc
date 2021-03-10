@@ -53,7 +53,14 @@ dmag = dmag.astype('uint8')
 # based on https://minecraft.gamepedia.com/Map_item_format#Base_colors
 # liberty was taken to move stained glass panes into the appropriate colour category
 
+# to translate a string of regular names into the appropriate list of minecraft block IDs
+# def f(string): return ["minecraft:"+i.strip().lower().replace(" ", "_") for i in string.split(", ")]
+
+# to translate a 255 RGB to hex RGB value
+# def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
+
 VERSION = "1.16.x"
+USEDETAILED = True
 
 TRANSPARENT = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air',
                'minecraft:barrier', 'minecraft:redstone_lamp', 'minecraft:cake', 'minecraft:powered_rail', 'minecraft:detector_rail', 'minecraft:torch', 'minecraft:redstone_wire', 'minecraft:ladder', 'minecraft:rail', 'minecraft:lever', 'minecraft:redstone_torch',
@@ -68,7 +75,7 @@ TRANSPARENT = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air',
 # base colours
 PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
            0xf7e9a3: ('minecraft:sand',
-                      'minecraft:birch_planks', 'minecraft:stripped_birch_log', 'minecraft:birch_wood', 'minecraft:stripped_birch_wood', 'minecraft:birch_sign', 'minecraft:birch_pressure_plate', 'minecraft:birch_trapdoor', 'minecraft:birch_stairs', 'minecraft:birch_slab', 'minecraft:birch_fence_gate', 'minecraft:birch_fence', 'minecraft:birch_door)',
+                      'minecraft:birch_planks', 'minecraft:stripped_birch_log', 'minecraft:birch_wood', 'minecraft:stripped_birch_wood', 'minecraft:birch_sign', 'minecraft:birch_wall_sign', 'minecraft:birch_pressure_plate', 'minecraft:birch_trapdoor', 'minecraft:birch_stairs', 'minecraft:birch_slab', 'minecraft:birch_fence_gate', 'minecraft:birch_fence', 'minecraft:birch_door)',
                       'minecraft:sandstone', 'minecraft:sandstone_slab', 'minecraft:sandstone_stairs', 'minecraft:sandstone_wall)',
                       'minecraft:cut_sandstone', 'minecraft:cut_sandstone_slab',
                       'minecraft:smooth_sandstone', 'minecraft:smooth_sandstone_slab', 'minecraft:smooth_sandstone_stairs',
@@ -110,7 +117,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
            0x976d4d: ('minecraft:dirt', 'minecraft:coarse_dirt', 'minecraft:farmland', 'minecraft:grass_path',
                       'minecraft:granite', 'minecraft:granite_slab', 'minecraft:granite_stairs', 'minecraft:granite_wall',
                       'minecraft:polished_granite', 'minecraft:polished_granite_slab', 'minecraft:polished_granite_stairs',
-                      'minecraft:jungle_planks', 'minecraft:jungle_log', 'minecraft:stripped_jungle_log', 'minecraft:jungle_wood', 'minecraft:stripped_jungle_wood', 'minecraft:jungle_sign', 'minecraft:jungle_pressure_plate', 'minecraft:jungle_trapdoor', 'minecraft:jungle_stairs', 'minecraft:jungle_slab', 'minecraft:jungle_fence_gate', 'minecraft:jungle_fence', 'minecraft:jungle_door)',
+                      'minecraft:jungle_planks', 'minecraft:jungle_log', 'minecraft:stripped_jungle_log', 'minecraft:jungle_wood', 'minecraft:stripped_jungle_wood', 'minecraft:jungle_sign', 'minecraft:jungle_wall_sign', 'minecraft:jungle_pressure_plate', 'minecraft:jungle_trapdoor', 'minecraft:jungle_stairs', 'minecraft:jungle_slab', 'minecraft:jungle_fence_gate', 'minecraft:jungle_fence', 'minecraft:jungle_door)',
                       'minecraft:jukebox', 'minecraft:brown_mushroom_block'),
            0x707070: ('minecraft:stone', 'minecraft:stone_slab', 'minecraft:stone_stairs',
                       'minecraft:andesite', 'minecraft:andesite_slab', 'minecraft:andesite_stairs', 'minecraft:andesite_wall',
@@ -135,7 +142,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
                       'minecraft:hopper'),
            0x4040ff: ('minecraft:kelp', 'minecraft:seagrass',
                       'minecraft:water', 'minecraft:bubble_column'),
-           0x8f7748: ('minecraft:oak_planks', 'minecraft:oak_log', 'minecraft:stripped_oak_log', 'minecraft:oak_wood', 'minecraft:stripped_oak_wood', 'minecraft:oak_sign', 'minecraft:oak_pressure_plate', 'minecraft:oak_trapdoor', 'minecraft:oak_stairs', 'minecraft:oak_slab', 'minecraft:oak_fence_gate', 'minecraft:oak_fence', 'minecraft:oak_door)',
+           0x8f7748: ('minecraft:oak_planks', 'minecraft:oak_log', 'minecraft:stripped_oak_log', 'minecraft:oak_wood', 'minecraft:stripped_oak_wood', 'minecraft:oak_sign', 'minecraft:oak_wall_sign', 'minecraft:oak_pressure_plate', 'minecraft:oak_trapdoor', 'minecraft:oak_stairs', 'minecraft:oak_slab', 'minecraft:oak_fence_gate', 'minecraft:oak_fence', 'minecraft:oak_door)',
                       'minecraft:note_block', 'minecraft:bookshelf',
                       'minecraft:chest', 'minecraft:trapped_chest',
                       'minecraft:crafting_table', 'minecraft:daylight_detector',
@@ -152,7 +159,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
                       'minecraft:smooth_quartz', 'minecraft:smooth_quartz_slab', 'minecraft:smooth_quartz_stairs',
                       'minecraft:chiseled_quartz_block', 'minecraft:quartz_pillar', 'minecraft:quartz_bricks',
                       'minecraft:sea_lantern', 'minecraft:target'),
-           0xd87f33: ('minecraft:acacia_planks', 'minecraft:stripped_acacia_log', 'minecraft:stripped_acacia_wood', 'minecraft:acacia_sign', 'minecraft:acacia_pressure_plate', 'minecraft:acacia_trapdoor', 'minecraft:acacia_stairs', 'minecraft:acacia_slab', 'minecraft:acacia_fence_gate', 'minecraft:acacia_fence', 'minecraft:acacia_door)',
+           0xd87f33: ('minecraft:acacia_planks', 'minecraft:stripped_acacia_log', 'minecraft:stripped_acacia_wood', 'minecraft:acacia_sign', 'minecraft:acacia_wall_sign', 'minecraft:acacia_pressure_plate', 'minecraft:acacia_trapdoor', 'minecraft:acacia_stairs', 'minecraft:acacia_slab', 'minecraft:acacia_fence_gate', 'minecraft:acacia_fence', 'minecraft:acacia_door)',
                       'minecraft:red_sand',
                       'minecraft:orange_wool', 'minecraft:orange_carpet',
                       'minecraft:orange_shulker_box', 'minecraft:orange_bed',
@@ -241,7 +248,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
                       'minecraft:blue_banner', 'minecraft:blue_glazed_terracotta',
                       'minecraft:blue_concrete', 'minecraft:blue_concrete_powder',
                       'minecraft:tube_coral_block', 'minecraft:tube_coral', 'minecraft:tube_coral_fan'),
-           0x664c33: ('minecraft:dark_oak_planks', 'minecraft:dark_oak_log', 'minecraft:stripped_dark_oak_log', 'minecraft:dark_oak_wood', 'minecraft:stripped_dark_oak_wood', 'minecraft:dark_oak_sign', 'minecraft:dark_oak_pressure_plate', 'minecraft:dark_oak_trapdoor', 'minecraft:dark_oak_stairs', 'minecraft:dark_oak_slab', 'minecraft:dark_oak_fence_gate', 'minecraft:dark_oak_fence', 'minecraft:dark_oak_door)',
+           0x664c33: ('minecraft:dark_oak_planks', 'minecraft:dark_oak_log', 'minecraft:stripped_dark_oak_log', 'minecraft:dark_oak_wood', 'minecraft:stripped_dark_oak_wood', 'minecraft:dark_oak_sign', 'minecraft:dark_oak_wall_sign', 'minecraft:dark_oak_pressure_plate', 'minecraft:dark_oak_trapdoor', 'minecraft:dark_oak_stairs', 'minecraft:dark_oak_slab', 'minecraft:dark_oak_fence_gate', 'minecraft:dark_oak_fence', 'minecraft:dark_oak_door)',
                       'minecraft:spruce_log',
                       'minecraft:brown_wool', 'minecraft:brown_carpet',
                       'minecraft:brown_shulker_box', 'minecraft:brown_bed',
@@ -289,7 +296,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
                       'minecraft:conduit'),
            0x4a80ff: ('minecraft:lapis_block', ),
            0x00d93a: ('minecraft:emerald_block', ),
-           0x815631: ('minecraft:podzol', 'minecraft:spruce_planks', 'minecraft:stripped_spruce_log', 'minecraft:spruce_wood', 'minecraft:stripped_spruce_wood', 'minecraft:spruce_sign', 'minecraft:spruce_pressure_plate', 'minecraft:spruce_trapdoor', 'minecraft:spruce_stairs', 'minecraft:spruce_slab', 'minecraft:spruce_fence_gate', 'minecraft:spruce_fence', 'minecraft:spruce_door',
+           0x815631: ('minecraft:podzol', 'minecraft:spruce_planks', 'minecraft:stripped_spruce_log', 'minecraft:spruce_wood', 'minecraft:stripped_spruce_wood', 'minecraft:spruce_sign', 'minecraft:spruce_wall_sign', 'minecraft:spruce_pressure_plate', 'minecraft:spruce_trapdoor', 'minecraft:spruce_stairs', 'minecraft:spruce_slab', 'minecraft:spruce_fence_gate', 'minecraft:spruce_fence', 'minecraft:spruce_door',
                       'minecraft:campfire', 'minecraft:soul_campfire'),
            0x700200: ('minecraft:netherrack',
                       'minecraft:nether_bricks', 'minecraft:nether_brick_fence', 'minecraft:nether_brick_slab', 'minecraft:nether_brick_stairs', 'minecraft:nether_brick_wall',
@@ -316,10 +323,10 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
            0x8e3c2e: ('minecraft:red_terracotta', ),
            0x251610: ('minecraft:black_terracotta', ),
            0xbd3031: ('minecraft:crimson_nylium', ),
-           0x943f61: ('minecraft:crimson_fence', 'minecraft:crimson_fence_gate', 'minecraft:crimson_planks', 'minecraft:crimson_pressure_plate', 'minecraft:crimson_sign', 'minecraft:crimson_slab', 'minecraft:crimson_stairs', 'minecraft:crimson_stem', 'minecraft:stripped_crimson_stem', 'minecraft:crimson_trapdoor'),
+           0x943f61: ('minecraft:crimson_fence', 'minecraft:crimson_fence_gate', 'minecraft:crimson_planks', 'minecraft:crimson_pressure_plate', 'minecraft:crimson_sign', 'minecraft:crimson_wall_sign', 'minecraft:crimson_slab', 'minecraft:crimson_stairs', 'minecraft:crimson_stem', 'minecraft:stripped_crimson_stem', 'minecraft:crimson_trapdoor'),
            0x5c191d: ('minecraft:crimson_hyphae', 'minecraft:stripped_crimson_hyphae'),
            0x167e86: ('minecraft:warped_nylium', ),
-           0x3a8e8c: ('minecraft:warped_fence', 'minecraft:warped_fence_gate', 'minecraft:warped_planks', 'minecraft:warped_pressure_plate', 'minecraft:warped_sign', 'minecraft:warped_slab', 'minecraft:warped_stairs', 'minecraft:warped_stem', 'minecraft:stripped_warped_stem', 'minecraft:warped_trapdoor'),
+           0x3a8e8c: ('minecraft:warped_fence', 'minecraft:warped_fence_gate', 'minecraft:warped_planks', 'minecraft:warped_pressure_plate', 'minecraft:warped_sign', 'minecraft:warped_wall_sign', 'minecraft:warped_slab', 'minecraft:warped_stairs', 'minecraft:warped_stem', 'minecraft:stripped_warped_stem', 'minecraft:warped_trapdoor'),
            0x562c3e: ('minecraft:warped_hyphae', 'minecraft:stripped_warped_hyphae'),
            0x14b485: ('minecraft:warped_wart_block', )}
 
@@ -354,51 +361,31 @@ def verifyPaletteBlocks():
         print("All blocks successfully verified.")
     print()
 
-# to translate a string of regular names into the appropriate list of minecraft block IDs
-# def f(string): return ["minecraft:"+i.strip().lower().replace(" ", "_") for i in string.split(", ")]
 
+palette = {
+    "unknown":                  0x000000,
+    "minecraft:dirt":           0x777733,
+    "minecraft:grass":          0x33aa33,
+    "minecraft:grass_block":    0x33aa33,
+    "minecraft:stone":          0x777777,
+    "minecraft:sand":           0xffffaa,
+    "minecraft:snow":           0xffffff,
+    "minecraft:water":          0x3333ee,
+    "minecraft:ice":            0xaaaaee,
+    "minecraft:white_wool":     0xffffff,
+    "minecraft:white_concrete": 0xffffff
+}
 
-palette = [
-    "unknown",
-    "minecraft:dirt",
-    "minecraft:grass",
-    "minecraft:grass_block",
-    "minecraft:stone",
-    "minecraft:sand",
-    "minecraft:snow",
-    "minecraft:water",
-    "minecraft:ice",
-    "minecraft:white_wool",
-    "minecraft:white_concrete",
+# verifyPaletteBlocks()
 
-
-]
-
-# to translate a 255 RGB to hex RGB value
-# def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
-
-paletteColors = [
-    0x000000,
-    0x777733,
-    0x33aa33,
-    0x33aa33,
-    0x777777,
-    0xffffaa,
-    0xffffff,
-    0x3333ee,
-    0xaaaaee,
-    0xffffff,
-    0xffffff,
-]
-
-verifyPaletteBlocks()
-
-paletteReverseLookup = {}
-for i in range(len(palette)):
-    paletteReverseLookup[palette[i]] = i
+if USEDETAILED:
+    for hex, blocks in PALETTE.items():
+        for block in blocks:
+            palette[block] = hex
+numReference = list(palette.keys())
 
 topmap = np.zeros((rect[2], rect[3]), dtype='int')
-topcolor = np.zeros(topmap.shape, dtype="int")
+topcolor = np.zeros(topmap.shape, dtype='int')
 
 unknownBlocks = set()
 
@@ -413,18 +400,19 @@ for dx in range(rect[2]):
 
             if blockCompound != None:
                 blockID = blockCompound["Name"].value
-                if(blockID in TRANSPARENT):
+                if blockID in TRANSPARENT:
                     continue
                 else:
-                    numID = paletteReverseLookup.get(blockID, 0)
-                    if(numID == 0):
+                    if blockID not in palette:
                         unknownBlocks.add(blockID)
-                    # print("%s > %i" % (blockID, numID))
-                    topmap[(dx, dz)] = numID
-                    topcolor[(dx, dz)] = paletteColors[numID]
+                    else:
+                        # print("%s > %i" % (blockID, numID))
+                        numID = numReference.index(blockID)
+                        topmap[(dx, dz)] = numID
+                        topcolor[(dx, dz)] = palette[blockID]
                     break
 
-print("unknown blocks: %s" % str(unknownBlocks))
+print("Unknown blocks: " + str(unknownBlocks))
 
 # topcolor = np.pad(topcolor, 16, mode='edge')
 topcolor = cv2.merge(((topcolor) & 0xff, (topcolor >> 8)
