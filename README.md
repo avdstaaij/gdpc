@@ -1,4 +1,4 @@
-## python client scripts for the Minecraft HTTP Interface Mod
+## Python3 client scripts for the Minecraft HTTP Interface Mod
 
 This a collection of scripts to use with the [Minecraft HTTP Interface Mod](https://github.com/nilsgawlik/gdmc_http_interface) built for the GDMC competition.
 
