@@ -13,9 +13,9 @@ if buildArea != -1:
     z1 = buildArea["zFrom"]
     x2 = buildArea["xTo"]
     z2 = buildArea["zTo"]
-    print(buildArea)
+    # DEBUG: print(buildArea)
     rect = (x1, z1, x2 - x1, z2 - z1)
-    print(rect)
+    # DEBUG: print(rect)
 
 slice = WorldSlice(rect)
 
@@ -23,31 +23,31 @@ heightmap1 = np.array(
     slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype=np.uint8)
 heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
 heightmap = np.minimum(heightmap1, heightmap2)
-watermap = heightmap - heightmap2 + 128
+# TODO: UNUSED | watermap = heightmap - heightmap2 + 128
 
-bHM = cv2.blur(heightmap, (7, 7))
+# TODO: UNUSED | bHM = cv2.blur(heightmap, (7, 7))
 
 dx = cv2.Scharr(heightmap, cv2.CV_16S, 1, 0)
 dy = cv2.Scharr(heightmap, cv2.CV_16S, 0, 1)
-atan = np.arctan2(dx, dy, dtype=np.float64) * 5 / 6.283
-atan = atan % 5
-atan = atan.astype('uint8')
+# TODO: UNUSED | atan = np.arctan2(dx, dy, dtype=np.float64) * 5 / 6.283
+# TODO: UNUSED | atan = atan % 5
+# TODO: UNUSED | atan = atan.astype('uint8')
 
 finalHM = cv2.medianBlur(heightmap, 7)
 
-diffmap = finalHM.astype('float64') - heightmap.astype('float64')
-diffmap = np.round(diffmap)
-diffmap = diffmap.astype('int8')
+# TODO: UNUSED | diffmap = finalHM.astype('float64') - heightmap.astype('float64')
+# TODO: UNUSED | diffmap = np.round(diffmap)
+# TODO: UNUSED | diffmap = diffmap.astype('int8')
 
 # diff
 img = heightmap
 diffx = cv2.Scharr(img, cv2.CV_16S, 1, 0)
 diffy = cv2.Scharr(img, cv2.CV_16S, 0, 1)
-dmag = np.absolute(diffx) + np.absolute(diffy)
+# TODO: UNUSED | dmag = np.absolute(diffx) + np.absolute(diffy)
 # thres = 32
 # dmag = dmag - thres
-dmag = dmag.clip(0, 255)
-dmag = dmag.astype('uint8')
+# TODO: UNUSED | dmag = dmag.clip(0, 255)
+# TODO: UNUSED | dmag = dmag.astype('uint8')
 
 # block visualization
 # based on https://minecraft.gamepedia.com/Map_item_format#Base_colors
@@ -407,12 +407,13 @@ for dx in range(rect[2]):
                         unknownBlocks.add(blockID)
                     else:
                         # print("%s > %i" % (blockID, numID))
-                        numID = numReference.index(blockID)
-                        topmap[(dx, dz)] = numID
+                        # TODO: UNUSED | numID = numReference.index(blockID)
+                        # TODO: UNUSED | topmap[(dx, dz)] = numID
                         topcolor[(dx, dz)] = palette[blockID]
                     break
 
-print("Unknown blocks: " + str(unknownBlocks))
+if len(unknownBlocks) > 0:
+    print("Unknown blocks: " + str(unknownBlocks))
 
 # topcolor = np.pad(topcolor, 16, mode='edge')
 topcolor = cv2.merge(((topcolor) & 0xff, (topcolor >> 8)
@@ -428,6 +429,7 @@ topcolor = topcolor.astype('uint8')
 
 topcolor = np.transpose(topcolor, (1, 0, 2))
 plt_image = cv2.cvtColor(topcolor, cv2.COLOR_BGR2RGB)
-imgplot = plt.imshow(plt_image)
 
+# TODO: UNUSED | imgplot = plt.imshow(plt_image)
+plt.imshow(plt_image)
 plt.show()
