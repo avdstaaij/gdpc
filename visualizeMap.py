@@ -14,13 +14,14 @@ if buildArea != -1:
     x2 = buildArea["xTo"]
     z2 = buildArea["zTo"]
     print(buildArea)
-    rect = (x1, z1, x2-x1, z2-z1)
+    rect = (x1, z1, x2 - x1, z2 - z1)
     print(rect)
 
 slice = WorldSlice(rect)
 
-heightmap1 = np.array(slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype = np.uint8)
-heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype = np.uint8)
+heightmap1 = np.array(
+    slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype=np.uint8)
+heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
 heightmap = np.minimum(heightmap1, heightmap2)
 watermap = heightmap - heightmap2 + 128
 
@@ -49,6 +50,17 @@ dmag = dmag.clip(0, 255)
 dmag = dmag.astype('uint8')
 
 # block visualization
+
+TRANSPARENT = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air', 'minecraft:barrier', 'minecraft:redstone_lamp', 'minecraft:cake', 'minecraft:powered_rail', 'minecraft:detector_rail', 'minecraft:torch', 'minecraft:redstone_wire', 'minecraft:ladder', 'minecraft:rail', 'minecraft:lever', 'minecraft:redstone_torch',
+               'minecraft:stone_button', 'minecraft:oak_button', , 'minecraft:spruce_button', 'minecraft:birch_button', 'minecraft:jungle_button', 'minecraft:acacia_button', 'minecraft:dark_oak_button', 'minecraft:crimson_button', 'minecraft:warped_button', 'minecraft:polished_blackstone_button',
+               'minecraft:repeater', 'minecraft:tripwire_hook', 'minecraft:tripwire', 'minecraft:flower_pot', 'minecraft:head', 'minecraft:comparator', 'minecraft:activator_rail', 'minecraft:end_rod',
+               'minecraft:glass', 'minecraft:white_stained_glass', 'minecraft:orange_stained_glass', 'minecraft:magenta_stained_glass', 'minecraft:light_blue_stained_glass', 'minecraft:yellow_stained_glass', 'minecraft:lime_stained_glass', 'minecraft:pink_stained_glass', 'minecraft:gray_stained_glass', 'minecraft:light_gray_stained_glass', 'minecraft:cyan_stained_glass', 'minecraft:purple_stained_glass', 'minecraft:blue_stained_glass', 'minecraft:brown_stained_glass', 'minecraft:green_stained_glass', 'minecraft:red_stained_glass', 'minecraft:black_stained_glass',
+               'minecraft:glass_pane', 'minecraft:white_stained_glass_pane', 'minecraft:orange_stained_glass_pane', 'minecraft:magenta_stained_glass_pane', 'minecraft:light_blue_stained_glass_pane', 'minecraft:yellow_stained_glass_pane', 'minecraft:lime_stained_glass_pane', 'minecraft:pink_stained_glass_pane', 'minecraft:gray_stained_glass_pane', 'minecraft:light_gray_stained_glass_pane', 'minecraft:cyan_stained_glass_pane', 'minecraft:purple_stained_glass_pane', 'minecraft:blue_stained_glass_pane', 'minecraft:brown_stained_glass_pane', 'minecraft:green_stained_glass_pane', 'minecraft:red_stained_glass_pane', 'minecraft:black_stained_glass_pane',
+               'minecraft:nether_portal', 'minecraft:structure_void', 'minecraft:iron_bars', 'minecraft:soul_fire_torch', 'minecraft:chain')
+
+
+# to translate a string of regular names into the appropriate list of minecraft block IDs
+#def f(string): return ["minecraft:"+i.strip().lower().replace(" ", "_") for i in string.split(", ")]
 
 palette = [
     "unknown",
@@ -80,7 +92,7 @@ paletteReverseLookup = {}
 for i in range(len(palette)):
     paletteReverseLookup[palette[i]] = i
 
-topmap = np.zeros((rect[2],rect[3]), dtype='int')
+topmap = np.zeros((rect[2], rect[3]), dtype='int')
 topcolor = np.zeros(topmap.shape, dtype="int")
 
 unknownBlocks = set()
@@ -90,17 +102,18 @@ for dx in range(rect[2]):
         for dy in range(5):
             x = rect[0] + dx
             z = rect[1] + dz
-            y = int(heightmap1[(dx,dz)]) - dy
+            y = int(heightmap1[(dx, dz)]) - dy
 
-            blockCompound = slice.getBlockCompoundAt((x,y,z))
-            
+            blockCompound = slice.getBlockCompoundAt((x, y, z))
+
             if blockCompound != None:
                 blockID = blockCompound["Name"].value
-                if(blockID in ["minecraft:air", "minecraft:cave_air"]):
+                if(blockID in TRANSPARENT):
                     continue
                 else:
                     numID = paletteReverseLookup.get(blockID, 0)
-                    if(numID == 0): unknownBlocks.add(blockID)
+                    if(numID == 0):
+                        unknownBlocks.add(blockID)
                     # print("%s > %i" % (blockID, numID))
                     topmap[(dx, dz)] = numID
                     topcolor[(dx, dz)] = paletteColors[numID]
@@ -109,7 +122,8 @@ for dx in range(rect[2]):
 print("unknown blocks: %s" % str(unknownBlocks))
 
 # topcolor = np.pad(topcolor, 16, mode='edge')
-topcolor = cv2.merge(((topcolor) & 0xff, (topcolor >> 8) & 0xff, (topcolor >> 16) & 0xff))
+topcolor = cv2.merge(((topcolor) & 0xff, (topcolor >> 8)
+                      & 0xff, (topcolor >> 16) & 0xff))
 
 off = np.expand_dims((diffx + diffy).astype("int"), 2)
 # off = np.pad(off, ((16, 16), (16, 16), (0, 0)), mode='edge')
@@ -119,7 +133,7 @@ topcolor = topcolor.clip(0, 255)
 
 topcolor = topcolor.astype('uint8')
 
-topcolor = np.transpose(topcolor, (1,0,2))
+topcolor = np.transpose(topcolor, (1, 0, 2))
 plt_image = cv2.cvtColor(topcolor, cv2.COLOR_BGR2RGB)
 imgplot = plt.imshow(plt_image)
 
