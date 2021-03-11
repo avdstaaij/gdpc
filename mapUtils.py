@@ -5,10 +5,12 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def normalize(array):
     """Normalizes the array so that the min value is 0 and the max value is 1
     """
     return (array - array.min()) / (array.max() - array.min())
+
 
 def visualize(*arrays, title=None, autonormalize=True):
     """Uses pyplot and OpenCV to visualize one or multiple numpy arrays
@@ -28,7 +30,8 @@ def visualize(*arrays, title=None, autonormalize=True):
         imgplot = plt.imshow(plt_image)
     plt.show()
 
-def calcGoodHeightmap(worldSlice):    
+
+def calcGoodHeightmap(worldSlice):
     """Calculates a heightmap that is well suited for building. It ignores any logs and leaves and treats water as ground.
 
     Args:
@@ -45,9 +48,10 @@ def calcGoodHeightmap(worldSlice):
         for z in range(area[3]):
             while True:
                 y = heightmapNoTrees[x, z]
-                block = worldSlice.getBlockAt((area[0] + x, y - 1, area[1] + z))
+                block = worldSlice.getBlockAt(
+                    (area[0] + x, y - 1, area[1] + z))
                 if block[-4:] == '_log':
-                    heightmapNoTrees[x,z] -= 1
+                    heightmapNoTrees[x, z] -= 1
                 else:
                     break
 
