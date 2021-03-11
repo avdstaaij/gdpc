@@ -1,38 +1,24 @@
+"""### Provides tools for maps and heightmaps
+
+This module contains functions to:
+* Calculate a heightmap ideal for building
+* Visualise numpy arrays
 """
-Utilities for (height)maps
-"""
+__all__ = ['calcGoodHeightmap']
+__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
+__date__ = "11 March 2021"
+# __version__
+__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
+    "Flashing Blinkenlights for general improvements"
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-def normalize(array):
-    """Normalizes the array so that the min value is 0 and the max value is 1
-    """
-    return (array - array.min()) / (array.max() - array.min())
-
-
-def visualize(*arrays, title=None, autonormalize=True):
-    """Uses pyplot and OpenCV to visualize one or multiple numpy arrays
-
-    Args:
-        title (str, optional): display title. Defaults to None.
-        autonormalize (bool, optional): Normalizes the array to be between 0 (black) and 255 (white). Defaults to True.
-    """
-    for array in arrays:
-        if autonormalize:
-            array = (normalize(array) * 255).astype(np.uint8)
-
-        plt.figure()
-        if title:
-            plt.title(title)
-        plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
-        imgplot = plt.imshow(plt_image)
-    plt.show()
-
-
 def calcGoodHeightmap(worldSlice):
-    """Calculates a heightmap that is well suited for building. It ignores any logs and leaves and treats water as ground.
+    """**Calculates a heightmap ideal for building.**
+    Trees are ignored and water is considered ground.
 
     Args:
         worldSlice (WorldSlice): an instance of the WorldSlice class containing the raw heightmaps and block data
@@ -56,3 +42,27 @@ def calcGoodHeightmap(worldSlice):
                     break
 
     return np.array(np.minimum(hm_mbnl, heightmapNoTrees))
+
+
+def visualize(*arrays, title=None, autonormalize=True):
+    """**Visualizes one or multiple numpy arrays.**
+
+    Args:
+        title (str, optional): display title. Defaults to None.
+        autonormalize (bool, optional): Normalizes the array to be between 0 (black) and 255 (white). Defaults to True.
+    """
+    for array in arrays:
+        if autonormalize:
+            array = (normalize(array) * 255).astype(np.uint8)
+
+        plt.figure()
+        if title:
+            plt.title(title)
+        plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+        imgplot = plt.imshow(plt_image)
+    plt.show()
+
+
+def normalize(array):
+    """**Normalizes the array to contain values from 0 to 1.**"""
+    return (array - array.min()) / (array.max() - array.min())
