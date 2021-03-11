@@ -1,8 +1,6 @@
+# ! /usr/bin/python3
 """### Displays a map of the build area
 
-This module contains functions to:
-* Calculate a heightmap ideal for building
-* Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
 __author__ = "Nils Gawlik <nilsgawlik@gmx.de>"

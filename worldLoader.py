@@ -1,3 +1,4 @@
+# ! /usr/bin/python3
 """### Provides tools for reading chunk data
 
 This module contains functions to:

@@ -1,3 +1,4 @@
+# ! /usr/bin/python3
 """### Provides tools for maps and heightmaps
 
 This module contains functions to:
