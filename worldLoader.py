@@ -1,21 +1,39 @@
-from math import ceil, log2
-from bitarray import BitArray
+# ! /usr/bin/python3
+"""### Provides tools for reading chunk data
+
+This module contains functions to:
+* Calculate a heightmap ideal for building
+* Visualise numpy arrays
+"""
+__all__ = ['WorldSlice']
+__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
+__date__ = "11 March 2021"
+# __version__
+__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
+    "Flashing Blinkenlights for general improvements"
+
 from io import BytesIO
-import requests
+from math import ceil, log2
+
 import nbt
 import numpy as np
+import requests
+
+from bitarray import BitArray
 
 
 def getChunks(x, z, dx, dz, rtype='text'):
-    print("getting chunks %i %i %i %i " % (x, z, dx, dz))
+    """**Get raw chunk data.**"""
+    print("getting chunks {} {} {} {} ".format(x, z, dx, dz))
 
-    url = 'http://localhost:9000/chunks?x=%i&z=%i&dx=%i&dz=%i' % (x, z, dx, dz)
-    print("request url: %s" % url)
+    url = 'http://localhost:9000/chunks?x={}&z={}&dx={}&dz={}'.format(
+        x, z, dx, dz)
+    print("request url: {}".format(url))
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
     response = requests.get(url, headers={"Accept": acceptType})
-    print("result: %i" % response.status_code)
+    print("result: {}".format(response.status_code))
     if response.status_code >= 400:
-        print("error: %s" % response.text)
+        print("error: {}".format(response.text))
 
     if rtype == 'text':
         return response.text
@@ -24,21 +42,21 @@ def getChunks(x, z, dx, dz, rtype='text'):
 
 
 class CachedSection:
+    """**Represents a cached Chunk.**"""
+
     def __init__(self, palette, blockStatesBitArray):
         self.palette = palette
         self.blockStatesBitArray = blockStatesBitArray
 
 
 class WorldSlice:
+    """**Contains information on a slice of the world.**"""
     # TODO format this to blocks
+
     def __init__(self, rect, heightmapTypes=["MOTION_BLOCKING", "MOTION_BLOCKING_NO_LEAVES", "OCEAN_FLOOR", "WORLD_SURFACE"]):
         self.rect = rect
-        self.chunkRect = (
-            rect[0] >> 4,
-            rect[1] >> 4,
-            ((rect[0] + rect[2] - 1) >> 4) - (rect[0] >> 4) + 1,
-            ((rect[1] + rect[3] - 1) >> 4) - (rect[1] >> 4) + 1
-        )
+        self.chunkRect = (rect[0] >> 4, rect[1] >> 4, ((rect[0] + rect[2] - 1) >> 4) - (
+            rect[0] >> 4) + 1, ((rect[1] + rect[3] - 1) >> 4) - (rect[1] >> 4) + 1)
         self.heightmapTypes = heightmapTypes
 
         bytes = getChunks(*self.chunkRect, rtype='bytes')
@@ -106,6 +124,7 @@ class WorldSlice:
         print("done")
 
     def getBlockCompoundAt(self, blockPos):
+        """**Returns block data.**"""
         # chunkID = relativeChunkPos[0] + relativeChunkPos[1] * self.chunkRect[2]
 
         # section = self.nbtfile['Chunks'][chunkID]['Level']['Sections'][(blockPos[1] >> 4)+1]
@@ -133,6 +152,7 @@ class WorldSlice:
         return palette[bitarray.getAt(blockIndex)]
 
     def getBlockAt(self, blockPos):
+        """**Returns block name.**"""
         blockCompound = self.getBlockCompoundAt(blockPos)
         if blockCompound == None:
             return "minecraft:air"

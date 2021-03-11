@@ -1,4 +1,12 @@
-# The purpost of this class is to read the bitarray format that minecraft likes to store data in
+#! /usr/bin/python3
+"""### Read the bitarray format used by Minecraft.
+"""
+__all__ = ['BitArray']
+__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
+__date__ = "11 March 2021"
+# __version__
+__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
+    "Flashing Blinkenlights for general improvements"
 
 from math import floor
 
@@ -6,7 +14,7 @@ from math import floor
 def inclusiveBetween(start, end, value):
     if value < start or value > end:
         raise ValueError(
-            "The value %i is not in the inclusive range of %i to %i" % (value, start, end))
+            "The value {} is not in the inclusive range of {} to {}".format(value, start, end))
 
 
 # Minecraft stores block and heightmap data in compacted arrays of longs. This class does the proper index mapping and bit shifting to get to the actual data.
@@ -22,7 +30,7 @@ class BitArray:
         if (data != None):
             if (len(data) != j):
                 raise Exception(
-                    "Invalid length given for storage, got: %s but expected: %s" % (len(data), j))
+                    "Invalid length given for storage, got: {} but expected: {}".format(len(data), j))
 
             self.longArray = data
         else:
@@ -34,7 +42,7 @@ class BitArray:
     def getAt(self, index):
         inclusiveBetween(0, (self.arraySize - 1), index)
         i = self.getPosOfLong(index)
-        # print("%i > %i" % (index, i))
+        # print("{} > {}".format(index, i))
         j = self.longArray[i]
         k = (index - i * self.entriesPerLong) * self.bitsPerEntry
         return (j >> k & self.maxEntryValue)
