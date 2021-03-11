@@ -362,26 +362,11 @@ def verifyPaletteBlocks():
     print()
 
 
-palette = {
-    "unknown":                  0x000000,
-    "minecraft:dirt":           0x777733,
-    "minecraft:grass":          0x33aa33,
-    "minecraft:grass_block":    0x33aa33,
-    "minecraft:stone":          0x777777,
-    "minecraft:sand":           0xffffaa,
-    "minecraft:snow":           0xffffff,
-    "minecraft:water":          0x3333ee,
-    "minecraft:ice":            0xaaaaee,
-    "minecraft:white_wool":     0xffffff,
-    "minecraft:white_concrete": 0xffffff
-}
-
 # verifyPaletteBlocks()
 
-if USEDETAILED:
-    for hex, blocks in PALETTE.items():
-        for block in blocks:
-            palette[block] = hex
+for hex, blocks in PALETTE.items():
+    for block in blocks:
+        palette[block] = hex
 numReference = list(palette.keys())
 
 topmap = np.zeros((rect[2], rect[3]), dtype='int')
