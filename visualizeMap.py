@@ -23,31 +23,16 @@ heightmap1 = np.array(
     slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype=np.uint8)
 heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
 heightmap = np.minimum(heightmap1, heightmap2)
-# TODO: UNUSED | watermap = heightmap - heightmap2 + 128
-
-# TODO: UNUSED | bHM = cv2.blur(heightmap, (7, 7))
 
 dx = cv2.Scharr(heightmap, cv2.CV_16S, 1, 0)
 dy = cv2.Scharr(heightmap, cv2.CV_16S, 0, 1)
-# TODO: UNUSED | atan = np.arctan2(dx, dy, dtype=np.float64) * 5 / 6.283
-# TODO: UNUSED | atan = atan % 5
-# TODO: UNUSED | atan = atan.astype('uint8')
 
 finalHM = cv2.medianBlur(heightmap, 7)
-
-# TODO: UNUSED | diffmap = finalHM.astype('float64') - heightmap.astype('float64')
-# TODO: UNUSED | diffmap = np.round(diffmap)
-# TODO: UNUSED | diffmap = diffmap.astype('int8')
 
 # diff
 img = heightmap
 diffx = cv2.Scharr(img, cv2.CV_16S, 1, 0)
 diffy = cv2.Scharr(img, cv2.CV_16S, 0, 1)
-# TODO: UNUSED | dmag = np.absolute(diffx) + np.absolute(diffy)
-# thres = 32
-# dmag = dmag - thres
-# TODO: UNUSED | dmag = dmag.clip(0, 255)
-# TODO: UNUSED | dmag = dmag.astype('uint8')
 
 # block visualization
 # based on https://minecraft.gamepedia.com/Map_item_format#Base_colors
@@ -125,7 +110,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
                       'minecraft:cobblestone', 'minecraft:cobblestone_slab', 'minecraft:cobblestone_stairs', 'minecraft:cobblestone_wall',
                       'minecraft:bedrock', 'minecraft:gold_ore',
                       'minecraft:iron_ore', 'minecraft:coal_ore',
-                      'minecraft:lapis_ore', 'diamond_ore',
+                      'minecraft:lapis_ore', 'minecraft:diamond_ore',
                       'minecraft:dispenser', 'minecraft:dropper',
                       'minecraft:mossy_cobblestone', 'minecraft:mossy_cobblestone_slab', 'minecraft:mossy_cobblestone_stairs', 'minecraft:mossy_cobblestone_wall',
                       'minecraft:spawner', 'minecraft:furnace', 'minecraft:stone_pressure_plate', 'minecraft:redstone_ore',
@@ -364,13 +349,13 @@ def verifyPaletteBlocks():
 
 # verifyPaletteBlocks()
 
+palette = {}
+
 for hex, blocks in PALETTE.items():
     for block in blocks:
         palette[block] = hex
-numReference = list(palette.keys())
 
-topmap = np.zeros((rect[2], rect[3]), dtype='int')
-topcolor = np.zeros(topmap.shape, dtype='int')
+topcolor = np.zeros((rect[2], rect[3]), dtype='int')
 
 unknownBlocks = set()
 
@@ -391,9 +376,6 @@ for dx in range(rect[2]):
                     if blockID not in palette:
                         unknownBlocks.add(blockID)
                     else:
-                        # print("%s > %i" % (blockID, numID))
-                        # TODO: UNUSED | numID = numReference.index(blockID)
-                        # TODO: UNUSED | topmap[(dx, dz)] = numID
                         topcolor[(dx, dz)] = palette[blockID]
                     break
 
@@ -415,6 +397,5 @@ topcolor = topcolor.astype('uint8')
 topcolor = np.transpose(topcolor, (1, 0, 2))
 plt_image = cv2.cvtColor(topcolor, cv2.COLOR_BGR2RGB)
 
-# TODO: UNUSED | imgplot = plt.imshow(plt_image)
 plt.imshow(plt_image)
 plt.show()
