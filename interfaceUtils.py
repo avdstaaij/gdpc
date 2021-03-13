@@ -27,9 +27,8 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    self.buffer = []
-
-    def __init__(offset=(0, 0, 0)):
+    def __init__(self, offset=(0, 0, 0)):
+        self.buffer = []
         self.offset = offset
 
     def requestBuildArea(self):
@@ -45,7 +44,7 @@ class Interface():
                 z2 = buildArea["zTo"]
                 # print(buildArea)
                 buildArea = (*self.global2local(x1, None, z1),
-                             *self.global2local(x2 - x1, None, z2 - z1)
+                             *self.global2local(x2 - x1, None, z2 - z1))
             return buildArea
         else:
             print(response.text)
@@ -60,9 +59,9 @@ class Interface():
         print("WARNING: Interface.runCommand not correctly implemented yet!")
 
         # DEBUG: print("running cmd " + command)
-        url='http://localhost:9000/command'
+        url = 'http://localhost:9000/command'
         try:
-            response=requests.post(url, bytes(command, "utf-8"))
+            response = requests.post(url, bytes(command, "utf-8"))
         except ConnectionError:
             return "connection error"
 
@@ -72,12 +71,12 @@ class Interface():
 
     def getBlock(self, x, y, z):
         """**Returns the name of a block in the world.**"""
-        x, y, z=self.local2global(x, y, z)
+        x, y, z = self.local2global(x, y, z)
 
-        url='http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+        url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         # DEBUG: print(url)
         try:
-            response=requests.get(url)
+            response = requests.get(url)
         except ConnectionError:
             return "minecraft:void_air"
         return response.text
@@ -85,19 +84,52 @@ class Interface():
 
     def setBlock(self, x, y, z, str):
         """**Places a block in the world.**"""
-        x, y, z=self.local2global(x, y, z)
+        x, y, z = self.local2global(x, y, z)
 
-        url='http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+        url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         # DEBUG: print('setting block {} at {} {} {}'.format(str, x, y, z))
         try:
-            response=requests.put(url, str)
+            response = requests.put(url, str)
         except ConnectionError:
             return "0"
         return response.text
         # DEBUG: print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
+    # --------------------------------------------------------- block buffers
+
+    def placeBlockBatched(self, x, y, z, str, limit=50):
+        """**Place a block in the buffer and send if the limit is exceeded.**"""
+        x, y, z = self.local2global(x, y, z)
+
+        self.buffer.append((x, y, z, str))
+        if len(self.buffer) >= limit:
+            return self.sendBlocks()
+        else:
+            return None
+
+    def sendBlocks(self, x=0, y=0, z=0, retries=5):
+        """**Sends the buffer to the server and clears it.**
+
+        Since the buffer contains global coordinates no conversion takes place in this function
+        """
+
+        url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+        body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp)
+                               for bp in self.buffer])
+        print(body)
+        try:
+            response = requests.put(url, body)
+            self.buffer = []
+            return response.text
+        except ConnectionError as e:
+            print("Request failed: {} Retrying ({} left)".format(e, retries))
+            if retries > 0:
+                return self.sendBlocks(x, y, z, retries - 1)
+
+    # --------------------------------------------------------- utility functions
+
     def local2global(self, x, y, z):
-        result=[]
+        result = []
         if x != None:
             result.append(x + self.offset[0])
         if y != None:
@@ -107,7 +139,7 @@ class Interface():
         return result
 
     def global2local(self, x, y, z):
-        result=[]
+        result = []
         if x != None:
             result.append(x - self.offset[0])
         if y != None:
@@ -115,47 +147,6 @@ class Interface():
         if z != None:
             result.append(z - self.offset[2])
         return result
-
-    # --------------------------------------------------------- block buffers
-
-    blockBuffer=[]
-
-    def placeBlockBatched(x, y, z, str, limit=50):
-        """**Place a block in the buffer and send if the limit is exceeded. (deprecated)**"""
-        warnings.warn("Please use the Interface class.", DeprecationWarning)
-
-        registerSetBlock(x, y, z, str)
-        if len(blockBuffer) >= limit:
-            return sendBlocks(0, 0, 0)
-        else:
-            return None
-
-    def sendBlocks(x=0, y=0, z=0, retries=5):
-        """**Sends the buffer to the server and clears it. (deprecated)**"""
-        warnings.warn("Please use the Interface class.", DeprecationWarning)
-
-        global blockBuffer
-        body="\n" + '~{} ~{} ~{} {}'.format(*[bp for bp in blockBuffer])
-        url='http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        try:
-            response=requests.put(url, body)
-            clearBlockBuffer()
-            return response.text
-        except ConnectionError as e:
-            print("Request failed: {} Retrying ({} left)".format(e, retries))
-            if retries > 0:
-                return sendBlocks(x, y, z, retries - 1)
-
-    def registerSetBlock(x, y, z, str):
-        """**Places a block in the buffer.**"""
-
-        # buffer += () '~{} ~{} ~{} {}'.format(x, y, z, str)
-        self.buffer.append((x, y, z, str))
-
-    def clearBuffer():
-        """**Clears the block buffer.**"""
-
-        self.buffer=[]
 
 
 # ========================================================= DEPRACATED
@@ -165,7 +156,7 @@ def requestBuildArea():
     """**Returns the building area. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
-    response=requests.get('http://localhost:9000/buildarea')
+    response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
         return response.json()
     else:
@@ -178,9 +169,9 @@ def runCommand(command):
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     # print("running cmd " + command)
-    url='http://localhost:9000/command'
+    url = 'http://localhost:9000/command'
     try:
-        response=requests.post(url, bytes(command, "utf-8"))
+        response = requests.post(url, bytes(command, "utf-8"))
     except ConnectionError:
         return "connection error"
     return response.text
@@ -192,10 +183,10 @@ def getBlock(x, y, z):
     """**Returns the name of a block in the world. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
-    url='http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     # print(url)
     try:
-        response=requests.get(url)
+        response = requests.get(url)
     except ConnectionError:
         return "minecraft:void_air"
     return response.text
@@ -206,10 +197,10 @@ def setBlock(x, y, z, str):
     """**Places a block in the world. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
-    url='http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     # print('setting block {} at {} {} {}'.format(str, x, y, z))
     try:
-        response=requests.put(url, str)
+        response = requests.put(url, str)
     except ConnectionError:
         return "0"
     return response.text
@@ -218,14 +209,15 @@ def setBlock(x, y, z, str):
 
 # --------------------------------------------------------- block buffers
 
-blockBuffer=[]
+blockBuffer = []
 
 
 def placeBlockBatched(x, y, z, str, limit=50):
     """**Place a block in the buffer and send if the limit is exceeded. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
+    global blockBuffer
 
-    registerSetBlock(x, y, z, str)
+    blockBuffer.append((x, y, z, str))
     if len(blockBuffer) >= limit:
         return sendBlocks(0, 0, 0)
     else:
@@ -235,32 +227,15 @@ def placeBlockBatched(x, y, z, str, limit=50):
 def sendBlocks(x=0, y=0, z=0, retries=5):
     """**Sends the buffer to the server and clears it. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
-
     global blockBuffer
-    body="\n" + '~{} ~{} ~{} {}'.format(*[bp for bp in blockBuffer])
-    url='http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+
+    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
     try:
-        response=requests.put(url, body)
-        clearBlockBuffer()
+        response = requests.put(url, body)
+        blockBuffer = []
         return response.text
     except ConnectionError as e:
         print("Request failed: {} Retrying ({} left)".format(e, retries))
         if retries > 0:
             return sendBlocks(x, y, z, retries - 1)
-
-
-def registerSetBlock(x, y, z, str):
-    """**Places a block in the buffer. (deprecated)**"""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-
-    global blockBuffer
-    # blockBuffer += () '~{} ~{} ~{} {}'.format(x, y, z, str)
-    blockBuffer.append((x, y, z, str))
-
-
-def clearBlockBuffer():
-    """**Clears the block buffer. (deprecated)**"""
-
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-    global blockBuffer
-    blockBuffer=[]
