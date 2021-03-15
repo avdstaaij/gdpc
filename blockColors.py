@@ -1,3 +1,12 @@
+#! /usr/bin/python3
+"""### Store lists of all the blocks in minecraft and their appropriate map colours."""
+__all__ = ['VERSION', 'TRANSPARENT', 'PALETTE']
+__author__ = "Flashing Blinkenlights <blinkenlights@pm.me>"
+__date__ = "11 March 2021"
+# __version__
+__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
+    "Flashing Blinkenlights for researching the blocks and their colours"
+
 import interfaceUtils
 
 # block visualization
