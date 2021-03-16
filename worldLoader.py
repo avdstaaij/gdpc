@@ -38,7 +38,7 @@ def getChunks(x, z, dx, dz, rtype='text'):
 
 
 class CachedSection:
-    """**Represents a cached Chunk.**"""
+    """**Represents a cached chunk section (16x16x16).**"""
 
     def __init__(self, palette, blockStatesBitArray):
         self.palette = palette
@@ -148,7 +148,7 @@ class WorldSlice:
         return palette[bitarray.getAt(blockIndex)]
 
     def getBlockAt(self, blockPos):
-        """**Returns block name.**"""
+        """**Returns the block's namespaced id at blockPos.**"""
         blockCompound = self.getBlockCompoundAt(blockPos)
         if blockCompound == None:
             return "minecraft:air"

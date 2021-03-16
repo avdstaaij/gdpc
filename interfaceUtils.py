@@ -16,6 +16,8 @@ import requests
 
 
 def requestBuildArea():
+    """**Requests a build area and returns it as an dictionary containing 
+    the keys xFrom, yFrom, zFrom, xTo, yTo and zTo**"""
     response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
         return response.json()
@@ -25,6 +27,7 @@ def requestBuildArea():
 
 
 def runCommand(command):
+    """**Executes one or multiple minecraft commands (separated by newlines).**"""
     # print("running cmd " + command)
     url = 'http://localhost:9000/command'
     try:
@@ -37,7 +40,7 @@ def runCommand(command):
 
 
 def getBlock(x, y, z):
-    """**Returns the name of a block in the world.**"""
+    """**Returns the namespaced id of a block in the world.**"""
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     # print(url)
     try:
