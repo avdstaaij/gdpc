@@ -80,7 +80,7 @@ def placeBlockBatched(x, y, z, str, limit=50):
 def sendBlocks(x=0, y=0, z=0, retries=5):
     """**Sends the buffer to the server and clears it.**"""
     global blockBuffer
-    body = "\n" + '~{} ~{} ~{} {}'.format(*[bp for bp in blockBuffer])
+    body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     try:
         response = requests.put(url, body)

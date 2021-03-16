@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
         if not overlapsExisting:
 
-            print("building house at {}, {} with size {},{}".format(houseRect))
+            print("building house at {}, {} with size {},{}".format(*houseRect))
 
             # find the lowest corner of the house and give it a random height
             houseY = min(
