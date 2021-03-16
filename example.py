@@ -10,11 +10,7 @@ The source code of this module contains examples for:
 It is not meant to be imported.
 """
 __all__ = []
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 import random
 

@@ -6,11 +6,7 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['calcGoodHeightmap']
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 import cv2
 import matplotlib.pyplot as plt

@@ -1,11 +1,7 @@
 #! /usr/bin/python3
 """### Store lists of all the blocks in minecraft and their appropriate map colours."""
 __all__ = ['VERSION', 'TRANSPARENT', 'PALETTE']
-__author__ = "Flashing Blinkenlights <blinkenlights@pm.me>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for researching the blocks and their colours"
 
 import interfaceUtils
 
@@ -289,6 +285,7 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
            0x562c3e: ('minecraft:warped_hyphae', 'minecraft:stripped_warped_hyphae'),
            0x14b485: ('minecraft:warped_wart_block', )}
 
+
 def verifyPaletteBlocks():
     counter = 0
     badcounter = 0
@@ -318,6 +315,7 @@ def verifyPaletteBlocks():
     else:
         print("All blocks successfully verified.")
     print()
+
 
 # running the file directly does a test of all the blocks, to make sure they all exists in the minecraft version used
 if __name__ == "__main__":

@@ -10,11 +10,7 @@ This module contains functions to:
 __all__ = ['requestBuildArea', 'runCommand',
            'setBlock', 'getBlock',
            'placeBlockBatched', 'sendBlocks']
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 import requests
 
