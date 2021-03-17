@@ -14,9 +14,10 @@ __all__ = []
 
 import random
 
-import interfaceUtils
 import mapUtils
 from worldLoader import WorldSlice
+from interfaceUtils import Interface
+import interfaceUtils
 
 # Do we send blocks in batches to speed up the generation process?
 USE_BATCHING = True
@@ -26,6 +27,7 @@ area = (0, 0, 128, 128)  # default build area
 
 # see if a build area has been specified
 # you can set a build area in minecraft using the /setbuildarea command
+# TODO deprecated function? Why is requestBuildArea deprecated in the first place? 
 buildArea = interfaceUtils.requestBuildArea()
 if buildArea != -1:
     x1 = buildArea["xFrom"]
@@ -42,56 +44,46 @@ def heightAt(x, z):
     # Heightmap coordinates are not equal to world coordinates!
     return heightmap[(x - area[0], z - area[1])]
 
-
-def setBlock(x, y, z, block):
-    """Place blocks or add them to batch."""
-    if USE_BATCHING:
-        # add block to buffer, send once buffer has 100 items in it
-        interfaceUtils.placeBlockBatched(x, y, z, block, 100)
-    else:
-        interfaceUtils.setBlock(x, y, z, block)
-
-
-def buildHouse(x1, y1, z1, x2, y2, z2):
+def buildHouse(x1, y1, z1, x2, y2, z2, interface):
     """Build a small house."""
     # floor
     for x in range(x1, x2):
         for z in range(z1, z2):
-            setBlock(x, y1, z, "cobblestone")
+            interface.setBlock(x, y1, z, "cobblestone")
     # walls
     for y in range(y1 + 1, y2):
         for x in range(x1 + 1, x2 - 1):
-            setBlock(x, y, z1, "oak_planks")
-            setBlock(x, y, z2 - 1, "oak_planks")
+            interface.setBlock(x, y, z1, "oak_planks")
+            interface.setBlock(x, y, z2 - 1, "oak_planks")
         for z in range(z1 + 1, z2 - 1):
-            setBlock(x1, y, z, "oak_planks")
-            setBlock(x2 - 1, y, z, "oak_planks")
+            interface.setBlock(x1, y, z, "oak_planks")
+            interface.setBlock(x2 - 1, y, z, "oak_planks")
     # corners
     for dx in range(2):
         for dz in range(2):
             x = x1 + dx * (x2 - x1 - 1)
             z = z1 + dz * (z2 - z1 - 1)
             for y in range(y1, y2):
-                setBlock(x, y, z, "oak_log")
+                interface.setBlock(x, y, z, "oak_log")
     # clear interior
     for y in range(y1 + 1, y2):
         for x in range(x1 + 1, x2 - 1):
             for z in range(z1 + 1, z2 - 1):
-                setBlock(x, y, z, "air")
+                interface.setBlock(x, y, z, "air")
     # roof
     if x2 - x1 < z2 - z1:
         for i in range(0, x2 - x1, 2):
             halfI = int(i / 2)
             for x in range(x1 + halfI, x2 - halfI):
                 for z in range(z1, z2):
-                    setBlock(x, y2 + halfI, z, "bricks")
+                    interface.setBlock(x, y2 + halfI, z, "bricks")
     else:
         # same as above but with x and z swapped
         for i in range(0, z2 - z1, 2):
             halfI = int(i / 2)
             for z in range(z1 + halfI, z2 - halfI):
                 for x in range(x1, x2):
-                    setBlock(x, y2 + halfI, z, "bricks")
+                    interface.setBlock(x, y2 + halfI, z, "bricks")
 
 
 def rectanglesOverlap(r1, r2):
@@ -103,8 +95,11 @@ def rectanglesOverlap(r1, r2):
 
 
 if __name__ == '__main__':
-    """Generate a village within the target area."""
+    # Generate a village within the target area.
     print("Build area is at position {}, {} with size {}, {}".format(*area))
+
+    # create an interface object
+    interface = Interface((area[0], 0, area[1]), USE_BATCHING)
 
     # load the world data
     # this uses the /chunks endpoint in the background
@@ -126,23 +121,23 @@ if __name__ == '__main__':
     for x in range(area[0], area[0] + area[2]):
         z = area[1]
         y = heightAt(x, z)
-        setBlock(x, y - 1, z, "cobblestone")
-        setBlock(x, y,   z, "oak_fence")
+        interface.setBlock(x, y - 1, z, "cobblestone")
+        interface.setBlock(x, y,   z, "oak_fence")
     for z in range(area[1], area[1] + area[3]):
         x = area[0]
         y = heightAt(x, z)
-        setBlock(x, y - 1, z, "cobblestone")
-        setBlock(x, y, z, "oak_fence")
+        interface.setBlock(x, y - 1, z, "cobblestone")
+        interface.setBlock(x, y, z, "oak_fence")
     for x in range(area[0], area[0] + area[2]):
         z = area[1] + area[3] - 1
         y = heightAt(x, z)
-        setBlock(x, y - 1, z, "cobblestone")
-        setBlock(x, y,   z, "oak_fence")
+        interface.setBlock(x, y - 1, z, "cobblestone")
+        interface.setBlock(x, y,   z, "oak_fence")
     for z in range(area[1], area[1] + area[3]):
         x = area[0] + area[2] - 1
         y = heightAt(x, z)
-        setBlock(x, y - 1, z, "cobblestone")
-        setBlock(x, y, z, "oak_fence")
+        interface.setBlock(x, y - 1, z, "cobblestone")
+        interface.setBlock(x, y, z, "oak_fence")
 
     houses = []
     for i in range(100):
@@ -178,9 +173,9 @@ if __name__ == '__main__':
 
             # build the house!
             buildHouse(houseX, houseY, houseZ, houseX + houseSizeX,
-                       houseY + houseSizeY, houseZ + houseSizeZ)
+                       houseY + houseSizeY, houseZ + houseSizeZ, interface)
             houses.append(houseRect)
 
     if USE_BATCHING:
         # we need to send any blocks remaining in the buffer
-        interfaceUtils.sendBlocks()
+        interface.sendOutstandingBlocks()

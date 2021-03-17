@@ -23,9 +23,11 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, offset=(0, 0, 0)):
+    def __init__(self, offset=(0, 0, 0), useBatching=True, batchSize=100):
         self.buffer = []
         self.offset = offset
+        self.useBatching = useBatching
+        self.batchSize = batchSize
 
     def requestBuildArea(self):
         """**Returns the building area.**"""
@@ -78,14 +80,23 @@ class Interface():
         return response.text
         # DEBUG: print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
-    def setBlock(self, x, y, z, str):
+    def setBlock(self, x, y, z, blockStr):
+        if self.useBatching:
+            self._placeBlockBatched(x, y, z, blockStr, self.batchSize)
+        else:
+            self._setBlockDirect(x, y, z, blockStr)
+
+    def sendOutstandingBlocks(self):
+        self._sendBlocks()
+
+    def _setBlockDirect(self, x, y, z, blockStr):
         """**Places a block in the world.**"""
         x, y, z = self.local2global(x, y, z)
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        # DEBUG: print('setting block {} at {} {} {}'.format(str, x, y, z))
+        # DEBUG: print('setting block {} at {} {} {}'.format(blockStr, x, y, z))
         try:
-            response = requests.put(url, str)
+            response = requests.put(url, blockStr)
         except ConnectionError:
             return "0"
         return response.text
@@ -93,17 +104,17 @@ class Interface():
 
     # --------------------------------------------------------- block buffers
 
-    def placeBlockBatched(self, x, y, z, str, limit=50):
+    def _placeBlockBatched(self, x, y, z, blockStr, limit=50):
         """**Place a block in the buffer and send if the limit is exceeded.**"""
         x, y, z = self.local2global(x, y, z)
 
-        self.buffer.append((x, y, z, str))
+        self.buffer.append((x, y, z, blockStr))
         if len(self.buffer) >= limit:
-            return self.sendBlocks()
+            return self._sendBlocks()
         else:
             return None
 
-    def sendBlocks(self, x=0, y=0, z=0, retries=5):
+    def _sendBlocks(self, x=0, y=0, z=0, retries=5):
         """**Sends the buffer to the server and clears it.**
 
         Since the buffer contains global coordinates no conversion takes place in this function
@@ -112,7 +123,7 @@ class Interface():
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp)
                                for bp in self.buffer])
-        print(body)
+        # DEBUG: print(body)
         try:
             response = requests.put(url, body)
             self.buffer = []
@@ -120,7 +131,7 @@ class Interface():
         except ConnectionError as e:
             print("Request failed: {} Retrying ({} left)".format(e, retries))
             if retries > 0:
-                return self.sendBlocks(x, y, z, retries - 1)
+                return self._sendBlocks(x, y, z, retries - 1)
 
     # --------------------------------------------------------- utility functions
 
@@ -189,14 +200,14 @@ def getBlock(x, y, z):
     # print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
 
-def setBlock(x, y, z, str):
+def setBlock(x, y, z, blockStr):
     """**Places a block in the world. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-    # print('setting block {} at {} {} {}'.format(str, x, y, z))
+    # print('setting block {} at {} {} {}'.format(blockStr, x, y, z))
     try:
-        response = requests.put(url, str)
+        response = requests.put(url, blockStr)
     except ConnectionError:
         return "0"
     return response.text
@@ -208,12 +219,12 @@ def setBlock(x, y, z, str):
 blockBuffer = []
 
 
-def placeBlockBatched(x, y, z, str, limit=50):
+def placeBlockBatched(x, y, z, blockStr, limit=50):
     """**Place a block in the buffer and send if the limit is exceeded. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
     global blockBuffer
 
-    blockBuffer.append((x, y, z, str))
+    blockBuffer.append((x, y, z, blockStr))
     if len(blockBuffer) >= limit:
         return sendBlocks(0, 0, 0)
     else:
@@ -227,7 +238,7 @@ def sendBlocks(x=0, y=0, z=0, retries=5):
 
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
-    
+
     try:
         response = requests.put(url, body)
         blockBuffer = []
