@@ -10,11 +10,7 @@ This module contains functions to:
 __all__ = ['requestBuildArea', 'runCommand',
            'setBlock', 'getBlock',
            'placeBlockBatched', 'sendBlocks']
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 import warnings
 
@@ -180,7 +176,7 @@ def runCommand(command):
 
 
 def getBlock(x, y, z):
-    """**Returns the name of a block in the world. (deprecated)**"""
+    """**Returns the namespaced id of a block in the world. (deprecated)**"""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
@@ -231,6 +227,7 @@ def sendBlocks(x=0, y=0, z=0, retries=5):
 
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
+    
     try:
         response = requests.put(url, body)
         blockBuffer = []

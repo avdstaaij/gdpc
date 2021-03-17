@@ -2,11 +2,7 @@
 """### Read the bitarray format used by Minecraft.
 """
 __all__ = ['BitArray']
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 from math import floor
 
