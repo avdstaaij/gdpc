@@ -41,7 +41,7 @@ def runCommand(command):
 
 def getBlock(x, y, z):
     """**Returns the namespaced id of a block in the world.**"""
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     # print(url)
     try:
         response = requests.get(url)
@@ -53,7 +53,7 @@ def getBlock(x, y, z):
 
 def setBlock(x, y, z, str):
     """**Places a block in the world.**"""
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     # print('setting block {} at {} {} {}'.format(str, x, y, z))
     try:
         response = requests.put(url, str)
@@ -81,13 +81,13 @@ def sendBlocks(x=0, y=0, z=0, retries=5):
     """**Sends the buffer to the server and clears it.**"""
     global blockBuffer
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.put(url, body)
         clearBlockBuffer()
         return response.text
     except ConnectionError as e:
-        print("Request failed: {} Retrying ({} left)".format(e, retries))
+        print(f"Request failed: {e} Retrying ({retries} left)")
         if retries > 0:
             return sendBlocks(x, y, z, retries - 1)
 
