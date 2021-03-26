@@ -30,10 +30,7 @@ if __name__ == '__main__':
     # load the world data and extract the heightmap(s)
     slice = WorldSlice(rect)
 
-    heightmap1 = np.array(
-        slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype=np.uint8)
-    heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
-    heightmap = np.minimum(heightmap1, heightmap2)
+    heightmap = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
 
     # calculate the gradient (steepness)
     gradientX = cv2.Scharr(heightmap, cv2.CV_16S, 1, 0)
@@ -57,7 +54,7 @@ if __name__ == '__main__':
                 # calculate absolute coordinates
                 x = rect[0] + dx
                 z = rect[1] + dz
-                y = int(heightmap1[(dx, dz)]) - dy
+                y = int(heightmap[(dx, dz)]) - dy
 
                 blockID = slice.getBlockAt((x, y, z))
                 if blockID in blockColors.TRANSPARENT:
