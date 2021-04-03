@@ -13,7 +13,7 @@ __all__ = ['requestBuildArea', 'runCommand',
 # __version__
 
 import requests
-
+from requests.exceptions import ConnectionError
 
 def requestBuildArea():
     """**Requests a build area and returns it as an dictionary containing 
