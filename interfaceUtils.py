@@ -17,8 +17,34 @@ __credits__ = "Nils Gawlick for being awesome and creating the framework" + \
     "Flashing Blinkenlights for general improvements"
 
 import warnings
+from collections import OrderedDict
 
 import requests
+
+
+class OrderedByLookupDict(OrderedDict):
+    """Limit size, evicting the least recently looked-up key when full.
+
+    Taken from
+    https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
+    """
+
+    def __init__(self, maxsize=128, /, *args, **kwds):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwds)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if len(self) > self.maxsize:
+            oldest = next(iter(self))
+            del self[oldest]
 
 
 class Interface():
@@ -27,11 +53,15 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, offset=(0, 0, 0), buffering=False, bufferlimit=4096):
+    def __init__(self, offset=(0, 0, 0),
+                 buffering=False, bufferlimit=4096,
+                 caching=False):
         self.offset = offset
-        self.__buffering = False
-        self.bufferlimit = 4096
+        self.__buffering = buffering
+        self.bufferlimit = bufferlimit
         self.buffer = []
+        self.caching = caching
+        self.cache = OrderedByLookupDict()
 
     def __del__(self):
         self.sendBlocks()
@@ -58,8 +88,12 @@ class Interface():
         x, y, z = self.local2global(x, y, z)
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+        if self.caching and (x, y, z) in self.cache:
+            return self.cache[(x, y, z)]
         try:
             response = requests.get(url)
+            if self.caching:
+                self.cache[(x, y, z)] = response.text
         except ConnectionError:
             return "minecraft:void_air"
         return response.text
@@ -81,6 +115,8 @@ class Interface():
             self.placeBlockBatched(x, y, z, str, self.bufferlimit)
         else:
             self.placeBlock(x, y, z, str)
+        if self.caching:
+            self.cache[(x, y, z)] = str
 
     def placeBlock(self, x, y, z, str):
         """**Place a single block in the world**."""
