@@ -60,6 +60,17 @@ class Interface():
             return "minecraft:void_air"
         return response.text
 
+    def fill(self, x1, y1, z1, x2, y2, z2, str):
+        x1, y1, z1 = self.local2global(x1, y1, z1)
+        x2, y2, z2 = self.local2global(x2, y2, z2)
+        xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
+        xhi, yhi, zhi = max(x1, x2), max(y1, y2), max(z1, z2)
+
+        for x in range(xlo, xhi):
+            for y in range(ylo, yhi):
+                for z in range(zlo, zhi):
+                    self.setBlock(x, y, z, str)
+
     def setBlock(self, x, y, z, str):
         """**Place a block in the world depending on buffer activation**."""
         if self.buffering:
