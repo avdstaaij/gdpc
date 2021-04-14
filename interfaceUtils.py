@@ -22,18 +22,19 @@ import requests
 
 
 class Interface():
-    """**Provides tools for interacting with the HTML interface.**
+    """**Provides tools for interacting with the HTML interface**.
 
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, offset=(0, 0, 0)):
-        self.buffer = []
+    def __init__(self, offset=(0, 0, 0), buffering=False, bufferlimit=4096):
         self.offset = offset
+        self.buffering = False
+        self.bufferlimit = 4096
+        self.buffer = []
 
     def requestBuildArea(self):
-        """**Returns the building area.**"""
-
+        """**Return the building area**."""
         response = requests.get('http://localhost:9000/buildarea')
         if response.ok:
             buildArea = response.json()
@@ -42,63 +43,45 @@ class Interface():
                 z1 = buildArea["zFrom"]
                 x2 = buildArea["xTo"]
                 z2 = buildArea["zTo"]
-                # print(buildArea)
                 buildArea = (*self.global2local(x1, None, z1),
                              *self.global2local(x2 - x1, None, z2 - z1))
             return buildArea
         else:
             print(response.text)
 
-    def runCommand(self, command):
-        """**Runs a Minecraft command in the world.**
-
-        TODO: extract and convert local coordinates
-        """
-
-        # TODO: local2global
-        print("WARNING: Interface.runCommand not correctly implemented yet!")
-
-        # DEBUG: print("running cmd " + command)
-        url = 'http://localhost:9000/command'
-        try:
-            response = requests.post(url, bytes(command, "utf-8"))
-        except ConnectionError:
-            return "connection error"
-
-        # TODO: global2local
-
-        return response.text
-
     def getBlock(self, x, y, z):
-        """**Returns the name of a block in the world.**"""
+        """**Return the name of a block in the world**."""
         x, y, z = self.local2global(x, y, z)
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        # DEBUG: print(url)
         try:
             response = requests.get(url)
         except ConnectionError:
             return "minecraft:void_air"
         return response.text
-        # DEBUG: print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
     def setBlock(self, x, y, z, str):
-        """**Places a block in the world.**"""
+        """**Place a block in the world depending on buffer activation**."""
+        if self.buffering:
+            self.placeBlockBatched(x, y, z, str, self.limit)
+        else:
+            self.placeBlock(x, y, z, str)
+
+    def placeBlock(self, x, y, z, str):
+        """**Place a single block in the world**."""
         x, y, z = self.local2global(x, y, z)
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        # DEBUG: print('setting block {} at {} {} {}'.format(str, x, y, z))
         try:
             response = requests.put(url, str)
         except ConnectionError:
             return "0"
         return response.text
-        # DEBUG: print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
-    # --------------------------------------------------------- block buffers
+    # ----------------------------------------------------- block buffers
 
     def placeBlockBatched(self, x, y, z, str, limit=50):
-        """**Place a block in the buffer and send if the limit is exceeded.**"""
+        """**Place a block in the buffer and send once limit is exceeded**."""
         x, y, z = self.local2global(x, y, z)
 
         self.buffer.append((x, y, z, str))
@@ -108,11 +91,11 @@ class Interface():
             return None
 
     def sendBlocks(self, x=0, y=0, z=0, retries=5):
-        """**Sends the buffer to the server and clears it.**
+        """**Send the buffer to the server and clear it**.
 
-        Since the buffer contains global coordinates no conversion takes place in this function
+        Since the buffer contains global coordinates
+            no conversion takes place in this function
         """
-
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp)
                                for bp in self.buffer])
@@ -126,34 +109,44 @@ class Interface():
             if retries > 0:
                 return self.sendBlocks(x, y, z, retries - 1)
 
-    # --------------------------------------------------------- utility functions
+    # ----------------------------------------------------- utility functions
 
     def local2global(self, x, y, z):
         result = []
-        if x != None:
+        if x is not None:
             result.append(x + self.offset[0])
-        if y != None:
+        if y is not None:
             result.append(y + self.offset[1])
-        if z != None:
+        if z is not None:
             result.append(z + self.offset[2])
         return result
 
     def global2local(self, x, y, z):
         result = []
-        if x != None:
+        if x is not None:
             result.append(x - self.offset[0])
-        if y != None:
+        if y is not None:
             result.append(y - self.offset[1])
-        if z != None:
+        if z is not None:
             result.append(z - self.offset[2])
         return result
+
+
+def runCommand(command):
+    """**Run a Minecraft command in the world**."""
+    url = 'http://localhost:9000/command'
+    try:
+        response = requests.post(url, bytes(command, "utf-8"))
+    except ConnectionError:
+        return "connection error"
+    return response.text
 
 
 # ========================================================= DEPRACATED
 
 
 def requestBuildArea():
-    """**Returns the building area. (deprecated)**"""
+    """**Return the building area (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     response = requests.get('http://localhost:9000/buildarea')
@@ -164,47 +157,31 @@ def requestBuildArea():
         return -1
 
 
-def runCommand(command):
-    """**Runs a Minecraft command in the world. (deprecated)**"""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-
-    # print("running cmd " + command)
-    url = 'http://localhost:9000/command'
-    try:
-        response = requests.post(url, bytes(command, "utf-8"))
-    except ConnectionError:
-        return "connection error"
-    return response.text
-
 # --------------------------------------------------------- get/set block
 
 
 def getBlock(x, y, z):
-    """**Returns the name of a block in the world. (deprecated)**"""
+    """**Return the name of a block in the world (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-    # print(url)
     try:
         response = requests.get(url)
     except ConnectionError:
         return "minecraft:void_air"
     return response.text
-    # print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
 
 def setBlock(x, y, z, str):
-    """**Places a block in the world. (deprecated)**"""
+    """**Place a block in the world (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-    # print('setting block {} at {} {} {}'.format(str, x, y, z))
     try:
         response = requests.put(url, str)
     except ConnectionError:
         return "0"
     return response.text
-    # print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
 
 
 # --------------------------------------------------------- block buffers
@@ -213,7 +190,7 @@ blockBuffer = []
 
 
 def placeBlockBatched(x, y, z, str, limit=50):
-    """**Place a block in the buffer and send if the limit is exceeded. (deprecated)**"""
+    """**Place block in buffer and send once limit exceeded (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
     global blockBuffer
 
@@ -225,7 +202,7 @@ def placeBlockBatched(x, y, z, str, limit=50):
 
 
 def sendBlocks(x=0, y=0, z=0, retries=5):
-    """**Sends the buffer to the server and clears it. (deprecated)**"""
+    """**Send the buffer to the server and clears it (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
     global blockBuffer
 
