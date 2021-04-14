@@ -6,11 +6,7 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 from io import BytesIO
 from math import ceil, log2
@@ -42,7 +38,7 @@ def getChunks(x, z, dx, dz, rtype='text'):
 
 
 class CachedSection:
-    """**Represents a cached Chunk.**"""
+    """**Represents a cached chunk section (16x16x16).**"""
 
     def __init__(self, palette, blockStatesBitArray):
         self.palette = palette
@@ -152,7 +148,7 @@ class WorldSlice:
         return palette[bitarray.getAt(blockIndex)]
 
     def getBlockAt(self, blockPos):
-        """**Returns block name.**"""
+        """**Returns the block's namespaced id at blockPos.**"""
         blockCompound = self.getBlockCompoundAt(blockPos)
         if blockCompound == None:
             return "minecraft:air"
