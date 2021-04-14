@@ -29,9 +29,12 @@ class Interface():
 
     def __init__(self, offset=(0, 0, 0), buffering=False, bufferlimit=4096):
         self.offset = offset
-        self.buffering = False
+        self.__buffering = False
         self.bufferlimit = 4096
         self.buffer = []
+
+    def __del__(self):
+        self.sendBlocks()
 
     def requestBuildArea(self):
         """**Return the building area**."""
@@ -48,6 +51,7 @@ class Interface():
             return buildArea
         else:
             print(response.text)
+            return -1
 
     def getBlock(self, x, y, z):
         """**Return the name of a block in the world**."""
@@ -66,15 +70,15 @@ class Interface():
         xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
         xhi, yhi, zhi = max(x1, x2), max(y1, y2), max(z1, z2)
 
-        for x in range(xlo, xhi):
-            for y in range(ylo, yhi):
-                for z in range(zlo, zhi):
+        for x in range(xlo, xhi + 1):
+            for y in range(ylo, yhi + 1):
+                for z in range(zlo, zhi + 1):
                     self.setBlock(x, y, z, str)
 
     def setBlock(self, x, y, z, str):
         """**Place a block in the world depending on buffer activation**."""
-        if self.buffering:
-            self.placeBlockBatched(x, y, z, str, self.limit)
+        if self.__buffering:
+            self.placeBlockBatched(x, y, z, str, self.bufferlimit)
         else:
             self.placeBlock(x, y, z, str)
 
@@ -90,6 +94,24 @@ class Interface():
         return response.text
 
     # ----------------------------------------------------- block buffers
+
+    def toggleBuffer(self):
+        """**Activates or deactivates the buffer function safely**."""
+        self.Buffering = not self.Buffering
+        return self.Buffering
+
+    @property
+    def Buffering(self):
+        return self.__buffering
+
+    @Buffering.setter
+    def Buffering(self, value):
+        self.__buffering = value
+        if self.__buffering:
+            print("Buffering has been activated.")
+        else:
+            self.sendBlocks()
+            print("Buffering has been deactivated.")
 
     def placeBlockBatched(self, x, y, z, str, limit=50):
         """**Place a block in the buffer and send once limit is exceeded**."""
@@ -108,9 +130,8 @@ class Interface():
             no conversion takes place in this function
         """
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp)
+        body = str.join("\n", ['{} {} {} {}'.format(*bp)
                                for bp in self.buffer])
-        print(body)
         try:
             response = requests.put(url, body)
             self.buffer = []
