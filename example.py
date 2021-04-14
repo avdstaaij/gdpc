@@ -106,13 +106,13 @@ def rectanglesOverlap(r1, r2):
 
 if __name__ == '__main__':
     """Generate a village within the target area."""
-    print("Build area is at position {}, {} with size {}, {}".format(*area))
+    print(f"Build area is at position {area[0]}, {area[1]} with size {area[2]}, {area[3]}")
 
     # load the world data
     # this uses the /chunks endpoint in the background
     worldSlice = WorldSlice(area)
 
-    # caclulate a heightmap suitable for building:
+    # calculate a heightmap suitable for building:
     heightmap = mapUtils.calcGoodHeightmap(worldSlice)
 
     # example alternative heightmaps:

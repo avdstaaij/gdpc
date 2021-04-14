@@ -19,7 +19,7 @@ __credits__ = "Nils Gawlick for being awesome and creating the framework" + \
 import warnings
 
 import requests
-
+from requests.exceptions import ConnectionError
 
 class Interface():
     """**Provides tools for interacting with the HTML interface**.
@@ -196,7 +196,7 @@ def getBlock(x, y, z):
     """**Return the name of a block in the world (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.get(url)
     except ConnectionError:
@@ -208,7 +208,7 @@ def setBlock(x, y, z, str):
     """**Place a block in the world (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.put(url, str)
     except ConnectionError:
@@ -237,14 +237,13 @@ def sendBlocks(x=0, y=0, z=0, retries=5):
     """**Send the buffer to the server and clears it (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
     global blockBuffer
-
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
+    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.put(url, body)
         blockBuffer = []
         return response.text
     except ConnectionError as e:
-        print("Request failed: {} Retrying ({} left)".format(e, retries))
+        print(f"Request failed: {e} Retrying ({retries} left)")
         if retries > 0:
             return sendBlocks(x, y, z, retries - 1)

@@ -15,3 +15,6 @@ You need to have Minecraft running, the mod installed and a world open for this 
 #### Created by:
 - Nils Gawlik
 - Blinkenlights
+
+with contributions from:
+- Mayank Jain

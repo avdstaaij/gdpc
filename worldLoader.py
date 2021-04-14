@@ -20,16 +20,15 @@ from bitarray import BitArray
 
 def getChunks(x, z, dx, dz, rtype='text'):
     """**Get raw chunk data.**"""
-    print("getting chunks {} {} {} {} ".format(x, z, dx, dz))
+    print(f"getting chunks {x} {z} {dx} {dz} ")
 
-    url = 'http://localhost:9000/chunks?x={}&z={}&dx={}&dz={}'.format(
-        x, z, dx, dz)
-    print("request url: {}".format(url))
+    url = f'http://localhost:9000/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
+    print(f"request url: {url}")
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
     response = requests.get(url, headers={"Accept": acceptType})
-    print("result: {}".format(response.status_code))
+    print(f"result: {response.status_code}")
     if response.status_code >= 400:
-        print("error: {}".format(response.text))
+        print(f"error: {response.text}")
 
     if rtype == 'text':
         return response.text
