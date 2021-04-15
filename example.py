@@ -10,11 +10,7 @@ The source code of this module contains examples for:
 It is not meant to be imported.
 """
 __all__ = []
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 import random
 
@@ -96,7 +92,7 @@ def buildHouse(x1, y1, z1, x2, y2, z2):
 
 
 def rectanglesOverlap(r1, r2):
-    """Check that r1 and r2 do not overlap."""
+    """Check whether r1 and r2 overlap."""
     if ((r1[0] >= r2[0] + r2[2]) or (r1[0] + r1[2] <= r2[0])
             or (r1[1] + r1[3] <= r2[1]) or (r1[1] >= r2[1] + r2[3])):
         return False
