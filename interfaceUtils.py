@@ -10,16 +10,13 @@ This module contains functions to:
 __all__ = ['requestBuildArea', 'runCommand',
            'setBlock', 'getBlock',
            'placeBlockBatched', 'sendBlocks']
-__author__ = "Nils Gawlik <nilsgawlik@gmx.de>"
-__date__ = "11 March 2021"
 # __version__
-__credits__ = "Nils Gawlick for being awesome and creating the framework" + \
-    "Flashing Blinkenlights for general improvements"
 
 import warnings
 
 import requests
 from requests.exceptions import ConnectionError
+
 
 class Interface():
     """**Provides tools for interacting with the HTML interface**.
@@ -27,10 +24,10 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, offset=(0, 0, 0), buffering=False, bufferlimit=4096):
+    def __init__(self, offset=(0, 0, 0), buffering=False, bufferlimit=1024):
         self.offset = offset
-        self.__buffering = False
-        self.bufferlimit = 4096
+        self.__buffering = buffering
+        self.bufferlimit = bufferlimit
         self.buffer = []
 
     def __del__(self):
@@ -64,7 +61,7 @@ class Interface():
             return "minecraft:void_air"
         return response.text
 
-    def fill(self, x1, y1, z1, x2, y2, z2, str):
+    def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
         x1, y1, z1 = self.local2global(x1, y1, z1)
         x2, y2, z2 = self.local2global(x2, y2, z2)
         xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
@@ -73,22 +70,22 @@ class Interface():
         for x in range(xlo, xhi + 1):
             for y in range(ylo, yhi + 1):
                 for z in range(zlo, zhi + 1):
-                    self.setBlock(x, y, z, str)
+                    self.setBlock(x, y, z, blockStr)
 
-    def setBlock(self, x, y, z, str):
+    def setBlock(self, x, y, z, blockStr):
         """**Place a block in the world depending on buffer activation**."""
         if self.__buffering:
-            self.placeBlockBatched(x, y, z, str, self.bufferlimit)
+            self.placeBlockBatched(x, y, z, blockStr, self.bufferlimit)
         else:
-            self.placeBlock(x, y, z, str)
+            self.placeBlock(x, y, z, blockStr)
 
-    def placeBlock(self, x, y, z, str):
+    def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
         x, y, z = self.local2global(x, y, z)
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         try:
-            response = requests.put(url, str)
+            response = requests.put(url, blockStr)
         except ConnectionError:
             return "0"
         return response.text
@@ -97,15 +94,15 @@ class Interface():
 
     def toggleBuffer(self):
         """**Activates or deactivates the buffer function safely**."""
-        self.Buffering = not self.Buffering
-        return self.Buffering
+        self.buffering = not self.buffering
+        return self.buffering
 
     @property
-    def Buffering(self):
+    def buffering(self):
         return self.__buffering
 
-    @Buffering.setter
-    def Buffering(self, value):
+    @buffering.setter
+    def buffering(self, value):
         self.__buffering = value
         if self.__buffering:
             print("Buffering has been activated.")
@@ -113,11 +110,11 @@ class Interface():
             self.sendBlocks()
             print("Buffering has been deactivated.")
 
-    def placeBlockBatched(self, x, y, z, str, limit=50):
+    def placeBlockBatched(self, x, y, z, blockStr, limit=50):
         """**Place a block in the buffer and send once limit is exceeded**."""
         x, y, z = self.local2global(x, y, z)
 
-        self.buffer.append((x, y, z, str))
+        self.buffer.append((x, y, z, blockStr))
         if len(self.buffer) >= limit:
             return self.sendBlocks()
         else:
@@ -130,7 +127,7 @@ class Interface():
             no conversion takes place in this function
         """
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        body = str.join("\n", ['{} {} {} {}'.format(*bp)
+        body = str.join("\n", ['~{} ~{} ~{} ~{}'.format(*bp)
                                for bp in self.buffer])
         try:
             response = requests.put(url, body)
@@ -204,13 +201,13 @@ def getBlock(x, y, z):
     return response.text
 
 
-def setBlock(x, y, z, str):
+def setBlock(x, y, z, blockStr):
     """**Place a block in the world (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
 
     url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
-        response = requests.put(url, str)
+        response = requests.put(url, blockStr)
     except ConnectionError:
         return "0"
     return response.text
@@ -221,12 +218,12 @@ def setBlock(x, y, z, str):
 blockBuffer = []
 
 
-def placeBlockBatched(x, y, z, str, limit=50):
+def placeBlockBatched(x, y, z, blockStr, limit=50):
     """**Place block in buffer and send once limit exceeded (deprecated)**."""
     warnings.warn("Please use the Interface class.", DeprecationWarning)
     global blockBuffer
 
-    blockBuffer.append((x, y, z, str))
+    blockBuffer.append((x, y, z, blockStr))
     if len(blockBuffer) >= limit:
         return sendBlocks(0, 0, 0)
     else:
