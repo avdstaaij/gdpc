@@ -33,23 +33,6 @@ class Interface():
     def __del__(self):
         self.sendBlocks()
 
-    def requestBuildArea(self):
-        """**Return the building area**."""
-        response = requests.get('http://localhost:9000/buildarea')
-        if response.ok:
-            buildArea = response.json()
-            if buildArea != -1:
-                x1 = buildArea["xFrom"]
-                z1 = buildArea["zFrom"]
-                x2 = buildArea["xTo"]
-                z2 = buildArea["zTo"]
-                buildArea = (*self.global2local(x1, None, z1),
-                             *self.global2local(x2 - x1, None, z2 - z1))
-            return buildArea
-        else:
-            print(response.text)
-            return -1
-
     def getBlock(self, x, y, z):
         """**Return the name of a block in the world**."""
         x, y, z = self.local2global(x, y, z)
@@ -171,21 +154,27 @@ def runCommand(command):
     return response.text
 
 
-# ========================================================= DEPRACATED
-
-
 def requestBuildArea():
-    """**Return the building area (deprecated)**."""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-
+    """**Return the building area**."""
+    area = 0, 0, 0, 128, 256, 128   # default area for beginners
     response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
-        return response.json()
+        buildArea = response.json()
+        if buildArea != -1:
+            x1 = buildArea["xFrom"]
+            y1 = buildArea["yFrom"]
+            z1 = buildArea["zFrom"]
+            x2 = buildArea["xTo"]
+            y2 = buildArea["yTo"]
+            z2 = buildArea["zTo"]
+            area = x1, y1, z1, x2, y2, z2
+        return area
     else:
         print(response.text)
         return -1
 
 
+# ========================================================= DEPRACATED
 # --------------------------------------------------------- get/set block
 
 

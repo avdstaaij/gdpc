@@ -34,21 +34,16 @@ interface = Interface()
 #       so that you can see the result without having to wait
 #   IMPORTANT: A crash may prevent the blocks from being placed
 
-# x position, z position, x size, z size
-area = (0, 0, 128, 128)  # default build area
-
 # see if a build area has been specified
 # you can set a build area in minecraft using the /setbuildarea command
-buildArea = interface.requestBuildArea()
-if buildArea != -1:
-    area = buildArea
+startx, starty, startz, endx, endy, endz = interfaceUtils.requestBuildArea()
 
 
 def heightAt(x, z):
     """Access height using local coordinates."""
     # Warning:
     # Heightmap coordinates are not equal to world coordinates!
-    return heightmap[(x - area[0], z - area[1])]
+    return heightmap[(x - startx, z - startz)]
 
 
 def buildHouse(x1, y1, z1, x2, y2, z2):
@@ -101,13 +96,12 @@ def rectanglesOverlap(r1, r2):
 
 
 if __name__ == '__main__':
-    """Generate a village within the target area."""
-    print(f"Build area is at position {area[0]}, {area[1]}"
-          f" with size {area[2]}, {area[3]}")
+    print(f"Build area is at position {startx}, {startz}"
+          f" with size {endx}, {endz}")
 
     # load the world data
     # this uses the /chunks endpoint in the background
-    worldSlice = WorldSlice(area)
+    worldSlice = WorldSlice(startx, startz, endx, endz)
 
     # calculate a heightmap suitable for building:
     heightmap = mapUtils.calcGoodHeightmap(worldSlice)
@@ -122,23 +116,23 @@ if __name__ == '__main__':
     # >>> mapUtils.visualize(heightmap, title="heightmap")
 
     # build a fence around the perimeter
-    for x in range(area[0], area[0] + area[2]):
-        z = area[1]
+    for x in range(startx, startx + endx):
+        z = startz
         y = heightAt(x, z)
         interface.setBlock(x, y - 1, z, "cobblestone")
         interface.setBlock(x, y,   z, "oak_fence")
-    for z in range(area[1], area[1] + area[3]):
-        x = area[0]
+    for z in range(startz, startz + endz):
+        x = startx
         y = heightAt(x, z)
         interface.setBlock(x, y - 1, z, "cobblestone")
         interface.setBlock(x, y, z, "oak_fence")
-    for x in range(area[0], area[0] + area[2]):
-        z = area[1] + area[3] - 1
+    for x in range(startx, startx + endx):
+        z = startz + endz - 1
         y = heightAt(x, z)
         interface.setBlock(x, y - 1, z, "cobblestone")
         interface.setBlock(x, y,   z, "oak_fence")
-    for z in range(area[1], area[1] + area[3]):
-        x = area[0] + area[2] - 1
+    for z in range(startz, startz + endz):
+        x = startx + endx - 1
         y = heightAt(x, z)
         interface.setBlock(x, y - 1, z, "cobblestone")
         interface.setBlock(x, y, z, "oak_fence")
@@ -153,9 +147,9 @@ if __name__ == '__main__':
         houseSizeX = random.randrange(5, 25)
         houseSizeZ = random.randrange(5, 25)
         houseX = random.randrange(
-            area[0] + houseSizeX + 1, area[0] + area[2] - houseSizeX - 1)
+            startx + houseSizeX + 1, startx + endx - houseSizeX - 1)
         houseZ = random.randrange(
-            area[1] + houseSizeZ + 1, area[1] + area[3] - houseSizeZ - 1)
+            startz + houseSizeZ + 1, startz + endz - houseSizeZ - 1)
         houseRect = (houseX, houseZ, houseSizeX, houseSizeZ)
 
         # check whether there are any overlaps
