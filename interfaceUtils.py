@@ -189,7 +189,7 @@ def buffering():
 
 @buffering.setter
 def buffering(value):
-    return globalinterface.buffering
+    globalinterface.buffering = value
 
 
 def getBlock(x, y, z):
