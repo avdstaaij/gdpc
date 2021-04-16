@@ -7,15 +7,12 @@ This module contains functions to:
 * Get the name of a block at a particular coordinate
 * Place blocks in the world
 """
-__all__ = ['requestBuildArea', 'runCommand',
-           'setBlock', 'getBlock',
-           'placeBlockBatched', 'sendBlocks']
-# __version__
-
-import warnings
-from collections import OrderedDict
+__all__ = ['Interface', 'requestBuildArea', 'runCommand',
+           'setBlock', 'getBlock', 'sendBlocks']
+__version__ = "v4.2_dev"
 
 import requests
+from requests.exceptions import ConnectionError
 
 
 class OrderedByLookupDict(OrderedDict):
@@ -49,10 +46,9 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, offset=(0, 0, 0),
-                 buffering=False, bufferlimit=1024,
-                 caching=False):
-        self.offset = offset
+    def __init__(self, x=0, y=0, z=0, buffering=False, bufferlimit=1024):
+        """**Initialise an interface with offset and buffering**."""
+        self.offset = x, y, z
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
         self.buffer = []
@@ -60,24 +56,8 @@ class Interface():
         self.cache = OrderedByLookupDict()
 
     def __del__(self):
+        """**Clean up before destruction**."""
         self.sendBlocks()
-
-    def requestBuildArea(self):
-        """**Return the building area**."""
-        response = requests.get('http://localhost:9000/buildarea')
-        if response.ok:
-            buildArea = response.json()
-            if buildArea != -1:
-                x1 = buildArea["xFrom"]
-                z1 = buildArea["zFrom"]
-                x2 = buildArea["xTo"]
-                z2 = buildArea["zTo"]
-                buildArea = (*self.global2local(x1, None, z1),
-                             *self.global2local(x2 - x1, None, z2 - z1))
-            return buildArea
-        else:
-            print(response.text)
-            return -1
 
     def getBlock(self, x, y, z):
         """**Return the name of a block in the world**."""
@@ -95,6 +75,7 @@ class Interface():
         return response.text
 
     def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
+        """**Fill the given region with the given block**."""
         x1, y1, z1 = self.local2global(x1, y1, z1)
         x2, y2, z2 = self.local2global(x2, y2, z2)
         xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
@@ -108,7 +89,7 @@ class Interface():
     def setBlock(self, x, y, z, blockStr):
         """**Place a block in the world depending on buffer activation**."""
         if self.__buffering:
-            self.placeBlockBatched(x, y, z, str, self.bufferlimit)
+            self.placeBlockBatched(x, y, z, blockStr, self.bufferlimit)
         else:
             self.placeBlock(x, y, z, blockStr)
         if self.caching:
@@ -132,18 +113,26 @@ class Interface():
         self.buffering = not self.buffering
         return self.buffering
 
-    @property
-    def buffering(self):
+    def isBuffering(self):
+        """**Get self.__buffering**."""
         return self.__buffering
 
-    @buffering.setter
-    def buffering(self, value):
+    def setBuffering(self, value):
+        """**Set self.__buffering**."""
         self.__buffering = value
         if self.__buffering:
             print("Buffering has been activated.")
         else:
             self.sendBlocks()
             print("Buffering has been deactivated.")
+
+    def getBufferlimit(self):
+        """**Get self.bufferlimit**."""
+        return self.bufferlimit
+
+    def setBufferLimit(self, value):
+        """**Set self.bufferlimit**."""
+        self.bufferlimit = value
 
     def placeBlockBatched(self, x, y, z, blockStr, limit=50):
         """**Place a block in the buffer and send once limit is exceeded**."""
@@ -176,6 +165,7 @@ class Interface():
     # ----------------------------------------------------- utility functions
 
     def local2global(self, x, y, z):
+        """**Translate local to global coordinates**."""
         result = []
         if x is not None:
             result.append(x + self.offset[0])
@@ -186,6 +176,7 @@ class Interface():
         return result
 
     def global2local(self, x, y, z):
+        """**Translate global to local coordinates**."""
         result = []
         if x is not None:
             result.append(x - self.offset[0])
@@ -206,77 +197,73 @@ def runCommand(command):
     return response.text
 
 
-# ========================================================= DEPRACATED
-
-
 def requestBuildArea():
-    """**Return the building area (deprecated)**."""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-
+    """**Return the building area**."""
+    area = 0, 0, 0, 128, 256, 128   # default area for beginners
     response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
-        return response.json()
+        buildArea = response.json()
+        if buildArea != -1:
+            x1 = buildArea["xFrom"]
+            y1 = buildArea["yFrom"]
+            z1 = buildArea["zFrom"]
+            x2 = buildArea["xTo"]
+            y2 = buildArea["yTo"]
+            z2 = buildArea["zTo"]
+            area = x1, y1, z1, x2, y2, z2
     else:
         print(response.text)
-        return -1
+        print("Using default build area.")
+    return area
+
+# ========================================================= global interface
 
 
-# --------------------------------------------------------- get/set block
+globalinterface = Interface()
+
+
+def isBuffering():
+    """**Global isBuffering**."""
+    return globalinterface.isBuffering()
+
+
+def setBuffering(val):
+    """**Global setBuffering**."""
+    globalinterface.setBuffering(val)
+
+
+def getBufferLimit():
+    """**Global getBufferLimit**."""
+    return globalinterface.getBufferLimit()
+
+
+def setBufferLimit(val):
+    """**Global setBufferLimit**."""
+    globalinterface.setBufferLimit(val)
 
 
 def getBlock(x, y, z):
-    """**Return the name of a block in the world (deprecated)**."""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
+    """**Global getBlock**."""
+    return globalinterface.getBlock(x, y, z)
 
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-    try:
-        response = requests.get(url)
-    except ConnectionError:
-        return "minecraft:void_air"
-    return response.text
+
+def fill(x1, y1, z1, x2, y2, z2, blockStr):
+    """**Global fill**."""
+    return globalinterface.fill(x1, y1, z1, x2, y2, z2, blockStr)
 
 
 def setBlock(x, y, z, blockStr):
-    """**Place a block in the world (deprecated)**."""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
+    """**Global setBlock**."""
+    return globalinterface.setBlock(x, y, z, blockStr)
 
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-    try:
-        response = requests.put(url, blockStr)
-    except ConnectionError:
-        return "0"
-    return response.text
+# ----------------------------------------------------- block buffers
 
 
-# --------------------------------------------------------- block buffers
-
-blockBuffer = []
-
-
-def placeBlockBatched(x, y, z, blockStr, limit=50):
-    """**Place block in buffer and send once limit exceeded (deprecated)**."""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-    global blockBuffer
-
-    blockBuffer.append((x, y, z, blockStr))
-    if len(blockBuffer) >= limit:
-        return sendBlocks(0, 0, 0)
-    else:
-        return None
+def toggleBuffer():
+    """**Global toggleBuffer**."""
+    return globalinterface.toggleBuffer()
 
 
 def sendBlocks(x=0, y=0, z=0, retries=5):
-    """**Send the buffer to the server and clears it (deprecated)**."""
-    warnings.warn("Please use the Interface class.", DeprecationWarning)
-    global blockBuffer
-
-    url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-    body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
-    try:
-        response = requests.put(url, body)
-        blockBuffer = []
-        return response.text
-    except ConnectionError as e:
-        print("Request failed: {} Retrying ({} left)".format(e, retries))
-        if retries > 0:
-            return sendBlocks(x, y, z, retries - 1)
+    """**Global sendBlocks**."""
+    return globalinterface.sendBlocks(x, y, z, retries)

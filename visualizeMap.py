@@ -1,39 +1,23 @@
 # ! /usr/bin/python3
-"""### Displays a map of the build area
-
-"""
+"""### Displays a map of the build area."""
 __all__ = ['WorldSlice']
 # __version__
 
+import blockColors
 import cv2
+import interfaceUtils
 import matplotlib.pyplot as plt
 import numpy as np
-
-import blockColors
-import interfaceUtils
 from worldLoader import WorldSlice
-
-rect = (0, 0, 128, 128)  # default build area
 
 if __name__ == '__main__':
     # see if a different build area was defined ingame
-    buildArea = interfaceUtils.requestBuildArea()
-    if buildArea != -1:
-        x1 = buildArea["xFrom"]
-        z1 = buildArea["zFrom"]
-        x2 = buildArea["xTo"]
-        z2 = buildArea["zTo"]
-        # DEBUG: print(buildArea)
-        rect = (x1, z1, x2 - x1, z2 - z1)
-        # DEBUG: print(rect)
+    x1, y1, z1, x2, y2, z2 = interfaceUtils.requestBuildArea()
 
     # load the world data and extract the heightmap(s)
-    slice = WorldSlice(rect)
+    slice = WorldSlice(x1, z1, x2, z2)
 
-    heightmap1 = np.array(
-        slice.heightmaps["MOTION_BLOCKING_NO_LEAVES"], dtype=np.uint8)
-    heightmap2 = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
-    heightmap = np.minimum(heightmap1, heightmap2)
+    heightmap = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=np.uint8)
 
     # calculate the gradient (steepness)
     gradientX = cv2.Scharr(heightmap, cv2.CV_16S, 1, 0)
@@ -47,19 +31,19 @@ if __name__ == '__main__':
             palette[block] = hex
 
     # create a 2d map containing the surface block colors
-    topcolor = np.zeros((rect[2], rect[3]), dtype='int')
+    topcolor = np.zeros((x2 - x1, z2 - z1), dtype='int')
     unknownBlocks = set()
 
-    for dx in range(rect[2]):
-        for dz in range(rect[3]):
+    for dx in range(x2 - x1):
+        for dz in range(z2 - z1):
             # check up to 5 blocks below the heightmap
             for dy in range(5):
                 # calculate absolute coordinates
-                x = rect[0] + dx
-                z = rect[1] + dz
-                y = int(heightmap1[(dx, dz)]) - dy
+                x = x1 + dx
+                z = z1 + dz
+                y = int(heightmap[(dx, dz)]) - dy
 
-                blockID = slice.getBlockAt((x, y, z))
+                blockID = slice.getBlockAt(x, y, z)
                 if blockID in blockColors.TRANSPARENT:
                     # transparent blocks are ignored
                     continue
