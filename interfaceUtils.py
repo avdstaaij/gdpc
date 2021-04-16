@@ -118,7 +118,7 @@ class Interface():
             no conversion takes place in this function
         """
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        body = str.join("\n", ['~{} ~{} ~{} ~{}'.format(*bp)
+        body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp)
                                for bp in self.buffer])
         try:
             response = requests.put(url, body)

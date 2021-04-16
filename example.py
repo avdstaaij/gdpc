@@ -22,9 +22,9 @@ from worldLoader import WorldSlice
 # IMPORTANT: It is recommended not to use buffering during development
 # How to use buffering (batch placement):
 #   Allow block buffer placement
-#       >>> interfaceUtils.toggleBuffer()
-#   Change maximum buffer size (default is 4096 blocks)
-#       >>> interfaceUtils.bufferlimit = 100
+#       >>> interfaceUtils.setBuffering(True)
+#   Change maximum buffer size (default is 1024 blocks, set 4096 for speed)
+#       >>> interfaceUtils.setBufferLimit(100)
 #   Send blocks to world
 #       >>> interfaceUtils.sendBlocks()
 #   NOTE: The buffer will automatically place its blocks once it gets full
@@ -80,7 +80,7 @@ def buildHouse(x1, y1, z1, x2, y2, z2):
             interfaceUtils.fill(x1, y2 + i, z1 + i, x2 - 1,
                                 y2 + i, z2 - 1 - i, "bricks")
 
-    if interfaceUtils.buffering:
+    if interfaceUtils.isBuffering():
         interfaceUtils.sendBlocks()
 
 
@@ -135,7 +135,7 @@ if __name__ == '__main__':
         interfaceUtils.setBlock(x, y - 1, z, "cobblestone")
         interfaceUtils.setBlock(x, y, z, "oak_fence")
 
-    if interfaceUtils.buffering:
+    if interfaceUtils.isBuffering():
         interfaceUtils.sendBlocks()
 
     houses = []
