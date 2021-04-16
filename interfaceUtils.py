@@ -80,19 +80,26 @@ class Interface():
         self.buffering = not self.buffering
         return self.buffering
 
-    @property
-    def buffering(self):
+    def isBuffering(self):
         """**Get self.__buffering**."""
         return self.__buffering
 
-    @buffering.setter
-    def buffering(self, value):
+    def setBuffering(self, value):
+        """**Set self.__buffering**."""
         self.__buffering = value
         if self.__buffering:
             print("Buffering has been activated.")
         else:
             self.sendBlocks()
             print("Buffering has been deactivated.")
+
+    def getBufferlimit(self):
+        """**Get self.bufferlimit**."""
+        return self.bufferlimit
+
+    def setBufferLimit(self, value):
+        """**Set self.bufferlimit**."""
+        self.bufferlimit = value
 
     def placeBlockBatched(self, x, y, z, blockStr, limit=50):
         """**Place a block in the buffer and send once limit is exceeded**."""
@@ -182,14 +189,24 @@ def requestBuildArea():
 globalinterface = Interface()
 
 
-@property
-def buffering():
-    return globalinterface.buffering
+def isBuffering():
+    """**Global isBuffering**."""
+    return globalinterface.isBuffering()
 
 
-@buffering.setter
-def buffering(value):
-    globalinterface.buffering = value
+def setBuffering(val):
+    """**Global setBuffering**."""
+    globalinterface.setBuffering(val)
+
+
+def getBufferLimit():
+    """**Global getBufferLimit**."""
+    return globalinterface.getBufferLimit()
+
+
+def setBufferLimit(val):
+    """**Global setBufferLimit**."""
+    globalinterface.setBufferLimit(val)
 
 
 def getBlock(x, y, z):
