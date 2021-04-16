@@ -130,8 +130,8 @@ class WorldSlice:
     def getBlockCompoundAt(self, x, y, z):
         """**Return block data**."""
         chunkX = (x >> 4) - self.chunkRect[0]
-        chunkZ = (y >> 4) - self.chunkRect[1]
-        chunkY = z >> 4
+        chunkZ = (z >> 4) - self.chunkRect[1]
+        chunkY = y >> 4
 
         cachedSection = self.sections[chunkX][chunkZ][chunkY]
 
