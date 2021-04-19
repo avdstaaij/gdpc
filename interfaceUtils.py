@@ -11,6 +11,8 @@ __all__ = ['Interface', 'requestBuildArea', 'runCommand',
            'setBlock', 'getBlock', 'sendBlocks']
 __version__ = "v4.2_dev"
 
+from collections import OrderedDict
+
 import requests
 from requests.exceptions import ConnectionError
 
@@ -46,14 +48,17 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, x=0, y=0, z=0, buffering=False, bufferlimit=1024):
+    def __init__(self, x=0, y=0, z=0,
+                 buffering=False, bufferlimit=1024,
+                 caching=False, cachelimit=8192):
         """**Initialise an interface with offset and buffering**."""
         self.offset = x, y, z
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
         self.buffer = []
         self.caching = caching
-        self.cache = OrderedByLookupDict()
+        self.cache = OrderedByLookupDict(cachelimit)
+        # Interface.cache.maxsize to change size
 
     def __del__(self):
         """**Clean up before destruction**."""
@@ -93,7 +98,7 @@ class Interface():
         else:
             self.placeBlock(x, y, z, blockStr)
         if self.caching:
-            self.cache[(x, y, z)] = str
+            self.cache[(x, y, z)] = blockStr
 
     def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
