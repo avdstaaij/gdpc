@@ -229,5 +229,6 @@ if __name__ == '__main__':
             failed += 1
     print(f"\n{TCOLOURS['CLR']}Test suite completed with "
           f"{TCOLOURS['orange']}{failed}"
-          f"{TCOLOURS['CLR']} fails!\n"
-          f"==== Summary ====\n{errors}{TCOLOURS['CLR']}")
+          f"{TCOLOURS['CLR']} fails!\n")
+    if errors != "":
+        print(f"==== Summary ====\n{errors}{TCOLOURS['CLR']}")
