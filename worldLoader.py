@@ -152,3 +152,20 @@ class WorldSlice:
             return "minecraft:air"
         else:
             return blockCompound["Name"].value
+
+    def getBiomeAt(self, x, y, z):
+        """**Return biome at given coordinates**."""
+        chunkID = x + z * self.chunkRect[2]
+        data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
+        x = (x % 16) // 4
+        z = (z % 16) // 4
+        y //= 4
+
+        print(data[y * (x + 4 * z)])
+
+        # for i in range(len(data)):
+        #     if not i % 4:
+        #         print()
+        #     if not i % 16:
+        #         print()
+        #     print(data[i], end=", ")
