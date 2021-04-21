@@ -72,14 +72,12 @@ class Interface():
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         if self.caching and (x, y, z) in self.cache:
-            print("retrieved from cache")
             return self.cache[(x, y, z)]
 
         if self.caching and globalWorldSlice is not None:
             if not globalDecay[x][y][z]:
                 block = globalWorldSlice.getBlockAt(x, y, z)
                 self.cache[(x, y, z)] = block
-                print("retrieved from worldslice")
                 return block
 
         try:
@@ -89,7 +87,6 @@ class Interface():
         except ConnectionError:
             return "minecraft:void_air"
 
-        print("retrieved from getBlock")
         return response.text
 
     def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
@@ -112,11 +109,8 @@ class Interface():
             self.placeBlock(x, y, z, blockStr)
         if self.caching:
             self.cache[(x, y, z)] = blockStr
-        try:
-            if not globalDecay[x][y][z]:
-                globalDecay[x][y][z] = True
-        except IndexError:
-            print(f"{x}, {y}, {z} not in globalDecay")
+        if globalDecay is not None and not globalDecay[x][y][z]:
+            globalDecay[x][y][z] = True
 
     def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
@@ -243,7 +237,7 @@ def requestBuildArea():
 
 
 globalWorldSlice = None
-globalDecay = np.zeros((0, 255, 0), dtype=bool)
+globalDecay = None
 
 globalinterface = Interface()
 
