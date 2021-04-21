@@ -13,11 +13,11 @@ __version__ = "v4.2_dev"
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs
 # >>> def f(string):
-# >>> return ["minecraft:" + i.strip().lower().replace(" ", "_")
-# >>>     for i in string.split(", ")]
+# >>>     return ["minecraft:" + i.strip().lower().replace(" ", "_")
+# >>>         for i in string.split(", ")]
 
 # to translate a 255 RGB to hex RGB value
-# def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
+# >>> def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
 
 VERSION = "1.16.x"
 
