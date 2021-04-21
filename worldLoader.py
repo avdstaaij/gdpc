@@ -157,7 +157,7 @@ class WorldSlice:
     def getBiomeAt(self, x, y, z):
         """**Return biome at given coordinates**.
 
-            Due to the noise around chunk borders,
+        Due to the noise around chunk borders,
             there is an inacurracy of ±2 blocks.
         """
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
@@ -172,5 +172,13 @@ class WorldSlice:
         """**Return a list of biomes in the same chunk**."""
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
-        # sorted(list(set(data))) is used to remove duplicates from data
+        # "sorted(list(set(data)))" is used to remove duplicates from data
+        return [BIOMES[i] for i in sorted(list(set(data)))]
+
+    def getPrimaryBiomeAt(self, x, y, z):
+        """**Return the most prevelant biome in the same chunk**."""
+        chunkID = x // 16 + z // 16 * self.chunkRect[2]
+        data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
+        # "max(set(data), key=data.count)" is used to find the most common item
+        data = max(set(data), key=data.count)
         return [BIOMES[i] for i in sorted(list(set(data)))]
