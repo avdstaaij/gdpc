@@ -13,8 +13,10 @@ __version__ = "v4.2_dev"
 
 from collections import OrderedDict
 
+import numpy as np
 import requests
 from requests.exceptions import ConnectionError
+from worldLoader import WorldSlice
 
 
 class OrderedByLookupDict(OrderedDict):
@@ -70,13 +72,24 @@ class Interface():
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         if self.caching and (x, y, z) in self.cache:
+            print("retrieved from cache")
             return self.cache[(x, y, z)]
+
+        if self.caching and globalWorldSlice is not None:
+            if not globalDecay[x][y][z]:
+                block = globalWorldSlice.getBlockAt(x, y, z)
+                self.cache[(x, y, z)] = block
+                print("retrieved from worldslice")
+                return block
+
         try:
             response = requests.get(url)
             if self.caching:
                 self.cache[(x, y, z)] = response.text
         except ConnectionError:
             return "minecraft:void_air"
+
+        print("retrieved from getBlock")
         return response.text
 
     def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
@@ -99,6 +112,11 @@ class Interface():
             self.placeBlock(x, y, z, blockStr)
         if self.caching:
             self.cache[(x, y, z)] = blockStr
+        try:
+            if not globalDecay[x][y][z]:
+                globalDecay[x][y][z] = True
+        except IndexError:
+            print(f"{x}, {y}, {z} not in globalDecay")
 
     def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
@@ -224,7 +242,18 @@ def requestBuildArea():
 # ========================================================= global interface
 
 
+globalWorldSlice = None
+globalDecay = np.zeros((0, 255, 0), dtype=bool)
+
 globalinterface = Interface()
+
+
+def makeGlobalSlice():
+    global globalWorldSlice
+    global globalDecay
+    x1, y1, z1, x2, y2, z2 = requestBuildArea()
+    globalWorldSlice = WorldSlice(x1, z1, x2, z2)
+    globalDecay = np.zeros((x2 - x1, 255, z2 - z1), dtype=bool)
 
 
 def isBuffering():
