@@ -29,9 +29,13 @@ __author__ = "Blinkenlights"
 __version__ = "v4.2_dev"
 __date__ = "22 April 2021"
 
+
 # === STRUCTURE #1
 # These are the modules (libraries) we will use in this code
 # We are giving these modules shorter, but distinct, names for convenience
+from math import hypot  # we only need this for calculating our circles
+from random import randint
+
 import interfaceUtils as IU
 import worldLoader as WL
 
@@ -52,14 +56,15 @@ STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = IU.requestBuildArea()  # BUILDAREA
 #   and any changes you make later on will not be reflected in the world slice
 WORLDSLICE = WL.WorldSlice(STARTX, STARTZ, ENDX + 1,
                            ENDZ + 1)  # this takes a while
-
+ROADHEIGHT = 0
 
 # === STRUCTURE #3
 # Here we are defining all of our functions to keep our code organised
 # They are:
 # - buildPerimeter()
 # - buildRoads()
-# - placeCenterStones()
+# - buildCity()
+
 
 def buildPerimeter():
     """Build a wall along the build area border.
@@ -101,11 +106,141 @@ def buildPerimeter():
 
 
 def buildRoads():
-    pass
+    """Build a road from north to south and east to west."""
+    xaxis = STARTX + (ENDX - STARTX) // 2  # getting start + half the length
+    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    heights = WORLDSLICE.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
+
+    # caclulating the average height along where we want to build our road
+    y = heights[(xaxis, zaxis)]
+    for x in range(STARTX, ENDX + 1):
+        newy = heights[(x, zaxis)]
+        y = (y + newy) // 2
+    for z in range(STARTZ, ENDZ + 1):
+        newy = heights[(xaxis, z)]
+        y = (y + newy) // 2
+
+    # GLOBAL
+    # By calling 'global ROADHEIGHT' we allow writing to ROADHEIGHT
+    # If 'global' is not called, a new, local variable is created
+    global ROADHEIGHT
+    ROADHEIGHT = y
+
+    # building the east-west road
+    IU.fill(xaxis - 2, y, STARTZ, xaxis - 2, y, ENDZ, "end_stone_bricks")
+    IU.fill(xaxis - 1, y, STARTZ, xaxis + 1, y, ENDZ, "gold_block")
+    IU.fill(xaxis + 2, y, STARTZ, xaxis + 2, y, ENDZ, "end_stone_bricks")
+    IU.fill(xaxis - 1, y + 1, STARTZ, xaxis + 1, y + 3, ENDZ, "air")
+
+    # building the north-south road
+    IU.fill(STARTX, y, zaxis - 2, ENDX, y, zaxis - 2, "end_stone_bricks")
+    IU.fill(STARTX, y, zaxis - 1, ENDX, y, zaxis + 1, "gold_block")
+    IU.fill(STARTX, y, zaxis + 2, ENDX, y, zaxis + 2, "end_stone_bricks")
+    IU.fill(STARTX, y + 1, zaxis - 1, ENDX, y + 3, zaxis + 1, "air")
 
 
-def placeCenterStones():
-    pass
+def buildCity():
+    xaxis = STARTX + (ENDX - STARTX) // 2  # getting start + half the length
+    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    y = ROADHEIGHT
+
+    # Building a platform and clearing a dome for the city to sit in
+    buildCylinder(xaxis, y, zaxis, 1, 21, "end_stone_bricks")
+    buildCylinder(xaxis, y, zaxis, 1, 20, "gold_block")
+    buildCylinder(xaxis, y + 1, zaxis, 3, 20, "air")
+    buildCylinder(xaxis, y + 4, zaxis, 2, 19, "air")
+    buildCylinder(xaxis, y + 6, zaxis, 1, 18, "air")
+    buildCylinder(xaxis, y + 7, zaxis, 1, 17, "air")
+    buildCylinder(xaxis, y + 8, zaxis, 1, 15, "air")
+    buildCylinder(xaxis, y + 9, zaxis, 1, 12, "air")
+    buildCylinder(xaxis, y + 10, zaxis, 1, 8, "air")
+    buildCylinder(xaxis, y + 11, zaxis, 1, 3, "air")
+
+    placeLectern()
+
+    for i in range(50):
+        buildTower(randint(xaxis - 20, xaxis + 20),
+                   randint(zaxis - 20, zaxis + 20))
+
+
+def placeLectern():
+    xaxis = STARTX + (ENDX - STARTX) // 2  # getting start + half the length
+    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    y = ROADHEIGHT
+
+    # TODO: give book contents
+    filled_lectern = 'lectern[has_book=true]'
+
+    IU.setBlock(xaxis, y, zaxis, "emerald_block")
+    IU.setBlock(xaxis, y + 1, zaxis, filled_lectern)
+
+
+def buildTower(x, z):
+    radius = 3
+    y = ROADHEIGHT
+
+    # if the blocks to the north, south, east and west aren't all gold
+    if not (IU.getBlock(x - radius, y, z) == "minecraft:gold_block"
+            and IU.getBlock(x + radius, y, z) == "minecraft:gold_block"
+            and IU.getBlock(x, y, z - radius) == "minecraft:gold_block"
+            and IU.getBlock(x, y, z + radius) == "minecraft:gold_block"):
+        return  # return without building anything
+
+    # lay the foundation
+    buildCylinder(x, y, z, 1, radius, "emerald_block")
+
+    # build ground floor
+    buildCylinder(x, y + 1, z, 3, radius, "lime_concrete")
+    buildCylinder(x, y + 1, z, 3, radius - 1, "air")
+
+    # extend height
+    height = randint(5, 20)
+    buildCylinder(x, y + 4, z, height, radius, "lime_concrete")
+    buildCylinder(x, y + 4, z, height, radius - 1, "air")
+    height += 4
+
+    # build roof
+    buildCylinder(x, y + height, z, 1, radius, "emerald_block")
+    buildCylinder(x, y + height + 1, z, 1, radius - 1, "emerald_block")
+    buildCylinder(x, y + height + 2, z, 1, radius - 2, "emerald_block")
+    IU.fill(x, y + height, z, x, y + height + 2, z, "lime_stained_glass")
+    IU.setBlock(x, y + 1, z, "beacon")
+
+    # trim sides and add doors
+    IU.fill(x + radius, y + 1, z, x + radius, y + height + 2, z, "air")
+    IU.fill(x + radius - 1, y + 1, z,
+            x + radius - 1, y + height + 2, z, "lime_stained_glass")
+    IU.setBlock(x + radius - 1, y + 1, z, "warped_door[facing=east]")
+    IU.setBlock(x + radius - 1, y + 2, z,
+                "warped_door[facing=west, half=upper]")
+
+    IU.fill(x - radius, y + 1, z, x - radius, y + height + 2, z, "air")
+    IU.fill(x - radius + 1, y + 1, z,
+            x - radius + 1, y + height + 2, z, "lime_stained_glass")
+    IU.setBlock(x - radius + 1, y + 1, z, "warped_door[facing=west]")
+    IU.setBlock(x - radius + 1, y + 2, z,
+                "warped_door[facing=east, half=upper]")
+
+    IU.fill(x, y + 1, z + radius, x, y + height + 2, z + radius, "air")
+    IU.fill(x, y + 1, z + radius - 1,
+            x, y + height + 2, z + radius - 1, "lime_stained_glass")
+    IU.setBlock(x, y + 1, z + radius - 1, "warped_door[facing=north]")
+    IU.setBlock(x, y + 2, z + radius - 1,
+                "warped_door[facing=south, half=upper]")
+
+    IU.fill(x, y + 1, z - radius, x, y + height + 2, z - radius, "air")
+    IU.fill(x, y + 1, z - radius + 1,
+            x, y + height + 2, z - radius + 1, "lime_stained_glass")
+    IU.setBlock(x, y + 1, z - radius + 1, "warped_door[facing=south]")
+    IU.setBlock(x, y + 2, z - radius + 1,
+                "warped_door[facing=north, half=upper]")
+
+
+def buildCylinder(cx, y, cz, height, radius, block):
+    for x in range(cx - radius, cx + radius + 1):
+        for z in range(cz - radius, cz + radius + 1):
+            if hypot(abs(cx - x), abs(cz - z)) <= radius:
+                IU.fill(x, y, z, x, y + height - 1, z, block)
 
 
 # ===STRUCTURE #4
@@ -117,4 +252,4 @@ if __name__ == '__main__':
 
     buildPerimeter()
     buildRoads()
-    placeCenterStones()
+    buildCity()
