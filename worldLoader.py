@@ -158,7 +158,7 @@ class WorldSlice:
         """**Return biome at given coordinates**.
 
         Due to the noise around chunk borders,
-            there is an inacurracy of ±2 blocks.
+            there is an inacurracy of +/-2 blocks.
         """
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
