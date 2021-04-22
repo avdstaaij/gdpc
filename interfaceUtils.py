@@ -166,7 +166,7 @@ def runCommand(command):
 
 def requestBuildArea():
     """**Return the building area**."""
-    area = 0, 0, 0, 128, 256, 128   # default area for beginners
+    area = 0, 0, 0, 127, 255, 127   # default area for beginners
     response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
         buildArea = response.json()
