@@ -9,12 +9,18 @@ The source code of this module contains examples for:
 * Requesting the build area (search 'BUILDAREA')
 * Introduction to world slices (search 'WORLDSLICE')
 * Introduction to basic heightmaps (search 'HEIGHTMAP')
+For more advanced functionality, see Land_of_Oz.py
 
 NOTE: We recommend creating your own files instead of modifying or adding code
     to these pre-existing files.
 NOTE: If part of the program is running to fast for you to understand, insert
+    >>> from time import sleep
+    and
     >>> sleep(0.1)
-    at the appropriate location for a delay of 1/10 of a second
+    at the appropriate locations for a delay of 1/10 of a second
+    Alternatively, inserting
+    >>> input("Waiting for user to press [Enter]")
+    will pause the program at the point.
 INFO: Should you have any questions regarding this software, feel free to visit
     the #gdmc-http-discussion-help channel on the GDMC Discord Server
     (Invite link: https://discord.gg/zkdaEMBCmd)
@@ -35,7 +41,6 @@ __date__ = "22 April 2021"
 # We are giving these modules shorter, but distinct, names for convenience
 from math import hypot  # we only need this for calculating our circles
 from random import randint
-from time import sleep
 
 import interfaceUtils as IU
 import worldLoader as WL
