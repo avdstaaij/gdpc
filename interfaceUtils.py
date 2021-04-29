@@ -13,8 +13,10 @@ __version__ = "v4.2_dev"
 
 from collections import OrderedDict
 
+import numpy as np
 import requests
 from requests.exceptions import ConnectionError
+from worldLoader import WorldSlice
 
 
 class OrderedByLookupDict(OrderedDict):
@@ -37,7 +39,7 @@ class OrderedByLookupDict(OrderedDict):
         if key in self:
             self.move_to_end(key)
         super().__setitem__(key, value)
-        if len(self) > self.maxsize:
+        if self.maxsize != -1 and len(self) > self.maxsize:
             oldest = next(iter(self))
             del self[oldest]
 
@@ -71,12 +73,20 @@ class Interface():
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         if self.caching and (x, y, z) in self.cache:
             return self.cache[(x, y, z)]
+
+        if self.caching and globalWorldSlice is not None:
+            if not globalDecay[x][y][z]:
+                block = globalWorldSlice.getBlockAt(x, y, z)
+                self.cache[(x, y, z)] = block
+                return block
+
         try:
             response = requests.get(url)
             if self.caching:
                 self.cache[(x, y, z)] = response.text
         except ConnectionError:
             return "minecraft:void_air"
+
         return response.text
 
     def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
@@ -99,6 +109,8 @@ class Interface():
             self.placeBlock(x, y, z, blockStr)
         if self.caching:
             self.cache[(x, y, z)] = blockStr
+        if globalDecay is not None and not globalDecay[x][y][z]:
+            globalDecay[x][y][z] = True
 
     def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
@@ -224,7 +236,18 @@ def requestBuildArea():
 # ========================================================= global interface
 
 
+globalWorldSlice = None
+globalDecay = None
+
 globalinterface = Interface()
+
+
+def makeGlobalSlice():
+    global globalWorldSlice
+    global globalDecay
+    x1, y1, z1, x2, y2, z2 = requestBuildArea()
+    globalWorldSlice = WorldSlice(x1, z1, x2, z2)
+    globalDecay = np.zeros((x2 - x1, 255, z2 - z1), dtype=bool)
 
 
 def isBuffering():

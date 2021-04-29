@@ -108,9 +108,11 @@ def testCache():
     def placeFromCache():
         """Replace all removed blocks from memory."""
         print("\t\tReplacing blocks from memory...", end="\r")
-        for pos, block in tester.cache.items():
-            tester.setBlock(*pos, block)
+        tester.caching = True
+        for x, z in xzloop(SIZE, SIZE):
+            tester.setBlock(x, 1, z, tester.getBlock(x, 1, z))
         tester.sendBlocks()
+        tester.caching = False
         print("\n\t\tReplacing blocks from memory done.")
 
     def checkDiscrepancies():
@@ -159,7 +161,7 @@ def testCache():
     print("\tPlacing pattern...▕██████████")
     print("\tScattering test blocks done.")
 
-    # ---- first run (caching through getBlock)
+    # ---- first run (caching through setBlock)
     print(f"\t{TCOLOURS['grey']}First run: Cache updated via setBlock")
 
     clearTestbed()
@@ -183,7 +185,7 @@ def testCache():
     placeFromCache()
     checkDiscrepancies()
 
-    # ---- third run (randomized placement)
+    # ---- third run (randomized get-/setBlock)
     print(f"\t{TCOLOURS['grey']}Third run: Cache updated via random methods")
     for i in range(4 * SIZE):
         print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
@@ -208,9 +210,35 @@ def testCache():
     placeFromCache()
     checkDiscrepancies()
 
+    # ---- fourth run (using WorldSlice)
+
+    print(f"\t{TCOLOURS['grey']}Fourth run: Cache updated via WorldSlice")
+    for i in range(4 * SIZE):
+        print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
+              + (10 - 10 * i // SIZE) * "▕", end="\r")
+        x = random.randint(0, SIZE - 1)
+        z = random.randint(0, SIZE - 1)
+        if random.choice([True, False]):
+            type = random.choice(PALETTES)
+            tester.setBlock(x, 1, z, type[1])
+            tester.setBlock(x, 0, z, type[0])
+            tester.sendBlocks()
+        else:
+            tester.getBlock(x, 1, z)
+    print("\t\tMuddling...▕██████████")
+    print("\t\tMuddling complete.")
+
+    interfaceUtils.makeGlobalSlice()
+
+    clearTestbed()
+    placeFromCache()
+    checkDiscrepancies()
+
     # ---- cleanup
     print(f"{TCOLOURS['green']}Cache test complete!")
     tester.fill(0, 0, 0, SIZE, 1, SIZE, "bedrock")
+    interfaceUtils.globalWorldSlice = None
+    interfaceUtils.globalDecay = None
 
 
 if __name__ == '__main__':
