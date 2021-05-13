@@ -21,6 +21,18 @@ __version__ = "v4.2_dev"
 
 VERSION = "1.16.x"
 
+# ========================================================= custom values
+
+DIRECTIONS = ('north', 'east', 'south', 'west')
+INVERTDIRECTION = {'north': 'south', 'east': 'west',
+                   'south': 'north', 'west': 'east'}
+DIRECTIONTOVECTOR = {'north': (0, -1), 'east': (1, 0),
+                     'south': (0, 1), 'west': (-1, 0)}
+
+# ========================================================= materials
+
+WOODS = ('oak', 'birch', 'spruce', 'jungle', 'acacia', 'crimson', 'warped')
+
 # ========================================================= grouped by model
 
 AIR = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air')
@@ -112,6 +124,15 @@ WALLHEADS = ('minecraft:skeleton_wall_skull',
              'minecraft:dragon_wall_head',)
 HEADS = FLOORHEADS + WALLHEADS
 
+FLOORSIGNS = {'minecraft:oak_sign', 'minecraft:birch_sign',
+              'minecraft:spruce_sign', 'minecraft:jungle_sign',
+              'minecraft:dark_oak_sign', 'minecraft:acacia_sign',
+              'minecraft:warped_sign', 'minecraft:crimson_sign'}
+WALLSIGNS = {'minecraft:oak_wall_sign', 'minecraft:birch_wall_sign',
+             'minecraft:spruce_wall_sign', 'minecraft:jungle_wall_sign',
+             'minecraft:dark_oak_wall_sign', 'minecraft:acacia_wall_sign',
+             'minecraft:warped_wall_sign', 'minecraft:crimson_wall_sign'}
+SIGNS = FLOORSIGNS + WALLSIGNS
 
 ANVILS = ('minecraft:anvil', 'minecraft:chipped_anvil',
           'minecraft:damaged_anvil')
@@ -242,13 +263,15 @@ UNOBTRUSIVE = ('minecraft:ladder',
                'minecraft:conduit',
                'minecraft:lily_pad',
                'minecraft:scaffolding') \
-    + GLASS + RAILS + WIRING + BUTTONS + TORCHES
+    + GLASS + RAILS + WIRING + BUTTONS + TORCHES + SIGNS
 
 # can be seen through moderately
 OBTRUSIVE = ('minecraft:bell', 'minecraft:brewing_stand', 'minecraft:cake',
              'minecraft:campfire', 'minecraft:dragon_egg',
-             'minecraft:flower_pot', 'minecraft£:lectern', 'turtle_egg') \
+             'minecraft:flower_pot', 'minecraft:lectern', 'turtle_egg') \
     + ANVILS + HEADS + PLANTS + BEDS + FENCES + GATES + SLABS
+
+TRANSPARENT = INVISIBLE + FILTERING + UNOBTRUSIVE + OBTRUSIVE
 
 # all esle is considered opaque
 
