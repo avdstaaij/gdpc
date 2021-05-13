@@ -7,101 +7,252 @@ This module contains functions to:
 * Get the name of a block at a particular coordinate
 * Place blocks in the world
 """
-__all__ = ['requestBuildArea', 'runCommand',
-           'setBlock', 'getBlock',
-           'placeBlockBatched', 'sendBlocks']
-# __version__
+__all__ = ['Interface', 'requestBuildArea', 'runCommand',
+           'setBlock', 'getBlock', 'sendBlocks']
+__version__ = "v4.2_dev"
 
-import requests
-from requests.exceptions import ConnectionError
+from collections import OrderedDict
 
-session = requests.Session()
+import direct_interface as di
+import numpy as np
+from worldLoader import WorldSlice
 
-def requestBuildArea():
-    """**Requests a build area and returns it as an dictionary containing 
-    the keys xFrom, yFrom, zFrom, xTo, yTo and zTo**"""
-    response = session.get('http://localhost:9000/buildarea')
-    if response.ok:
-        return response.json()
-    else:
-        print(response.text)
-        return -1
+
+class OrderedByLookupDict(OrderedDict):
+    """Limit size, evicting the least recently looked-up key when full.
+
+    Taken from
+    https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
+    """
+
+    def __init__(self, maxsize=128, /, *args, **kwds):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwds)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if self.maxsize != -1 and len(self) > self.maxsize:
+            oldest = next(iter(self))
+            del self[oldest]
+
+
+class Interface():
+    """**Provides tools for interacting with the HTML interface**.
+
+    All function parameters and returns are in local coordinates.
+    """
+
+    def __init__(self, x=0, y=0, z=0,
+                 buffering=False, bufferlimit=1024,
+                 caching=False, cachelimit=8192):
+        """**Initialise an interface with offset and buffering**."""
+        self.offset = x, y, z
+        self.__buffering = buffering
+        self.bufferlimit = bufferlimit
+        self.buffer = []
+        self.caching = caching
+        self.cache = OrderedByLookupDict(cachelimit)
+        # Interface.cache.maxsize to change size
+
+    def __del__(self):
+        """**Clean up before destruction**."""
+        self.sendBlocks()
+
+    def getBlock(self, x, y, z):
+        """**Return the name of a block in the world**."""
+        x, y, z = self.local2global(x, y, z)
+
+        if self.caching and (x, y, z) in self.cache:
+            return self.cache[(x, y, z)]
+
+        if self.caching and globalWorldSlice is not None:
+            if not globalDecay[x][y][z]:
+                block = globalWorldSlice.getBlockAt(x, y, z)
+                self.cache[(x, y, z)] = block
+                return block
+
+        response = di.getBlock(x, y, z)
+        if self.caching:
+            self.cache[(x, y, z)] = response
+
+        return response
+
+    def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
+        """**Fill the given region with the given block**."""
+        x1, y1, z1 = self.local2global(x1, y1, z1)
+        x2, y2, z2 = self.local2global(x2, y2, z2)
+        xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
+        xhi, yhi, zhi = max(x1, x2), max(y1, y2), max(z1, z2)
+
+        for x in range(xlo, xhi + 1):
+            for y in range(ylo, yhi + 1):
+                for z in range(zlo, zhi + 1):
+                    self.setBlock(x, y, z, blockStr)
+
+    def setBlock(self, x, y, z, blockStr):
+        """**Place a block in the world depending on buffer activation**."""
+        if self.__buffering:
+            self.placeBlockBatched(x, y, z, blockStr, self.bufferlimit)
+        else:
+            self.placeBlock(x, y, z, blockStr)
+        if self.caching:
+            self.cache[(x, y, z)] = blockStr
+        if globalDecay is not None and not globalDecay[x][y][z]:
+            globalDecay[x][y][z] = True
+
+    def placeBlock(self, x, y, z, blockStr):
+        """**Place a single block in the world**."""
+        x, y, z = self.local2global(x, y, z)
+        return di.setBlock(x, y, z, blockStr)
+
+    # ----------------------------------------------------- block buffers
+
+    def toggleBuffer(self):
+        """**Activates or deactivates the buffer function safely**."""
+        self.buffering = not self.buffering
+        return self.buffering
+
+    def isBuffering(self):
+        """**Get self.__buffering**."""
+        return self.__buffering
+
+    def setBuffering(self, value):
+        """**Set self.__buffering**."""
+        self.__buffering = value
+        if self.__buffering:
+            print("Buffering has been activated.")
+        else:
+            self.sendBlocks()
+            print("Buffering has been deactivated.")
+
+    def getBufferlimit(self):
+        """**Get self.bufferlimit**."""
+        return self.bufferlimit
+
+    def setBufferLimit(self, value):
+        """**Set self.bufferlimit**."""
+        self.bufferlimit = value
+
+    def placeBlockBatched(self, x, y, z, blockStr, limit=50):
+        """**Place a block in the buffer and send once limit is exceeded**."""
+        x, y, z = self.local2global(x, y, z)
+
+        self.buffer.append((x, y, z, blockStr))
+        if len(self.buffer) >= limit:
+            return self.sendBlocks()
+        else:
+            return None
+
+    def sendBlocks(self, x=0, y=0, z=0, retries=5):
+        """**Send the buffer to the server and clear it**.
+
+        Since the buffer contains global coordinates
+            no conversion takes place in this function
+        """
+        response = di.sendBlocks(self.buffer, x, y, z, retries)
+        if response:
+            self.buffer = []
+
+    # ----------------------------------------------------- utility functions
+
+    def local2global(self, x, y, z):
+        """**Translate local to global coordinates**."""
+        result = []
+        if x is not None:
+            result.append(x + self.offset[0])
+        if y is not None:
+            result.append(y + self.offset[1])
+        if z is not None:
+            result.append(z + self.offset[2])
+        return result
+
+    def global2local(self, x, y, z):
+        """**Translate global to local coordinates**."""
+        result = []
+        if x is not None:
+            result.append(x - self.offset[0])
+        if y is not None:
+            result.append(y - self.offset[1])
+        if z is not None:
+            result.append(z - self.offset[2])
+        return result
 
 
 def runCommand(command):
-    """**Executes one or multiple minecraft commands (separated by newlines).**"""
-    # print("running cmd " + command)
-    url = 'http://localhost:9000/command'
-    try:
-        response = session.post(url, bytes(command, "utf-8"))
-    except ConnectionError:
-        return "connection error"
-    return response.text
+    """**Run a Minecraft command in the world**."""
+    return di.runCommand(command)
 
-# --------------------------------------------------------- get/set block
+
+def requestBuildArea():
+    """**Return the building area**."""
+    return di.requestBuildArea()
+
+# ========================================================= global interface
+
+
+globalWorldSlice = None
+globalDecay = None
+
+globalinterface = Interface()
+
+
+def makeGlobalSlice():
+    global globalWorldSlice
+    global globalDecay
+    x1, y1, z1, x2, y2, z2 = requestBuildArea()
+    globalWorldSlice = WorldSlice(x1, z1, x2, z2)
+    globalDecay = np.zeros((x2 - x1, 255, z2 - z1), dtype=bool)
+
+
+def isBuffering():
+    """**Global isBuffering**."""
+    return globalinterface.isBuffering()
+
+
+def setBuffering(val):
+    """**Global setBuffering**."""
+    globalinterface.setBuffering(val)
+
+
+def getBufferLimit():
+    """**Global getBufferLimit**."""
+    return globalinterface.getBufferLimit()
+
+
+def setBufferLimit(val):
+    """**Global setBufferLimit**."""
+    globalinterface.setBufferLimit(val)
 
 
 def getBlock(x, y, z):
-    """**Returns the namespaced id of a block in the world.**"""
-    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
-    # print(url)
-    try:
-        response = session.get(url)
-    except ConnectionError:
-        return "minecraft:void_air"
-    return response.text
-    # print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
+    """**Global getBlock**."""
+    return globalinterface.getBlock(x, y, z)
 
 
-def setBlock(x, y, z, str):
-    """**Places a block in the world.**"""
-    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
-    # print('setting block {} at {} {} {}'.format(str, x, y, z))
-    try:
-        response = session.put(url, str)
-    except ConnectionError:
-        return "0"
-    return response.text
-    # print("{}, {}, {}: {} - {}".format(x, y, z, response.status_code, response.text))
+def fill(x1, y1, z1, x2, y2, z2, blockStr):
+    """**Global fill**."""
+    return globalinterface.fill(x1, y1, z1, x2, y2, z2, blockStr)
 
 
-# --------------------------------------------------------- block buffers
+def setBlock(x, y, z, blockStr):
+    """**Global setBlock**."""
+    return globalinterface.setBlock(x, y, z, blockStr)
 
-blockBuffer = []
+# ----------------------------------------------------- block buffers
 
 
-def placeBlockBatched(x, y, z, str, limit=50):
-    """**Place a block in the buffer and send if the limit is exceeded.**"""
-    registerSetBlock(x, y, z, str)
-    if len(blockBuffer) >= limit:
-        return sendBlocks(0, 0, 0)
-    else:
-        return None
+def toggleBuffer():
+    """**Global toggleBuffer**."""
+    return globalinterface.toggleBuffer()
 
 
 def sendBlocks(x=0, y=0, z=0, retries=5):
-    """**Sends the buffer to the server and clears it.**"""
-    global blockBuffer
-    body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockBuffer])
-    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
-    try:
-        response = session.put(url, body)
-        clearBlockBuffer()
-        return response.text
-    except ConnectionError as e:
-        print(f"Request failed: {e} Retrying ({retries} left)")
-        if retries > 0:
-            return sendBlocks(x, y, z, retries - 1)
-
-
-def registerSetBlock(x, y, z, str):
-    """**Places a block in the buffer.**"""
-    global blockBuffer
-    # blockBuffer += () '~{} ~{} ~{} {}'.format(x, y, z, str)
-    blockBuffer.append((x, y, z, str))
-
-
-def clearBlockBuffer():
-    """**Clears the block buffer.**"""
-    global blockBuffer
-    blockBuffer = []
+    """**Global sendBlocks**."""
+    return globalinterface.sendBlocks(x, y, z, retries)
