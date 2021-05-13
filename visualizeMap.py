@@ -67,7 +67,7 @@ if __name__ == '__main__':
     brightness = brightness.clip(-64, 64)
 
     topcolor += brightness
-    topcolor = topcolor.clip(0, 255)
+    topcolor = topcolor.clip(0, 256)
 
     # display the map
     topcolor = topcolor.astype('uint8')

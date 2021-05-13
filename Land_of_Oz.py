@@ -46,7 +46,7 @@ def analyzeChunks():
     IU.setBuffering(True)
     IU.setBufferLimit(4096)
 
-    IU.fill(STARTX, 255, STARTZ, ENDX, 255, ENDZ, "air")
+    IU.fill(STARTX, 254, STARTZ, ENDX, 255, ENDZ, "air")
     IU.sendBlocks()
 
     for x in range(WORLDSLICE.chunkRect[2]):
@@ -54,7 +54,6 @@ def analyzeChunks():
             chunkID = x + z * WORLDSLICE.chunkRect[2]
             biomes = WORLDSLICE.nbtfile['Chunks'][chunkID]['Level']['Biomes']
             biomes = list(set(biomes))
-            print(biomes)
             if (0 in biomes or 7 in biomes or 24 in biomes or 44 in biomes
                     or 45 in biomes or 46 in biomes or 47 in biomes
                     or 48 in biomes or 49 in biomes or 50 in biomes):
@@ -62,11 +61,9 @@ def analyzeChunks():
                 xend = xstart + 15
                 zstart = WORLDSLICE.nbtfile['Chunks'][chunkID]['Level']['zPos'].value * 16
                 zend = zstart + 15
-                print(f"filling {xstart, zstart, xend, zend}")
-                IU.fill(xstart, 255, zstart, xend,
-                        255, zend, "snow_block")
+                IU.fill(xstart, 200, zstart, xend,
+                        200, zend, "snow_block")
                 IU.sendBlocks()
-                print("filling done.")
 
 
 def buildCity():
