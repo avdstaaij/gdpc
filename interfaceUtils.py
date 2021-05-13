@@ -13,9 +13,8 @@ __version__ = "v4.2_dev"
 
 from collections import OrderedDict
 
+import direct_interface as di
 import numpy as np
-import requests
-from requests.exceptions import ConnectionError
 from worldLoader import WorldSlice
 
 
@@ -70,7 +69,6 @@ class Interface():
         """**Return the name of a block in the world**."""
         x, y, z = self.local2global(x, y, z)
 
-        url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
         if self.caching and (x, y, z) in self.cache:
             return self.cache[(x, y, z)]
 
@@ -80,14 +78,11 @@ class Interface():
                 self.cache[(x, y, z)] = block
                 return block
 
-        try:
-            response = requests.get(url)
-            if self.caching:
-                self.cache[(x, y, z)] = response.text
-        except ConnectionError:
-            return "minecraft:void_air"
+        response = di.getBlock(x, y, z)
+        if self.caching:
+            self.cache[(x, y, z)] = response
 
-        return response.text
+        return response
 
     def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
         """**Fill the given region with the given block**."""
@@ -115,13 +110,7 @@ class Interface():
     def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
         x, y, z = self.local2global(x, y, z)
-
-        url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        try:
-            response = requests.put(url, blockStr)
-        except ConnectionError:
-            return "0"
-        return response.text
+        return di.setBlock(x, y, z, blockStr)
 
     # ----------------------------------------------------- block buffers
 
@@ -167,17 +156,9 @@ class Interface():
         Since the buffer contains global coordinates
             no conversion takes place in this function
         """
-        url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
-        body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp)
-                               for bp in self.buffer])
-        try:
-            response = requests.put(url, body)
+        response = di.sendBlocks(self.buffer, x, y, z, retries)
+        if response:
             self.buffer = []
-            return response.text
-        except ConnectionError as e:
-            print("Request failed: {} Retrying ({} left)".format(e, retries))
-            if retries > 0:
-                return self.sendBlocks(x, y, z, retries - 1)
 
     # ----------------------------------------------------- utility functions
 
@@ -206,32 +187,12 @@ class Interface():
 
 def runCommand(command):
     """**Run a Minecraft command in the world**."""
-    url = 'http://localhost:9000/command'
-    try:
-        response = requests.post(url, bytes(command, "utf-8"))
-    except ConnectionError:
-        return "connection error"
-    return response.text
+    return di.runCommand(command)
 
 
 def requestBuildArea():
     """**Return the building area**."""
-    area = 0, 0, 0, 128, 256, 128   # default area for beginners
-    response = requests.get('http://localhost:9000/buildarea')
-    if response.ok:
-        buildArea = response.json()
-        if buildArea != -1:
-            x1 = buildArea["xFrom"]
-            y1 = buildArea["yFrom"]
-            z1 = buildArea["zFrom"]
-            x2 = buildArea["xTo"]
-            y2 = buildArea["yTo"]
-            z2 = buildArea["zTo"]
-            area = x1, y1, z1, x2, y2, z2
-    else:
-        print(response.text)
-        print("Using default build area.")
-    return area
+    return di.requestBuildArea()
 
 # ========================================================= global interface
 

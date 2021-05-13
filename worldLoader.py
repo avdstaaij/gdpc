@@ -11,29 +11,11 @@ __all__ = ['WorldSlice']
 from io import BytesIO
 from math import ceil, log2
 
+import direct_interface as di
 import nbt
 import numpy as np
-import requests
 from bitarray import BitArray
 from blockColors import BIOMES
-
-
-def getChunks(x, z, dx, dz, rtype='text'):
-    """**Get raw chunk data**."""
-    print(f"getting chunks {x} {z} {dx} {dz} ")
-
-    url = f'http://localhost:9000/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
-    print(f"request url: {url}")
-    acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
-    response = requests.get(url, headers={"Accept": acceptType})
-    print(f"result: {response.status_code}")
-    if response.status_code >= 400:
-        print(f"error: {response.text}")
-
-    if rtype == 'text':
-        return response.text
-    elif rtype == 'bytes':
-        return response.content
 
 
 class CachedSection:
@@ -61,10 +43,9 @@ class WorldSlice:
                           - (self.rect[1] >> 4) + 1)
         self.heightmapTypes = heightmapTypes
 
-        bytes = getChunks(*self.chunkRect, rtype='bytes')
+        bytes = di.getChunks(*self.chunkRect, rtype='bytes')
         file_like = BytesIO(bytes)
 
-        print("parsing NBT")
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)
 
         rectOffset = [self.rect[0] % 16, self.rect[1] % 16]
@@ -80,8 +61,6 @@ class WorldSlice:
             self.chunkRect[3])] for x in range(self.chunkRect[2])]
 
         # heightmaps
-        print("extracting heightmaps")
-
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
@@ -102,8 +81,6 @@ class WorldSlice:
                                 pass
 
         # sections
-        print("extracting chunk sections")
-
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
