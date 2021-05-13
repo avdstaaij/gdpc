@@ -91,12 +91,15 @@ FUNGI = ('minecraft:red_mushroom', 'minecraft:brown_mushroom',
 WILDCROPS = ('minecraft:cocoa', 'minecraft:sweet_berry_bush')
 TALLCROPS = ('minecraft:bamboo', 'minecraft:sugar_cane',
              'minecraft:cactus')
+GRASSES = ('minecraft:grass', 'minecraft:tall_grass',
+           'minecraft:fern', 'minecraft:large_fern')
 VINES = ('minecraft:vine',
          'minecraft:weeping_vines', 'minecraft:weeping_vines')
 
 FLOWERS = SHORTFLOWERS + TALLFLOWERS
 TALLPLANTS = TALLCROPS + TALLFLOWERS
-PLANTS = FLOWERS + CROPS + FUNGI + WILDCROPS + TALLCROPS + VINES
+PLANTS = ('minecraft:dead_bush',) + FLOWERS + CROPS + FUNGI + WILDCROPS \
+    + TALLCROPS + GRASSES + VINES
 
 
 WIRING = ('minecraft:redstone_wire',
@@ -124,14 +127,14 @@ WALLHEADS = ('minecraft:skeleton_wall_skull',
              'minecraft:dragon_wall_head',)
 HEADS = FLOORHEADS + WALLHEADS
 
-FLOORSIGNS = {'minecraft:oak_sign', 'minecraft:birch_sign',
+FLOORSIGNS = ('minecraft:oak_sign', 'minecraft:birch_sign',
               'minecraft:spruce_sign', 'minecraft:jungle_sign',
               'minecraft:dark_oak_sign', 'minecraft:acacia_sign',
-              'minecraft:warped_sign', 'minecraft:crimson_sign'}
-WALLSIGNS = {'minecraft:oak_wall_sign', 'minecraft:birch_wall_sign',
+              'minecraft:warped_sign', 'minecraft:crimson_sign')
+WALLSIGNS = ('minecraft:oak_wall_sign', 'minecraft:birch_wall_sign',
              'minecraft:spruce_wall_sign', 'minecraft:jungle_wall_sign',
              'minecraft:dark_oak_wall_sign', 'minecraft:acacia_wall_sign',
-             'minecraft:warped_wall_sign', 'minecraft:crimson_wall_sign'}
+             'minecraft:warped_wall_sign', 'minecraft:crimson_wall_sign')
 SIGNS = FLOORSIGNS + WALLSIGNS
 
 ANVILS = ('minecraft:anvil', 'minecraft:chipped_anvil',

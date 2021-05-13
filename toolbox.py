@@ -73,14 +73,20 @@ def placeSign(x, y, z, facing=None, rotation=None,
     if not wall:
         if rotation is None:
             reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
-            rotation = 0
-            for direction in facing:
-                rotation += reference[direction]
-            rotation //= 2
-            if rotation == 6 and 'north' in facing:
-                rotation = 14
-            if rotation % 4 != 2:
-                rotation = reference[facing[0]]
+            if len(facing) == 1:
+                rotation = reference[lookup.INVERTDIRECTION[facing[0]]]
+            else:
+                rotation = 0
+                for direction in facing:
+                    rotation += reference[lookup.INVERTDIRECTION[direction]]
+                rotation //= 2
+
+                print(f"{facing, rotation}")
+
+                if rotation == 6 and 'north' not in facing:
+                    rotation = 14
+                if rotation % 4 != 2:
+                    rotation = reference[facing[0]]
         gi.placeBlock(x, y, z, f"{wood}_sign[rotation={rotation}]")
 
     data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
@@ -110,6 +116,8 @@ def getOptimalDirection(x, y, z):
         if min_obstruction == max_obstruction:
             return lookup.DIRECTIONS
 
+        print(f"{min_obstruction, max_obstruction, directions}")
+
         if surrounding[2][0] == min_obstruction:
             directions.append(surrounding[2][1])
         if (surrounding[1][0] == min_obstruction
@@ -118,7 +126,7 @@ def getOptimalDirection(x, y, z):
         elif (surrounding[3][0] == min_obstruction
                 and surrounding[1][0] != min_obstruction):
             directions.append(surrounding[3][1])
-        else:
+        elif len(directions) == 0:
             directions.append(surrounding[1][1])
             directions.append(surrounding[3][1])
 
