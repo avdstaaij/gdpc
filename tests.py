@@ -13,10 +13,10 @@ __version__ = "v4.2_dev"
 
 import random
 
-# import bitarray
-import blockColors
 # import example
 import interfaceUtils
+# import bitarray
+import lookup
 
 # import time
 # import timeit
@@ -55,8 +55,8 @@ def verifyPaletteBlocks():
     counter = 0
     badcounter = 0
     passed = []
-    tocheck = [block for i in blockColors.PALETTE.values()
-               for block in i] + list(blockColors.TRANSPARENT)
+    tocheck = [block for i in lookup.PALETTE.values()
+               for block in i] + list(lookup.TRANSPARENT)
     print(f"\t{TCOLOURS['grey']}Preparing done.")
 
     for block in tocheck:
@@ -80,7 +80,7 @@ def verifyPaletteBlocks():
                             f"{TCOLOURS['red']} blocks duplicate "
                             "or could not be verified.\n"
                             f"{TCOLOURS['orange']}Please check you are running"
-                            f" on Minecraft {blockColors.VERSION}")
+                            f" on Minecraft {lookup.VERSION}")
 
     print(f"{TCOLOURS['green']}All {counter} blocks successfully verified!")
 

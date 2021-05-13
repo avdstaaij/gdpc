@@ -6,12 +6,12 @@ Examples and tests are available but not to be imported.
 See README.md for more information.
 """
 import bitarray
-import blockColors
 import direct_interface
 import interfaceUtils
+import lookup
 import mapUtils
 import worldLoader
 
-__all__ = ['bitarray', 'blockColors', 'direct_interface', 'interfaceUtils',
+__all__ = ['bitarray', 'lookup', 'direct_interface', 'interfaceUtils',
            'mapUtils', 'worldLoader']
 __version__ = 'v4.2_dev'

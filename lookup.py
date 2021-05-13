@@ -1,7 +1,14 @@
 #! /usr/bin/python3
-"""### Store lists of all the blocks in minecraft with map colours."""
+"""### Store lists of various imformation on blocks, biomes and more."""
 
-__all__ = ['VERSION', 'TRANSPARENT', 'PALETTE']
+__all__ = ['VERSION',
+           'AIR', 'GLASS', 'LEAVES', 'WIRING', 'RAILS', 'BUTTONS',
+           'FLOORHEADS', 'WALLHEADS', 'HEADS',
+           'SHULKERBOXES',
+           'WOOL', 'CARPETS', 'PRESSUREPLATES',
+           'DOORS', 'TRAPDOORS',
+           'STAIRS', 'SLABS', 'FENCES', 'WALLS',
+           'MAPTRANSPARENT', 'PALETTE']
 __version__ = "v4.2_dev"
 
 
@@ -21,35 +28,142 @@ __version__ = "v4.2_dev"
 
 VERSION = "1.16.x"
 
-TRANSPARENT = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air',
-               'minecraft:barrier', 'minecraft:redstone_lamp',
-               'minecraft:cake', 'minecraft:powered_rail',
-               'minecraft:detector_rail',
-               'minecraft:torch', 'minecraft:redstone_wire',
-               'minecraft:ladder', 'minecraft:rail', 'minecraft:lever',
-               'minecraft:redstone_torch',
-               'minecraft:stone_button', 'minecraft:oak_button',
-               'minecraft:spruce_button', 'minecraft:birch_button',
-               'minecraft:jungle_button', 'minecraft:acacia_button',
-               'minecraft:dark_oak_button',
-               'minecraft:crimson_button', 'minecraft:warped_button',
-               'minecraft:polished_blackstone_button',
-               'minecraft:repeater', 'minecraft:tripwire_hook',
-               'minecraft:tripwire', 'minecraft:flower_pot',
-               'minecraft:skeleton_skull', 'minecraft:wither_skeleton_skull',
-               'minecraft:zombie_head', 'minecraft:player_head',
-               'minecraft:creeper_head', 'minecraft:dragon_head',
-               'minecraft:skeleton_wall_skull',
-               'minecraft:wither_skeleton_wall_skull',
-               'minecraft:zombie_wall_head',
-               'minecraft:player_wall_head', 'minecraft:creeper_wall_head',
-               'minecraft:dragon_wall_head',
-               'minecraft:comparator', 'minecraft:activator_rail',
+# ========================================================= grouped by model
+
+AIR = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air')
+GLASS = ('minecraft:glass', 'minecraft:glass_pane',
+         'minecraft:white_stained_glass',
+         'minecraft:white_stained_glass_pane',
+         'minecraft:orange_stained_glass',
+         'minecraft:orange_stained_glass_pane',
+         'minecraft:magenta_stained_glass',
+         'minecraft:magenta_stained_glass_pane',
+         'minecraft:light_blue_stained_glass',
+         'minecraft:light_blue_stained_glass_pane',
+         'minecraft:yellow_stained_glass',
+         'minecraft:yellow_stained_glass_pane',
+         'minecraft:lime_stained_glass',
+         'minecraft:lime_stained_glass_pane',
+         'minecraft:pink_stained_glass',
+         'minecraft:pink_stained_glass_pane',
+         'minecraft:gray_stained_glass',
+         'minecraft:gray_stained_glass_pane',
+         'minecraft:light_gray_stained_glass',
+         'minecraft:light_gray_stained_glass_pane',
+         'minecraft:cyan_stained_glass',
+         'minecraft:cyan_stained_glass_pane',
+         'minecraft:purple_stained_glass',
+         'minecraft:purple_stained_glass_pane',
+         'minecraft:blue_stained_glass',
+         'minecraft:blue_stained_glass_pane',
+         'minecraft:brown_stained_glass',
+         'minecraft:brown_stained_glass_pane',
+         'minecraft:green_stained_glass',
+         'minecraft:green_stained_glass_pane',
+         'minecraft:red_stained_glass',
+         'minecraft:red_stained_glass_pane',
+         'minecraft:black_stained_glass',
+         'minecraft: black_stained_glass_pane')
+LEAVES = ('minecraft:oak_leaves', 'minecraft:birch_leaves',
+          'minecraft:spruce_leaves', 'minecraft:jungle_leaves',
+          'minecraft:dark_oak_leaves', 'minecraft:acacia_leaves',)
+
+WIRING = ('minecraft:redstone_wire', 'minecraft:redstone_torch',
+          'minecraft:repeater', 'minecraft:comparator',)
+RAILS = ('minecraft:rail', 'minecraft:powered_rail',
+         'minecraft:detector_rail', 'minecraft:activator_rail',)
+BUTTONS = ('minecraft:lever',
+           'minecraft:stone_button', 'minecraft:oak_button',
+           'minecraft:spruce_button', 'minecraft:birch_button',
+           'minecraft:jungle_button', 'minecraft:acacia_button',
+           'minecraft:dark_oak_button',
+           'minecraft:crimson_button', 'minecraft:warped_button',
+           'minecraft:polished_blackstone_button',
+           'minecraft:tripwire_hook')
+
+FLOORHEADS = ('minecraft:skeleton_skull',
+              'minecraft:wither_skeleton_skull',
+              'minecraft:zombie_head', 'minecraft:player_head',
+              'minecraft:creeper_head', 'minecraft:dragon_head')
+WALLHEADS = ('minecraft:skeleton_wall_skull',
+             'minecraft:wither_skeleton_wall_skull',
+             'minecraft:zombie_wall_head',
+             'minecraft:player_wall_head', 'minecraft:creeper_wall_head',
+             'minecraft:dragon_wall_head',)
+HEADS = FLOORHEADS + WALLHEADS
+
+SHULKERBOXES = ('minecraft:shulker_box', 'minecraft:white_shulker_box',
+                'minecraft:orange_shulker_box',
+                'minecraft:magenta_shulker_box',
+                'minecraft:light_blue_shulker_box',
+                'minecraft:yellow_shulker_box',
+                'minecraft:lime_shulker_box', 'minecraft:pink_shulker_box',
+                'minecraft:gray_shulker_box',
+                'minecraft:light_gray_shulker_box',
+                'minecraft:cyan_shulker_box', 'minecraft:purple_shulker_box',
+                'minecraft:blue_shulker_box', 'minecraft:brown_shulker_box',
+                'minecraft:green_shulker_box', 'minecraft:red_shulker_box',
+                'minecraft:black_shulker_box')
+
+WOOL = 'FILL ME'
+CARPETS = ('minecraft:white_carpet', 'minecraft:orange_carpet',
+           'minecraft:magenta_carpet', 'minecraft:light_blue_carpet',
+           'minecraft:yellow_carpet', 'minecraft:lime_carpet',
+           'minecraft:pink_carpet', 'minecraft:gray_carpet',
+           'minecraft:light_gray_carpet', 'minecraft:cyan_carpet',
+           'minecraft:purple_carpet', 'minecraft:blue_carpet',
+           'minecraft:brown_carpet', 'minecraft:green_carpet',
+           'minecraft:red_carpet', 'minecraft:black_carpet')
+PRESSUREPLATES = 'FILL ME'
+
+DOORS = 'FILL ME'
+TRAPDOORS = 'FILL ME'
+
+STAIRS = 'FILL ME'
+SLABS = 'FILL ME'
+FENCES = 'FILL ME'
+WALLS = 'FILL ME'
+
+# ================================================= grouped by obtrusiveness
+
+INVISIBLE = AIR + ('minecraft:barrier', 'minecraft:structure_void')
+
+# can be seen through easily
+UNOBTRUSIVE = ('minecraft:torch', 'minecraft:soul_torch',
+               'minecraft:ladder',
+               'minecraft:tripwire',
                'minecraft:end_rod',
-               'minecraft:glass', 'minecraft:glass_pane',
-               'minecraft:nether_portal', 'minecraft:structure_void',
-               'minecraft:iron_bars', 'minecraft:soul_torch',
-               'minecraft:chain')
+               'minecraft:nether_portal',
+               'minecraft:iron_bars',
+               'minecraft:chain') \
+    + GLASS + RAILS + WIRING + BUTTONS
+
+# filter skylight
+FILTERING = ('minecraft:water', 'minecraft:bubble_column',
+             'minecraft:ice', 'minecraft:frosted_ice',
+             'minecraft:cobweb',
+             'minecraft:slime_block', 'minecraft:honey_block',
+             'minecraft:spawner',
+             'minecraft:lava',
+             'minecraft:beacon',
+             'minecraft:end_gateway',
+             'minecraft:chorus_plant', 'minecraft:chorus_flower') \
+    + LEAVES + SHULKERBOXES
+
+# ========================================================= map colouring
+
+MAPTRANSPARENT = ('minecraft:redstone_lamp',
+                  'minecraft:cake',
+                  'minecraft:torch', 'minecraft:soul_torch',
+                  'minecraft:ladder',
+                  'minecraft:tripwire',
+                  'minecraft:flower_pot',
+                  'minecraft:end_rod',
+                  'minecraft:glass', 'minecraft:glass_pane',
+                  'minecraft:nether_portal',
+                  'minecraft:iron_bars',
+                  'minecraft:chain') \
+    + INVISIBLE + WIRING + RAILS + BUTTONS + HEADS
 
 # base colours
 PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
@@ -546,6 +660,9 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
            0x562c3e: ('minecraft:warped_hyphae',
                       'minecraft:stripped_warped_hyphae'),
            0x14b485: ('minecraft:warped_wart_block')}
+
+
+# ========================================================= biome-related
 
 BIOMES = {0: "ocean",
           1: "plains",

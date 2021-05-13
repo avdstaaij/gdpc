@@ -15,7 +15,7 @@ import direct_interface as di
 import nbt
 import numpy as np
 from bitarray import BitArray
-from blockColors import BIOMES
+from lookup import BIOMES
 
 
 class CachedSection:

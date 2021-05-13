@@ -3,9 +3,9 @@
 __all__ = ['WorldSlice']
 # __version__
 
-import blockColors
 import cv2
 import interfaceUtils
+import lookup
 import matplotlib.pyplot as plt
 import numpy as np
 from worldLoader import WorldSlice
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # create a dictionary mapping block ids ("minecraft:...") to colors
     palette = {}
 
-    for hex, blocks in blockColors.PALETTE.items():
+    for hex, blocks in lookup.PALETTE.items():
         for block in blocks:
             palette[block] = hex
 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                 y = int(heightmap[(dx, dz)]) - dy
 
                 blockID = slice.getBlockAt(x, y, z)
-                if blockID in blockColors.TRANSPARENT:
+                if blockID in lookup.MAPTRANSPARENT:
                     # transparent blocks are ignored
                     continue
                 else:
