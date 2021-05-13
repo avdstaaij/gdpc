@@ -9,10 +9,39 @@ This module contains functions to:
 """
 __all__ = ['Interface', 'requestBuildArea', 'runCommand',
            'setBlock', 'getBlock', 'sendBlocks']
-# __version__
+__version__ = "v4.2_dev"
 
+from collections import OrderedDict
+
+import numpy as np
 import requests
 from requests.exceptions import ConnectionError
+from worldLoader import WorldSlice
+
+
+class OrderedByLookupDict(OrderedDict):
+    """Limit size, evicting the least recently looked-up key when full.
+
+    Taken from
+    https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
+    """
+
+    def __init__(self, maxsize=128, /, *args, **kwds):
+        self.maxsize = maxsize
+        super().__init__(*args, **kwds)
+
+    def __getitem__(self, key):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if self.maxsize != -1 and len(self) > self.maxsize:
+            oldest = next(iter(self))
+            del self[oldest]
 
 
 class Interface():
@@ -21,12 +50,17 @@ class Interface():
     All function parameters and returns are in local coordinates.
     """
 
-    def __init__(self, x=0, y=0, z=0, buffering=False, bufferlimit=1024):
+    def __init__(self, x=0, y=0, z=0,
+                 buffering=False, bufferlimit=1024,
+                 caching=False, cachelimit=8192):
         """**Initialise an interface with offset and buffering**."""
         self.offset = x, y, z
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
         self.buffer = []
+        self.caching = caching
+        self.cache = OrderedByLookupDict(cachelimit)
+        # Interface.cache.maxsize to change size
 
     def __del__(self):
         """**Clean up before destruction**."""
@@ -37,10 +71,22 @@ class Interface():
         x, y, z = self.local2global(x, y, z)
 
         url = 'http://localhost:9000/blocks?x={}&y={}&z={}'.format(x, y, z)
+        if self.caching and (x, y, z) in self.cache:
+            return self.cache[(x, y, z)]
+
+        if self.caching and globalWorldSlice is not None:
+            if not globalDecay[x][y][z]:
+                block = globalWorldSlice.getBlockAt(x, y, z)
+                self.cache[(x, y, z)] = block
+                return block
+
         try:
             response = requests.get(url)
+            if self.caching:
+                self.cache[(x, y, z)] = response.text
         except ConnectionError:
             return "minecraft:void_air"
+
         return response.text
 
     def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
@@ -61,6 +107,10 @@ class Interface():
             self.placeBlockBatched(x, y, z, blockStr, self.bufferlimit)
         else:
             self.placeBlock(x, y, z, blockStr)
+        if self.caching:
+            self.cache[(x, y, z)] = blockStr
+        if globalDecay is not None and not globalDecay[x][y][z]:
+            globalDecay[x][y][z] = True
 
     def placeBlock(self, x, y, z, blockStr):
         """**Place a single block in the world**."""
@@ -186,7 +236,18 @@ def requestBuildArea():
 # ========================================================= global interface
 
 
+globalWorldSlice = None
+globalDecay = None
+
 globalinterface = Interface()
+
+
+def makeGlobalSlice():
+    global globalWorldSlice
+    global globalDecay
+    x1, y1, z1, x2, y2, z2 = requestBuildArea()
+    globalWorldSlice = WorldSlice(x1, z1, x2, z2)
+    globalDecay = np.zeros((x2 - x1, 255, z2 - z1), dtype=bool)
 
 
 def isBuffering():

@@ -94,6 +94,7 @@ def rectanglesOverlap(r1, r2):
 
 
 if __name__ == '__main__':
+
     print(f"Build area is at position {startx}, {startz}"
           f" with size {endx}, {endz}")
 

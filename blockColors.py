@@ -1,10 +1,9 @@
 #! /usr/bin/python3
-"""### Store lists of all the blocks in minecraft and their appropriate map colours."""
+"""### Store lists of all the blocks in minecraft with map colours."""
+
 __all__ = ['VERSION', 'TRANSPARENT', 'PALETTE']
+__version__ = "v4.2_dev"
 
-# __version__
-
-import interfaceUtils
 
 # block visualization
 # based on https://minecraft.gamepedia.com/Map_item_format#Base_colors
@@ -362,39 +361,3 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
                       'minecraft:stripped_warped_stem', 'minecraft:warped_trapdoor'),
            0x562c3e: ('minecraft:warped_hyphae', 'minecraft:stripped_warped_hyphae'),
            0x14b485: ('minecraft:warped_wart_block',)}
-
-
-def verifyPaletteBlocks():
-    counter = 0
-    badcounter = 0
-    passed = []
-    tocheck = [block for i in PALETTE.values()
-               for block in i] + list(TRANSPARENT)
-    for block in tocheck:
-        if block in passed:
-            badcounter += 1
-            print()
-            print(block + " is duplicated")
-        elif not interfaceUtils.setBlock(0, 0, 0, block).isnumeric():
-            badcounter += 1
-            print()
-            print(interfaceUtils.setBlock(0, 0, 0, block))
-            print("Cannot verify " + block)
-        counter += 1
-        passed.append(block)
-        print(str(counter) + " blocks verified.", end='\r')
-    interfaceUtils.setBlock(0, 0, 0, 'air')
-    print()
-    print("Scan complete.")
-    if badcounter > 0:
-        print(
-            "{}/{} blocks duplicate or could not be verified.".format(badcounter, counter))
-        print("Please check you are running on Minecraft " + VERSION)
-    else:
-        print("All blocks successfully verified.")
-    print()
-
-
-# running the file directly does a test of all the blocks, to make sure they all exists in the minecraft version used
-if __name__ == "__main__":
-    verifyPaletteBlocks()
