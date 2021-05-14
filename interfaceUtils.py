@@ -29,6 +29,8 @@ class OrderedByLookupDict(OrderedDict):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
 
+    # inherited __repr__ from OrderedDict is sufficient
+
     def __getitem__(self, key):
         value = super().__getitem__(key)
         self.move_to_end(key)
@@ -64,6 +66,12 @@ class Interface():
     def __del__(self):
         """**Clean up before destruction**."""
         self.sendBlocks()
+
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        return f"Interface({*self.offset}" \
+            f", {self.__buffering}, {self.bufferlimit}" \
+            f", {self.caching}, {self.cache.maxsize})"
 
     def getBlock(self, x, y, z):
         """**Return the name of a block in the world**."""

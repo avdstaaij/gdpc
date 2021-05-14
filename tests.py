@@ -45,6 +45,8 @@ class TestException(Exception):
     def __init__(self, *args):
         super().__init__(*args)
 
+    # inherited __repr__ from OrderedDict is sufficient
+
 
 def verifyPaletteBlocks():
     """Check blockColours blocks."""
