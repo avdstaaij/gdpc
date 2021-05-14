@@ -13,6 +13,7 @@ __all__ = ['Interface', 'requestBuildArea', 'requestPlayerArea', 'runCommand',
 __version__ = "v4.2_dev"
 
 from collections import OrderedDict
+from random import choice
 
 import direct_interface as di
 import numpy as np
@@ -102,17 +103,40 @@ class Interface():
 
         return response
 
-    def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
+    def fill(self, x1, y1, z1, x2, y2, z2, replaceBlock):
         """**Fill the given region with the given block**.
 
-        Works with local coordinates.
+        Supports sequences of block strings for random texturing
+        Works with local coordinates
         """
         from toolbox import loop3d
-        xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
-        xhi, yhi, zhi = max(x1, x2), max(y1, y2), max(z1, z2)
+        textured = False
+        if type(replaceBlock) != str:
+            textured = True
 
-        for x, y, z in loop3d(xhi, yhi, zhi):
-            self.setBlock(xlo + x, ylo + y, zlo + z, blockStr)
+        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
+            if textured:
+                self.setBlock(x, y, z, choice(replaceBlock))
+            else:
+                self.setBlock(x1 + x, y1 + y, z1 + z, replaceBlock)
+
+    def replace(self, x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
+        """**Replace searchBlock with replaceBlock**.
+
+        Supports sequences of block strings for random texturing
+        Works with local coordinates
+        """
+        from toolbox import loop3d
+        textured = False
+        if type(replaceBlock) != str:
+            textured = True
+
+        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
+            if self.getBlock(x + x1, y + y1, z + z1) == searchBlock:
+                if textured:
+                    self.setBlock(x + x1, y + y1, z + z1, choice(replaceBlock))
+                else:
+                    self.setBlock(x + x1, y + y1, z + z1, replaceBlock)
 
     def setBlock(self, x, y, z, blockStr):
         """**Place a block in the world depending on buffer activation**.
@@ -244,8 +268,7 @@ def requestBuildArea():
     x1, _, z1, x2, _, z2 = globalBuildArea = di.requestBuildArea()
 
     if globalWorldSlice is not None:
-        global globalDecay
-        globalDecay = np.zeros((x2 - x1, 256, z2 - z1), dtype=bool)
+        resetGlobalDecay()
 
     return globalBuildArea
 
@@ -275,6 +298,7 @@ def makeGlobalSlice():
     global globalWorldSlice
     x1, y1, z1, x2, y2, z2 = requestBuildArea()
     globalWorldSlice = WorldSlice(x1, z1, x2, z2)
+    resetGlobalDecay()
 
 
 def isBuffering():
@@ -342,3 +366,9 @@ def checkOutOfBounds(x, y, z, warn=True):
                   f"the build area!{TCOLORS['CLR']}")
         return True
     return False
+
+
+def resetGlobalDecay():
+    global globalDecay
+    x1, _, z1, x2, _, z2 = globalBuildArea
+    globalDecay = np.zeros((x2 - x1, 256, z2 - z1), dtype=bool)
