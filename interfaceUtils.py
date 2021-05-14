@@ -55,6 +55,8 @@ class Interface():
                  buffering=False, bufferlimit=1024,
                  caching=False, cachelimit=8192):
         """**Initialise an interface with offset and buffering**."""
+        x1, y1, z1, x2, y2, z2 = requestBuildArea()
+
         self.offset = x, y, z
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
@@ -69,9 +71,11 @@ class Interface():
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
-        return f"Interface({*self.offset}" \
-            f", {self.__buffering}, {self.bufferlimit}" \
-            f", {self.caching}, {self.cache.maxsize})"
+        """**Represent the Interface as a constructor**."""
+        return "Interface(" \
+            f"{self.offset[0]}, {self.offset[1]}, {self.offset[2]}, " \
+            f"{self.__buffering}, {self.bufferlimit}, " \
+            f"{self.caching}, {self.cache.maxsize})"
 
     def getBlock(self, x, y, z):
         """**Return the name of a block in the world**."""
@@ -81,7 +85,9 @@ class Interface():
             return self.cache[(x, y, z)]
 
         if self.caching and globalWorldSlice is not None:
-            if not globalDecay[x][y][z]:
+            dx, dy, dz = global2buildlocal(x, y, z)  # convert for decay index
+            print(f"{x, y, z, dx, dy, dz}")
+            if not globalDecay[dx][dy][dz]:
                 block = globalWorldSlice.getBlockAt(x, y, z)
                 self.cache[(x, y, z)] = block
                 return block
@@ -112,7 +118,9 @@ class Interface():
             self.placeBlock(x, y, z, blockStr)
         if self.caching:
             self.cache[(x, y, z)] = blockStr
-        if globalDecay is not None and not globalDecay[x][y][z]:
+        # mark block as decayed
+        if globalDecay is not None:
+            x, y, z = global2buildlocal(*self.local2global(x, y, z))
             globalDecay[x][y][z] = True
 
     def placeBlock(self, x, y, z, blockStr):
@@ -228,6 +236,12 @@ def makeGlobalSlice():
     x1, y1, z1, x2, y2, z2 = requestBuildArea()
     globalWorldSlice = WorldSlice(x1, z1, x2, z2)
     globalDecay = np.zeros((x2 - x1, 255, z2 - z1), dtype=bool)
+
+
+def global2buildlocal(x, y, z):
+    """**Convert global coordinates to ones relative to the build area**."""
+    x0, y0, z0, _, _, _ = requestBuildArea()
+    return x - x0, y - y0, z - z0
 
 
 def isBuffering():

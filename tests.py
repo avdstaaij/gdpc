@@ -12,13 +12,14 @@ __all__ = []
 __version__ = "v4.2_dev"
 
 import random
+import time
 
 # import example
 import interfaceUtils
 # import bitarray
 import lookup
+import toolbox
 
-# import time
 # import timeit
 
 # import mapUtils
@@ -58,7 +59,7 @@ def verifyPaletteBlocks():
     badcounter = 0
     passed = []
     tocheck = [block for i in lookup.PALETTE.values()
-               for block in i] + list(lookup.TRANSPARENT)
+               for block in i] + list(lookup.MAPTRANSPARENT)
     print(f"\t{TCOLOURS['grey']}Preparing done.")
 
     for block in tocheck:
@@ -87,12 +88,6 @@ def verifyPaletteBlocks():
     print(f"{TCOLOURS['green']}All {counter} blocks successfully verified!")
 
 
-def xzloop(x, z):
-    for x2 in range(x):
-        for z2 in range(z):
-            yield x2, z2
-
-
 def testCache():
     """Check Interface cache functionality."""
     print(f"\n{TCOLOURS['yellow']}Running Interface cache test...")
@@ -111,7 +106,7 @@ def testCache():
         """Replace all removed blocks from memory."""
         print("\t\tReplacing blocks from memory...", end="\r")
         tester.caching = True
-        for x, z in xzloop(SIZE, SIZE):
+        for x, z in toolbox.loop2d(SIZE, SIZE):
             tester.setBlock(x, 1, z, tester.getBlock(x, 1, z))
         tester.sendBlocks()
         tester.caching = False
@@ -119,7 +114,7 @@ def testCache():
 
     def checkDiscrepancies():
         """Check test bed and comparison layer for discrepancies."""
-        for x, z in xzloop(SIZE, SIZE):
+        for x, z in toolbox.loop2d(SIZE, SIZE):
             print("\t\tTesting...▕" + (10 * x // SIZE) * "█"
                   + (10 - 10 * x // SIZE) * "▕", end="\r")
 
@@ -142,7 +137,8 @@ def testCache():
 
     # ---- preparation
     print(f"\t{TCOLOURS['grey']}Preparing...", end="\r")
-    tester = interfaceUtils.Interface(buffering=True, bufferlimit=SIZE ** 2)
+    tester = interfaceUtils.Interface(
+        100000, 0, 100000, buffering=True, bufferlimit=SIZE ** 2)
     tester.fill(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock")
     tester.fill(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air")
     tester.sendBlocks()
@@ -151,7 +147,7 @@ def testCache():
 
     # ---- test block scatter
     print("\tScattering test blocks...", end="\r")
-    for x, z in xzloop(SIZE, SIZE):
+    for x, z in toolbox.loop2d(SIZE, SIZE):
         print("\tPlacing pattern...▕" + (10 * x // SIZE) * "█"
               + (10 - 10 * x // SIZE) * "▕", end="\r")
         type = random.choice(PALETTES)
@@ -175,7 +171,7 @@ def testCache():
 
     tester.cache.clear
     tester.caching = True
-    for x, z in xzloop(SIZE, SIZE):
+    for x, z in toolbox.loop2d(SIZE, SIZE):
         print("\t\tReading...▕" + (10 * x // SIZE) * "█"
               + (10 - 10 * x // SIZE) * "▕", end="\r")
         tester.getBlock(x, 1, z)
@@ -230,7 +226,11 @@ def testCache():
     print("\t\tMuddling...▕██████████")
     print("\t\tMuddling complete.")
 
+    print("\t\tGenerating global slice...", end="\r")
+    d0 = time.perf_counter()
     interfaceUtils.makeGlobalSlice()
+    dt = time.perf_counter()
+    print(f"\t\tGenerated global slice in {(dt-d0):.2f} seconds.")
 
     clearTestbed()
     placeFromCache()

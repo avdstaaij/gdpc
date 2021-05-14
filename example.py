@@ -145,10 +145,10 @@ if __name__ == '__main__':
         # pick random rectangle to place new house
         houseSizeX = random.randrange(5, 25)
         houseSizeZ = random.randrange(5, 25)
-        houseX = random.randrange(
-            startx + houseSizeX + 1, endx - houseSizeX - 1)
-        houseZ = random.randrange(
-            startz + houseSizeZ + 1, endz - houseSizeZ - 1)
+        houseX = random.randrange(startx + houseSizeX + 1,
+                                  endx - houseSizeX - 1)
+        houseZ = random.randrange(startz + houseSizeZ + 1,
+                                  endz - houseSizeZ - 1)
         houseRect = (houseX, houseZ, houseSizeX, houseSizeZ)
 
         # check whether there are any overlaps
