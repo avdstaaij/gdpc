@@ -15,16 +15,16 @@ from interfaceUtils import runCommand
 
 def loop2d(dx, dz):
     """**Return all coordinates in a region of size dx, dz**."""
-    for x in range(dx):
-        for z in range(dz):
+    for x in range(dx + 1):
+        for z in range(dz + 1):
             yield x, z
 
 
 def loop3d(dx, dy, dz):
     """**Return all coordinates in a region of size dx, dy, dz**."""
-    for x in range(dx):
-        for y in range(dy):
-            for z in range(dz):
+    for x in range(dx + 1):
+        for y in range(dy + 1):
+            for z in range(dz + 1):
                 yield x, y, z
 
 

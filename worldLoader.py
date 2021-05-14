@@ -59,7 +59,7 @@ class WorldSlice:
         self.heightmaps = {}
         for hmName in self.heightmapTypes:
             self.heightmaps[hmName] = np.zeros(
-                (self.rect[2], self.rect[3]), dtype=np.int)
+                (self.rect[2] + 1, self.rect[3] + 1), dtype=int)
 
         # Sections are in x,z,y order!!! (reverse minecraft order :p)
         self.sections = [[[None for i in range(16)] for z in range(
@@ -119,7 +119,7 @@ class WorldSlice:
         """**Return block data**."""
         chunkX = (x >> 4) - self.chunkRect[0]
         chunkZ = (z >> 4) - self.chunkRect[1]
-        chunkY = y >> 4
+        chunkY = y - 1 >> 4
 
         cachedSection = self.sections[chunkX][chunkZ][chunkY]
 
@@ -137,7 +137,7 @@ class WorldSlice:
         """**Return the block's namespaced id at blockPos**."""
         blockCompound = self.getBlockCompoundAt(x, y, z)
         if blockCompound is None:
-            return "minecraft:air"
+            return "minecraft:void_air"
         else:
             return blockCompound["Name"].value
 
