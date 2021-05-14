@@ -194,6 +194,17 @@ def requestBuildArea():
     """**Return the building area**."""
     return di.requestBuildArea()
 
+
+def requestPlayerArea(dx=128, dz=128):
+    """**Return the building area surrounding the player**."""
+    # Correcting for offset from player position
+    dx -= 1
+    dz -= 1
+    runCommand("execute at @p run setbuildarea "
+               f"~{-dx//2} 0 ~{-dz//2} ~{dx//2} 255 ~{dz//2}")
+    return di.requestBuildArea()
+
+
 # ========================================================= global interface
 
 
