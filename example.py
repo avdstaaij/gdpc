@@ -96,7 +96,7 @@ def rectanglesOverlap(r1, r2):
 if __name__ == '__main__':
 
     print(f"Build area is at position {startx}, {startz}"
-          f" with size {endx}, {endz}")
+          f" with size {endx-startx+1}, {endz-startz+1}")
 
     # load the world data
     # this uses the /chunks endpoint in the background

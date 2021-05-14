@@ -25,6 +25,11 @@ class CachedSection:
         self.palette = palette
         self.blockStatesBitArray = blockStatesBitArray
 
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        return f"CachedSection({repr(self.palette)}, " \
+            f"{repr(self.blockStatesBitArray)})"
+
 
 class WorldSlice:
     """**Contains information on a slice of the world**."""
@@ -103,7 +108,12 @@ class WorldSlice:
                     self.sections[x][z][y] = CachedSection(
                         palette, blockStatesBitArray)
 
-        print("done")
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        """**Represent the WorldSlice as a constructor**."""
+        x1, z1 = self.rect[:2]
+        x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
+        return f"WorldSlice{(x1, z1, x2, z2)}"
 
     def getBlockCompoundAt(self, x, y, z):
         """**Return block data**."""

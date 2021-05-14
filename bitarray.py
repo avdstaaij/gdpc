@@ -40,9 +40,10 @@ class BitArray:
         else:
             self.longArray = []  # length j
 
+    # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
-        """**Represent the stored data**."""
-        return str(self.longArray)
+        """**Represent the BitArray as a constructor**."""
+        return f"BitArray{(self.bitsPerEntry, self.arraySize, self.longArray)}"
 
     def getPosOfLong(self, index):
         """**Return the position of the long that contains index**."""
