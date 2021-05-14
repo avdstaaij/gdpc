@@ -26,21 +26,6 @@ import toolbox
 # import visualizeMap
 # import worldLoader
 
-TCOLOURS = {"black":    "\033[38;2;000;000;000m",
-            "grey":     "\033[38;2;128;128;128m",
-            "white":    "\033[38;2;255;255;255m",
-            "pink":     "\033[38;2;255;192;203m",
-            "red":      "\033[38;2;255;000;000m",
-            "orange":   "\033[38;2;255;165;000m",
-            "yellow":   "\033[38;2;255;255;000m",
-            "darkgreen": "\033[38;2;000;128;000m",
-            "green":    "\033[38;2;000;255;000m",
-            "blue":     "\033[38;2;135;206;235m",
-            "darkblue": "\033[38;2;000;000;255m",
-            "magenta":  "\033[38;2;255;000;255m",
-            "brown":    "\033[38;2;139;069;019m",
-            "CLR":      "\033[0m"}  # 38 is replaced by 48 for background
-
 
 class TestException(Exception):
     def __init__(self, *args):
@@ -51,46 +36,48 @@ class TestException(Exception):
 
 def verifyPaletteBlocks():
     """Check blockColours blocks."""
-    print(f"\n{TCOLOURS['yellow']}Running blockColours palette test...")
+    print(f"\n{lookup.TCOLORS['yellow']}Running blockColours palette test...")
 
-    print(f"\t{TCOLOURS['grey']}Preparing...", end="\r")
+    print(f"\t{lookup.TCOLORS['grey']}Preparing...", end="\r")
     tester = interfaceUtils.Interface()
     counter = 0
     badcounter = 0
     passed = []
     tocheck = [block for i in lookup.PALETTE.values()
                for block in i] + list(lookup.MAPTRANSPARENT)
-    print(f"\t{TCOLOURS['grey']}Preparing done.")
+    print(f"\t{lookup.TCOLORS['grey']}Preparing done.")
 
     for block in tocheck:
         if block in passed:
             badcounter += 1
             print()
-            print(f"\t\t{TCOLOURS['grey']}{block} is duplicated")
+            print(f"\t\t{lookup.TCOLORS['grey']}{block} is duplicated")
         elif not tester.placeBlock(0, 0, 0, block).isnumeric():
             badcounter += 1
             print()
             print(tester.placeBlock(0, 0, 0, block))
-            print(f"\t\t{TCOLOURS['orange']}Cannot verify {block}")
+            print(f"\t\t{lookup.TCOLORS['orange']}Cannot verify {block}")
         counter += 1
         passed.append(block)
-        print(f"\t{TCOLOURS['blue']}{counter}"
-              f"{TCOLOURS['CLR']} blocks verified.", end='\r')
-    interfaceUtils.setBlock(0, 0, 0, 'air')
+        print(f"\t{lookup.TCOLORS['blue']}{counter}"
+              f"{lookup.TCOLORS['CLR']} blocks verified.", end='\r')
+    tester.placeBlock(0, 0, 0, 'air')
     if badcounter > 0:
-        raise TestException(f"{TCOLOURS['red']}{badcounter}/"
-                            f"{TCOLOURS['grey']}{counter}"
-                            f"{TCOLOURS['red']} blocks duplicate "
+        raise TestException(f"{lookup.TCOLORS['red']}{badcounter}/"
+                            f"{lookup.TCOLORS['grey']}{counter}"
+                            f"{lookup.TCOLORS['red']} blocks duplicate "
                             "or could not be verified.\n"
-                            f"{TCOLOURS['orange']}Please check you are running"
+                            f"{lookup.TCOLORS['orange']}"
+                            "Please check you are running"
                             f" on Minecraft {lookup.VERSION}")
 
-    print(f"{TCOLOURS['green']}All {counter} blocks successfully verified!")
+    print(f"{lookup.TCOLORS['green']}"
+          f"All {counter} blocks successfully verified!")
 
 
 def testCache():
     """Check Interface cache functionality."""
-    print(f"\n{TCOLOURS['yellow']}Running Interface cache test...")
+    print(f"\n{lookup.TCOLORS['yellow']}Running Interface cache test...")
     SIZE = 16
     PALETTES = (("birch_fence", "stripped_birch_log"),
                 ("dark_oak_fence", "stripped_dark_oak_log"))
@@ -121,24 +108,23 @@ def testCache():
             for palette in PALETTES:
                 if tester.getBlock(x, 1, z) == "minecraft:shroomlight":
                     raise TestException(
-                        f"{TCOLOURS['red']}Block at "
-                        f"{TCOLOURS['orange']}{x} 0 {z} "
-                        f"{TCOLOURS['red']}was no longer in memory.")
+                        f"{lookup.TCOLORS['red']}Block at "
+                        f"{lookup.TCOLORS['orange']}{x} 0 {z} "
+                        f"{lookup.TCOLORS['red']}was no longer in memory.")
                 if tester.getBlock(x, 0, z) == palette[0]:
                     if tester.getBlock(x, 1, z) == palette[1]:
                         continue
                     else:
                         raise TestException(
-                            f"{TCOLOURS['red']}Cache test failed at "
-                            f"{TCOLOURS['orange']}{x} 0 {z}"
-                            f"{TCOLOURS['red']}.")
+                            f"{lookup.TCOLORS['red']}Cache test failed at "
+                            f"{lookup.TCOLORS['orange']}{x} 0 {z}"
+                            f"{lookup.TCOLORS['red']}.")
         print("\t\tTesting...▕██████████")
-        print(f"\t{TCOLOURS['darkgreen']}No discrepancies found.")
+        print(f"\t{lookup.TCOLORS['darkgreen']}No discrepancies found.")
 
     # ---- preparation
-    print(f"\t{TCOLOURS['grey']}Preparing...", end="\r")
-    tester = interfaceUtils.Interface(
-        100000, 0, 100000, buffering=True, bufferlimit=SIZE ** 2)
+    print(f"\t{lookup.TCOLORS['grey']}Preparing...", end="\r")
+    tester = interfaceUtils.Interface(buffering=True, bufferlimit=SIZE ** 2)
     tester.fill(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock")
     tester.fill(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air")
     tester.sendBlocks()
@@ -160,14 +146,14 @@ def testCache():
     print("\tScattering test blocks done.")
 
     # ---- first run (caching through setBlock)
-    print(f"\t{TCOLOURS['grey']}First run: Cache updated via setBlock")
+    print(f"\t{lookup.TCOLORS['grey']}First run: Cache updated via setBlock")
 
     clearTestbed()
     placeFromCache()
     checkDiscrepancies()
 
     # ---- second run (caching through getBlock)
-    print(f"\t{TCOLOURS['grey']}Second run: Cache updated via getBlock")
+    print(f"\t{lookup.TCOLORS['grey']}Second run: Cache updated via getBlock")
 
     tester.cache.clear
     tester.caching = True
@@ -184,7 +170,8 @@ def testCache():
     checkDiscrepancies()
 
     # ---- third run (randomized get-/setBlock)
-    print(f"\t{TCOLOURS['grey']}Third run: Cache updated via random methods")
+    print(f"\t{lookup.TCOLORS['grey']}Third run: "
+          "Cache updated via random methods")
     for i in range(4 * SIZE):
         print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
               + (10 - 10 * i // SIZE) * "▕", end="\r")
@@ -209,8 +196,8 @@ def testCache():
     checkDiscrepancies()
 
     # ---- fourth run (using WorldSlice)
-
-    print(f"\t{TCOLOURS['grey']}Fourth run: Cache updated via WorldSlice")
+    print(f"\t{lookup.TCOLORS['grey']}Fourth run: "
+          "Cache updated via WorldSlice")
     for i in range(4 * SIZE):
         print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
               + (10 - 10 * i // SIZE) * "▕", end="\r")
@@ -237,7 +224,7 @@ def testCache():
     checkDiscrepancies()
 
     # ---- cleanup
-    print(f"{TCOLOURS['green']}Cache test complete!")
+    print(f"{lookup.TCOLORS['green']}Cache test complete!")
     tester.fill(0, 0, 0, SIZE, 1, SIZE, "bedrock")
     interfaceUtils.globalWorldSlice = None
     interfaceUtils.globalDecay = None
@@ -247,18 +234,19 @@ if __name__ == '__main__':
     TESTS = (verifyPaletteBlocks, testCache)
 
     print(f"Beginning test suite for version "
-          f"{TCOLOURS['blue']}{__version__}: {len(TESTS)} tests")
+          f"{lookup.TCOLORS['blue']}{__version__}: {len(TESTS)} tests")
+    interfaceUtils.setBuildArea(0, 0, 0, 255, 255, 255)
     failed = 0
     errors = ""
     for test in TESTS:
         try:
             test()
         except TestException as e:
-            errors += f"{TCOLOURS['red']}> {test.__name__}() failed.\n" \
-                + f"{TCOLOURS['grey']}Cause: {e}\n"
+            errors += f"{lookup.TCOLORS['red']}> {test.__name__}() failed.\n" \
+                + f"{lookup.TCOLORS['grey']}Cause: {e}\n"
             failed += 1
-    print(f"\n{TCOLOURS['CLR']}Test suite completed with "
-          f"{TCOLOURS['orange']}{failed}"
-          f"{TCOLOURS['CLR']} fails!\n")
+    print(f"\n{lookup.TCOLORS['CLR']}Test suite completed with "
+          f"{lookup.TCOLORS['orange']}{failed}"
+          f"{lookup.TCOLORS['CLR']} fails!\n")
     if errors != "":
-        print(f"==== Summary ====\n{errors}{TCOLOURS['CLR']}")
+        print(f"==== Summary ====\n{errors}{lookup.TCOLORS['CLR']}")

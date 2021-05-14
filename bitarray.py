@@ -8,7 +8,7 @@ from math import floor
 
 def inclusiveBetween(start, end, value):
     """**Raise an exception when the value is out of bounds**."""
-    if start > value > end:
+    if not (start <= value <= end):
         raise ValueError(
             f"The value {value} is not in the inclusive range "
             f"of {start} to {end}")

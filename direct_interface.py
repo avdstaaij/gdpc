@@ -30,7 +30,7 @@ def setBlock(x, y, z, blockStr, flags='0100011'):
     return response.text
 
 
-def sendBlocks(blockList, x=0, y=0, z=0, flags='0100011', retries=5):
+def sendBlocks(blockList, x=0, y=0, z=0, retries=5, flags='0100011'):
     """**Take a list of blocks and place them into the world in one go**."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:
