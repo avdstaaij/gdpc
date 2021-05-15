@@ -131,6 +131,7 @@ def testBooks():
             raise TestException(f"Book criteria #{no} was failed:\n"
                                 f"\t{prompt}: {reply}")
     print(f"{lookup.TCOLORS['green']}Book test complete!")
+    interfaceUtils.globalinterface.placeBlock(0, 255, 0, "air")
 
 
 def testCache():

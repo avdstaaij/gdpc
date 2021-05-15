@@ -21,61 +21,6 @@ __version__ = "v4.2_dev"
 
 VERSION = "1.16.x"
 
-# ========================================================= technical values
-
-# the width of ASCII characters in pixels
-# space between characters is 1
-# the widest supported Unicode character is 9 wide
-ASCIIPIXELS = {'A': 5, 'a': 5,
-               'B': 5, 'b': 5,
-               'C': 5, 'c': 5,
-               'D': 5, 'd': 5,
-               'E': 5, 'e': 5,
-               'F': 5, 'f': 4,
-               'G': 5, 'g': 5,
-               'H': 5, 'h': 5,
-               'I': 3, 'i': 1,
-               'J': 5, 'j': 5,
-               'K': 5, 'k': 4,
-               'L': 5, 'l': 2,
-               'M': 5, 'm': 5,
-               'N': 5, 'n': 5,
-               'O': 5, 'o': 5,
-               'P': 5, 'p': 5,
-               'Q': 5, 'q': 5,
-               'R': 5, 'r': 5,
-               'S': 5, 's': 5,
-               'T': 5, 't': 3,
-               'U': 5, 'u': 5,
-               'V': 5, 'v': 5,
-               'W': 5, 'w': 5,
-               'X': 5, 'x': 5,
-               'Y': 5, 'y': 5,
-               'Z': 5, 'z': 5,
-               '1': 5, '2': 5, '3': 5, '4': 5, '5': 5,
-               '6': 5, '7': 5, '8': 5, '9': 5, '0': 5,
-               ' ': 3, '!': 1, '@': 6, '#': 5, '$': 5, '£': 5, '%': 5, '^': 5,
-               '&': 5, '*': 3, '(': 3, ')': 3, '_': 5, '-': 5, '+': 5, '=': 5,
-               '~': 6, '[': 3, ']': 3, '{': 3, '}': 3, '|': 1, '\\': 5, ':': 1,
-               ';': 1, '"': 3, "'": 1, ',': 1, '<': 4, '>': 4, '.': 1, '?': 5,
-               '/': 5, '`': 2}
-
-# terminal colour codes
-TCOLORS = {"black":    "\033[38;2;000;000;000m",
-           "grey":     "\033[38;2;128;128;128m",
-           "white":    "\033[38;2;255;255;255m",
-           "pink":     "\033[38;2;255;192;203m",
-           "red":      "\033[38;2;255;000;000m",
-           "orange":   "\033[38;2;255;165;000m",
-           "yellow":   "\033[38;2;255;255;000m",
-           "darkgreen": "\033[38;2;000;128;000m",
-           "green":    "\033[38;2;000;255;000m",
-           "blue":     "\033[38;2;135;206;235m",
-           "darkblue": "\033[38;2;000;000;255m",
-           "magenta":  "\033[38;2;255;000;255m",
-           "brown":    "\033[38;2;139;069;019m",
-           "CLR":      "\033[0m"}  # 38 is replaced by 48 for background
-
 # ========================================================= custom values
 
 DIRECTIONS = ('north', 'east', 'south', 'west')
@@ -200,6 +145,7 @@ BEDS = ('minecraft:white_bed', 'minecraft:orange_bed', 'minecraft:magenta_bed',
         'minecraft:light_gray_bed', 'minecraft:cyan_bed',
         'minecraft:purple_bed', 'minecraft:blue_bed', 'minecraft:brown_bed',
         'minecraft:green_bed', 'minecraft:red_bed', 'minecraft:black_bed')
+FURNACES = ('minecraft:furnace', 'minecraft:smoker', 'minecraft:blast_furnace')
 SHULKERBOXES = ('minecraft:shulker_box', 'minecraft:white_shulker_box',
                 'minecraft:orange_shulker_box',
                 'minecraft:magenta_shulker_box',
@@ -320,7 +266,8 @@ UNOBTRUSIVE = ('minecraft:ladder',
                'minecraft:chain',
                'minecraft:conduit',
                'minecraft:lily_pad',
-               'minecraft:scaffolding') \
+               'minecraft:scaffolding',
+               'minecraft:snow') \
     + GLASS + RAILS + WIRING + BUTTONS + TORCHES + SIGNS
 
 # can be seen through moderately
@@ -842,6 +789,10 @@ PALETTE = {0x7fb238: ('minecraft:grass_block', 'minecraft:slime_block'),
            0x562c3e: ('minecraft:warped_hyphae',
                       'minecraft:stripped_warped_hyphae'),
            0x14b485: ('minecraft:warped_wart_block', )}
+PALETTELOOKUP = {}
+for hex, blocks in PALETTE.items():
+    for block in blocks:
+        PALETTELOOKUP[block] = hex
 
 
 # ========================================================= biome-related
@@ -926,3 +877,68 @@ BIOMES = {0: "ocean",
           172: "warped_forest",
           173: "basalt_deltas"
           }
+
+# ========================================================= technical values
+
+# the width of ASCII characters in pixels
+# space between characters is 1
+# the widest supported Unicode character is 9 wide
+ASCIIPIXELS = {'A': 5, 'a': 5,
+               'B': 5, 'b': 5,
+               'C': 5, 'c': 5,
+               'D': 5, 'd': 5,
+               'E': 5, 'e': 5,
+               'F': 5, 'f': 4,
+               'G': 5, 'g': 5,
+               'H': 5, 'h': 5,
+               'I': 3, 'i': 1,
+               'J': 5, 'j': 5,
+               'K': 5, 'k': 4,
+               'L': 5, 'l': 2,
+               'M': 5, 'm': 5,
+               'N': 5, 'n': 5,
+               'O': 5, 'o': 5,
+               'P': 5, 'p': 5,
+               'Q': 5, 'q': 5,
+               'R': 5, 'r': 5,
+               'S': 5, 's': 5,
+               'T': 5, 't': 3,
+               'U': 5, 'u': 5,
+               'V': 5, 'v': 5,
+               'W': 5, 'w': 5,
+               'X': 5, 'x': 5,
+               'Y': 5, 'y': 5,
+               'Z': 5, 'z': 5,
+               '1': 5, '2': 5, '3': 5, '4': 5, '5': 5,
+               '6': 5, '7': 5, '8': 5, '9': 5, '0': 5,
+               ' ': 3, '!': 1, '@': 6, '#': 5, '$': 5, '£': 5, '%': 5, '^': 5,
+               '&': 5, '*': 3, '(': 3, ')': 3, '_': 5, '-': 5, '+': 5, '=': 5,
+               '~': 6, '[': 3, ']': 3, '{': 3, '}': 3, '|': 1, '\\': 5, ':': 1,
+               ';': 1, '"': 3, "'": 1, ',': 1, '<': 4, '>': 4, '.': 1, '?': 5,
+               '/': 5, '`': 2}
+
+# terminal colour codes
+TCOLORS = {"black":    "\033[38;2;000;000;000m",
+           "grey":     "\033[38;2;128;128;128m",
+           "white":    "\033[38;2;255;255;255m",
+           "pink":     "\033[38;2;255;192;203m",
+           "red":      "\033[38;2;255;000;000m",
+           "orange":   "\033[38;2;255;165;000m",
+           "yellow":   "\033[38;2;255;255;000m",
+           "darkgreen": "\033[38;2;000;128;000m",
+           "green":    "\033[38;2;000;255;000m",
+           "blue":     "\033[38;2;135;206;235m",
+           "darkblue": "\033[38;2;000;000;255m",
+           "magenta":  "\033[38;2;255;000;255m",
+           "brown":    "\033[38;2;139;069;019m",
+           "CLR":      "\033[0m"}  # 38 is replaced by 48 for background
+
+INVENTORYDIMENSIONS = {(9, 3): ('minecraft:barrel', 'minecraft:chest',
+                                'minecraft:trapped_chest') + SHULKERBOXES,
+                       (3, 3): ('minecraft:dispenser', 'minecraft:dropper'),
+                       (5, 1): ('minecraft:hopper', 'minecraft:brewing_stand'),
+                       (3, 1): FURNACES}
+INVENTORYLOOKUP = {}
+for dimensions, blocks in INVENTORYDIMENSIONS.items():
+    for block in blocks:
+        INVENTORYLOOKUP[block] = dimensions

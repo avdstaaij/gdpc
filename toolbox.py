@@ -30,6 +30,14 @@ def loop3d(dx, dy, dz):
                 yield x, y, z
 
 
+def index2slot(sx, sy, ox, oy):
+    """**Return slot number of an inventory correlating to a 2d index**."""
+    print((sx, sy, ox, oy))
+    if not (0 <= sx < ox and 0 <= sy < oy):
+        raise ValueError(f"{sx, sy} is not within (0, 0) and {ox, oy}!")
+    return sx + sy * ox
+
+
 def writeBook(text, title="Chronicle", author=__author__,
               description="I wonder what's inside?", desccolor='gold'):
     r"""**Return NBT data for a correctly formatted book**.
@@ -62,7 +70,7 @@ def writeBook(text, title="Chronicle", author=__author__,
     - `§o`: *Italic* text
     - `§r`: Reset text formatting
 
-    - `\\s`: When at start of page, print page as string directly
+    - `\\\\s`: When at start of page, print page as string directly
     - `\\c`: When at start of line, align text to center
     - `\\r`: When at start of line, align text to right side
 
@@ -222,7 +230,41 @@ def placeLectern(x, y, z, bookData, facing=None):
     response = runCommand(command)
     if not response.isnumeric():
         print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
-              f"upon placing block:\n\t{lookup.TCOLORS['CLR']}{response}")
+              f"upon placing book in lectern:\n\t{lookup.TCOLORS['CLR']}"
+              f"{response}")
+
+
+def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
+                        items=[]):
+    """**Place an invetorized block with any number of items in the world**.
+
+    Items is expected to be a sequence of (x, y, item[, amount])
+        or a sequence of such sequences e.g. ((x, y, item), (x, y, item), ...)
+    """
+    if block not in lookup.INVENTORYLOOKUP:
+        raise ValueError(f"The inventory for {block} is not available.\n"
+                         "Make sure you are using the namespaced ID.")
+    dx, dy = lookup.INVENTORYLOOKUP[block]
+    if facing is None:
+        facing = choice(getOptimalDirection(x, y, z))
+    gi.placeBlock(x, y, z, f"{block}[facing={facing}]")
+
+    # we received a single item
+    if 3 <= len(items) <= 4 and type(items[0]) == int:
+        items = [items, ]
+
+    response = '0'
+    for item in items:
+        slot = index2slot(item[0], item[1], dx, dy)
+        if len(item) == 3:
+            item = list(item)
+            item.append(1)
+        response = runCommand(f"replaceitem block {x} {y} {z} "
+                              f"container.{slot} {item[2]} {item[3]}")
+
+    if not response.isnumeric():
+        print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
+              f"upon placing items:\n\t{lookup.TCOLORS['CLR']}{response}")
 
 
 def placeSign(x, y, z, facing=None, rotation=None,
