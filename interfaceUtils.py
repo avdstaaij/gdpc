@@ -28,7 +28,7 @@ class OrderedByLookupDict(OrderedDict):
     https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
     """
 
-    def __init__(self, maxsize=128, /, *args, **kwds):
+    def __init__(self, maxsize, *args, **kwds):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
 

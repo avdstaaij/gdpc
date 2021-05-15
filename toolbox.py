@@ -85,7 +85,7 @@ def writeBook(text, title="Chronicle", author=__author__,
     pixels_left = PIXELS = 113          # per line
     toprint = ''
 
-    @lru_cache
+    @lru_cache()
     def fontwidth(word):
         """**Return the length of a word based on character width**.
 
