@@ -155,14 +155,14 @@ class WorldSlice:
         index = x + 4 * z + 16 * y
         return(BIOMES[data[index]])
 
-    def getBiomesAt(self, x, y, z):
+    def getBiomesNear(self, x, y, z):
         """**Return a list of biomes in the same chunk**."""
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         # "sorted(list(set(data)))" is used to remove duplicates from data
         return [BIOMES[i] for i in sorted(list(set(data)))]
 
-    def getPrimaryBiomeAt(self, x, y, z):
+    def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']

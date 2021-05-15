@@ -9,6 +9,7 @@ This module contains functions to:
 """
 __all__ = ['Interface', 'requestBuildArea', 'requestPlayerArea', 'runCommand',
            'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
+           'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
            'getBlock', 'fill', 'setBlock', 'sendBlocks']
 __version__ = "v4.2_dev"
 
@@ -43,7 +44,7 @@ class OrderedByLookupDict(OrderedDict):
         if key in self:
             self.move_to_end(key)
         super().__setitem__(key, value)
-        if self.maxsize != -1 and len(self) > self.maxsize:
+        if self.maxsize > 0 and len(self) > self.maxsize:
             oldest = next(iter(self))
             del self[oldest]
 
@@ -194,6 +195,22 @@ class Interface():
         """**Set self.bufferlimit**."""
         self.bufferlimit = value
 
+    def isCaching(self):
+        """**Get self.caching**."""
+        return self.caching
+
+    def setCaching(self, value=False):
+        """**Set self.caching**."""
+        self.caching = value
+
+    def getCacheLimit(self):
+        """**Get maximum cache size**."""
+        return self.cache.maxsize
+
+    def setCacheLimit(self, value=8192):
+        """**Set maximum cache size**."""
+        self.cache.maxsize = value
+
     def placeBlockBatched(self, x, y, z, blockStr, limit=50):
         """**Place a block in the buffer and send once limit is exceeded**.
 
@@ -300,26 +317,6 @@ def makeGlobalSlice():
     resetGlobalDecay()
 
 
-def isBuffering():
-    """**Global isBuffering**."""
-    return globalinterface.isBuffering()
-
-
-def setBuffering(val):
-    """**Global setBuffering**."""
-    globalinterface.setBuffering(val)
-
-
-def getBufferLimit():
-    """**Global getBufferLimit**."""
-    return globalinterface.getBufferLimit()
-
-
-def setBufferLimit(val):
-    """**Global setBufferLimit**."""
-    globalinterface.setBufferLimit(val)
-
-
 def getBlock(x, y, z):
     """**Global getBlock**."""
     return globalinterface.getBlock(x, y, z)
@@ -343,9 +340,44 @@ def setBlock(x, y, z, blockStr):
 # ----------------------------------------------------- block buffers
 
 
-def toggleBuffer():
-    """**Global toggleBuffer**."""
-    return globalinterface.toggleBuffer()
+def isCaching():
+    """**Global isCaching**."""
+    return globalinterface.caching
+
+
+def setCaching(value=False):
+    """**Global setCaching**."""
+    globalinterface.caching = value
+
+
+def getCacheLimit():
+    """**Global getCacheLimit**."""
+    return globalinterface.cache.maxsize
+
+
+def setCacheLimit(value=8192):
+    """**Global setCacheLimit**."""
+    globalinterface.cache.maxsize = value
+
+
+def isBuffering():
+    """**Global isBuffering**."""
+    return globalinterface.isBuffering()
+
+
+def setBuffering(val):
+    """**Global setBuffering**."""
+    globalinterface.setBuffering(val)
+
+
+def getBufferLimit():
+    """**Global getBufferLimit**."""
+    return globalinterface.getBufferLimit()
+
+
+def setBufferLimit(val):
+    """**Global setBufferLimit**."""
+    globalinterface.setBufferLimit(val)
 
 
 def sendBlocks(x=0, y=0, z=0, retries=5):

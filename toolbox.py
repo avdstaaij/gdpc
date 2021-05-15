@@ -16,19 +16,30 @@ from interfaceUtils import globalinterface as gi
 from interfaceUtils import runCommand
 
 
-def loop2d(dx, dz):
-    """**Return all coordinates in a region of size dx, dz**."""
-    for x in range(dx + 1):
-        for z in range(dz + 1):
-            yield x, z
+def loop2d(x1, y1, x2=None, y2=None):
+    """**Return all coordinates in a 2D region**.
+
+    If only one pair is provided, the loop will yield x1*z1 values
+    If two pairs are provided the loop will yield all results between them
+        inclusively
+    """
+    if x2 is None or y2 is None:
+        x1, y1, x2, y2 = 0, 0, x1, y1
+    for x in range(x1, x2 + 1):
+        for y in range(y1, y2 + 1):
+            yield x, y
 
 
-def loop3d(dx, dy, dz):
-    """**Return all coordinates in a region of size dx, dy, dz**."""
-    for x in range(dx + 1):
-        for y in range(dy + 1):
-            for z in range(dz + 1):
-                yield x, y, z
+def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
+    """**Return all coordinates in a region of size dx, dy, dz**.
+
+    Behaves like loop2d
+    """
+    if x2 is None or y2 is None or z2 is None:
+        x1, y1, z1, x2, y2, z2 = 0, 0, 0, x1, y1, z1
+    for x, y in loop2d(x1, y1, x2, y2):
+        for z in range(z1, z2 + 1):
+            yield x, y, z
 
 
 def index2slot(sx, sy, ox, oy):
