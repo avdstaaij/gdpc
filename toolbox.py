@@ -1,7 +1,8 @@
 #! /usr/bin/python3
 """### Provides various small functions for the average workflow."""
 
-__all__ = []
+__all__ = ['loop2d', 'loop3d', 'writeBook', 'placeLectern',
+           'placeInventoryBlock', 'placeSign', 'getOptimalDirection']
 __version__ = 'v4.2_dev'
 __year__ = '2021'
 __author__ = 'Blinkenlights'

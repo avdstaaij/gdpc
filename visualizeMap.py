@@ -1,7 +1,7 @@
 # ! /usr/bin/python3
 """### Displays a map of the build area."""
 __all__ = ['WorldSlice']
-# __version__
+__version__ = 'v4.2_dev'
 
 import cv2
 import interfaceUtils

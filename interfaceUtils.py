@@ -91,7 +91,6 @@ class Interface():
 
         if self.caching and globalWorldSlice is not None:
             dx, dy, dz = global2buildlocal(x, y, z)  # convert for decay index
-            print(f"{x, y, z, dx, dy, dz}")
             if not checkOutOfBounds(x, y, z) and not globalDecay[dx][dy][dz]:
                 block = globalWorldSlice.getBlockAt(x, y, z)
                 self.cache[(x, y, z)] = block
@@ -326,9 +325,15 @@ def getBlock(x, y, z):
     return globalinterface.getBlock(x, y, z)
 
 
-def fill(x1, y1, z1, x2, y2, z2, blockStr):
+def fill(x1, y1, z1, x2, y2, z2, replaceBlock):
     """**Global fill**."""
-    return globalinterface.fill(x1, y1, z1, x2, y2, z2, blockStr)
+    return globalinterface.fill(x1, y1, z1, x2, y2, z2, replaceBlock)
+
+
+def replace(x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
+    """**Global replace**."""
+    return globalinterface.replace(x1, y1, z1, x2, y2, z2,
+                                   searchBlock, replaceBlock)
 
 
 def setBlock(x, y, z, blockStr):

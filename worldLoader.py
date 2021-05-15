@@ -6,7 +6,7 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
-# __version__
+__version__ = 'v4.2_dev'
 
 from io import BytesIO
 from math import ceil, log2
@@ -102,11 +102,11 @@ class WorldSlice:
                     palette = section['Palette']
                     rawBlockStates = section['BlockStates']
                     bitsPerEntry = max(4, ceil(log2(len(palette))))
-                    blockStatesBitArray = BitArray(
-                        bitsPerEntry, 16 * 16 * 16, rawBlockStates)
+                    blockStatesBitArray = BitArray(bitsPerEntry, 16 * 16 * 16,
+                                                   rawBlockStates)
 
-                    self.sections[x][z][y] = CachedSection(
-                        palette, blockStatesBitArray)
+                    self.sections[x][z][y] = CachedSection(palette,
+                                                           blockStatesBitArray)
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
