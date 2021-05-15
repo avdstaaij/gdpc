@@ -169,7 +169,7 @@ class Interface():
         result = di.setBlock(x, y, z, blockStr)
         if not result.isnumeric():
             print(f"{TCOLORS['orange']}Warning: Server returned error "
-                  f"upon placing block:\n\t{TCOLORS['CLR'], result}")
+                  f"upon placing block:\n\t{TCOLORS['CLR']}{result}")
         return result
 
     # ----------------------------------------------------- block buffers

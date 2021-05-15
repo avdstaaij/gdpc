@@ -75,8 +75,66 @@ def verifyPaletteBlocks():
           f"All {counter} blocks successfully verified!")
 
 
+def testBooks():
+    """**Check book creation and storage**."""
+    print(f"\n{lookup.TCOLORS['yellow']}Running book test...")
+    TITLE = 'Testonomicon'
+    AUTHOR = 'Dr. Blinkenlights'
+    DESCRIPTION = 'All is doomed that enters here.'
+    DESCRIPTIONCOLOR = 'aqua'
+
+    CRITERIA = ('Lectern is at 0 255 0 and displays correctly?',
+                'Lectern is facing east?', 'Book is legible?',
+                'Book contents is correct?', 'Final page is displayed?')
+
+    text = ('New line:\n'
+            'Automatic sentence line breaking\n'
+            'Automatic_word_line_breaking\n'
+            '\\cCenter-aligned\n'
+            '\\rRight-aligned\n'
+            'New page:\f'
+            '§6gold text§r\n'
+            '§k█§r < obfuscated text§r\n'
+            '§lbold§r text§r\n'
+            '§mstriked§r text§r\n'
+            '§nunderlined§r text§r\n'
+            '§oitalic§r text§r\n'
+            '\f\\\\s╔══════════╗\\\\n'
+            '║                      `║\\\\n'
+            '║                      `║\\\\n'
+            '║:   Preformatted  :║\\\\n'
+            '║         Page       `║\\\\n'
+            '║                      `║\\\\n'
+            '║                      `║\\\\n'
+            '║        ☞⛏☜       .║\\\\n'
+            '║                      `║\\\\n'
+            '║                      `║\\\\n'
+            '║                      `║\\\\n'
+            '║                      `║\\\\n'
+            '║                      `║\\\\n'
+            '╚══════════╝')
+
+    print(f"\t{lookup.TCOLORS['grey']}Writing book...", end="\r")
+    book = toolbox.writeBook(text, TITLE, AUTHOR,
+                             DESCRIPTION, DESCRIPTIONCOLOR)
+    print("\tWriting book done.")
+
+    print("\tPlacing lectern...", end="\r")
+    toolbox.placeLectern(0, 255, 0, book, 'east')
+    print("\tPlacing lectern done.")
+
+    print("\tPrompting user...", end="\r")
+    for no, prompt in enumerate(CRITERIA):
+        reply = input(f"\t{lookup.TCOLORS['blue']}{no}/{len(CRITERIA)} "
+                      f"{prompt} (y/*): {lookup.TCOLORS['CLR']}")
+        if reply == '' or reply[0].lower() != 'y':
+            raise TestException(f"Book criteria #{no} was failed:\n"
+                                f"\t{prompt}: {reply}")
+    print(f"{lookup.TCOLORS['green']}Book test complete!")
+
+
 def testCache():
-    """Check Interface cache functionality."""
+    """**Check Interface cache functionality**."""
     print(f"\n{lookup.TCOLORS['yellow']}Running Interface cache test...")
     SIZE = 16
     PALETTES = (("birch_fence", "stripped_birch_log"),
@@ -231,7 +289,7 @@ def testCache():
 
 
 if __name__ == '__main__':
-    TESTS = (verifyPaletteBlocks, testCache)
+    TESTS = (verifyPaletteBlocks, testBooks, testCache)
 
     print(f"Beginning test suite for version "
           f"{lookup.TCOLORS['blue']}{__version__}: {len(TESTS)} tests")
