@@ -12,6 +12,7 @@ __all__ = []
 __version__ = "v4.2_dev"
 
 import random
+import sys
 import time
 
 # import example
@@ -290,14 +291,22 @@ def testCache():
 
 
 if __name__ == '__main__':
-    TESTS = (verifyPaletteBlocks, testBooks, testCache)
+    AUTOTESTS = (verifyPaletteBlocks, testCache)
+    MANUALTESTS = (testBooks, )
+    tests = AUTOTESTS + MANUALTESTS
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == '--manual':
+            tests = MANUALTESTS
+    else:
+        tests = AUTOTESTS
 
     print(f"Beginning test suite for version "
-          f"{lookup.TCOLORS['blue']}{__version__}: {len(TESTS)} tests")
+          f"{lookup.TCOLORS['blue']}{__version__}: {len(tests)} tests")
     interfaceUtils.setBuildArea(0, 0, 0, 255, 255, 255)
     failed = 0
     errors = ""
-    for test in TESTS:
+    for test in tests:
         try:
             test()
         except TestException as e:

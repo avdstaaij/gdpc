@@ -24,7 +24,7 @@ def loop2d(x1, y1, x2=None, y2=None):
         inclusively
     """
     if x2 is None or y2 is None:
-        x1, y1, x2, y2 = 0, 0, x1, y1
+        x1, y1, x2, y2 = 0, 0, x1 - 1, y1 - 1
     for x in range(x1, x2 + 1):
         for y in range(y1, y2 + 1):
             yield x, y
@@ -36,7 +36,7 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
     Behaves like loop2d
     """
     if x2 is None or y2 is None or z2 is None:
-        x1, y1, z1, x2, y2, z2 = 0, 0, 0, x1, y1, z1
+        x1, y1, z1, x2, y2, z2 = 0, 0, 0, x1 - 1, y1 - 1, z1 - 1
     for x, y in loop2d(x1, y1, x2, y2):
         for z in range(z1, z2 + 1):
             yield x, y, z
