@@ -7,14 +7,17 @@ This module contains functions to:
 * Get the name of a block at a particular coordinate
 * Place blocks in the world
 """
-__all__ = ['Interface', 'requestBuildArea', 'runCommand',
-           'setBlock', 'getBlock', 'sendBlocks']
+__all__ = ['Interface', 'requestBuildArea', 'requestPlayerArea', 'runCommand',
+           'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
+           'getBlock', 'fill', 'setBlock', 'sendBlocks']
 __version__ = "v4.2_dev"
 
 from collections import OrderedDict
+from random import choice
 
 import direct_interface as di
 import numpy as np
+from lookup import TCOLORS
 from worldLoader import WorldSlice
 
 
@@ -25,9 +28,11 @@ class OrderedByLookupDict(OrderedDict):
     https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
     """
 
-    def __init__(self, maxsize=128, /, *args, **kwds):
+    def __init__(self, maxsize, *args, **kwds):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
+
+    # inherited __repr__ from OrderedDict is sufficient
 
     def __getitem__(self, key):
         value = super().__getitem__(key)
@@ -56,8 +61,9 @@ class Interface():
         self.offset = x, y, z
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
-        self.buffer = []
+        self.buffer = []    # buffer is in global coordinates
         self.caching = caching
+        # cache is in global coordinates
         self.cache = OrderedByLookupDict(cachelimit)
         # Interface.cache.maxsize to change size
 
@@ -65,15 +71,27 @@ class Interface():
         """**Clean up before destruction**."""
         self.sendBlocks()
 
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        """**Represent the Interface as a constructor**."""
+        return "Interface(" \
+            f"{self.offset[0]}, {self.offset[1]}, {self.offset[2]}, " \
+            f"{self.__buffering}, {self.bufferlimit}, " \
+            f"{self.caching}, {self.cache.maxsize})"
+
     def getBlock(self, x, y, z):
-        """**Return the name of a block in the world**."""
+        """**Return the name of a block in the world**.
+
+        Takes local coordinates, works with global coordinates
+        """
         x, y, z = self.local2global(x, y, z)
 
         if self.caching and (x, y, z) in self.cache:
             return self.cache[(x, y, z)]
 
         if self.caching and globalWorldSlice is not None:
-            if not globalDecay[x][y][z]:
+            dx, dy, dz = global2buildlocal(x, y, z)  # convert for decay index
+            if not checkOutOfBounds(x, y, z) and not globalDecay[dx][dy][dz]:
                 block = globalWorldSlice.getBlockAt(x, y, z)
                 self.cache[(x, y, z)] = block
                 return block
@@ -84,40 +102,76 @@ class Interface():
 
         return response
 
-    def fill(self, x1, y1, z1, x2, y2, z2, blockStr):
-        """**Fill the given region with the given block**."""
-        x1, y1, z1 = self.local2global(x1, y1, z1)
-        x2, y2, z2 = self.local2global(x2, y2, z2)
-        xlo, ylo, zlo = min(x1, x2), min(y1, y2), min(z1, z2)
-        xhi, yhi, zhi = max(x1, x2), max(y1, y2), max(z1, z2)
+    def fill(self, x1, y1, z1, x2, y2, z2, replaceBlock):
+        """**Fill the given region with the given block**.
 
-        for x in range(xlo, xhi + 1):
-            for y in range(ylo, yhi + 1):
-                for z in range(zlo, zhi + 1):
-                    self.setBlock(x, y, z, blockStr)
+        Supports sequences of block strings for random texturing
+        Works with local coordinates
+        """
+        from toolbox import loop3d
+        textured = False
+        if type(replaceBlock) != str:
+            textured = True
+
+        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
+            if textured:
+                self.setBlock(x, y, z, choice(replaceBlock))
+            else:
+                self.setBlock(x1 + x, y1 + y, z1 + z, replaceBlock)
+
+    def replace(self, x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
+        """**Replace searchBlock with replaceBlock**.
+
+        Supports sequences of block strings for random texturing
+        Works with local coordinates
+        """
+        from toolbox import loop3d
+        textured = False
+        if type(replaceBlock) != str:
+            textured = True
+
+        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
+            if self.getBlock(x + x1, y + y1, z + z1) == searchBlock:
+                if textured:
+                    self.setBlock(x + x1, y + y1, z + z1, choice(replaceBlock))
+                else:
+                    self.setBlock(x + x1, y + y1, z + z1, replaceBlock)
 
     def setBlock(self, x, y, z, blockStr):
-        """**Place a block in the world depending on buffer activation**."""
+        """**Place a block in the world depending on buffer activation**.
+
+        Takes local coordinates, works with local and global coordinates
+        """
         if self.__buffering:
-            self.placeBlockBatched(x, y, z, blockStr, self.bufferlimit)
+            response = self.placeBlockBatched(x, y, z, blockStr,
+                                              self.bufferlimit)
         else:
-            self.placeBlock(x, y, z, blockStr)
+            response = self.placeBlock(x, y, z, blockStr)
+
+        # switch to global coordinates
+        x, y, z = self.local2global(x, y, z)
         if self.caching:
             self.cache[(x, y, z)] = blockStr
-        if globalDecay is not None and not globalDecay[x][y][z]:
+        # mark block as decayed
+        if not checkOutOfBounds(x, y, z) and globalDecay is not None:
+            x, y, z = global2buildlocal(x, y, z)
             globalDecay[x][y][z] = True
 
+        return response
+
     def placeBlock(self, x, y, z, blockStr):
-        """**Place a single block in the world**."""
+        """**Place a single block in the world directly**.
+
+        Takes local coordinates, works with global coordinates
+        """
         x, y, z = self.local2global(x, y, z)
-        return di.setBlock(x, y, z, blockStr)
+        result = di.setBlock(x, y, z, blockStr)
+        if not result.isnumeric():
+            print(f"{TCOLORS['orange']}Warning: Server returned error "
+                  f"upon placing block:\n\t{TCOLORS['CLR']}{result}")
+        return result
 
     # ----------------------------------------------------- block buffers
-
-    def toggleBuffer(self):
-        """**Activates or deactivates the buffer function safely**."""
-        self.buffering = not self.buffering
-        return self.buffering
 
     def isBuffering(self):
         """**Get self.__buffering**."""
@@ -141,7 +195,10 @@ class Interface():
         self.bufferlimit = value
 
     def placeBlockBatched(self, x, y, z, blockStr, limit=50):
-        """**Place a block in the buffer and send once limit is exceeded**."""
+        """**Place a block in the buffer and send once limit is exceeded**.
+
+        Takes local coordinates and works with global coordinates
+        """
         x, y, z = self.local2global(x, y, z)
 
         self.buffer.append((x, y, z, blockStr))
@@ -156,9 +213,14 @@ class Interface():
         Since the buffer contains global coordinates
             no conversion takes place in this function
         """
-        response = di.sendBlocks(self.buffer, x, y, z, retries)
-        if response:
+        if self.buffer == []:
+            return
+        response = di.sendBlocks(self.buffer, x, y, z, retries).split('\n')
+        if all(map(lambda val: val.isnumeric(), response)):  # no errors
             self.buffer = []
+        else:
+            print(f"{TCOLORS['orange']}Warning: Server returned error upon "
+                  f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
 
     # ----------------------------------------------------- utility functions
 
@@ -190,25 +252,52 @@ def runCommand(command):
     return di.runCommand(command)
 
 
+def setBuildArea(x1, y1, z1, x2, y2, z2):
+    runCommand(f"setbuildarea {x1} {y1} {z1} {x2} {y2} {z2}")
+    requestBuildArea()
+
+
 def requestBuildArea():
-    """**Return the building area**."""
-    return di.requestBuildArea()
+    """**Return the current building area**.
+
+    Will reset anything dependant on the build area.
+    """
+    global globalBuildArea
+
+    x1, _, z1, x2, _, z2 = globalBuildArea = di.requestBuildArea()
+
+    if globalWorldSlice is not None:
+        resetGlobalDecay()
+
+    return globalBuildArea
+
+
+def requestPlayerArea(dx=128, dz=128):
+    """**Return the building area surrounding the player**."""
+    # Correcting for offset from player position
+    dx -= 1
+    dz -= 1
+    runCommand("execute at @p run setbuildarea "
+               f"~{-dx//2} 0 ~{-dz//2} ~{dx//2} 255 ~{dz//2}")
+    return requestBuildArea()
+
 
 # ========================================================= global interface
 
 
 globalWorldSlice = None
 globalDecay = None
+globalBuildArea = requestBuildArea()
 
 globalinterface = Interface()
 
 
 def makeGlobalSlice():
+    """**Instantiate a global WorldSlice and refresh building area**."""
     global globalWorldSlice
-    global globalDecay
     x1, y1, z1, x2, y2, z2 = requestBuildArea()
     globalWorldSlice = WorldSlice(x1, z1, x2, z2)
-    globalDecay = np.zeros((x2 - x1, 255, z2 - z1), dtype=bool)
+    resetGlobalDecay()
 
 
 def isBuffering():
@@ -236,9 +325,15 @@ def getBlock(x, y, z):
     return globalinterface.getBlock(x, y, z)
 
 
-def fill(x1, y1, z1, x2, y2, z2, blockStr):
+def fill(x1, y1, z1, x2, y2, z2, replaceBlock):
     """**Global fill**."""
-    return globalinterface.fill(x1, y1, z1, x2, y2, z2, blockStr)
+    return globalinterface.fill(x1, y1, z1, x2, y2, z2, replaceBlock)
+
+
+def replace(x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
+    """**Global replace**."""
+    return globalinterface.replace(x1, y1, z1, x2, y2, z2,
+                                   searchBlock, replaceBlock)
 
 
 def setBlock(x, y, z, blockStr):
@@ -256,3 +351,29 @@ def toggleBuffer():
 def sendBlocks(x=0, y=0, z=0, retries=5):
     """**Global sendBlocks**."""
     return globalinterface.sendBlocks(x, y, z, retries)
+
+# ----------------------------------------------------- utility functions
+
+
+def global2buildlocal(x, y, z):
+    """**Convert global coordinates to ones relative to the build area**."""
+    x0, y0, z0, _, _, _ = globalBuildArea
+    return x - x0, y - y0, z - z0
+
+
+def checkOutOfBounds(x, y, z, warn=True):
+    """**Check whether a given coordinate is outside the build area**."""
+    x1, y1, z1, x2, y2, z2 = globalBuildArea
+    if not (x1 <= x <= x2 and y1 <= y <= y2 and z1 <= z <= z2):
+        if warn:
+            # building outside the build area can be less efficient
+            print(f"{TCOLORS['orange']}WARNING: Block at {x, y, z} is outside "
+                  f"the build area!{TCOLORS['CLR']}")
+        return True
+    return False
+
+
+def resetGlobalDecay():
+    global globalDecay
+    x1, _, z1, x2, _, z2 = globalBuildArea
+    globalDecay = np.zeros((x2 - x1, 256, z2 - z1), dtype=bool)

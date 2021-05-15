@@ -54,7 +54,7 @@ def visualize(*arrays, title=None, autonormalize=True):
     """
     for array in arrays:
         if autonormalize:
-            array = (normalize(array) * 255).astype(np.uint8)
+            array = (normalize(array) * 255).astype(int)
 
         plt.figure()
         if title:

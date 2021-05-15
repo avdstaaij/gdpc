@@ -14,7 +14,7 @@ def getBlock(x, y, z):
     """**Return the name of a block from the world**."""
     url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
-        response = requests.get(url)
+        response = requests.get(url).text
     except ConnectionError:
         return "minecraft:void_air"
     return response
@@ -30,7 +30,7 @@ def setBlock(x, y, z, blockStr, flags='0100011'):
     return response.text
 
 
-def sendBlocks(blockList, x=0, y=0, z=0, flags='0100011', retries=5):
+def sendBlocks(blockList, x=0, y=0, z=0, retries=5, flags='0100011'):
     """**Take a list of blocks and place them into the world in one go**."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:
@@ -79,7 +79,7 @@ def getChunks(x, z, dx, dz, rtype='text'):
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
     response = requests.get(url, headers={"Accept": acceptType})
     if response.status_code >= 400:
-        print(f"error: {response.text}")
+        print(f"Error: {response.text}")
 
     if rtype == 'text':
         return response.text

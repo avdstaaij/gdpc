@@ -6,7 +6,7 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
-# __version__
+__version__ = 'v4.2_dev'
 
 from io import BytesIO
 from math import ceil, log2
@@ -15,7 +15,7 @@ import direct_interface as di
 import nbt
 import numpy as np
 from bitarray import BitArray
-from blockColors import BIOMES
+from lookup import BIOMES
 
 
 class CachedSection:
@@ -24,6 +24,11 @@ class CachedSection:
     def __init__(self, palette, blockStatesBitArray):
         self.palette = palette
         self.blockStatesBitArray = blockStatesBitArray
+
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        return f"CachedSection({repr(self.palette)}, " \
+            f"{repr(self.blockStatesBitArray)})"
 
 
 class WorldSlice:
@@ -54,7 +59,7 @@ class WorldSlice:
         self.heightmaps = {}
         for hmName in self.heightmapTypes:
             self.heightmaps[hmName] = np.zeros(
-                (self.rect[2], self.rect[3]), dtype=np.int)
+                (self.rect[2] + 1, self.rect[3] + 1), dtype=int)
 
         # Sections are in x,z,y order!!! (reverse minecraft order :p)
         self.sections = [[[None for i in range(16)] for z in range(
@@ -97,19 +102,24 @@ class WorldSlice:
                     palette = section['Palette']
                     rawBlockStates = section['BlockStates']
                     bitsPerEntry = max(4, ceil(log2(len(palette))))
-                    blockStatesBitArray = BitArray(
-                        bitsPerEntry, 16 * 16 * 16, rawBlockStates)
+                    blockStatesBitArray = BitArray(bitsPerEntry, 16 * 16 * 16,
+                                                   rawBlockStates)
 
-                    self.sections[x][z][y] = CachedSection(
-                        palette, blockStatesBitArray)
+                    self.sections[x][z][y] = CachedSection(palette,
+                                                           blockStatesBitArray)
 
-        print("done")
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        """**Represent the WorldSlice as a constructor**."""
+        x1, z1 = self.rect[:2]
+        x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
+        return f"WorldSlice{(x1, z1, x2, z2)}"
 
     def getBlockCompoundAt(self, x, y, z):
         """**Return block data**."""
         chunkX = (x >> 4) - self.chunkRect[0]
         chunkZ = (z >> 4) - self.chunkRect[1]
-        chunkY = y >> 4
+        chunkY = y - 1 >> 4
 
         cachedSection = self.sections[chunkX][chunkZ][chunkY]
 
@@ -127,7 +137,7 @@ class WorldSlice:
         """**Return the block's namespaced id at blockPos**."""
         blockCompound = self.getBlockCompoundAt(x, y, z)
         if blockCompound is None:
-            return "minecraft:air"
+            return "minecraft:void_air"
         else:
             return blockCompound["Name"].value
 

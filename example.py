@@ -96,7 +96,7 @@ def rectanglesOverlap(r1, r2):
 if __name__ == '__main__':
 
     print(f"Build area is at position {startx}, {startz}"
-          f" with size {endx}, {endz}")
+          f" with size {endx-startx+1}, {endz-startz+1}")
 
     # load the world data
     # this uses the /chunks endpoint in the background
@@ -145,10 +145,10 @@ if __name__ == '__main__':
         # pick random rectangle to place new house
         houseSizeX = random.randrange(5, 25)
         houseSizeZ = random.randrange(5, 25)
-        houseX = random.randrange(
-            startx + houseSizeX + 1, endx - houseSizeX - 1)
-        houseZ = random.randrange(
-            startz + houseSizeZ + 1, endz - houseSizeZ - 1)
+        houseX = random.randrange(startx + houseSizeX + 1,
+                                  endx - houseSizeX - 1)
+        houseZ = random.randrange(startz + houseSizeZ + 1,
+                                  endz - houseSizeZ - 1)
         houseRect = (houseX, houseZ, houseSizeX, houseSizeZ)
 
         # check whether there are any overlaps
