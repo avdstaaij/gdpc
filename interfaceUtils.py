@@ -138,21 +138,23 @@ class Interface():
                 else:
                     self.setBlock(x + x1, y + y1, z + z1, replaceBlock)
 
-    def setBlock(self, x, y, z, blockStr):
+    def setBlock(self, x, y, z, block):
         """**Place a block in the world depending on buffer activation**.
 
         Takes local coordinates, works with local and global coordinates
         """
+        if block is not str:
+            block = choice(block)
+
         if self.__buffering:
-            response = self.placeBlockBatched(x, y, z, blockStr,
-                                              self.bufferlimit)
+            response = self.placeBlockBatched(x, y, z, block, self.bufferlimit)
         else:
-            response = self.placeBlock(x, y, z, blockStr)
+            response = self.placeBlock(x, y, z, block)
 
         # switch to global coordinates
         x, y, z = self.local2global(x, y, z)
         if self.caching:
-            self.cache[(x, y, z)] = blockStr
+            self.cache[(x, y, z)] = block
         # mark block as decayed
         if not checkOutOfBounds(x, y, z) and globalDecay is not None:
             x, y, z = global2buildlocal(x, y, z)
@@ -160,7 +162,17 @@ class Interface():
 
         return response
 
-    def placeBlock(self, x, y, z, blockStr):
+    def replaceBlock(self, x, y, z, placeBlocks, searchBlocks=None):
+        """**Places block only if it would replace a searchBlock**."""
+        if searchBlocks is None:
+            return setBlock(x, y, z, placeBlocks)
+        if searchBlocks is str:
+            searchBlocks = (searchBlocks, )
+        if getBlock(x, y, z) in searchBlocks:
+            return setBlock(x, y, z, placeBlocks)
+        return '0'
+
+    def setBlock_direct(self, x, y, z, blockStr):
         """**Place a single block in the world directly**.
 
         Takes local coordinates, works with global coordinates
