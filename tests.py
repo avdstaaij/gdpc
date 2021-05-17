@@ -39,20 +39,20 @@ def verifyPaletteBlocks():
     """Check blockColours blocks."""
     print(f"\n{lookup.TCOLORS['yellow']}Running blockColours palette test...")
 
-    print(f"\t{lookup.TCOLORS['grey']}Preparing...", end="\r")
+    print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
     tester = interfaceUtils.Interface()
     counter = 0
     badcounter = 0
     passed = []
     tocheck = [block for i in lookup.PALETTE.values()
                for block in i] + list(lookup.MAPTRANSPARENT)
-    print(f"\t{lookup.TCOLORS['grey']}Preparing done.")
+    print(f"\t{lookup.TCOLORS['gray']}Preparing done.")
 
     for block in tocheck:
         if block in passed:
             badcounter += 1
             print()
-            print(f"\t\t{lookup.TCOLORS['grey']}{block} is duplicated")
+            print(f"\t\t{lookup.TCOLORS['gray']}{block} is duplicated")
         elif not tester.placeBlock(0, 0, 0, block).isnumeric():
             badcounter += 1
             print()
@@ -65,7 +65,7 @@ def verifyPaletteBlocks():
     tester.placeBlock(0, 0, 0, 'air')
     if badcounter > 0:
         raise TestException(f"{lookup.TCOLORS['red']}{badcounter}/"
-                            f"{lookup.TCOLORS['grey']}{counter}"
+                            f"{lookup.TCOLORS['gray']}{counter}"
                             f"{lookup.TCOLORS['red']} blocks duplicate "
                             "or could not be verified.\n"
                             f"{lookup.TCOLORS['orange']}"
@@ -115,7 +115,7 @@ def testBooks():
             '║                      `║\\\\n'
             '╚══════════╝')
 
-    print(f"\t{lookup.TCOLORS['grey']}Writing book...", end="\r")
+    print(f"\t{lookup.TCOLORS['gray']}Writing book...", end="\r")
     book = toolbox.writeBook(text, TITLE, AUTHOR,
                              DESCRIPTION, DESCRIPTIONCOLOR)
     print("\tWriting book done.")
@@ -183,7 +183,7 @@ def testCache():
         print(f"\t{lookup.TCOLORS['darkgreen']}No discrepancies found.")
 
     # ---- preparation
-    print(f"\t{lookup.TCOLORS['grey']}Preparing...", end="\r")
+    print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
     tester = interfaceUtils.Interface(buffering=True, bufferlimit=SIZE ** 2)
     tester.fill(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock")
     tester.fill(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air")
@@ -206,14 +206,14 @@ def testCache():
     print("\tScattering test blocks done.")
 
     # ---- first run (caching through setBlock)
-    print(f"\t{lookup.TCOLORS['grey']}First run: Cache updated via setBlock")
+    print(f"\t{lookup.TCOLORS['gray']}First run: Cache updated via setBlock")
 
     clearTestbed()
     placeFromCache()
     checkDiscrepancies()
 
     # ---- second run (caching through getBlock)
-    print(f"\t{lookup.TCOLORS['grey']}Second run: Cache updated via getBlock")
+    print(f"\t{lookup.TCOLORS['gray']}Second run: Cache updated via getBlock")
 
     tester.cache.clear
     tester.caching = True
@@ -230,7 +230,7 @@ def testCache():
     checkDiscrepancies()
 
     # ---- third run (randomized get-/setBlock)
-    print(f"\t{lookup.TCOLORS['grey']}Third run: "
+    print(f"\t{lookup.TCOLORS['gray']}Third run: "
           "Cache updated via random methods")
     for i in range(4 * SIZE):
         print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
@@ -256,7 +256,7 @@ def testCache():
     checkDiscrepancies()
 
     # ---- fourth run (using WorldSlice)
-    print(f"\t{lookup.TCOLORS['grey']}Fourth run: "
+    print(f"\t{lookup.TCOLORS['gray']}Fourth run: "
           "Cache updated via WorldSlice")
     for i in range(4 * SIZE):
         print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
@@ -311,7 +311,7 @@ if __name__ == '__main__':
             test()
         except TestException as e:
             errors += f"{lookup.TCOLORS['red']}> {test.__name__}() failed.\n" \
-                + f"{lookup.TCOLORS['grey']}Cause: {e}\n"
+                + f"{lookup.TCOLORS['gray']}Cause: {e}\n"
             failed += 1
     print(f"\n{lookup.TCOLORS['CLR']}Test suite completed with "
           f"{lookup.TCOLORS['orange']}{failed}"
