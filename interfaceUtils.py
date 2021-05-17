@@ -114,11 +114,11 @@ class Interface():
         if type(replaceBlock) != str:
             textured = True
 
-        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
+        for x, y, z in loop3d(x1, y1, z1, x2, y2, z2):
             if textured:
                 self.setBlock(x, y, z, choice(replaceBlock))
             else:
-                self.setBlock(x1 + x, y1 + y, z1 + z, replaceBlock)
+                self.setBlock(x, y, z, replaceBlock)
 
     def replace(self, x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
         """**Replace searchBlock with replaceBlock**.
@@ -131,12 +131,12 @@ class Interface():
         if type(replaceBlock) != str:
             textured = True
 
-        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
-            if self.getBlock(x + x1, y + y1, z + z1) == searchBlock:
+        for x, y, z in loop3d(x1, y1, z1, x2, y2, z2):
+            if self.getBlock(x, y, z) == searchBlock:
                 if textured:
-                    self.setBlock(x + x1, y + y1, z + z1, choice(replaceBlock))
+                    self.setBlock(x, y, z, choice(replaceBlock))
                 else:
-                    self.setBlock(x + x1, y + y1, z + z1, replaceBlock)
+                    self.setBlock(x, y, z, replaceBlock)
 
     def setBlock(self, x, y, z, blockStr):
         """**Place a block in the world depending on buffer activation**.
