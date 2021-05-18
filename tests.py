@@ -203,16 +203,34 @@ def testCache():
                         f"{lookup.TCOLORS['red']}Block at "
                         f"{lookup.TCOLORS['orange']}{x} 0 {z} "
                         f"{lookup.TCOLORS['red']}was no longer in memory.")
-                if tester.getBlock(x, 0, z) == palette[0]:
-                    if tester.getBlock(x, 1, z) == palette[1]:
-                        continue
-                    else:
-                        raise TestException(
-                            f"{lookup.TCOLORS['red']}Cache test failed at "
-                            f"{lookup.TCOLORS['orange']}{x} 0 {z}"
-                            f"{lookup.TCOLORS['red']}.")
+                if (tester.getBlock(x, 0, z) == palette[0]
+                        and tester.getBlock(x, 1, z) != palette[1]):
+                    raise TestException(
+                        f"{lookup.TCOLORS['red']}Cache test failed at "
+                        f"{lookup.TCOLORS['orange']}{x} 0 {z}"
+                        f"{lookup.TCOLORS['red']}.")
         print("\t\tTesting...▕██████████")
         print(f"\t{lookup.TCOLORS['darkgreen']}No discrepancies found.")
+
+    def muddle():
+        for i in range(4 * SIZE):
+            print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
+                  + (10 - 10 * i // SIZE) * "▕", end="\r")
+            x = random.randint(0, SIZE - 1)
+            z = random.randint(0, SIZE - 1)
+            if random.choice([True, False]):
+                type = random.choice(PALETTES)
+                tester.caching = True
+                tester.setBlock(x, 1, z, type[1])
+                tester.caching = False
+                tester.setBlock(x, 0, z, type[0])
+                tester.sendBlocks()
+            else:
+                tester.caching = True
+                tester.getBlock(x, 1, z)
+                tester.caching = False
+        print("\t\tMuddling...▕██████████")
+        print("\t\tMuddling complete.")
 
     # ---- preparation
     print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
@@ -264,25 +282,8 @@ def testCache():
     # ---- third run (randomized get-/setBlock)
     print(f"\t{lookup.TCOLORS['gray']}Third run: "
           "Cache updated via random methods")
-    for i in range(4 * SIZE):
-        print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
-              + (10 - 10 * i // SIZE) * "▕", end="\r")
-        x = random.randint(0, SIZE - 1)
-        z = random.randint(0, SIZE - 1)
-        if random.choice([True, False]):
-            type = random.choice(PALETTES)
-            tester.caching = True
-            tester.setBlock(x, 1, z, type[1])
-            tester.caching = False
-            tester.setBlock(x, 0, z, type[0])
-            tester.sendBlocks()
-        else:
-            tester.caching = True
-            tester.getBlock(x, 1, z)
-            tester.caching = False
-    print("\t\tMuddling...▕██████████")
-    print("\t\tMuddling complete.")
 
+    muddle()
     clearTestbed()
     placeFromCache()
     checkDiscrepancies()
@@ -290,20 +291,8 @@ def testCache():
     # ---- fourth run (using WorldSlice)
     print(f"\t{lookup.TCOLORS['gray']}Fourth run: "
           "Cache updated via WorldSlice")
-    for i in range(4 * SIZE):
-        print("\t\tMuddling...▕" + (10 * i // SIZE) * "█"
-              + (10 - 10 * i // SIZE) * "▕", end="\r")
-        x = random.randint(0, SIZE - 1)
-        z = random.randint(0, SIZE - 1)
-        if random.choice([True, False]):
-            type = random.choice(PALETTES)
-            tester.setBlock(x, 1, z, type[1])
-            tester.setBlock(x, 0, z, type[0])
-            tester.sendBlocks()
-        else:
-            tester.getBlock(x, 1, z)
-    print("\t\tMuddling...▕██████████")
-    print("\t\tMuddling complete.")
+
+    muddle()
 
     print("\t\tGenerating global slice...", end="\r")
     d0 = time.perf_counter()

@@ -343,19 +343,7 @@ def placeSign(x, y, z, facing=None, rotation=None,
 
     if not wall:
         if rotation is None:
-            reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
-            if len(facing) == 1:
-                rotation = reference[lookup.INVERTDIRECTION[facing[0]]]
-            else:
-                rotation = 0
-                for direction in facing:
-                    rotation += reference[lookup.INVERTDIRECTION[direction]]
-                rotation //= 2
-
-                if rotation == 6 and 'north' not in facing:
-                    rotation = 14
-                if rotation % 4 != 2:
-                    rotation = reference[facing[0]]
+            rotation = facing2rotation(facing)
         gi.placeBlock(x, y, z, f"{wood}_sign[rotation={rotation}]")
 
     data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
@@ -363,6 +351,23 @@ def placeSign(x, y, z, facing=None, rotation=None,
     data += f'Text3:\'{{"text":"{text3}"}}\','
     data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
     runCommand(f"data merge block {x} {y} {z} {data}")
+
+
+def facing2rotation(facing):
+    reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
+    if len(facing) == 1:
+        rotation = reference[lookup.INVERTDIRECTION[facing[0]]]
+    else:
+        rotation = 0
+        for direction in facing:
+            rotation += reference[lookup.INVERTDIRECTION[direction]]
+        rotation //= 2
+
+        if rotation == 6 and 'north' not in facing:
+            rotation = 14
+        if rotation % 4 != 2:
+            rotation = reference[facing[0]]
+    return rotation
 
 
 def getOptimalDirection(x, y, z):
