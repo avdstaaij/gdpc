@@ -10,7 +10,7 @@ This module contains functions to:
 __all__ = ['Interface', 'requestBuildArea', 'requestPlayerArea', 'runCommand',
            'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
            'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
-           'getBlock', 'fill', 'setBlock', 'sendBlocks']
+           'getBlock', 'placeBlock', 'sendBlocks']
 __version__ = "v4.2_dev"
 
 from collections import OrderedDict
@@ -103,53 +103,25 @@ class Interface():
 
         return response
 
-    def fill(self, x1, y1, z1, x2, y2, z2, replaceBlock):
-        """**Fill the given region with the given block**.
-
-        Supports sequences of block strings for random texturing
-        Works with local coordinates
-        """
-        from toolbox import loop3d
-        textured = False
-        if type(replaceBlock) != str:
-            textured = True
-
-        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
-            if textured:
-                self.setBlock(x, y, z, choice(replaceBlock))
-            else:
-                self.setBlock(x1 + x, y1 + y, z1 + z, replaceBlock)
-
-    def replace(self, x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
-        """**Replace searchBlock with replaceBlock**.
-
-        Supports sequences of block strings for random texturing
-        Works with local coordinates
-        """
-        from toolbox import loop3d
-        textured = False
-        if type(replaceBlock) != str:
-            textured = True
-
-        for x, y, z in loop3d(x2 - x1, y2 - y1, z2 - z1):
-            if self.getBlock(x + x1, y + y1, z + z1) == searchBlock:
-                if textured:
-                    self.setBlock(x + x1, y + y1, z + z1, choice(replaceBlock))
-                else:
-                    self.setBlock(x + x1, y + y1, z + z1, replaceBlock)
-
-    def setBlock(self, x, y, z, block):
+    def placeBlock(self, x, y, z, block, replace=None):
         """**Place a block in the world depending on buffer activation**.
 
         Takes local coordinates, works with local and global coordinates
         """
-        if block is not str:
+        from toolbox import isSequence
+        if isinstance(replace, str):
+            if self.getBlock(x, y, z) != replace:
+                return '0'
+        elif isSequence(replace) and self.getBlock(x, y, z) not in replace:
+            return '0'
+
+        if not isinstance(block, str) and isSequence(block):
             block = choice(block)
 
         if self.__buffering:
-            response = self.placeBlockBatched(x, y, z, block, self.bufferlimit)
+            response = self.setBlockBatched(x, y, z, block, self.bufferlimit)
         else:
-            response = self.placeBlock(x, y, z, block)
+            response = self.setBlock(x, y, z, block)
 
         # switch to global coordinates
         x, y, z = self.local2global(x, y, z)
@@ -162,17 +134,7 @@ class Interface():
 
         return response
 
-    def replaceBlock(self, x, y, z, placeBlocks, searchBlocks=None):
-        """**Places block only if it would replace a searchBlock**."""
-        if searchBlocks is None:
-            return setBlock(x, y, z, placeBlocks)
-        if searchBlocks is str:
-            searchBlocks = (searchBlocks, )
-        if getBlock(x, y, z) in searchBlocks:
-            return setBlock(x, y, z, placeBlocks)
-        return '0'
-
-    def setBlock_direct(self, x, y, z, blockStr):
+    def setBlock(self, x, y, z, blockStr):
         """**Place a single block in the world directly**.
 
         Takes local coordinates, works with global coordinates
@@ -223,7 +185,7 @@ class Interface():
         """**Set maximum cache size**."""
         self.cache.maxsize = value
 
-    def placeBlockBatched(self, x, y, z, blockStr, limit=50):
+    def setBlockBatched(self, x, y, z, blockStr, limit=50):
         """**Place a block in the buffer and send once limit is exceeded**.
 
         Takes local coordinates and works with global coordinates
@@ -234,7 +196,7 @@ class Interface():
         if len(self.buffer) >= limit:
             return self.sendBlocks()
         else:
-            return None
+            return '0'
 
     def sendBlocks(self, x=0, y=0, z=0, retries=5):
         """**Send the buffer to the server and clear it**.
@@ -243,10 +205,11 @@ class Interface():
             no conversion takes place in this function
         """
         if self.buffer == []:
-            return
+            return '0'
         response = di.sendBlocks(self.buffer, x, y, z, retries).split('\n')
         if all(map(lambda val: val.isnumeric(), response)):  # no errors
             self.buffer = []
+            return str(sum(map(int, response)))
         else:
             print(f"{TCOLORS['orange']}Warning: Server returned error upon "
                   f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
@@ -334,20 +297,9 @@ def getBlock(x, y, z):
     return globalinterface.getBlock(x, y, z)
 
 
-def fill(x1, y1, z1, x2, y2, z2, replaceBlock):
-    """**Global fill**."""
-    return globalinterface.fill(x1, y1, z1, x2, y2, z2, replaceBlock)
-
-
-def replace(x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
-    """**Global replace**."""
-    return globalinterface.replace(x1, y1, z1, x2, y2, z2,
-                                   searchBlock, replaceBlock)
-
-
-def setBlock(x, y, z, blockStr):
+def placeBlock(x, y, z, blocks, replace=None):
     """**Global setBlock**."""
-    return globalinterface.setBlock(x, y, z, blockStr)
+    return globalinterface.placeBlock(x, y, z, blocks, replace)
 
 # ----------------------------------------------------- block buffers
 

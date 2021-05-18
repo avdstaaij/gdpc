@@ -8,6 +8,7 @@ __year__ = '2021'
 __author__ = 'Blinkenlights'
 
 from functools import lru_cache
+from itertools import product
 from random import choice
 
 import lookup
@@ -16,18 +17,37 @@ from interfaceUtils import globalinterface as gi
 from interfaceUtils import runCommand
 
 
-def loop2d(x1, y1, x2=None, y2=None):
+def isSequence(sequence):
+    try:
+        sequence[0:-1]
+        return True
+    except TypeError:
+        return False
+
+
+def normaliseCoordinates(x1, y1, z1, x2, y2, z2):
+    if x1 > x2:
+        x1, x2 = x2, x1
+    if y1 > y2:
+        y1, y2 = y2, y1
+    if z1 > z2:
+        z1, z2 = z2, z1
+    return x1, y1, z1, x2, y2, z2
+
+
+def loop2d(a1, b1, a2=None, b2=None):
     """**Return all coordinates in a 2D region**.
 
-    If only one pair is provided, the loop will yield x1*z1 values
+    If only one pair is provided, the loop will yield a1*b1 values
     If two pairs are provided the loop will yield all results between them
         inclusively
     """
-    if x2 is None or y2 is None:
-        x1, y1, x2, y2 = 0, 0, x1 - 1, y1 - 1
-    for x in range(x1, x2 + 1):
-        for y in range(y1, y2 + 1):
-            yield x, y
+    if a2 is None or b2 is None:
+        a1, b1, a2, b2 = 0, 0, a1 - 1, b1 - 1
+
+    a1, b1, _, a2, b2, _ = normaliseCoordinates(a1, b1, 0, a2, b2, 0)
+
+    return product(range(a1, a2 + 1), range(b1, b2 + 1))
 
 
 def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
@@ -37,14 +57,14 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
     """
     if x2 is None or y2 is None or z2 is None:
         x1, y1, z1, x2, y2, z2 = 0, 0, 0, x1 - 1, y1 - 1, z1 - 1
-    for x, y in loop2d(x1, y1, x2, y2):
-        for z in range(z1, z2 + 1):
-            yield x, y, z
+
+    x1, y1, z1, x2, y2, z2 = normaliseCoordinates(x1, y1, z1, x2, y2, z2)
+
+    return product(range(x1, x2 + 1), range(y1, y2 + 1), range(z1, z2 + 1))
 
 
 def index2slot(sx, sy, ox, oy):
     """**Return slot number of an inventory correlating to a 2d index**."""
-    print((sx, sy, ox, oy))
     if not (0 <= sx < ox and 0 <= sy < oy):
         raise ValueError(f"{sx, sy} is not within (0, 0) and {ox, oy}!")
     return sx + sy * ox

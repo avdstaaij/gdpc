@@ -15,6 +15,10 @@ import random
 import sys
 import time
 
+# import mapUtils
+# import visualizeMap
+# import worldLoader
+import geometry
 # import example
 import interfaceUtils
 # import bitarray
@@ -22,10 +26,6 @@ import lookup
 import toolbox
 
 # import timeit
-
-# import mapUtils
-# import visualizeMap
-# import worldLoader
 
 
 class TestException(Exception):
@@ -74,6 +74,38 @@ def verifyPaletteBlocks():
 
     print(f"{lookup.TCOLORS['green']}"
           f"All {counter} blocks successfully verified!")
+
+
+def testShapes():
+    """**Check shape construction**."""
+    # TODO: Fill me!
+    interfaceUtils.setBuffering(True)
+    interfaceUtils.setBufferLimit(4096)
+
+    geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')
+    geometry.placeLine(0, 128, 16, 15, 128, 16, 'red_concrete')
+    geometry.placeLine(0, 128, 32, 15, 143, 32, 'red_concrete')
+    geometry.placeLine(0, 128, 48, 15, 143, 63, 'red_concrete')
+    geometry.placeArea(16, 128, 0, 16, 128, 0, 'orange_concrete')
+    geometry.placeArea(16, 128, 16, 31, 128, 16, 'orange_concrete')
+    geometry.placeArea(16, 128, 32, 31, 143, 32, 'orange_concrete')
+    geometry.placeArea(16, 128, 48, 31, 143, 63, 'orange_concrete')
+    geometry.placeCuboid(32, 128, 0, 32, 128, 0, 'yellow_concrete')
+    geometry.placeCuboid(32, 144, 0, 32, 144, 0, 'yellow_stained_glass',
+                         hollow=True)
+    geometry.placeCuboid(32, 128, 16, 47, 128, 16, 'yellow_concrete')
+    geometry.placeCuboid(32, 144, 16, 47, 144, 16, 'yellow_stained_glass',
+                         hollow=True)
+    geometry.placeCuboid(32, 128, 32, 47, 143, 32, 'yellow_concrete')
+    geometry.placeCuboid(32, 144, 32, 47, 159, 32, 'yellow_stained_glass',
+                         hollow=True)
+    geometry.placeCuboid(32, 128, 48, 47, 143, 63, 'yellow_concrete')
+    geometry.placeCuboid(32, 144, 48, 47, 159, 63, 'yellow_stained_glass',
+                         hollow=True)
+
+    geometry.placeArea(47, 159, 63, 0, 128, 0, 'air')
+    interfaceUtils.setBuffering(False)
+    interfaceUtils.setBufferLimit(0)
 
 
 def testBooks():
@@ -292,7 +324,8 @@ def testCache():
 
 if __name__ == '__main__':
     AUTOTESTS = (verifyPaletteBlocks, testCache)
-    MANUALTESTS = (testBooks, )
+    # MANUALTESTS = (testBooks, testShapes)
+    MANUALTESTS = (testShapes,)
     tests = AUTOTESTS + MANUALTESTS
 
     if len(sys.argv) > 1:
