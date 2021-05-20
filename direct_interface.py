@@ -27,8 +27,8 @@ def setBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
     else:
         blockUpdateQueryParam = f"doBlockUpdates={str(doBlockUpdates)}"
 
-    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}&{blockUpdateQueryParam}'
-    print(url)
+    url = (f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
+           f'&{blockUpdateQueryParam}')
     try:
         response = requests.put(url, blockStr)
     except ConnectionError:
@@ -36,7 +36,8 @@ def setBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
     return response.text
 
 
-def sendBlocks(blockList, x=0, y=0, z=0, retries=5, doBlockUpdates=True, customFlags=None):
+def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
+               doBlockUpdates=True, customFlags=None):
     """**Take a list of blocks and place them into the world in one go**."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:

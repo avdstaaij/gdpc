@@ -25,14 +25,10 @@ def isSequence(sequence):
         return False
 
 
-def normaliseCoordinates(x1, y1, z1, x2, y2, z2):
-    if x1 > x2:
-        x1, x2 = x2, x1
-    if y1 > y2:
-        y1, y2 = y2, y1
-    if z1 > z2:
-        z1, z2 = z2, z1
-    return x1, y1, z1, x2, y2, z2
+def normaliseCoordinates(*args):
+    args1, args2 = args[:len(args) // 2], args[len(args) // 2:]
+    return [a if a < b else b for a, b in zip(args1, args2)] \
+        + [a if a > b else b for a, b in zip(args1, args2)]
 
 
 def loop2d(a1, b1, a2=None, b2=None):
@@ -334,7 +330,7 @@ def placeSign(x, y, z, facing=None, rotation=None,
         wall = False
         for direction in facing:
             inversion = lookup.INVERTDIRECTION[direction]
-            dx, dz = lookup.DIRECTIONTOVECTOR[inversion]
+            dx, dz = lookup.DIRECTION2VECTOR[inversion]
             if getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
                 break
             wall = True
@@ -351,23 +347,6 @@ def placeSign(x, y, z, facing=None, rotation=None,
     data += f'Text3:\'{{"text":"{text3}"}}\','
     data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
     runCommand(f"data merge block {x} {y} {z} {data}")
-
-
-def facing2rotation(facing):
-    reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
-    if len(facing) == 1:
-        rotation = reference[lookup.INVERTDIRECTION[facing[0]]]
-    else:
-        rotation = 0
-        for direction in facing:
-            rotation += reference[lookup.INVERTDIRECTION[direction]]
-        rotation //= 2
-
-        if rotation == 6 and 'north' not in facing:
-            rotation = 14
-        if rotation % 4 != 2:
-            rotation = reference[facing[0]]
-    return rotation
 
 
 def getOptimalDirection(x, y, z):
@@ -421,3 +400,31 @@ def identifyObtrusiveness(blockStr):
     if blockStr in lookup.OBTRUSIVE:
         return 3
     return 4
+
+
+# ========================================================= converters
+# The 'data types' commonly used in this package are:
+#
+# facing: any of 'north', 'east', 'south', 'west' (can be a sequence)
+# rotation: value from 0-15 representing number of clockwise increments of pi/4
+#
+# axis: 'x', 'y', 'z'
+# vector: any multiple of (1, 1, 1) e.g. (0, 1, -4)
+# =========================================================
+
+
+def facing2rotation(facing):
+    reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
+    if len(facing) == 1:
+        rotation = reference[lookup.INVERTDIRECTION[facing[0]]]
+    else:
+        rotation = 0
+        for direction in facing:
+            rotation += reference[lookup.INVERTDIRECTION[direction]]
+        rotation //= 2
+
+        if rotation == 6 and 'north' not in facing:
+            rotation = 14
+        if rotation % 4 != 2:
+            rotation = reference[facing[0]]
+    return rotation

@@ -23,12 +23,15 @@ VERSION = "1.16.x"
 
 # ========================================================= custom values
 
-DIRECTIONS = ('north', 'east', 'south', 'west')
-INVERTDIRECTION = {'north': 'south', 'east': 'west',
+AXES = ('x', 'y', 'z')
+DIRECTIONS = ('top', 'bottom', 'north', 'east', 'south', 'west')
+INVERTDIRECTION = {'top': 'bottom', 'bottom': 'top',
+                   'north': 'south', 'east': 'west',
                    'south': 'north', 'west': 'east'}
-DIRECTIONTOVECTOR = {'north': (0, -1), 'east': (1, 0),
-                     'south': (0, 1), 'west': (-1, 0)}
-
+DIRECTION2VECTOR = {'top': (0, 1, 0), 'bottom': (0, -1, 0),
+                    'north': (0, 0, -1), 'east': (1, 0, 0),
+                    'south': (0, 1), 'west': (-1, 0)}
+AXIS2VECTOR = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
 # ========================================================= materials
 
 COLORS = ('white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink',

@@ -79,33 +79,112 @@ def verifyPaletteBlocks():
 def testShapes():
     """**Check shape construction**."""
     # TODO: Fill me!
-    interfaceUtils.setBuffering(True)
-    interfaceUtils.setBufferLimit(4096)
+    # geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
 
-    geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')
-    geometry.placeLine(0, 128, 16, 15, 128, 16, 'red_concrete')
-    geometry.placeLine(0, 128, 32, 15, 143, 32, 'red_concrete')
-    geometry.placeLine(0, 128, 48, 15, 143, 63, 'red_concrete')
-    geometry.placeArea(16, 128, 0, 16, 128, 0, 'orange_concrete')
-    geometry.placeArea(16, 128, 16, 31, 128, 16, 'orange_concrete')
-    geometry.placeArea(16, 128, 32, 31, 143, 32, 'orange_concrete')
-    geometry.placeArea(16, 128, 48, 31, 143, 63, 'orange_concrete')
-    geometry.placeCuboid(32, 128, 0, 32, 128, 0, 'yellow_concrete')
+    # placeLine
+    geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')            # 0D
+
+    geometry.placeLine(0, 128, 16, 15, 128, 16, 'red_concrete')         # 1D x
+    geometry.placeLine(0, 128, 16, 0, 143, 16, 'red_concrete')          # 1D y
+    geometry.placeLine(0, 128, 16, 0, 128, 31, 'red_concrete')          # 1D z
+
+    geometry.placeLine(0, 128, 32, 15, 143, 32, 'red_concrete')         # 2D++0
+    geometry.placeLine(0, 128, 32, 0, 143, 47, 'red_concrete')          # 2D0++
+    geometry.placeLine(0, 128, 32, 15, 128, 47, 'red_concrete')         # 2D+0+
+    geometry.placeLine(15, 143, 47, 0, 128, 47, 'red_concrete')         # 2D--0
+    geometry.placeLine(15, 143, 47, 15, 128, 32, 'red_concrete')        # 2D0--
+    geometry.placeLine(15, 143, 47, 0, 143, 32, 'red_concrete')         # 2D-0-
+
+    geometry.placeLine(0, 128, 48, 7, 135, 55, 'red_concrete')          # 3D+++
+    geometry.placeLine(15, 143, 63, 7, 135, 55, 'red_concrete')         # 3D---
+    interfaceUtils.globalinterface.placeBlock(7, 135, 55, 'gold_block')
+
+    # placeArea
+    geometry.placeArea(16, 128, 0, 16, 128, 0, 'orange_concrete')       # 0D
+
+    geometry.placeArea(16, 128, 16, 31, 128, 16, 'orange_concrete')     # 1D x
+    geometry.placeArea(16, 128, 16, 16, 143, 16, 'orange_concrete')     # 1D y
+    geometry.placeArea(16, 128, 16, 16, 128, 31, 'orange_concrete')     # 1D z
+
+    geometry.placeArea(16, 128, 32, 31, 143, 32, 'orange_concrete')     # 2D xy
+    geometry.placeArea(16, 128, 32, 16, 143, 47, 'orange_concrete')     # 2D yz
+    geometry.placeArea(16, 128, 32, 31, 128, 47, 'orange_concrete')     # 2D xz
+
+    geometry.placeArea(16, 128, 48, 31, 143, 63, 'orange_concrete')     # 3D
+
+    # placeCuboid
+    geometry.placeCuboid(32, 128, 0, 32, 128, 0, 'yellow_concrete')     # 0D
     geometry.placeCuboid(32, 144, 0, 32, 144, 0, 'yellow_stained_glass',
                          hollow=True)
-    geometry.placeCuboid(32, 128, 16, 47, 128, 16, 'yellow_concrete')
+
+    geometry.placeCuboid(32, 128, 16, 47, 128, 16, 'yellow_concrete')   # 1D x
     geometry.placeCuboid(32, 144, 16, 47, 144, 16, 'yellow_stained_glass',
                          hollow=True)
-    geometry.placeCuboid(32, 128, 32, 47, 143, 32, 'yellow_concrete')
+    geometry.placeCuboid(32, 128, 16, 32, 143, 16, 'yellow_concrete')   # 1D y
+    geometry.placeCuboid(32, 144, 16, 32, 159, 16, 'yellow_stained_glass',
+                         hollow=True)
+    geometry.placeCuboid(32, 128, 16, 32, 128, 31, 'yellow_concrete')   # 1D z
+    geometry.placeCuboid(32, 144, 16, 32, 144, 31, 'yellow_stained_glass',
+                         hollow=True)
+
+    geometry.placeCuboid(32, 128, 32, 47, 143, 32, 'yellow_concrete')   # 2D xy
     geometry.placeCuboid(32, 144, 32, 47, 159, 32, 'yellow_stained_glass',
                          hollow=True)
-    geometry.placeCuboid(32, 128, 48, 47, 143, 63, 'yellow_concrete')
+    geometry.placeCuboid(32, 128, 32, 32, 143, 47, 'yellow_concrete')   # 2D yz
+    geometry.placeCuboid(32, 144, 32, 32, 159, 47, 'yellow_stained_glass',
+                         hollow=True)
+    geometry.placeCuboid(32, 128, 32, 47, 128, 47, 'yellow_concrete')   # 2D xz
+    geometry.placeCuboid(32, 144, 32, 47, 144, 47, 'yellow_stained_glass',
+                         hollow=True)
+
+    geometry.placeCuboid(32, 128, 48, 47, 143, 63, 'yellow_concrete')   # 3D
     geometry.placeCuboid(32, 144, 48, 47, 159, 63, 'yellow_stained_glass',
                          hollow=True)
 
-    geometry.placeArea(47, 159, 63, 0, 128, 0, 'air')
-    interfaceUtils.setBuffering(False)
-    interfaceUtils.setBufferLimit(0)
+    # placeCylinder axis = x
+    geometry.placeCylinder(48, 128, 0, 48, 128, 0, 'lime_concrete')     # 0D
+    geometry.placeCylinder(48, 144, 0, 48, 144, 0, 'lime_stained_glass',
+                           hollow=True)
+
+    geometry.placeCylinder(48, 128, 16, 63, 128, 16, 'lime_concrete')   # 1D x
+    geometry.placeCylinder(48, 144, 16, 63, 144, 16, 'lime_stained_glass',
+                           hollow=True)
+    geometry.placeCylinder(48, 128, 16, 48, 143, 16, 'lime_concrete')   # 1D y
+    geometry.placeCylinder(48, 144, 16, 48, 159, 16, 'lime_stained_glass',
+                           hollow=True)
+    geometry.placeCylinder(48, 128, 16, 48, 128, 31, 'lime_concrete')   # 1D z
+    geometry.placeCylinder(48, 144, 16, 48, 144, 31, 'lime_stained_glass',
+                           hollow=True)
+
+    # 2D xy (z axis)
+    geometry.placeCylinder(48, 128, 32, 63, 143, 32, 'lime_concrete', axis='z')
+    geometry.placeCylinder(48, 144, 32, 63, 159, 32, 'lime_stained_glass',
+                           hollow=True, axis='z')
+    # 2D yz (x axis)
+    geometry.placeCylinder(48, 128, 32, 48, 143, 47, 'lime_concrete', axis='x')
+    geometry.placeCylinder(48, 144, 32, 48, 159, 47, 'lime_stained_glass',
+                           hollow=True, axis='x')
+    # 2D xz (default axis)
+    geometry.placeCylinder(48, 128, 32, 63, 128, 47, 'lime_concrete')
+    geometry.placeCylinder(48, 144, 32, 63, 144, 47, 'lime_stained_glass',
+                           hollow=True)
+
+    # 3D x axis
+    geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete', axis='x')
+    geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
+                           hollow=True, axis='x')
+    # 3D default axis
+    geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete')
+    geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
+                           hollow=True)
+    # 3D z axis
+    geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete', axis='z')
+    geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
+                           hollow=True, axis='z')
+
+    input('check shapes')
+
+    geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
 
 
 def testBooks():
