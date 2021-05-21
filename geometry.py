@@ -1,12 +1,16 @@
 #! /usr/bin/python3
 """### Provides tools for creating multidimensional shapes."""
-__all__ = ['placeLine', 'placeArea', 'placeCuboid', 'placefromList']
+__all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
+           'placeArea', 'placeCuboid', 'placeCylinder', 'placefromList',
+           'getShapeBoundries', 'getDimension', 'padDimension', 'cutDimension',
+           'transform', 'repeat', 'fill2d', 'fill3d',
+           'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
 __version__ = 'v4.3_dev'
 
 import lookup
 import numpy as np
 import toolbox
-from interfaceUtils import globalinterface as gi
+from interface import globalinterface as gi
 
 
 def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
@@ -38,14 +42,16 @@ def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 
 def placeJointedLine(points, blocks, replace=None, interface=gi):
+    """**Place a line that runs from point to point**."""
     return placefromList(lineSequence(points), blocks, replace, interface)
 
 
 def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
+    """**Place a polygon that runs from line to line and may be filled**."""
     polygon = set()
     polygon.update(lineSequence(points))
     polygon.update(line3d(*points[0], *points[-1]))
-    dimension, vector = getDimension(*shapeboundries(polygon))
+    dimension, vector = getDimension(*getShapeBoundries(polygon))
     if filled and dimension == 2:
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
@@ -67,7 +73,7 @@ def placeArea(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                 hollow=False, interface=gi):
-    """**Draw a cubic shape that fills the entire region."""
+    """**Place a cubic shape that fills the entire region and may be hollow."""
     settings = blocks, replace, interface
     dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
 
@@ -94,19 +100,19 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
 
 
 def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
-                  axis='y', hollow=False, interface=gi):
-    """**Draw a cylindric shape that fills the entire region."""
+                  axis='y', tube=False, hollow=False, interface=gi):
+    """**Place a cylindric shape that fills the entire region."""
     settings = blocks, replace, interface
     dimension, flatSides = getDimension(x1, y1, z1, x2, y2, z2)
 
     def placeCylinderBody(a1, b1, a2, b2, h0, hn):
         """**Build a cylinder**."""
         tube, base = ellipse(a1, b1, a2, b2, filled=True)
-        base = padDimension(base, h0, axis)
-        if hollow:
+        base = tube = padDimension(base, h0, axis)
+        if tube:
+            base = tube = padDimension(tube, h0, axis)
+        elif hollow:
             tube = padDimension(tube, h0, axis)
-        else:
-            tube = base
 
         bottom = placefromList(base,  *settings)
         top = 0
@@ -163,81 +169,20 @@ def placefromList(list, blocks, replace=None, interface=gi):
 # ========================================================= calculations
 
 
-def floodFill(x, y, z, axis='y', replace='minecraft:air'):
-    """**Return the points for all connected blocks along a plain**."""
-    if isinstance(replace, str):
-        replace = (replace, )
-    elif not toolbox.isSequence(replace):
-        raise TypeError(f'{lookup.TCOLORS["red"]}{replace} is neither '
-                        'a string nor a sequence!')
-
-    raise NotImplementedError()
-
-
-def transform(points, amount, axis='y'):
-    points = set(points)
-    vx, vy, vz = lookup.AXIS2VECTOR[axis]
-    clone = [(x + amount * vx, y + amount * vy, z + amount * vz)
-             for x, y, z in points]
-    return clone
-
-
-def repeat(points, times, axis='y', step=1):
-    """**Return points with duplicates shifted along the appropriate axis**."""
-    clone = set(points)
-    for n in range(1, times + 2):
-        clone.update(transform(points, step * n, axis))
-    return clone
-
-
-def fill2d(points):
-    filling = points = list(points)
-    minx, miny = np.array(filling).min(axis=0)
-    maxx, maxy = np.array(filling).max(axis=0)
-    cx, cy = minx + (maxx - minx) // 2, miny + (maxy - miny) // 2
-
-    def fill(x, y):
-        if (x, y) in points:
-            return
-        elif not (minx <= x <= maxx and miny <= y <= maxy):
-            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
-                             'open-sided shape!')
-        points.append((x, y))
-        fill(x + 1, y)
-        fill(x - 1, y)
-        fill(x, y + 1)
-        fill(x, y - 1)
-
-    fill(cx, cy)
-    return points
-
-
-def fill3d(points):
-    filling = points = list(points)
-    minx, miny, minz = np.array(filling).min(axis=0)
-    maxx, maxy, maxz = np.array(filling).max(axis=0)
-    cx, cy, cz = (minx + (maxx - minx) // 2,
-                  miny + (maxy - miny) // 2,
-                  minz + (maxz - minz) // 2)
-
-    def fill(x, y, z):
-        if (x, y, z) in points:
-            return
-        elif not (minx <= x <= maxx
-                  and miny <= y <= maxy
-                  and minz <= z <= maxz):
-            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
-                             'open-sided 3D shape!')
-        points.append((x, y, z))
-        fill(x + 1, y, z)
-        fill(x - 1, y, z)
-        fill(x, y + 1, z)
-        fill(x, y - 1, z)
-        fill(x, y, z + 1)
-        fill(x, y, z - 1)
-
-    fill(cx, cy, cz)
-    return points
+def getShapeBoundries(points):
+    """**Return the smallest and largest values used in a shape**."""
+    points = np.array(points)
+    dimension = len(points[0])
+    if dimension == 2:
+        minx, miny = points.min(axis=0)
+        maxx, maxy = points.max(axis=0)
+        return minx, miny, maxx, maxy
+    elif dimension == 3:
+        minx, miny, minz = points.min(axis=0)
+        maxx, maxy, maxz = points.max(axis=0)
+        return minx, miny, minz, maxx, maxy, maxz
+    raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
+                     'shapes are not supported!')
 
 
 def getDimension(x1, y1, z1, x2, y2, z2):
@@ -254,9 +199,12 @@ def getDimension(x1, y1, z1, x2, y2, z2):
 
 
 def padDimension(points, value=0, axis='z'):
-    """**Pad a list of 3D points with a value in the appropriate position**."""
+    """**Pad a list of 2D points with a value in the appropriate position**.
+
+    May also be used to replace all values in an axis.
+    """
     if axis == 'x':
-        return [(value, i[0], i[-1]) for i in points]
+        return [(value, i[-2], i[-1]) for i in points]
     elif axis == 'y':
         return [(i[0], value, i[-1]) for i in points]
     elif axis == 'z':
@@ -266,6 +214,7 @@ def padDimension(points, value=0, axis='z'):
 
 
 def cutDimension(points, axis='z'):
+    """**Cut the appropriate axis from a list of points**."""
     try:
         if axis == 'x':
             return [(i[0:]) for i in points]
@@ -283,20 +232,77 @@ def cutDimension(points, axis='z'):
                      f'to cut from this set!\n{points}')
 
 
-def shapeboundries(points):
-    points = np.array(points)
-    dimension = len(points[0])
-    if dimension == 2:
-        minx, miny = points.min(axis=0)
-        maxx, maxy = points.max(axis=0)
-        return minx, miny, maxx, maxy
-    elif dimension == 3:
-        minx, miny, minz = points.min(axis=0)
-        maxx, maxy, maxz = points.max(axis=0)
-        return minx, miny, minz, maxx, maxy, maxz
-    else:
-        raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
-                         'shapes are not supported!')
+def transform(points, amount, axis='y'):
+    """**Return a clone of the points transformed by amount in axis**."""
+    points = set(points)
+    vx, vy, vz = lookup.AXIS2VECTOR[axis]
+    clone = [(x + amount * vx, y + amount * vy, z + amount * vz)
+             for x, y, z in points]
+    return clone
+
+
+def repeat(points, times, axis='y', step=1):
+    """**Return points with duplicates shifted along the appropriate axis**."""
+    clone = set(points)
+    for n in range(1, times + 2):
+        clone.update(transform(points, step * n, axis))
+    return clone
+
+
+def fill2d(points):
+    """**Return all filling within the shape of points**."""
+    points = list(points)
+    filling = []
+    minx, miny = np.array(points).min(axis=0)
+    maxx, maxy = np.array(points).max(axis=0)
+    cx, cy = minx + (maxx - minx) // 2, miny + (maxy - miny) // 2
+
+    def fill(x, y):
+        if (x, y) in points:
+            return
+        elif not (minx <= x <= maxx and miny <= y <= maxy):
+            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
+                             'open-sided shape!')
+        points.append((x, y))
+        filling.append((x, y))
+        fill(x + 1, y)
+        fill(x - 1, y)
+        fill(x, y + 1)
+        fill(x, y - 1)
+
+    fill(cx, cy)
+    return filling
+
+
+def fill3d(points):
+    """**Return all filling within the shape of points**."""
+    points = list(points)
+    filling = []
+    minx, miny, minz = np.array(points).min(axis=0)
+    maxx, maxy, maxz = np.array(points).max(axis=0)
+    cx, cy, cz = (minx + (maxx - minx) // 2,
+                  miny + (maxy - miny) // 2,
+                  minz + (maxz - minz) // 2)
+
+    def fill(x, y, z):
+        if (x, y, z) in points:
+            return
+        elif not (minx <= x <= maxx
+                  and miny <= y <= maxy
+                  and minz <= z <= maxz):
+            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
+                             'open-sided 3D shape!')
+        points.append((x, y, z))
+        filling.append((x, y, z))
+        fill(x + 1, y, z)
+        fill(x - 1, y, z)
+        fill(x, y + 1, z)
+        fill(x, y - 1, z)
+        fill(x, y, z + 1)
+        fill(x, y, z - 1)
+
+    fill(cx, cy, cz)
+    return filling
 
 
 def line2d(x1, y1, x2, y2):
@@ -406,6 +412,7 @@ def line3d(x1, y1, z1, x2, y2, z2):
 
 
 def lineSequence(points):
+    """**Return all points connecting points in sequence**."""
     last = points[0]
     dimension = len(last)
     toPlace = set()
@@ -418,6 +425,7 @@ def lineSequence(points):
             raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
                              'lineSequence not supported!')
         last = point
+    return toPlace
 
 
 def circle(x1, y1, x2, y2, filled=False):

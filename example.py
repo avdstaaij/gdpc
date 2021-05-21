@@ -14,19 +14,19 @@ __all__ = []
 
 import random
 
-import interfaceUtils
-import mapUtils
+import geometry
+import interface
 from worldLoader import WorldSlice
 
 # set up an interface for getting and placing blocks
 # IMPORTANT: It is recommended not to use buffering during development
 # How to use buffering (batch placement):
 #   Allow block buffer placement
-#       >>> interfaceUtils.setBuffering(True)
+#       >>> interface.setBuffering(True)
 #   Change maximum buffer size (default is 1024 blocks, set 4096 for speed)
-#       >>> interfaceUtils.setBufferLimit(100)
+#       >>> interface.setBufferLimit(100)
 #   Send blocks to world
-#       >>> interfaceUtils.sendBlocks()
+#       >>> interface.sendBlocks()
 #   NOTE: The buffer will automatically place its blocks once it gets full
 #   NOTE: It is a good idea to call sendBlocks() after completing a task,
 #       so that you can see the result without having to wait
@@ -34,7 +34,7 @@ from worldLoader import WorldSlice
 
 # see if a build area has been specified
 # you can set a build area in minecraft using the /setbuildarea command
-startx, starty, startz, endx, endy, endz = interfaceUtils.requestBuildArea()
+startx, starty, startz, endx, endy, endz = interface.requestBuildArea()
 
 
 def heightAt(x, z):
@@ -47,41 +47,41 @@ def heightAt(x, z):
 def buildHouse(x1, y1, z1, x2, y2, z2):
     """Build a small house."""
     # floor
-    interfaceUtils.fill(x1, y1, z1, x2 - 1, y1, z2 - 1, "cobblestone")
+    geometry.placeArea(x1, y1, z1, x2 - 1, y1, z2 - 1, "cobblestone")
 
     # walls
-    interfaceUtils.fill(x1 + 1, y1, z1, x2 - 2, y2, z1, "oak_planks")
-    interfaceUtils.fill(x1 + 1, y1, z2 - 1, x2 - 2, y2, z2 - 1, "oak_planks")
-    interfaceUtils.fill(x1, y1, z1 + 1, x1, y2, z2 - 2, "oak_planks")
-    interfaceUtils.fill(x2 - 1, y1, z1 + 1, x2 - 1, y2, z2 - 2, "oak_planks")
+    geometry.placeArea(x1 + 1, y1, z1, x2 - 2, y2, z1, "oak_planks")
+    geometry.placeArea(x1 + 1, y1, z2 - 1, x2 - 2, y2, z2 - 1, "oak_planks")
+    geometry.placeArea(x1, y1, z1 + 1, x1, y2, z2 - 2, "oak_planks")
+    geometry.placeArea(x2 - 1, y1, z1 + 1, x2 - 1, y2, z2 - 2, "oak_planks")
 
     # corners
-    interfaceUtils.fill(x1, y1, z1, x1, y2, z1, "oak_log")
-    interfaceUtils.fill(x2 - 1, y1, z1, x2 - 1, y2, z1, "oak_log")
-    interfaceUtils.fill(x1, y1, z2 - 1, x1, y2, z2 - 1, "oak_log")
-    interfaceUtils.fill(x2 - 1, y1, z2 - 1, x2 - 1, y2, z2 - 1, "oak_log")
+    geometry.placeArea(x1, y1, z1, x1, y2, z1, "oak_log")
+    geometry.placeArea(x2 - 1, y1, z1, x2 - 1, y2, z1, "oak_log")
+    geometry.placeArea(x1, y1, z2 - 1, x1, y2, z2 - 1, "oak_log")
+    geometry.placeArea(x2 - 1, y1, z2 - 1, x2 - 1, y2, z2 - 1, "oak_log")
 
     # clear interior
     for y in range(y1 + 1, y2):
         for x in range(x1 + 1, x2 - 1):
             for z in range(z1 + 1, z2 - 1):
                 # check what's at that place and only delete if not air
-                if "air" not in interfaceUtils.getBlock(x, y, z):
-                    interfaceUtils.setBlock(x, y, z, "air")
+                if "air" not in interface.getBlock(x, y, z):
+                    interface.placeBlock(x, y, z, "air")
 
     # roof
     if x2 - x1 < z2 - z1:   # if the house is longer in Z-direction
         for i in range(0, (1 - x1 + x2) // 2):
-            interfaceUtils.fill(x1 + i, y2 + i, z1,
-                                x2 - 1 - i, y2 + i, z2 - 1, "bricks")
+            geometry.placeArea(x1 + i, y2 + i, z1,
+                               x2 - 1 - i, y2 + i, z2 - 1, "bricks")
     else:
         # same as above but with x and z swapped
         for i in range(0, (1 - z1 + z2) // 2):
-            interfaceUtils.fill(x1, y2 + i, z1 + i, x2 - 1,
-                                y2 + i, z2 - 1 - i, "bricks")
+            geometry.placeArea(x1, y2 + i, z1 + i, x2 - 1,
+                               y2 + i, z2 - 1 - i, "bricks")
 
-    if interfaceUtils.isBuffering():
-        interfaceUtils.sendBlocks()
+    if interface.isBuffering():
+        interface.sendBlocks()
 
 
 def rectanglesOverlap(r1, r2):
@@ -101,43 +101,37 @@ if __name__ == '__main__':
     # load the world data
     # this uses the /chunks endpoint in the background
     worldSlice = WorldSlice(startx, startz, endx, endz)
-
-    # calculate a heightmap suitable for building:
-    heightmap = mapUtils.calcGoodHeightmap(worldSlice)
+    heightmap = worldSlice.heightmaps["MOTION_BLOCKING"]
 
     # example alternative heightmaps:
-    # >>> heightmap = worldSlice.heightmaps["MOTION_BLOCKING"]
     # >>> heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
     # >>> heightmap = worldSlice.heightmaps["OCEAN_FLOOR"]
     # >>> heightmap = worldSlice.heightmaps["WORLD_SURFACE"]
-
-    # show the heightmap as an image
-    # >>> mapUtils.visualize(heightmap, title="heightmap")
 
     # build a fence around the perimeter
     for x in range(startx, endx):
         z = startz
         y = heightAt(x, z)
-        interfaceUtils.setBlock(x, y - 1, z, "cobblestone")
-        interfaceUtils.setBlock(x, y,   z, "oak_fence")
+        interface.placeBlock(x, y - 1, z, "cobblestone")
+        interface.placeBlock(x, y,   z, "oak_fence")
     for z in range(startz, endz):
         x = startx
         y = heightAt(x, z)
-        interfaceUtils.setBlock(x, y - 1, z, "cobblestone")
-        interfaceUtils.setBlock(x, y, z, "oak_fence")
+        interface.placeBlock(x, y - 1, z, "cobblestone")
+        interface.placeBlock(x, y, z, "oak_fence")
     for x in range(startx, endx):
         z = endz - 1
         y = heightAt(x, z)
-        interfaceUtils.setBlock(x, y - 1, z, "cobblestone")
-        interfaceUtils.setBlock(x, y,   z, "oak_fence")
+        interface.placeBlock(x, y - 1, z, "cobblestone")
+        interface.placeBlock(x, y,   z, "oak_fence")
     for z in range(startz, endz):
         x = endx - 1
         y = heightAt(x, z)
-        interfaceUtils.setBlock(x, y - 1, z, "cobblestone")
-        interfaceUtils.setBlock(x, y, z, "oak_fence")
+        interface.placeBlock(x, y - 1, z, "cobblestone")
+        interface.placeBlock(x, y, z, "oak_fence")
 
-    if interfaceUtils.isBuffering():
-        interfaceUtils.sendBlocks()
+    if interface.isBuffering():
+        interface.sendBlocks()
 
     houses = []
     for i in range(100):

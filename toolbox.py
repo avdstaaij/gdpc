@@ -1,9 +1,10 @@
 #! /usr/bin/python3
 """### Provides various small functions for the average workflow."""
 
-__all__ = ['loop2d', 'loop3d', 'writeBook', 'placeLectern',
-           'placeInventoryBlock', 'placeSign', 'getOptimalDirection']
-__version__ = 'v4.2_dev'
+__all__ = ['isSequence', 'normaliseCoordinates', 'loop2d', 'loop3d',
+           'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
+           'getOptimalDirection', 'visualizeHeightmap']
+__version__ = 'v4.3_dev'
 __year__ = '2021'
 __author__ = 'Blinkenlights'
 
@@ -11,13 +12,17 @@ from functools import lru_cache
 from itertools import product
 from random import choice
 
+import cv2
 import lookup
-from interfaceUtils import getBlock
-from interfaceUtils import globalinterface as gi
-from interfaceUtils import runCommand
+import numpy as np
+from interface import getBlock
+from interface import globalinterface as gi
+from interface import runCommand
+from matplotlib import pyplot as plt
 
 
 def isSequence(sequence):
+    """**Determine whether sequence is a sequence**."""
     try:
         sequence[0:-1]
         return True
@@ -26,6 +31,7 @@ def isSequence(sequence):
 
 
 def normaliseCoordinates(*args):
+    """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
     args1, args2 = args[:len(args) // 2], args[len(args) // 2:]
     return [a if a < b else b for a, b in zip(args1, args2)] \
         + [a if a > b else b for a, b in zip(args1, args2)]
@@ -208,7 +214,6 @@ def writeBook(text, title="Chronicle", author=__author__,
             jokepage()
             break
         if page[:3] == '\\\\s':
-            print(page[3:])
             bookData += page[3:]
             newpage()
             continue
@@ -400,6 +405,30 @@ def identifyObtrusiveness(blockStr):
     if blockStr in lookup.OBTRUSIVE:
         return 3
     return 4
+
+
+def visualizeHeightmap(*arrays, title=None, autonormalize=True):
+    """**Visualizes one or multiple numpy arrays**.
+
+    Args:
+        title (str, optional): display title. Defaults to None.
+        autonormalize (bool, optional): Normalizes the array to be
+            between 0 (black) and 255 (white). Defaults to True.
+    """
+    def normalize(array):
+        """**Normalize the array to contain values from 0 to 1**."""
+        return (array - array.min()) / (array.max() - array.min())
+
+    for array in arrays:
+        if autonormalize:
+            array = (normalize(array) * 255).astype(np.uint8)
+
+        plt.figure()
+        if title:
+            plt.title(title)
+        plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+        plt.imshow(plt_image)
+    plt.show()
 
 
 # ========================================================= converters

@@ -7,11 +7,14 @@ This module contains functions to:
 * Get the name of a block at a particular coordinate
 * Place blocks in the world
 """
-__all__ = ['Interface', 'requestBuildArea', 'requestPlayerArea', 'runCommand',
-           'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
+__all__ = ['Interface', 'runCommand',
+           'setBuildArea', 'requestBuildArea', 'requestPlayerArea',
+           'makeGlobalSlice', 'getBlock', 'placeBlock',
+           'getBlockFlags', 'setBlockFlags',
            'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
-           'getBlock', 'placeBlock', 'sendBlocks']
-__version__ = "v4.2_dev"
+           'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
+           'sendBlocks', 'checkOutOfBounds']
+__version__ = "v4.3_dev"
 
 from collections import OrderedDict
 from random import choice
@@ -63,6 +66,8 @@ class Interface():
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
         self.buffer = []    # buffer is in global coordinates
+        self.setblockflags = (True, None)   # (doBlockUpdates, CustomFlags)
+        self.bufferblockflags = (True, None)   # (doBlockUpdates, CustomFlags)
         self.caching = caching
         # cache is in global coordinates
         self.cache = OrderedByLookupDict(cachelimit)
@@ -103,11 +108,13 @@ class Interface():
 
         return response
 
-    def placeBlock(self, x, y, z, block, replace=None):
+    def placeBlock(self, x, y, z, block, replace=None,
+                   doBlockUpdates=-1, customFlags=-1):
         """**Place a block in the world depending on buffer activation**.
 
         Takes local coordinates, works with local and global coordinates
         """
+        flags = doBlockUpdates, customFlags
         from toolbox import isSequence
         if isinstance(replace, str):
             if self.getBlock(x, y, z) != replace:
@@ -119,9 +126,10 @@ class Interface():
             block = choice(block)
 
         if self.__buffering:
-            response = self.setBlockBatched(x, y, z, block, self.bufferlimit)
+            response = self.setBlockBuffered(x, y, z, block, self.bufferlimit,
+                                             flags)
         else:
-            response = self.setBlock(x, y, z, block)
+            response = self.setBlock(x, y, z, block, flags)
 
         # switch to global coordinates
         x, y, z = self.local2global(x, y, z)
@@ -134,17 +142,31 @@ class Interface():
 
         return response
 
-    def setBlock(self, x, y, z, blockStr):
+    def setBlock(self, x, y, z, blockStr,
+                 doBlockUpdates=-1, customFlags=-1):
         """**Place a single block in the world directly**.
 
         Takes local coordinates, works with global coordinates
         """
+        if doBlockUpdates == -1:
+            doBlockUpdates = self.setblockflags[0]
+        if customFlags == -1:
+            customFlags = self.setblockflags[1]
+
         x, y, z = self.local2global(x, y, z)
-        result = di.setBlock(x, y, z, blockStr)
+        result = di.setBlock(x, y, z, blockStr, doBlockUpdates, customFlags)
         if not result.isnumeric():
             print(f"{TCOLORS['orange']}Warning: Server returned error "
                   f"upon placing block:\n\t{TCOLORS['CLR']}{result}")
         return result
+
+    def getBlockFlags(self):
+        """**Get default block placement flags**."""
+        return self.setblockflags
+
+    def setBlockFlags(self, doBlockUpdates=True, customFlags=None):
+        """**Set default block placement flags**."""
+        self.setblockflags = doBlockUpdates, customFlags
 
     # ----------------------------------------------------- block buffers
 
@@ -185,11 +207,21 @@ class Interface():
         """**Set maximum cache size**."""
         self.cache.maxsize = value
 
-    def setBlockBatched(self, x, y, z, blockStr, limit=50):
+    def setBlockBuffered(self, x, y, z, blockStr, limit=50,
+                         doBlockUpdates=-1, customFlags=-1):
         """**Place a block in the buffer and send once limit is exceeded**.
 
         Takes local coordinates and works with global coordinates
         """
+        if doBlockUpdates == -1:
+            doBlockUpdates = self.setblockflags[0]
+        if customFlags == -1:
+            customFlags = self.setblockflags[1]
+
+        if (doBlockUpdates, customFlags) != self.bufferblockflags:
+            self.sendBlocks()
+            self.bufferblockflags = doBlockUpdates, customFlags
+
         x, y, z = self.local2global(x, y, z)
 
         self.buffer.append((x, y, z, blockStr))
@@ -206,7 +238,8 @@ class Interface():
         """
         if self.buffer == []:
             return '0'
-        response = di.sendBlocks(self.buffer, x, y, z, retries).split('\n')
+        response = di.sendBlocks(self.buffer, x, y, z,
+                                 retries, *self.bufferblockflags).split('\n')
         if all(map(lambda val: val.isnumeric(), response)):  # no errors
             self.buffer = []
             return str(sum(map(int, response)))
@@ -245,8 +278,9 @@ def runCommand(command):
 
 
 def setBuildArea(x1, y1, z1, x2, y2, z2):
+    """**Set and return the build area**."""
     runCommand(f"setbuildarea {x1} {y1} {z1} {x2} {y2} {z2}")
-    requestBuildArea()
+    return requestBuildArea()
 
 
 def requestBuildArea():
@@ -301,6 +335,16 @@ def placeBlock(x, y, z, blocks, replace=None):
     """**Global setBlock**."""
     return globalinterface.placeBlock(x, y, z, blocks, replace)
 
+
+def getBlockFlags():
+    """**Global getBlockFlags**."""
+    return globalinterface.getBlockFlags()
+
+
+def setBlockFlags(doBlockUpdates=True, customFlags=None):
+    """**Global setBlockFlags**."""
+    globalinterface.setBlockFlags(doBlockUpdates, customFlags)
+
 # ----------------------------------------------------- block buffers
 
 
@@ -351,12 +395,6 @@ def sendBlocks(x=0, y=0, z=0, retries=5):
 # ----------------------------------------------------- utility functions
 
 
-def global2buildlocal(x, y, z):
-    """**Convert global coordinates to ones relative to the build area**."""
-    x0, y0, z0, _, _, _ = globalBuildArea
-    return x - x0, y - y0, z - z0
-
-
 def checkOutOfBounds(x, y, z, warn=True):
     """**Check whether a given coordinate is outside the build area**."""
     x1, y1, z1, x2, y2, z2 = globalBuildArea
@@ -369,7 +407,14 @@ def checkOutOfBounds(x, y, z, warn=True):
     return False
 
 
+def global2buildlocal(x, y, z):
+    """**Convert global coordinates to ones relative to the build area**."""
+    x0, y0, z0, _, _, _ = globalBuildArea
+    return x - x0, y - y0, z - z0
+
+
 def resetGlobalDecay():
+    """**Reset the global decay marker**."""
     global globalDecay
     x1, _, z1, x2, _, z2 = globalBuildArea
     globalDecay = np.zeros((x2 - x1, 256, z2 - z1), dtype=bool)

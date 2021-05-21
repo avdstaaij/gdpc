@@ -9,7 +9,7 @@ It is not meant to be imported.
 """
 
 __all__ = []
-__version__ = "v4.2_dev"
+__version__ = "v4.3_dev"
 
 import random
 import sys
@@ -20,7 +20,7 @@ import time
 # import worldLoader
 import geometry
 # import example
-import interfaceUtils
+import interface
 # import bitarray
 import lookup
 import toolbox
@@ -40,7 +40,7 @@ def verifyPaletteBlocks():
     print(f"\n{lookup.TCOLORS['yellow']}Running blockColours palette test...")
 
     print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
-    tester = interfaceUtils.Interface()
+    tester = interface.Interface()
     counter = 0
     badcounter = 0
     passed = []
@@ -79,7 +79,9 @@ def verifyPaletteBlocks():
 def testShapes():
     """**Check shape construction**."""
     # TODO: Fill me!
-    # geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
+    print(f"\n{lookup.TCOLORS['yellow']}Running shape test..."
+          f"{lookup.TCOLORS['gray']}")
+    geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
 
     # placeLine
     geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')            # 0D
@@ -97,7 +99,7 @@ def testShapes():
 
     geometry.placeLine(0, 128, 48, 7, 135, 55, 'red_concrete')          # 3D+++
     geometry.placeLine(15, 143, 63, 7, 135, 55, 'red_concrete')         # 3D---
-    interfaceUtils.globalinterface.placeBlock(7, 135, 55, 'gold_block')
+    interface.globalinterface.placeBlock(7, 135, 55, 'gold_block')
 
     # placeArea
     geometry.placeArea(16, 128, 0, 16, 128, 0, 'orange_concrete')       # 0D
@@ -182,9 +184,15 @@ def testShapes():
     geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
                            hollow=True, axis='z')
 
-    input('check shapes')
+    reply = input(f"\t{lookup.TCOLORS['blue']}\aHave all shapes generated "
+                  f"correctly? (y/*): {lookup.TCOLORS['CLR']}")
+
+    if reply != 'y':
+        raise TestException(f"Shapes were failed:\n"
+                            f"\t{reply}")
 
     geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
+    print(f"{lookup.TCOLORS['green']}Book test complete!")
 
 
 def testBooks():
@@ -237,13 +245,13 @@ def testBooks():
 
     print("\tPrompting user...", end="\r")
     for no, prompt in enumerate(CRITERIA):
-        reply = input(f"\t{lookup.TCOLORS['blue']}{no}/{len(CRITERIA)} "
+        reply = input(f"\t{lookup.TCOLORS['blue']}\a{no+1}/{len(CRITERIA)} "
                       f"{prompt} (y/*): {lookup.TCOLORS['CLR']}")
         if reply == '' or reply[0].lower() != 'y':
             raise TestException(f"Book criteria #{no} was failed:\n"
                                 f"\t{prompt}: {reply}")
     print(f"{lookup.TCOLORS['green']}Book test complete!")
-    interfaceUtils.globalinterface.placeBlock(0, 255, 0, "air")
+    interface.globalinterface.placeBlock(0, 255, 0, "air")
 
 
 def testCache():
@@ -256,7 +264,8 @@ def testCache():
     def clearTestbed():
         """Clean testbed for placement from memory."""
         print("\t\tWiping blocks...", end="\r")
-        tester.fill(0, 1, 0, SIZE - 1, 1, SIZE - 1, "shroomlight")
+        geometry.placeArea(0, 1, 0, SIZE - 1, 1, SIZE - 1,
+                           "shroomlight", tester)
         tester.sendBlocks()
         print("\n\t\tWiping blocks done.")
 
@@ -265,7 +274,7 @@ def testCache():
         print("\t\tReplacing blocks from memory...", end="\r")
         tester.caching = True
         for x, z in toolbox.loop2d(SIZE, SIZE):
-            tester.setBlock(x, 1, z, tester.getBlock(x, 1, z))
+            tester.placeBlock(x, 1, z, tester.getBlock(x, 1, z))
         tester.sendBlocks()
         tester.caching = False
         print("\n\t\tReplacing blocks from memory done.")
@@ -300,9 +309,9 @@ def testCache():
             if random.choice([True, False]):
                 type = random.choice(PALETTES)
                 tester.caching = True
-                tester.setBlock(x, 1, z, type[1])
+                tester.placeBlock(x, 1, z, type[1])
                 tester.caching = False
-                tester.setBlock(x, 0, z, type[0])
+                tester.placeBlock(x, 0, z, type[0])
                 tester.sendBlocks()
             else:
                 tester.caching = True
@@ -313,9 +322,9 @@ def testCache():
 
     # ---- preparation
     print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
-    tester = interfaceUtils.Interface(buffering=True, bufferlimit=SIZE ** 2)
-    tester.fill(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock")
-    tester.fill(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air")
+    tester = interface.Interface(buffering=True, bufferlimit=SIZE ** 2)
+    geometry.placeArea(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock", tester)
+    geometry.placeArea(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air", tester)
     tester.sendBlocks()
     tester.cache.maxsize = (SIZE ** 2)
     print("\tPerparing done.")
@@ -327,15 +336,15 @@ def testCache():
               + (10 - 10 * x // SIZE) * "▕", end="\r")
         type = random.choice(PALETTES)
         tester.caching = True
-        tester.setBlock(x, 1, z, type[1])
+        tester.placeBlock(x, 1, z, type[1])
         tester.caching = False
-        tester.setBlock(x, 0, z, type[0])
+        tester.placeBlock(x, 0, z, type[0])
     tester.sendBlocks()
     print("\tPlacing pattern...▕██████████")
     print("\tScattering test blocks done.")
 
-    # ---- first run (caching through setBlock)
-    print(f"\t{lookup.TCOLORS['gray']}First run: Cache updated via setBlock")
+    # ---- first run (caching through placeBlock)
+    print(f"\t{lookup.TCOLORS['gray']}First run: Cache updated via placeBlock")
 
     clearTestbed()
     placeFromCache()
@@ -358,7 +367,7 @@ def testCache():
     placeFromCache()
     checkDiscrepancies()
 
-    # ---- third run (randomized get-/setBlock)
+    # ---- third run (randomized get-/placeBlock)
     print(f"\t{lookup.TCOLORS['gray']}Third run: "
           "Cache updated via random methods")
 
@@ -375,7 +384,7 @@ def testCache():
 
     print("\t\tGenerating global slice...", end="\r")
     d0 = time.perf_counter()
-    interfaceUtils.makeGlobalSlice()
+    interface.makeGlobalSlice()
     dt = time.perf_counter()
     print(f"\t\tGenerated global slice in {(dt-d0):.2f} seconds.")
 
@@ -385,15 +394,14 @@ def testCache():
 
     # ---- cleanup
     print(f"{lookup.TCOLORS['green']}Cache test complete!")
-    tester.fill(0, 0, 0, SIZE, 1, SIZE, "bedrock")
-    interfaceUtils.globalWorldSlice = None
-    interfaceUtils.globalDecay = None
+    geometry.placeArea(0, 0, 0, SIZE, 1, SIZE, "bedrock", tester)
+    interface.globalWorldSlice = None
+    interface.globalDecay = None
 
 
 if __name__ == '__main__':
     AUTOTESTS = (verifyPaletteBlocks, testCache)
-    # MANUALTESTS = (testBooks, testShapes)
-    MANUALTESTS = (testShapes,)
+    MANUALTESTS = (testBooks, testShapes)
     tests = AUTOTESTS + MANUALTESTS
 
     if len(sys.argv) > 1:
@@ -404,7 +412,7 @@ if __name__ == '__main__':
 
     print(f"Beginning test suite for version "
           f"{lookup.TCOLORS['blue']}{__version__}: {len(tests)} tests")
-    interfaceUtils.setBuildArea(0, 0, 0, 255, 255, 255)
+    interface.setBuildArea(0, 0, 0, 255, 255, 255)
     failed = 0
     errors = ""
     for test in tests:
@@ -414,7 +422,7 @@ if __name__ == '__main__':
             errors += f"{lookup.TCOLORS['red']}> {test.__name__}() failed.\n" \
                 + f"{lookup.TCOLORS['gray']}Cause: {e}\n"
             failed += 1
-    print(f"\n{lookup.TCOLORS['CLR']}Test suite completed with "
+    print(f"\n{lookup.TCOLORS['CLR']}\aTest suite completed with "
           f"{lookup.TCOLORS['orange']}{failed}"
           f"{lookup.TCOLORS['CLR']} fails!\n")
     if errors != "":

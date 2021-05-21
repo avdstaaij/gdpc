@@ -7,11 +7,11 @@ See README.md for more information.
 """
 import bitarray
 import direct_interface
-import interfaceUtils
+import interface
 import lookup
 import mapUtils
 import worldLoader
 
-__all__ = ['bitarray', 'lookup', 'direct_interface', 'interfaceUtils',
+__all__ = ['bitarray', 'lookup', 'direct_interface', 'interface',
            'mapUtils', 'worldLoader']
 __version__ = 'v4.2_dev'
