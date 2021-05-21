@@ -38,12 +38,18 @@ def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 
 def placeJointedLine(points, blocks, replace=None, interface=gi):
-    last = points[0]
-    toPlace = set()
-    for point in points[0:]:
-        toPlace.add(line3d(last, point))
-        last = point
-    return placefromList(toPlace, blocks)
+    return placefromList(lineSequence(points), blocks, replace, interface)
+
+
+def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
+    polygon = set()
+    polygon.update(lineSequence(points))
+    polygon.update(line3d(*points[0], *points[-1]))
+    dimension, vector = getDimension(*shapeboundries(polygon))
+    if filled and dimension == 2:
+        polygon.update(fill2d(polygon))
+    elif filled and dimension == 3:
+        print("Cannot ")
 
 
 def placeArea(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
@@ -191,9 +197,11 @@ def fill2d(points):
     cx, cy = minx + (maxx - minx) // 2, miny + (maxy - miny) // 2
 
     def fill(x, y):
-        if (x, y) in points or (x == minx or x == maxx
-                                or y == miny or y == maxy):
+        if (x, y) in points:
             return
+        elif not (minx <= x <= maxx and miny <= y <= maxy):
+            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
+                             'open-sided shape!')
         points.append((x, y))
         fill(x + 1, y)
         fill(x - 1, y)
@@ -201,6 +209,34 @@ def fill2d(points):
         fill(x, y - 1)
 
     fill(cx, cy)
+    return points
+
+
+def fill3d(points):
+    filling = points = list(points)
+    minx, miny, minz = np.array(filling).min(axis=0)
+    maxx, maxy, maxz = np.array(filling).max(axis=0)
+    cx, cy, cz = (minx + (maxx - minx) // 2,
+                  miny + (maxy - miny) // 2,
+                  minz + (maxz - minz) // 2)
+
+    def fill(x, y, z):
+        if (x, y, z) in points:
+            return
+        elif not (minx <= x <= maxx
+                  and miny <= y <= maxy
+                  and minz <= z <= maxz):
+            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
+                             'open-sided 3D shape!')
+        points.append((x, y, z))
+        fill(x + 1, y, z)
+        fill(x - 1, y, z)
+        fill(x, y + 1, z)
+        fill(x, y - 1, z)
+        fill(x, y, z + 1)
+        fill(x, y, z - 1)
+
+    fill(cx, cy, cz)
     return points
 
 
@@ -227,6 +263,40 @@ def padDimension(points, value=0, axis='z'):
         return [(i[0], i[1], value) for i in points]
     raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis '
                      'to pad with!')
+
+
+def cutDimension(points, axis='z'):
+    try:
+        if axis == 'x':
+            return [(i[0:]) for i in points]
+        elif axis == 'y':
+            dimension = len(points[0])
+            if dimension == 2:
+                return [(i[:-1]) for i in points]
+            elif dimension == 3:
+                return [(i[0], i[-1]) for i in points]
+        elif axis == 'z':
+            return [(i[:-1]) for i in points]
+    except IndexError:
+        pass
+    raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis '
+                     f'to cut from this set!\n{points}')
+
+
+def shapeboundries(points):
+    points = np.array(points)
+    dimension = len(points[0])
+    if dimension == 2:
+        minx, miny = points.min(axis=0)
+        maxx, maxy = points.max(axis=0)
+        return minx, miny, maxx, maxy
+    elif dimension == 3:
+        minx, miny, minz = points.min(axis=0)
+        maxx, maxy, maxz = points.max(axis=0)
+        return minx, miny, minz, maxx, maxy, maxz
+    else:
+        raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
+                         'shapes are not supported!')
 
 
 def line2d(x1, y1, x2, y2):
@@ -333,6 +403,21 @@ def line3d(x1, y1, z1, x2, y2, z2):
             points.add((x1, y1, z1))
 
     return points
+
+
+def lineSequence(points):
+    last = points[0]
+    dimension = len(last)
+    toPlace = set()
+    for point in points[0:]:
+        if dimension == 2:
+            toPlace.update(line2d(*last, *point))
+        elif dimension == 3:
+            toPlace.update(line3d(*last, *point))
+        else:
+            raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
+                             'lineSequence not supported!')
+        last = point
 
 
 def circle(x1, y1, x2, y2, filled=False):
