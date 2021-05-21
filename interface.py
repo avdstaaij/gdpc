@@ -108,47 +108,8 @@ class Interface():
 
         return response
 
-<<<<<<< HEAD:interface.py
     def placeBlock(self, x, y, z, block, replace=None,
                    doBlockUpdates=-1, customFlags=-1):
-=======
-    def fill(self, x1, y1, z1, x2, y2, z2, replaceBlock):
-        """**Fill the given region with the given block**.
-
-        Supports sequences of block strings for random texturing
-        Works with local coordinates
-        """
-        from toolbox import loop3d
-        textured = False
-        if type(replaceBlock) != str:
-            textured = True
-
-        for x, y, z in loop3d(x1, y1, z1, x2, y2, z2):
-            if textured:
-                self.setBlock(x, y, z, choice(replaceBlock))
-            else:
-                self.setBlock(x, y, z, replaceBlock)
-
-    def replace(self, x1, y1, z1, x2, y2, z2, searchBlock, replaceBlock):
-        """**Replace searchBlock with replaceBlock**.
-
-        Supports sequences of block strings for random texturing
-        Works with local coordinates
-        """
-        from toolbox import loop3d
-        textured = False
-        if type(replaceBlock) != str:
-            textured = True
-
-        for x, y, z in loop3d(x1, y1, z1, x2, y2, z2):
-            if self.getBlock(x, y, z) == searchBlock:
-                if textured:
-                    self.setBlock(x, y, z, choice(replaceBlock))
-                else:
-                    self.setBlock(x, y, z, replaceBlock)
-
-    def setBlock(self, x, y, z, blockStr):
->>>>>>> dev:interfaceUtils.py
         """**Place a block in the world depending on buffer activation**.
 
         Takes local coordinates, works with local and global coordinates
