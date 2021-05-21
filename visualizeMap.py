@@ -33,13 +33,11 @@ if __name__ == '__main__':
     topcolor = np.zeros((x2 - x1 + 1, z2 - z1 + 1), dtype='int')
     unknownBlocks = set()
 
-    for dx, dz in loop2d(x2 - x1, z2 - z1):
+    for x, z in loop2d(x1, z1, x2, z2):
         # check up to 5 blocks below the heightmap
         for dy in range(5):
             # calculate absolute coordinates
-            x = x1 + dx
-            z = z1 + dz
-            y = int(heightmap[(dx, dz)]) - dy
+            y = int(heightmap[(x, z)]) - dy
 
             blockID = slice.getBlockAt(x, y, z)
             if blockID in lookup.MAPTRANSPARENT:
@@ -50,7 +48,7 @@ if __name__ == '__main__':
                     # unknown blocks remembered for debug purposes
                     unknownBlocks.add(blockID)
                 else:
-                    topcolor[(dx, dz)] = palette[blockID]
+                    topcolor[(x, z)] = palette[blockID]
                 break
 
     if len(unknownBlocks) > 0:
