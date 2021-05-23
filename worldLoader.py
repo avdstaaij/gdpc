@@ -119,7 +119,7 @@ class WorldSlice:
         """**Return block data**."""
         chunkX = (x >> 4) - self.chunkRect[0]
         chunkZ = (z >> 4) - self.chunkRect[1]
-        chunkY = y - 1 >> 4
+        chunkY = y >> 4
 
         cachedSection = self.sections[chunkX][chunkZ][chunkY]
 
