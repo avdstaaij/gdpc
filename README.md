@@ -12,9 +12,10 @@ You need to have Minecraft running, the mod installed and a world open for this 
 
 **`visualizeMap.py`**: Displays a map of the minecraft world, using OpenCV
 
-#### Created by:
+#### Developed by:
 - Nils Gawlik
 - Blinkenlights
+- Claus Aranha
 
 with contributions from:
 - Mayank Jain
