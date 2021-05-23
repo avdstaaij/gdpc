@@ -2,7 +2,7 @@
 """### Provide access to the HTTP interface of the Minecraft HTTP server.
 
 This file contains various functions that map directly onto the HTTP interface.
-It recommended to use `interface.py` instead.
+It is recommended to use `interface.py` instead.
 """
 __all__ = []
 __version__ = "v4.3_dev"
