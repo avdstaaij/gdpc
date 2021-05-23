@@ -75,6 +75,36 @@ def verifyPaletteBlocks():
     print(f"{lookup.TCOLORS['green']}"
           f"All {counter} blocks successfully verified!")
 
+def testSynchronisation():
+    print(f"{lookup.TCOLORS['green']}Running synchronization test...")
+    print("\tTesting y-indexes...")
+
+    buildarea = iu.requestBuildArea()
+    center = ((buildarea[0]+buildarea[3])//2,
+              (buildarea[2]+buildarea[5])//2)
+
+    # Creating world datafiles
+    iu.makeGlobalSlice()
+    ws = iu.globalWorldSlice
+
+    x,z = center
+
+    error = False
+    for _x in range(x-1, x+2):
+        for _z in range(z-1, z+2):
+            for i in range(0,128):
+                bws = ws.getBlockAt(_x, i, _z)
+                bdi = di.getBlock(_x, i, _z)
+                if (bws != bdi and bws != 'minecraft:void_air'):
+                    print("{}: ws: {}, di: {}".format((_x,i,_z), bws, bdi))
+                    error = True
+
+    if error:
+        raise TestException("Worldslice's blocks do not alighn in the Y-axis.")
+    
+    print("Testing y-indexes done.")
+    print(f"{lookup.TCOLORS['green']}Synchronization test complete!")
+    
 
 def testBooks():
     """**Check book creation and storage**."""
