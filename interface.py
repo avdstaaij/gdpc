@@ -183,7 +183,7 @@ class Interface():
             self.sendBlocks()
             print("Buffering has been deactivated.")
 
-    def getBufferlimit(self):
+    def getBufferLimit(self):
         """**Get self.bufferlimit**."""
         return self.bufferlimit
 
