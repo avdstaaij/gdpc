@@ -1,9 +1,11 @@
 #! /usr/bin/python3
 """### Provides various small functions for the average workflow."""
 
-__all__ = ['isSequence', 'normaliseCoordinates', 'loop2d', 'loop3d',
+__all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
            'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
-           'getOptimalDirection', 'visualizeHeightmap']
+           'getOptimalDirection', 'visualizeHeightmap',
+           'invertDirection', 'direction2rotation', 'direction2vector',
+           'axis2vector']
 __version__ = 'v4.3_dev'
 __year__ = '2021'
 __author__ = 'Blinkenlights'
@@ -30,11 +32,18 @@ def isSequence(sequence):
         return False
 
 
-def normaliseCoordinates(*args):
+def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
     """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
-    args1, args2 = args[:len(args) // 2], args[len(args) // 2:]
-    return [a if a < b else b for a, b in zip(args1, args2)] \
-        + [a if a > b else b for a, b in zip(args1, args2)]
+    # if 2D coords are provided reshape to 3D coords
+    if y2 is None or z2 is None:
+        x1, y1, z1, x2, y2, z2 = x1, 0, y1, z1, 255, x2
+    if x1 > x2:
+        x1, x2 = x2, x1
+    if y1 > y2:
+        y1, y2 = y2, y1
+    if z1 > z2:
+        z1, z2 = z2, z1
+    return x1, y1, z1, x2, y2, z2
 
 
 def loop2d(a1, b1, a2=None, b2=None):
@@ -47,7 +56,7 @@ def loop2d(a1, b1, a2=None, b2=None):
     if a2 is None or b2 is None:
         a1, b1, a2, b2 = 0, 0, a1 - 1, b1 - 1
 
-    a1, b1, _, a2, b2, _ = normaliseCoordinates(a1, b1, 0, a2, b2, 0)
+    a1, b1, _, a2, b2, _ = normalizeCoordinates(a1, b1, 0, a2, b2, 0)
 
     return product(range(a1, a2 + 1), range(b1, b2 + 1))
 
@@ -60,7 +69,7 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
     if x2 is None or y2 is None or z2 is None:
         x1, y1, z1, x2, y2, z2 = 0, 0, 0, x1 - 1, y1 - 1, z1 - 1
 
-    x1, y1, z1, x2, y2, z2 = normaliseCoordinates(x1, y1, z1, x2, y2, z2)
+    x1, y1, z1, x2, y2, z2 = normalizeCoordinates(x1, y1, z1, x2, y2, z2)
 
     return product(range(x1, x2 + 1), range(y1, y2 + 1), range(z1, z2 + 1))
 
@@ -344,7 +353,7 @@ def placeSign(x, y, z, facing=None, rotation=None,
 
     if not wall:
         if rotation is None:
-            rotation = facing2rotation(facing)
+            rotation = direction2rotation(facing)
         gi.placeBlock(x, y, z, f"{wood}_sign[rotation={rotation}]")
 
     data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
@@ -408,13 +417,7 @@ def identifyObtrusiveness(blockStr):
 
 
 def visualizeHeightmap(*arrays, title=None, autonormalize=True):
-    """**Visualizes one or multiple numpy arrays**.
-
-    Args:
-        title (str, optional): display title. Defaults to None.
-        autonormalize (bool, optional): Normalizes the array to be
-            between 0 (black) and 255 (white). Defaults to True.
-    """
+    """**Visualizes one or multiple numpy arrays**."""
     def normalize(array):
         """**Normalize the array to contain values from 0 to 1**."""
         return (array - array.min()) / (array.max() - array.min())
@@ -434,26 +437,46 @@ def visualizeHeightmap(*arrays, title=None, autonormalize=True):
 # ========================================================= converters
 # The 'data types' commonly used in this package are:
 #
-# facing: any of 'north', 'east', 'south', 'west' (can be a sequence)
-# rotation: value from 0-15 representing number of clockwise increments of pi/4
-#
 # axis: 'x', 'y', 'z'
+# direction: 'up', 'down', 'north', 'south', 'east', 'west'
+# rotation: 0 - 15 (22.5° clockwise turns starting at north)
 # vector: any multiple of (1, 1, 1) e.g. (0, 1, -4)
 # =========================================================
 
 
-def facing2rotation(facing):
+def invertDirection(direction):
+    """**Return the inverted direction of direcion**."""
+    if isSequence(direction):
+        return [lookup.INVERTDIRECTION[n] for n in direction]
+    return lookup.INVERTDIRECTION[direction]
+
+
+def direction2rotation(direction):
+    """**Convert a direction to a rotation**.
+
+    If a sequence is provided, the average is returned.
+    """
     reference = {'north': 0, 'east': 4, 'south': 8, 'west': 12}
-    if len(facing) == 1:
-        rotation = reference[lookup.INVERTDIRECTION[facing[0]]]
+    if len(direction) == 1:
+        rotation = reference[lookup.INVERTDIRECTION[direction[0]]]
     else:
         rotation = 0
-        for direction in facing:
+        for direction in direction:
             rotation += reference[lookup.INVERTDIRECTION[direction]]
         rotation //= 2
 
-        if rotation == 6 and 'north' not in facing:
+        if rotation == 6 and 'north' not in direction:
             rotation = 14
         if rotation % 4 != 2:
-            rotation = reference[facing[0]]
+            rotation = reference[direction[0]]
     return rotation
+
+
+def direction2vector(direction):
+    """**Convert a direction to a vector**."""
+    return lookup.DIRECTION2VECTOR[direction]
+
+
+def axis2vector(axis):
+    """**Convert an axis to a vector**."""
+    return lookup.AXIS2VECTOR[axis]

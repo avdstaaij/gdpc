@@ -81,7 +81,7 @@ def testShapes():
     # TODO: Fill me!
     print(f"\n{lookup.TCOLORS['yellow']}Running shape test..."
           f"{lookup.TCOLORS['gray']}")
-    geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
+    geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
 
     # placeLine
     geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')            # 0D
@@ -101,18 +101,24 @@ def testShapes():
     geometry.placeLine(15, 143, 63, 7, 135, 55, 'red_concrete')         # 3D---
     interface.globalinterface.placeBlock(7, 135, 55, 'gold_block')
 
-    # placeArea
-    geometry.placeArea(16, 128, 0, 16, 128, 0, 'orange_concrete')       # 0D
+    # placeVolume
+    geometry.placeVolume(16, 128, 0, 16, 128, 0, 'orange_concrete')       # 0D
 
-    geometry.placeArea(16, 128, 16, 31, 128, 16, 'orange_concrete')     # 1D x
-    geometry.placeArea(16, 128, 16, 16, 143, 16, 'orange_concrete')     # 1D y
-    geometry.placeArea(16, 128, 16, 16, 128, 31, 'orange_concrete')     # 1D z
+    geometry.placeVolume(16, 128, 16, 31, 128, 16,
+                         'orange_concrete')     # 1D x
+    geometry.placeVolume(16, 128, 16, 16, 143, 16,
+                         'orange_concrete')     # 1D y
+    geometry.placeVolume(16, 128, 16, 16, 128, 31,
+                         'orange_concrete')     # 1D z
 
-    geometry.placeArea(16, 128, 32, 31, 143, 32, 'orange_concrete')     # 2D xy
-    geometry.placeArea(16, 128, 32, 16, 143, 47, 'orange_concrete')     # 2D yz
-    geometry.placeArea(16, 128, 32, 31, 128, 47, 'orange_concrete')     # 2D xz
+    geometry.placeVolume(16, 128, 32, 31, 143, 32,
+                         'orange_concrete')     # 2D xy
+    geometry.placeVolume(16, 128, 32, 16, 143, 47,
+                         'orange_concrete')     # 2D yz
+    geometry.placeVolume(16, 128, 32, 31, 128, 47,
+                         'orange_concrete')     # 2D xz
 
-    geometry.placeArea(16, 128, 48, 31, 143, 63, 'orange_concrete')     # 3D
+    geometry.placeVolume(16, 128, 48, 31, 143, 63, 'orange_concrete')     # 3D
 
     # placeCuboid
     geometry.placeCuboid(32, 128, 0, 32, 128, 0, 'yellow_concrete')     # 0D
@@ -191,7 +197,7 @@ def testShapes():
         raise TestException(f"Shapes were failed:\n"
                             f"\t{reply}")
 
-    geometry.placeArea(63, 159, 63, 0, 128, 0, 'air')
+    geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
     print(f"{lookup.TCOLORS['green']}Book test complete!")
 
 
@@ -264,8 +270,8 @@ def testCache():
     def clearTestbed():
         """Clean testbed for placement from memory."""
         print("\t\tWiping blocks...", end="\r")
-        geometry.placeArea(0, 1, 0, SIZE - 1, 1, SIZE - 1,
-                           "shroomlight", tester)
+        geometry.placeVolume(0, 1, 0, SIZE - 1, 1, SIZE - 1,
+                             "shroomlight", tester)
         tester.sendBlocks()
         print("\n\t\tWiping blocks done.")
 
@@ -323,8 +329,8 @@ def testCache():
     # ---- preparation
     print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
     tester = interface.Interface(buffering=True, bufferlimit=SIZE ** 2)
-    geometry.placeArea(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock", tester)
-    geometry.placeArea(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air", tester)
+    geometry.placeVolume(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock", tester)
+    geometry.placeVolume(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air", tester)
     tester.sendBlocks()
     tester.cache.maxsize = (SIZE ** 2)
     print("\tPerparing done.")
@@ -394,7 +400,7 @@ def testCache():
 
     # ---- cleanup
     print(f"{lookup.TCOLORS['green']}Cache test complete!")
-    geometry.placeArea(0, 0, 0, SIZE, 1, SIZE, "bedrock", tester)
+    geometry.placeVolume(0, 0, 0, SIZE, 1, SIZE, "bedrock", tester)
     interface.globalWorldSlice = None
     interface.globalDecay = None
 

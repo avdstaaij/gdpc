@@ -1,9 +1,9 @@
 #! /usr/bin/python3
 """### Provides tools for creating multidimensional shapes."""
 __all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
-           'placeArea', 'placeCuboid', 'placeCylinder', 'placefromList',
-           'getShapeBoundries', 'getDimension', 'padDimension', 'cutDimension',
-           'transform', 'repeat', 'fill2d', 'fill3d',
+           'placeCuboid', 'placeCylinder', 'placeFromList',
+           'getShapeBoundaries', 'getDimension', 'padDimension', 'cutDimension',
+           'translate', 'repeat', 'fill2d', 'fill3d',
            'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
 __version__ = 'v4.3_dev'
 
@@ -20,30 +20,14 @@ def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
     if dimension == 0:
         return interface.placeBlock(x1, y1, z1, blocks, replace)
     elif dimension == 1:
-        return placeArea(x1, y1, z1, x2, y2, z2, *settings)
-    elif dimension == 2:
-        axis = None
-        if 'x' in flatSides:
-            axis = 'x'
-            line = line2d(y1, z1, y2, z2)
-            pad = x1
-        elif 'y' in flatSides:
-            axis = 'y'
-            line = line2d(x1, z1, x2, z2)
-            pad = y1
-        elif 'z' in flatSides:
-            axis = 'z'
-            line = line2d(x1, y1, x2, y2)
-            pad = z1
-
-        return placefromList(padDimension(line, pad, axis), *settings)
-    elif dimension == 3:
-        return placefromList(line3d(x1, y1, z1, x2, y2, z2), *settings)
+        return placeVolume(x1, y1, z1, x2, y2, z2, *settings)
+    elif dimension == 2 or dimension == 3:
+        return placeFromList(line3d(x1, y1, z1, x2, y2, z2), *settings)
 
 
 def placeJointedLine(points, blocks, replace=None, interface=gi):
     """**Place a line that runs from point to point**."""
-    return placefromList(lineSequence(points), blocks, replace, interface)
+    return placeFromList(lineSequence(points), blocks, replace, interface)
 
 
 def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
@@ -51,23 +35,23 @@ def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
     polygon = set()
     polygon.update(lineSequence(points))
     polygon.update(line3d(*points[0], *points[-1]))
-    dimension, vector = getDimension(*getShapeBoundries(polygon))
+    dimension, vector = getDimension(*getShapeBoundaries(polygon))
     if filled and dimension == 2:
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
-        print("Cannot ")
+        raise ValueError(f'{lookup.TCOLORS["red"]}Cannot fill 3D polygons!')
+    placeFromList(polygon, blocks, replace, interface)
 
 
-def placeArea(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
-    """**Fill an area with blocks**."""
+def placeVolume(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
     buffering = interface.isBuffering()
     if not buffering:
-        interface.setBuffering(True)
-        result = placefromList(toolbox.loop3d(x1, y1, z1, x2, y2, z2),
+        interface.setBuffering(True, False)
+        result = placeFromList(toolbox.loop3d(x1, y1, z1, x2, y2, z2),
                                blocks, replace, interface)
-        interface.setBuffering(False)
+        interface.setBuffering(False, False)
         return result
-    return placefromList(toolbox.loop3d(x1, y1, z1, x2, y2, z2),
+    return placeFromList(toolbox.loop3d(x1, y1, z1, x2, y2, z2),
                          blocks, replace, interface)
 
 
@@ -81,15 +65,15 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
         return interface.placeBlock(x1, y1, z1, blocks, replace)
 
     elif dimension in (1, 2) or not hollow:  # line, rectangle or solid cuboid
-        return placeArea(x1, y1, z1, x2, y2, z2,  *settings)
+        return placeVolume(x1, y1, z1, x2, y2, z2,  *settings)
 
     elif dimension == 3 and hollow:                         # hollow cuboid
-        bottom = placeArea(x1, y1, z1, x2, y1, z2, *settings)      # bottom
-        top = placeArea(x1, y2, z1, x2, y2, z2, *settings)         # top
-        north = placeArea(x1, y1, z1, x1, y2, z2, *settings)       # north
-        south = placeArea(x2, y1, z1, x2, y2, z2, *settings)       # south
-        west = placeArea(x1, y1, z1, x2, y2, z1, *settings)        # west
-        east = placeArea(x1, y1, z2, x2, y2, z2, *settings)        # east
+        bottom = placeVolume(x1, y1, z1, x2, y1, z2, *settings)      # bottom
+        top = placeVolume(x1, y2, z1, x2, y2, z2, *settings)         # top
+        north = placeVolume(x1, y1, z1, x1, y2, z2, *settings)       # north
+        south = placeVolume(x2, y1, z1, x2, y2, z2, *settings)       # south
+        west = placeVolume(x1, y1, z1, x2, y2, z1, *settings)        # west
+        east = placeVolume(x1, y1, z2, x2, y2, z2, *settings)        # east
         try:
             return bottom + top + north + south + west + east
         except TypeError:
@@ -114,12 +98,12 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
         elif hollow:
             tube = padDimension(tube, h0, axis)
 
-        bottom = placefromList(base,  *settings)
+        bottom = placeFromList(base,  *settings)
         top = 0
         body = 0
         if h0 != hn:
-            top = placefromList(transform(base, hn - h0, axis),  *settings)
-            body = placefromList(repeat(tube, hn - h0 - 2, axis), *settings)
+            top = placeFromList(translate(base, hn - h0, axis),  *settings)
+            body = placeFromList(repeat(tube, hn - h0 - 2, axis), *settings)
 
         try:
             return bottom + top + body
@@ -131,7 +115,7 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
         return interface.placeBlock(x1, y1, z1, blocks, replace)
     elif (dimension == 1
           or (len(flatSides) > 0 and flatSides[0] != axis)):
-        return placeArea(x1, y1, z1, x2, y2, z2, *settings)
+        return placeVolume(x1, y1, z1, x2, y2, z2, *settings)
     elif dimension == 2:
         if flatSides == ['x']:
             return placeCylinderBody(y1, z1, y2, z2, x1, x2)
@@ -150,11 +134,11 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
         raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
 
 
-def placefromList(list, blocks, replace=None, interface=gi):
+def placeFromList(list, blocks, replace=None, interface=gi):
     """**Replace all blocks at coordinates in list with blocks**."""
     result = 0
     ERRORMESSAGE = (f"\n{lookup.TCOLORS['orange']}"
-                    "Fails:\n{lookup.TCOLORS['gray']}")
+                    f"Fails:\n{lookup.TCOLORS['gray']}")
     errors = ERRORMESSAGE
     for x, y, z in list:
         response = interface.placeBlock(x, y, z, blocks, replace)
@@ -169,7 +153,7 @@ def placefromList(list, blocks, replace=None, interface=gi):
 # ========================================================= calculations
 
 
-def getShapeBoundries(points):
+def getShapeBoundaries(points):
     """**Return the smallest and largest values used in a shape**."""
     points = np.array(points)
     dimension = len(points[0])
@@ -232,8 +216,8 @@ def cutDimension(points, axis='z'):
                      f'to cut from this set!\n{points}')
 
 
-def transform(points, amount, axis='y'):
-    """**Return a clone of the points transformed by amount in axis**."""
+def translate(points, amount, axis='y'):
+    """**Return a clone of the points translateed by amount in axis**."""
     points = set(points)
     vx, vy, vz = lookup.AXIS2VECTOR[axis]
     clone = [(x + amount * vx, y + amount * vy, z + amount * vz)
@@ -245,7 +229,7 @@ def repeat(points, times, axis='y', step=1):
     """**Return points with duplicates shifted along the appropriate axis**."""
     clone = set(points)
     for n in range(1, times + 2):
-        clone.update(transform(points, step * n, axis))
+        clone.update(translate(points, step * n, axis))
     return clone
 
 

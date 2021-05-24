@@ -174,12 +174,12 @@ class Interface():
         """**Get self.__buffering**."""
         return self.__buffering
 
-    def setBuffering(self, value):
+    def setBuffering(self, value, notify=True):
         """**Set self.__buffering**."""
         self.__buffering = value
-        if self.__buffering:
+        if self.__buffering and notify:
             print("Buffering has been activated.")
-        else:
+        elif notify:
             self.sendBlocks()
             print("Buffering has been deactivated.")
 

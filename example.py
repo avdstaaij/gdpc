@@ -47,19 +47,19 @@ def heightAt(x, z):
 def buildHouse(x1, y1, z1, x2, y2, z2):
     """Build a small house."""
     # floor
-    geometry.placeArea(x1, y1, z1, x2 - 1, y1, z2 - 1, "cobblestone")
+    geometry.placeVolume(x1, y1, z1, x2 - 1, y1, z2 - 1, "cobblestone")
 
     # walls
-    geometry.placeArea(x1 + 1, y1, z1, x2 - 2, y2, z1, "oak_planks")
-    geometry.placeArea(x1 + 1, y1, z2 - 1, x2 - 2, y2, z2 - 1, "oak_planks")
-    geometry.placeArea(x1, y1, z1 + 1, x1, y2, z2 - 2, "oak_planks")
-    geometry.placeArea(x2 - 1, y1, z1 + 1, x2 - 1, y2, z2 - 2, "oak_planks")
+    geometry.placeVolume(x1 + 1, y1, z1, x2 - 2, y2, z1, "oak_planks")
+    geometry.placeVolume(x1 + 1, y1, z2 - 1, x2 - 2, y2, z2 - 1, "oak_planks")
+    geometry.placeVolume(x1, y1, z1 + 1, x1, y2, z2 - 2, "oak_planks")
+    geometry.placeVolume(x2 - 1, y1, z1 + 1, x2 - 1, y2, z2 - 2, "oak_planks")
 
     # corners
-    geometry.placeArea(x1, y1, z1, x1, y2, z1, "oak_log")
-    geometry.placeArea(x2 - 1, y1, z1, x2 - 1, y2, z1, "oak_log")
-    geometry.placeArea(x1, y1, z2 - 1, x1, y2, z2 - 1, "oak_log")
-    geometry.placeArea(x2 - 1, y1, z2 - 1, x2 - 1, y2, z2 - 1, "oak_log")
+    geometry.placeVolume(x1, y1, z1, x1, y2, z1, "oak_log")
+    geometry.placeVolume(x2 - 1, y1, z1, x2 - 1, y2, z1, "oak_log")
+    geometry.placeVolume(x1, y1, z2 - 1, x1, y2, z2 - 1, "oak_log")
+    geometry.placeVolume(x2 - 1, y1, z2 - 1, x2 - 1, y2, z2 - 1, "oak_log")
 
     # clear interior
     for y in range(y1 + 1, y2):
@@ -72,13 +72,13 @@ def buildHouse(x1, y1, z1, x2, y2, z2):
     # roof
     if x2 - x1 < z2 - z1:   # if the house is longer in Z-direction
         for i in range(0, (1 - x1 + x2) // 2):
-            geometry.placeArea(x1 + i, y2 + i, z1,
-                               x2 - 1 - i, y2 + i, z2 - 1, "bricks")
+            geometry.placeVolume(x1 + i, y2 + i, z1,
+                                 x2 - 1 - i, y2 + i, z2 - 1, "bricks")
     else:
         # same as above but with x and z swapped
         for i in range(0, (1 - z1 + z2) // 2):
-            geometry.placeArea(x1, y2 + i, z1 + i, x2 - 1,
-                               y2 + i, z2 - 1 - i, "bricks")
+            geometry.placeVolume(x1, y2 + i, z1 + i, x2 - 1,
+                                 y2 + i, z2 - 1 - i, "bricks")
 
     if interface.isBuffering():
         interface.sendBlocks()

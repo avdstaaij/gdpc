@@ -26,7 +26,7 @@ def setBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
     if customFlags is not None:
         blockUpdateQueryParam = f"customFlags={customFlags}"
     else:
-        blockUpdateQueryParam = f"doBlockUpdates={str(doBlockUpdates)}"
+        blockUpdateQueryParam = f"doBlockUpdates={doBlockUpdates}"
 
     url = (f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
            f'&{blockUpdateQueryParam}')
