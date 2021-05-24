@@ -3,7 +3,11 @@
 
 name: Python application
 
-on: [ push ]
+on:
+  push:
+    branches: [ master, dev ]
+  pull_request:
+    branches: [ master, dev ]
 
 jobs:
   build:
