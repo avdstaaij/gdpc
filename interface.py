@@ -324,6 +324,7 @@ def makeGlobalSlice():
     x1, y1, z1, x2, y2, z2 = requestBuildArea()
     globalWorldSlice = WorldSlice(x1, z1, x2, z2)
     resetGlobalDecay()
+    return globalWorldSlice
 
 
 def getBlock(x, y, z):

@@ -418,7 +418,7 @@ def circle(x1, y1, x2, y2, filled=False):
     With 'inspiration' from:
     https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
     """
-    toolbox.normaliseCoordinates(x1, y1, x2, y2)
+    toolbox.normalizeCoordinates(x1, y1, x2, y2)
 
     diameter = min(x2 - x1, y2 - y1)
     e = diameter % 2    # for even centers
@@ -466,7 +466,7 @@ def ellipse(x1, y1, x2, y2, filled=False):
     Modified version 'inspired' by chandan_jnu from
     https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
     """
-    toolbox.normaliseCoordinates(x1, y1, x2, y2)
+    toolbox.normalizeCoordinates(x1, y1, x2, y2)
 
     dx, dy = x2 - x1, y2 - y1
     ex, ey = dx % 2, dy % 2

@@ -15,17 +15,19 @@ import random
 import sys
 import time
 
-# import mapUtils
-# import visualizeMap
-# import worldLoader
+import direct_interface
 import geometry
-# import example
 import interface
-# import bitarray
 import lookup
 import toolbox
 
 # import timeit
+
+# import mapUtils
+# import visualizeMap
+# import worldLoader
+# import example
+# import bitarray
 
 
 class TestException(Exception):
@@ -75,36 +77,36 @@ def verifyPaletteBlocks():
     print(f"{lookup.TCOLORS['green']}"
           f"All {counter} blocks successfully verified!")
 
-def testSynchronisation():
-    print(f"{lookup.TCOLORS['green']}Running synchronization test...")
-    print("\tTesting y-indexes...")
 
-    buildarea = iu.requestBuildArea()
-    center = ((buildarea[0]+buildarea[3])//2,
-              (buildarea[2]+buildarea[5])//2)
+def testSynchronisation():
+    print(f"\n{lookup.TCOLORS['yellow']}Running synchronization test...")
+    print(f"\t{lookup.TCOLORS['gray']}Testing y-indexes...", end='\r')
+
+    buildarea = interface.requestBuildArea()
+    center = ((buildarea[0] + buildarea[3]) // 2,
+              (buildarea[2] + buildarea[5]) // 2)
 
     # Creating world datafiles
-    iu.makeGlobalSlice()
-    ws = iu.globalWorldSlice
+    ws = interface.makeGlobalSlice()
 
-    x,z = center
+    x, z = center
 
     error = False
-    for _x in range(x-1, x+2):
-        for _z in range(z-1, z+2):
-            for i in range(0,128):
+    for _x in range(x - 1, x + 2):
+        for _z in range(z - 1, z + 2):
+            for i in range(0, 128):
                 bws = ws.getBlockAt(_x, i, _z)
-                bdi = di.getBlock(_x, i, _z)
+                bdi = direct_interface.getBlock(_x, i, _z)
                 if (bws != bdi and bws != 'minecraft:void_air'):
-                    print("{}: ws: {}, di: {}".format((_x,i,_z), bws, bdi))
+                    print("{}: ws: {}, di: {}".format((_x, i, _z), bws, bdi))
                     error = True
 
     if error:
-        raise TestException("Worldslice's blocks do not alighn in the Y-axis.")
-    
-    print("Testing y-indexes done.")
+        raise TestException("Worldslice's blocks do not align in the Y-axis.")
+
+    print("\tTesting y-indexes done.")
     print(f"{lookup.TCOLORS['green']}Synchronization test complete!")
-    
+
 
 def testShapes():
     """**Check shape construction**."""
@@ -228,7 +230,7 @@ def testShapes():
                             f"\t{reply}")
 
     geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
-    print(f"{lookup.TCOLORS['green']}Book test complete!")
+    print(f"{lookup.TCOLORS['green']}Shape test complete!")
 
 
 def testBooks():
@@ -436,7 +438,7 @@ def testCache():
 
 
 if __name__ == '__main__':
-    AUTOTESTS = (verifyPaletteBlocks, testCache)
+    AUTOTESTS = (verifyPaletteBlocks, testCache, testSynchronisation)
     MANUALTESTS = (testBooks, testShapes)
     tests = AUTOTESTS + MANUALTESTS
 
