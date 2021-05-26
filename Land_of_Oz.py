@@ -22,16 +22,18 @@ __date__ = "23 April 2021"
 
 from random import choice, randint
 
-import interfaceUtils as IU
+import interfaceUtils as iu
 import numpy as np
-import worldLoader as WL
+import toolbox
+import worldLoader as wl
+from interfaceUtils import globalinterface as gi
 
 # custom default build area with override
 STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = 0, 0, 0, 999, 255, 999
-if IU.requestBuildArea() != [0, 0, 0, 127, 255, 127]:
-    STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = IU.requestBuildArea()
+if iu.requestBuildArea() != [0, 0, 0, 127, 255, 127]:
+    STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = iu.requestBuildArea()
 
-WORLDSLICE = WL.WorldSlice(STARTX, STARTZ, ENDX, ENDZ)
+WORLDSLICE = wl.WorldSlice(STARTX, STARTZ, ENDX, ENDZ)
 XCHUNKSPAN, ZCHUNKSPAN = WORLDSLICE.chunkRect[2], WORLDSLICE.chunkRect[3]
 
 POLITICAL_REGIONS = np.array((XCHUNKSPAN, ZCHUNKSPAN))
@@ -43,11 +45,11 @@ def analyzeChunks():
     """Analyze chunks in the build area to determine geographic layout."""
     # replace with getBiomesAt
 
-    IU.setBuffering(True)
-    IU.setBufferLimit(4096)
+    iu.setBuffering(True)
+    iu.setBufferLimit(4096)
 
-    IU.fill(STARTX, 254, STARTZ, ENDX, 255, ENDZ, "air")
-    IU.sendBlocks()
+    iu.fill(STARTX, 254, STARTZ, ENDX, 255, ENDZ, "air")
+    iu.sendBlocks()
 
     for x in range(WORLDSLICE.chunkRect[2]):
         for z in range(WORLDSLICE.chunkRect[3]):
@@ -61,9 +63,25 @@ def analyzeChunks():
                 xend = xstart + 15
                 zstart = WORLDSLICE.nbtfile['Chunks'][chunkID]['Level']['zPos'].value * 16
                 zend = zstart + 15
-                IU.fill(xstart, 200, zstart, xend,
+                iu.fill(xstart, 200, zstart, xend,
                         200, zend, "snow_block")
-                IU.sendBlocks()
+                iu.sendBlocks()
+
+
+def calculateTreelessHeightmap(worldSlice, interface=gi):
+    heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
+    area = worldSlice.rect
+
+    for x, z in toolbox.loop2d(area[2], area[3]):
+        while True:
+            y = heightmap[x, z]
+            block = interface.getBlock(area[0] + x, y - 1, area[1] + z)
+            if block[-4:] == '_log':
+                heightmap[x, z] -= 1
+            else:
+                break
+
+    return heightmap
 
 
 def buildCity():
