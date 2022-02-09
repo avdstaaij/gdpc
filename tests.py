@@ -15,11 +15,7 @@ import random
 import sys
 import time
 
-import direct_interface
-import geometry
-import interface
-import lookup
-import toolbox
+from gdpc import direct_interface, geometry, interface, lookup, toolbox
 
 # import timeit
 
@@ -112,7 +108,7 @@ def testShapes():
     """**Check shape construction**."""
     # TODO: Fill me!
     print(f"\n{lookup.TCOLORS['yellow']}Running shape test..."
-          f"{lookup.TCOLORS['gray']}")
+          f"{lookup.TCOLORS['gray']}\n\tPlacing shapes...")
     geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
 
     # placeLine
@@ -228,7 +224,7 @@ def testShapes():
     if reply != 'y':
         raise TestException(f"Shapes were failed:\n"
                             f"\t{reply}")
-
+    print(f"{lookup.TCOLORS['gray']}\tRemoving shapes...")
     geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
     print(f"{lookup.TCOLORS['green']}Shape test complete!")
 

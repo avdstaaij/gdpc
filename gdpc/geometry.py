@@ -5,12 +5,14 @@ __all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
            'getShapeBoundaries', 'getDimension', 'padDimension', 'cutDimension',
            'translate', 'repeat', 'fill2d', 'fill3d',
            'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
-__version__ = 'v4.3_dev'
 
-import lookup
+__author__ = "Blinkenlights"
+__version__ = "v4.3_dev"
+
 import numpy as np
-import toolbox
-from interface import globalinterface as gi
+
+from . import lookup, toolbox
+from .interface import globalinterface as gi
 
 
 def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
@@ -83,6 +85,22 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                     f'West {west}\n\tEast {east}')
 
 
+def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
+                          axis='y', tube=False, hollow=False, interface=gi):
+    """**Place a cylindric shape centered on xyz with height and radius."""
+    if axis == 'x':
+        placeCylinder(x, y - r, z - r, x + h - 1, y + r, z + r,
+                      blocks, replace, 'x', tube, hollow, interface)
+    elif axis == 'y':
+        placeCylinder(x - r, y, z - r, x + r, y + h - 1, z + r,
+                      blocks, replace, 'y', tube, hollow, interface)
+    elif axis == 'z':
+        placeCylinder(x - r, y - r, z, x + r, y + r, z + h - 1,
+                      blocks, replace, 'z', tube, hollow, interface)
+    else:
+        raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
+
+
 def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                   axis='y', tube=False, hollow=False, interface=gi):
     """**Place a cylindric shape that fills the entire region."""
@@ -91,19 +109,22 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
 
     def placeCylinderBody(a1, b1, a2, b2, h0, hn):
         """**Build a cylinder**."""
-        tube, base = ellipse(a1, b1, a2, b2, filled=True)
-        base = tube = padDimension(base, h0, axis)
+        tubePoints, basePoints = ellipse(a1, b1, a2, b2, filled=True)
+        basePoints = padDimension(basePoints, h0, axis)
+        tubePoints = padDimension(tubePoints, h0, axis)
         if tube:
-            base = tube = padDimension(tube, h0, axis)
-        elif hollow:
-            tube = padDimension(tube, h0, axis)
+            basePoints = tubePoints
+        elif not hollow:
+            tubePoints = basePoints
 
-        bottom = placeFromList(base,  *settings)
+        bottom = placeFromList(basePoints,  *settings)
         top = 0
         body = 0
         if h0 != hn:
-            top = placeFromList(translate(base, hn - h0, axis),  *settings)
-            body = placeFromList(repeat(tube, hn - h0 - 2, axis), *settings)
+            top = placeFromList(
+                translate(basePoints, hn - h0, axis),  *settings)
+            body = placeFromList(
+                repeat(tubePoints, hn - h0 - 2, axis), *settings)
 
         try:
             return bottom + top + body

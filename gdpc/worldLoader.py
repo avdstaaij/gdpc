@@ -6,16 +6,17 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
-__version__ = 'v4.2_dev'
+__version__ = "v4.3_dev"
 
 from io import BytesIO
 from math import ceil, log2
 
-import direct_interface as di
 import nbt
 import numpy as np
-from bitarray import BitArray
-from lookup import BIOMES
+
+from . import direct_interface as di
+from .bitarray import BitArray
+from .lookup import BIOMES
 
 
 class CachedSection:

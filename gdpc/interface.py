@@ -10,19 +10,22 @@ This module contains functions to:
 __all__ = ['Interface', 'runCommand',
            'setBuildArea', 'requestBuildArea', 'requestPlayerArea',
            'makeGlobalSlice', 'getBlock', 'placeBlock',
-           'getBlockFlags', 'setBlockFlags',
+           'getBlockFlags', 'placeBlockFlags',
            'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
            'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
            'sendBlocks', 'checkOutOfBounds']
+
+__author__ = "Blinkenlights"
 __version__ = "v4.3_dev"
 
 from collections import OrderedDict
 from random import choice
 
-import direct_interface as di
 import numpy as np
-from lookup import TCOLORS
-from worldLoader import WorldSlice
+
+from . import direct_interface as di
+from .lookup import TCOLORS
+from .worldLoader import WorldSlice
 
 
 class OrderedByLookupDict(OrderedDict):
@@ -66,7 +69,7 @@ class Interface():
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
         self.buffer = []    # buffer is in global coordinates
-        self.setblockflags = (True, None)   # (doBlockUpdates, CustomFlags)
+        self.placeBlockflags = (True, None)   # (doBlockUpdates, CustomFlags)
         self.bufferblockflags = (True, None)   # (doBlockUpdates, CustomFlags)
         self.caching = caching
         # cache is in global coordinates
@@ -115,7 +118,7 @@ class Interface():
         Takes local coordinates, works with local and global coordinates
         """
         flags = doBlockUpdates, customFlags
-        from toolbox import isSequence
+        from .toolbox import isSequence
         if isinstance(replace, str):
             if self.getBlock(x, y, z) != replace:
                 return '0'
@@ -126,10 +129,10 @@ class Interface():
             block = choice(block)
 
         if self.__buffering:
-            response = self.setBlockBuffered(x, y, z, block, self.bufferlimit,
-                                             flags)
+            response = self.placeBlockBuffered(x, y, z, block, self.bufferlimit,
+                                               flags)
         else:
-            response = self.setBlock(x, y, z, block, flags)
+            response = self.placeBlockDirect(x, y, z, block, flags)
 
         # switch to global coordinates
         x, y, z = self.local2global(x, y, z)
@@ -142,19 +145,19 @@ class Interface():
 
         return response
 
-    def setBlock(self, x, y, z, blockStr,
-                 doBlockUpdates=-1, customFlags=-1):
+    def placeBlockDirect(self, x, y, z, blockStr,
+                         doBlockUpdates=-1, customFlags=-1):
         """**Place a single block in the world directly**.
 
         Takes local coordinates, works with global coordinates
         """
         if doBlockUpdates == -1:
-            doBlockUpdates = self.setblockflags[0]
+            doBlockUpdates = self.placeBlockflags[0]
         if customFlags == -1:
-            customFlags = self.setblockflags[1]
+            customFlags = self.placeBlockflags[1]
 
         x, y, z = self.local2global(x, y, z)
-        result = di.setBlock(x, y, z, blockStr, doBlockUpdates, customFlags)
+        result = di.placeBlock(x, y, z, blockStr, doBlockUpdates, customFlags)
         if not result.isnumeric():
             print(f"{TCOLORS['orange']}Warning: Server returned error "
                   f"upon placing block:\n\t{TCOLORS['CLR']}{result}")
@@ -162,11 +165,11 @@ class Interface():
 
     def getBlockFlags(self):
         """**Get default block placement flags**."""
-        return self.setblockflags
+        return self.placeBlockflags
 
-    def setBlockFlags(self, doBlockUpdates=True, customFlags=None):
+    def placeBlockFlags(self, doBlockUpdates=True, customFlags=None):
         """**Set default block placement flags**."""
-        self.setblockflags = doBlockUpdates, customFlags
+        self.placeBlockflags = doBlockUpdates, customFlags
 
     # ----------------------------------------------------- block buffers
 
@@ -207,16 +210,16 @@ class Interface():
         """**Set maximum cache size**."""
         self.cache.maxsize = value
 
-    def setBlockBuffered(self, x, y, z, blockStr, limit=50,
-                         doBlockUpdates=-1, customFlags=-1):
+    def placeBlockBuffered(self, x, y, z, blockStr, limit=50,
+                           doBlockUpdates=-1, customFlags=-1):
         """**Place a block in the buffer and send once limit is exceeded**.
 
         Takes local coordinates and works with global coordinates
         """
         if doBlockUpdates == -1:
-            doBlockUpdates = self.setblockflags[0]
+            doBlockUpdates = self.placeBlockflags[0]
         if customFlags == -1:
-            customFlags = self.setblockflags[1]
+            customFlags = self.placeBlockflags[1]
 
         if (doBlockUpdates, customFlags) != self.bufferblockflags:
             self.sendBlocks()
@@ -274,6 +277,8 @@ class Interface():
 
 def runCommand(command):
     """**Run a Minecraft command in the world**."""
+    if command[0] == '/':
+        command = command[1:]
     return di.runCommand(command)
 
 
@@ -333,7 +338,7 @@ def getBlock(x, y, z):
 
 
 def placeBlock(x, y, z, blocks, replace=None):
-    """**Global setBlock**."""
+    """**Global placeBlock**."""
     return globalinterface.placeBlock(x, y, z, blocks, replace)
 
 
@@ -342,9 +347,9 @@ def getBlockFlags():
     return globalinterface.getBlockFlags()
 
 
-def setBlockFlags(doBlockUpdates=True, customFlags=None):
-    """**Global setBlockFlags**."""
-    globalinterface.setBlockFlags(doBlockUpdates, customFlags)
+def placeBlockFlags(doBlockUpdates=True, customFlags=None):
+    """**Global placeBlockFlags**."""
+    globalinterface.placeBlockFlags(doBlockUpdates, customFlags)
 
 # ----------------------------------------------------- block buffers
 

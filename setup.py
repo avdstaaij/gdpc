@@ -4,6 +4,9 @@ import pathlib
 
 from setuptools import setup
 
+__author__ = "Blinkenlights"
+__version__ = "v4.3_dev"
+
 here = pathlib.Path(__file__).parent.resolve()
 
 setup(name='gdpc',

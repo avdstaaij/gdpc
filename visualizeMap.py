@@ -1,15 +1,14 @@
 # ! /usr/bin/python3
 """### Displays a map of the build area."""
 __all__ = ['WorldSlice']
-__version__ = 'v4.2_dev'
+__version__ = 'v4.3_dev'
 
 import cv2
-import interface
-import lookup
 import matplotlib.pyplot as plt
 import numpy as np
-from toolbox import loop2d
-from worldLoader import WorldSlice
+from gdpc import interface, lookup
+from gdpc.toolbox import loop2d
+from gdpc.worldLoader import WorldSlice
 
 if __name__ == '__main__':
     # see if a different build area was defined ingame

@@ -1,26 +1,29 @@
 #! /usr/bin/python3
 """### Provides various small functions for the average workflow."""
 
-__all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
-           'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
-           'getOptimalDirection', 'visualizeHeightmap',
-           'invertDirection', 'direction2rotation', 'direction2vector',
-           'axis2vector']
-__version__ = 'v4.3_dev'
-__year__ = '2021'
-__author__ = 'Blinkenlights'
-
+from datetime import datetime as date
 from functools import lru_cache
 from itertools import product
 from random import choice
 
 import cv2
-import lookup
 import numpy as np
-from interface import getBlock
-from interface import globalinterface as gi
-from interface import runCommand
 from matplotlib import pyplot as plt
+
+from . import lookup
+from .interface import getBlock
+from .interface import globalinterface as gi
+from .interface import runCommand
+
+__all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
+           'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
+           'getOptimalDirection', 'visualizeHeightmap',
+           'invertDirection', 'direction2rotation', 'direction2vector',
+           'axis2vector']
+
+__author__ = "Blinkenlights"
+__version__ = "v4.3_dev"
+__year__ = date.now().year
 
 
 def isSequence(sequence):
@@ -82,7 +85,7 @@ def index2slot(sx, sy, ox, oy):
 
 
 def writeBook(text, title="Chronicle", author=__author__,
-              description="I wonder what's inside?", desccolor='gold'):
+              description="I wonder what\\'s inside?", desccolor='gold'):
     r"""**Return NBT data for a correctly formatted book**.
 
     The following special characters are used for formatting the book:
@@ -277,7 +280,7 @@ def placeLectern(x, y, z, bookData, facing=None):
 
 
 def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
-                        items=[]):
+                        items=[], replace=True):
     """**Place an invetorized block with any number of items in the world**.
 
     Items is expected to be a sequence of (x, y, item[, amount])
@@ -287,9 +290,16 @@ def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
         raise ValueError(f"The inventory for {block} is not available.\n"
                          "Make sure you are using the namespaced ID.")
     dx, dy = lookup.INVENTORYLOOKUP[block]
-    if facing is None:
-        facing = choice(getOptimalDirection(x, y, z))
-    gi.placeBlock(x, y, z, f"{block}[facing={facing}]")
+    if replace:
+        if facing is None:
+            facing = choice(getOptimalDirection(x, y, z))
+        gi.placeBlock(x, y, z, f"{block}[facing={facing}]")
+    else:
+        if block not in gi.getBlock(x, y, z):
+            print(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
+                  f"is not of specified type {block}!\n"
+                  f"\t{lookup.TCOLORS['CLR']}This may result in "
+                  f"incorrectly placed items.")
 
     # we received a single item
     if 3 <= len(items) <= 4 and type(items[0]) == int:
@@ -381,7 +391,7 @@ def getOptimalDirection(x, y, z):
     directions = []
     while len(directions) == 0:
         if min_obstruction == max_obstruction:
-            return lookup.DIRECTIONS
+            return lookup.DIRECTIONS[2:]
 
         if surrounding[2][0] == min_obstruction:
             directions.append(surrounding[2][1])

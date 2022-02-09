@@ -21,7 +21,7 @@ def getBlock(x, y, z):
     return response
 
 
-def setBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
+def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
     """**Place one or multiple blocks in the world**."""
     if customFlags is not None:
         blockUpdateQueryParam = f"customFlags={customFlags}"
@@ -42,7 +42,7 @@ def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
     """**Take a list of blocks and place them into the world in one go**."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:
-        response = setBlock(x, y, z, body, doBlockUpdates, customFlags)
+        response = placeBlock(x, y, z, body, doBlockUpdates, customFlags)
         return response
     except ConnectionError as e:
         print("Request failed: {} Retrying ({} left)".format(e, retries))
