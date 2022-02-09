@@ -18,8 +18,8 @@ For the latest sexy-but-might-break-something release, type the following instea
 - On Windows: `py -m pip install --pre gdpc`
 
 To update your package, type the following:
-- On Linux/MacOS: `python3 -m pip install --update gdpc`
-- On Windows: `py -m pip install --update gdpc`
+- On Linux/MacOS: `python3 -m pip install --upgrade gdpc`
+- On Windows: `py -m pip install --upgrade gdpc`
 
 If you would like to install the latest stable version directly from GitHub, replace `gdpc` with
 
