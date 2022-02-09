@@ -1,0 +1,49 @@
+Metadata-Version: 2.1
+Name: gdpc
+Version: 4.2.dev0
+Summary: The Generative Design Python Client is a Python-based interface for the Minecraft HTTP Interface mod.
+Home-page: http://github.com/nilsgawlik/gdmc_http_client_python
+Author: Blinkenlights
+Author-email: blinkenlights@pm.me
+License: MIT
+Project-URL: Bug Reports, https://github.com/nilsgawlik/gdmc_http_client_python/issues
+Project-URL: Official Competition, https://gendesignmc.engineering.nyu.edu/
+Project-URL: Chat about it on Discord, https://discord.gg/V9MW65bD
+Project-URL: Source, https://github.com/nilsgawlik/gdmc_http_client_python/
+Keywords: GDMC,generative design,Minecraft,HTTP,development
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Games/Entertainment :: Simulation
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: Software Development :: Version Control :: Git
+Requires-Python: >=3.6, <4
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+## GDPC 5.0
+
+GDPC (Generative Design Python Client) is a framework for use in conjunction with the [Minecraft HTTP Interface Mod](https://github.com/nilsgawlik/gdmc_http_interface) built for the [GDMC competition](https://gendesignmc.engineering.nyu.edu).
+
+Requirements are in `requirements.txt`. Functionality is not guaranteed with older versions.
+
+You need to have Minecraft running, the mod installed and a world open to use the framework.
+
+### Scripts:
+
+**`example.py`**: Demonstrates all of the basic gdmc-http functionality by building a very simple village. It uses the utility functions implemented in `worldLoader.py` and `mapUtils.py`.
+
+**`visualizeMap.py`**: Displays a map of the Minecraft world using OpenCV
+
+#### Developed by:
+- Nils Gawlik
+- Blinkenlights
+- Claus Aranha
+
+with contributions from:
+- Mayank Jain
+
+
