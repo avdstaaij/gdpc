@@ -32,7 +32,8 @@ For more information on installing from GitHub (such as getting old or dev versi
 To download one of the following scripts, click on the link, then right-click and `Save As...` *(I know it's tedious, if you have a better idea we'd be glad to hear it)*.
 
 - [**`visualizeMap.py`**](https://raw.githubusercontent.com/nilsgawlik/gdmc_http_client_python/master/visualizeMap.py): Displays a map of the Minecraft world using OpenCV
-- **`example.py`**: Demonstrates all of the basic gdmc-http functionality by building a very simple village. It uses the utility functions implemented in `worldLoader.py` and `mapUtils.py`.
+- [**`Start_Here.py`**](https://raw.githubusercontent.com/nilsgawlik/gdmc_http_client_python/master/Start_Here.py): Demonstrates all of the basic GDPC functionality by building a simple model of the Emerald City and introduces various concepts of coding in Python
+- [**`Land_of_Oz.py`**](https://raw.githubusercontent.com/nilsgawlik/gdmc_http_client_python/master/Land_of_Oz.py): An advanced version of `Start_Here.py`, introducing more powerful tools
 
 #### Developed by:
 - Nils Gawlik
