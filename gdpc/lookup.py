@@ -4,13 +4,8 @@
 # __all__ = []  # everything is available for import
 __version__ = "v4.2_dev"
 
-import sys
 import os
-
-# block visualization
-# based on https://minecraft.gamepedia.com/Map_item_format#Base_colors
-# liberty was taken to move stained glass panes and various flowers
-# into the appropriate colour category
+import sys
 
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs
@@ -21,9 +16,38 @@ import os
 # to translate a 255 RGB to hex RGB value
 # >>> def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
 
-VERSION = "1.16.x"
+# See https://minecraft.fandom.com/wiki/Data_version#List_of_data_versions
+SUPPORTS = 2566  # Supported Minecraft version code
+
+# all major Minecraft version codes
+VERSIONS = {
+    2860: '1.18', 2865: '1.18.1',
+
+    2724: '1.17', 2730: '1.17.1',
+
+    2566: '1.16', 2567: '1.16.1', 2578: '1.16.2', 2580: '1.16.3',
+    2584: '1.16.4', 2586: '1.16.5',
+
+    2225: '1.15', 2227: '1.15.1', 2230: '1.15.2',
+
+    1952: '1.14', 1957: '1.14.1', 1963: '1.14.2', 1968: '1.14.3',
+    1976: '1.14.4',
+
+    1519: '1.13', 1628: '1.13.1', 1631: '1.13.2',
+
+    1139: '1.12', 1241: '1.12.1', 1343: '1.12.2',
+
+    819: '1.11', 921: '1.11.1', 922: '1.11.2',
+
+    510: '1.10', 511: '1.10.1', 512: '1.10.2',
+
+    169: '1.9', 175: '1.9.1', 176: '1.9.2', 183: '1.9.3', 184: '1.9.4',
+
+    0: 'Pre-1.9'
+}
 
 # ========================================================= custom values
+
 
 AXES = ('x', 'y', 'z')
 DIRECTIONS = ('top', 'bottom', 'north', 'east', 'south', 'west')
@@ -646,6 +670,10 @@ TRANSPARENT = INVISIBLE + FILTERING + UNOBTRUSIVE + OBTRUSIVE
 # all esle is considered opaque
 
 # ========================================================= map colouring
+# block visualization
+# based on https://minecraft.gamepedia.com/Map_item_format#Base_colors
+# liberty was taken to move stained glass panes and various flowers
+# into the appropriate colour category
 
 MAPTRANSPARENT = ('minecraft:redstone_lamp',
                   'minecraft:cake',
@@ -1283,39 +1311,39 @@ ASCIIPIXELS = {'A': 5, 'a': 5,
                '/': 5, '`': 2}
 
 # terminal colour codes
+
+
 def supports_color():
-    """
-    Returns True if the running system's terminal supports color, and False
-    otherwise.
-    """
+    """Return True if the running system's terminal supports color."""
     plat = sys.platform
-    supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
-                                                  'ANSICON' in os.environ)
+    supported_platform = plat != 'Pocket PC' and (plat != 'win32'
+                                                  or 'ANSICON' in os.environ)
     # isatty is not always implemented, #6223.
     is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
     return supported_platform and is_a_tty
 
+
 if supports_color():
-  TCOLORS = {"black":    "\033[38;2;000;000;000m",
-             "gray":     "\033[38;2;128;128;128m",
-             "white":    "\033[38;2;255;255;255m",
-             "pink":     "\033[38;2;255;192;203m",
-             "red":      "\033[38;2;255;000;000m",
-             "orange":   "\033[38;2;255;165;000m",
-             "yellow":   "\033[38;2;255;255;000m",
-             "darkgreen": "\033[38;2;000;128;000m",
-             "green":    "\033[38;2;000;255;000m",
-             "blue":     "\033[38;2;135;206;235m",
-             "darkblue": "\033[38;2;000;000;255m",
-             "magenta":  "\033[38;2;255;000;255m",
-             "brown":    "\033[38;2;139;069;019m",
-             "CLR":      "\033[0m"}  # 38 is replaced by 48 for background
+    TCOLORS = {"black":    "\033[38;2;000;000;000m",
+               "gray":     "\033[38;2;128;128;128m",
+               "white":    "\033[38;2;255;255;255m",
+               "pink":     "\033[38;2;255;192;203m",
+               "red":      "\033[38;2;255;000;000m",
+               "orange":   "\033[38;2;255;165;000m",
+               "yellow":   "\033[38;2;255;255;000m",
+               "darkgreen": "\033[38;2;000;128;000m",
+               "green":    "\033[38;2;000;255;000m",
+               "blue":     "\033[38;2;135;206;235m",
+               "darkblue": "\033[38;2;000;000;255m",
+               "magenta":  "\033[38;2;255;000;255m",
+               "brown":    "\033[38;2;139;069;019m",
+               "CLR":      "\033[0m"}  # 38 is replaced by 48 for background
 else:
-  TCOLORS = {"black": "", "gray": "", "white": "",
-             "pink": "", "red": "", "orange": "",
-             "yellow": "", "darkgreen": "", "green": "",
-             "blue": "", "darkblue": "", "magenta": "",
-             "brown": "", "CLR": ""}  # colour codes not printed
+    TCOLORS = {"black": "", "gray": "", "white": "",
+               "pink": "", "red": "", "orange": "",
+               "yellow": "", "darkgreen": "", "green": "",
+               "blue": "", "darkblue": "", "magenta": "",
+               "brown": "", "CLR": ""}  # colour codes not printed
 
 INVENTORYDIMENSIONS = {(9, 3): ('minecraft:barrel', 'minecraft:chest',
                                 'minecraft:trapped_chest') + SHULKERBOXES,
@@ -1326,3 +1354,49 @@ INVENTORYLOOKUP = {}
 for dimensions, blocks in INVENTORYDIMENSIONS.items():
     for block in blocks:
         INVENTORYLOOKUP[block] = dimensions
+
+# version checking
+
+
+def closestVersion(version):
+    """Retrieve next-best version code to given version code."""
+    if version in VERSIONS:
+        return version
+    for v in sorted(VERSIONS.keys(), reverse=True):
+        if version - v >= 0:
+            return v
+    return 0
+
+
+def checkVersion():
+    """Retrieve Minecraft version and check compatibility."""
+    from .worldLoader import WorldSlice
+
+    slice = WorldSlice(0, 0, 1, 1)    # single-chunk slice
+    current = int(slice.nbtfile["Chunks"][0]["DataVersion"].value)
+    closestname = "Unknown"
+    # check compatibility
+    if current not in VERSIONS or VERSIONS[SUPPORTS] not in VERSIONS[current]:
+        closest = closestVersion(current)
+        closestname = VERSIONS[closest]
+        closestname += " snapshot" if current > closest else ""
+        if closest > SUPPORTS:
+            print(f"{TCOLORS['orange']}WARNING: You are using a newer "
+                  "version of Minecraft then GDPC supports!\n"
+                  f"\tSupports: {VERSIONS[SUPPORTS]} "
+                  f"Detected: {closestname}{TCOLORS['CLR']}")
+        elif closest < SUPPORTS:
+            print(f"{TCOLORS['orange']}WARNING: You are using an older "
+                  "version of Minecraft then GDPC supports!\n"
+                  f"\tSupports: {VERSIONS[SUPPORTS]} "
+                  f"Detected: {closestname}{TCOLORS['CLR']}")
+        else:
+            raise ValueError(f"{TCOLORS['red']}Invalid supported version: "
+                             f"SUPPORTS = {current}!{TCOLORS['CLR']}")
+    else:
+        closestname = VERSIONS[current]
+
+    return (current, closestname)
+
+
+CURRENTV, CURRENTVNAME = checkVersion()

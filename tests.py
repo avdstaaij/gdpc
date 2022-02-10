@@ -441,11 +441,16 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1] == '--manual':
             tests = MANUALTESTS
+        elif sys.argv[1] == '--loadonly':
+            tests = ()
     else:
         tests = AUTOTESTS
 
-    print(f"Beginning test suite for version "
-          f"{lookup.TCOLORS['blue']}{__version__}: {len(tests)} tests")
+    print(f"Beginning test suite for "
+          f"{lookup.TCOLORS['blue']}GDPC {__version__} "
+          f"{lookup.TCOLORS['CLR']}on "
+          f"{lookup.TCOLORS['blue']}Minecraft {lookup.CURRENTVNAME}: "
+          f"{len(tests)} tests{lookup.TCOLORS['CLR']}")
     interface.setBuildArea(0, 0, 0, 255, 255, 255)
     failed = 0
     errors = ""
