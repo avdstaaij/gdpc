@@ -10,7 +10,6 @@ The source code of this module contains examples for:
 * Introduction to world slices (search 'WORLDSLICE')
 * Introduction to basic heightmaps (search 'HEIGHTMAP')
 * Introduction to basic geometric shapes (search 'GEO')
-For more advanced functionality, see Land_of_Oz.py
 
 NOTE: We recommend creating your own files instead of modifying or adding code
     to these pre-existing files.
