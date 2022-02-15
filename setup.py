@@ -1,27 +1,31 @@
 """The repository setup file."""
 
-import pathlib
-
-from setuptools import setup
+from setuptools import find_packages, setup
 
 __author__ = "Blinkenlights"
 __version__ = "v4.3_dev"
 
-here = pathlib.Path(__file__).parent.resolve()
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+with open("requirements.txt", "r") as fh:
+    requirements = fh.readlines()
 
 setup(name='gdpc',
-      version='4.2_dev',
+      version='4.3_dev',
       description='The Generative Design Python Client is a Python-based '
       + 'interface for the Minecraft HTTP Interface mod.\n'
       + 'It was created for use in the '
       + 'Generative Design in Minecraft Competition.',
-      long_description=(here / 'README.md').read_text(encoding='utf-8'),
+      long_description=long_description,
       long_description_content_type='text/markdown',
       url='http://github.com/nilsgawlik/gdmc_http_client_python',
       author='Blinkenlights',
       author_email='blinkenlights@pm.me',
       license='MIT',
-      packages=['gdpc'],
+      packages=find_packages(),
+      install_requires=[req for req in requirements if req[:2] != "# "],
+      python_requires='>=3.6, <4',
       classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -33,7 +37,6 @@ setup(name='gdpc',
         'Topic :: Software Development :: Version Control :: Git'
       ],
       keywords='GDMC, generative design, Minecraft, HTTP, development',
-      python_requires='>=3.6, <4',
       project_urls={  # Optional
           'Bug Reports': 'https://github.com/nilsgawlik/gdmc_http_client_python/issues',
           'Official Competition': 'https://gendesignmc.engineering.nyu.edu/',
