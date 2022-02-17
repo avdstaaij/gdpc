@@ -572,7 +572,7 @@ LIGHTBLOCKS = ('minecraft:beacon', 'minecraft:redstone_lamp',
                'minecraft:jack_o_lantern', 'minecraft:sea_lantern',
                'minecraft:glowstone')
 
-LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCK
+LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCKS
 
 # mechanical
 WIRING = ('minecraft:redstone_wire',
