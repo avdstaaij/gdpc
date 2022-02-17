@@ -1,7 +1,7 @@
 # ! /usr/bin/python3
 """### Displays a map of the build area."""
 __all__ = ['WorldSlice']
-__version__ = 'v4.3_dev'
+__version__ = 'v5.0'
 
 import cv2
 import matplotlib.pyplot as plt

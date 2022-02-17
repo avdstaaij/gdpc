@@ -22,7 +22,7 @@ __all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
            'axis2vector']
 
 __author__ = "Blinkenlights"
-__version__ = "v4.3_dev"
+__version__ = "v5.0"
 __year__ = date.now().year
 
 
@@ -281,7 +281,7 @@ def placeLectern(x, y, z, bookData, facing=None):
 
 def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
                         items=[], replace=True):
-    """**Place an invetorized block with any number of items in the world**.
+    """**Place an inventorised block with any number of items in the world**.
 
     Items is expected to be a sequence of (x, y, item[, amount])
         or a sequence of such sequences e.g. ((x, y, item), (x, y, item), ...)

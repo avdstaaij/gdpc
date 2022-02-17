@@ -2,7 +2,7 @@
 """### Store lists of various imformation on blocks, biomes and more."""
 
 # __all__ = []  # everything is available for import
-__version__ = "v4.2_dev"
+__version__ = "v5.0"
 
 import os
 import sys
@@ -425,41 +425,8 @@ BLOCKS = ('minecraft:acacia_button', 'minecraft:acacia_door',
 # ========================================================= grouped by model
 
 AIR = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air')
-GLASS = ('minecraft:glass', 'minecraft:glass_pane',
-         'minecraft:white_stained_glass',
-         'minecraft:white_stained_glass_pane',
-         'minecraft:orange_stained_glass',
-         'minecraft:orange_stained_glass_pane',
-         'minecraft:magenta_stained_glass',
-         'minecraft:magenta_stained_glass_pane',
-         'minecraft:light_blue_stained_glass',
-         'minecraft:light_blue_stained_glass_pane',
-         'minecraft:yellow_stained_glass',
-         'minecraft:yellow_stained_glass_pane',
-         'minecraft:lime_stained_glass',
-         'minecraft:lime_stained_glass_pane',
-         'minecraft:pink_stained_glass',
-         'minecraft:pink_stained_glass_pane',
-         'minecraft:gray_stained_glass',
-         'minecraft:gray_stained_glass_pane',
-         'minecraft:light_gray_stained_glass',
-         'minecraft:light_gray_stained_glass_pane',
-         'minecraft:cyan_stained_glass',
-         'minecraft:cyan_stained_glass_pane',
-         'minecraft:purple_stained_glass',
-         'minecraft:purple_stained_glass_pane',
-         'minecraft:blue_stained_glass',
-         'minecraft:blue_stained_glass_pane',
-         'minecraft:brown_stained_glass',
-         'minecraft:brown_stained_glass_pane',
-         'minecraft:green_stained_glass',
-         'minecraft:green_stained_glass_pane',
-         'minecraft:red_stained_glass',
-         'minecraft:red_stained_glass_pane',
-         'minecraft:black_stained_glass',
-         'minecraft: black_stained_glass_pane')
 
-
+# flora
 LEAVES = ('minecraft:oak_leaves', 'minecraft:birch_leaves',
           'minecraft:spruce_leaves', 'minecraft:jungle_leaves',
           'minecraft:dark_oak_leaves', 'minecraft:acacia_leaves',)
@@ -490,85 +457,14 @@ TALLPLANTS = TALLCROPS + TALLFLOWERS
 PLANTS = ('minecraft:dead_bush',) + FLOWERS + CROPS + FUNGI + WILDCROPS \
     + TALLCROPS + GRASSES + VINES
 
-
-WIRING = ('minecraft:redstone_wire',
-          'minecraft:repeater', 'minecraft:comparator')
-RAILS = ('minecraft:rail', 'minecraft:powered_rail',
-         'minecraft:detector_rail', 'minecraft:activator_rail',)
-BUTTONS = ('minecraft:lever',
-           'minecraft:stone_button', 'minecraft:oak_button',
-           'minecraft:spruce_button', 'minecraft:birch_button',
-           'minecraft:jungle_button', 'minecraft:acacia_button',
-           'minecraft:dark_oak_button',
-           'minecraft:crimson_button', 'minecraft:warped_button',
-           'minecraft:polished_blackstone_button',
-           'minecraft:tripwire_hook')
+# landscape
+# TODO: LIQUIDS
+# TODO: SOILS
+# TODO: STONES
+# TODO: ORES
 
 
-FLOORHEADS = ('minecraft:skeleton_skull',
-              'minecraft:wither_skeleton_skull',
-              'minecraft:zombie_head', 'minecraft:player_head',
-              'minecraft:creeper_head', 'minecraft:dragon_head')
-WALLHEADS = ('minecraft:skeleton_wall_skull',
-             'minecraft:wither_skeleton_wall_skull',
-             'minecraft:zombie_wall_head',
-             'minecraft:player_wall_head', 'minecraft:creeper_wall_head',
-             'minecraft:dragon_wall_head',)
-HEADS = FLOORHEADS + WALLHEADS
-
-FLOORSIGNS = ('minecraft:oak_sign', 'minecraft:birch_sign',
-              'minecraft:spruce_sign', 'minecraft:jungle_sign',
-              'minecraft:dark_oak_sign', 'minecraft:acacia_sign',
-              'minecraft:warped_sign', 'minecraft:crimson_sign')
-WALLSIGNS = ('minecraft:oak_wall_sign', 'minecraft:birch_wall_sign',
-             'minecraft:spruce_wall_sign', 'minecraft:jungle_wall_sign',
-             'minecraft:dark_oak_wall_sign', 'minecraft:acacia_wall_sign',
-             'minecraft:warped_wall_sign', 'minecraft:crimson_wall_sign')
-SIGNS = FLOORSIGNS + WALLSIGNS
-
-ANVILS = ('minecraft:anvil', 'minecraft:chipped_anvil',
-          'minecraft:damaged_anvil')
-BEDS = ('minecraft:white_bed', 'minecraft:orange_bed', 'minecraft:magenta_bed',
-        'minecraft:light_blue_bed', 'minecraft:yellow_bed',
-        'minecraft:lime_bed', 'minecraft:pink_bed', 'minecraft:gray_bed',
-        'minecraft:light_gray_bed', 'minecraft:cyan_bed',
-        'minecraft:purple_bed', 'minecraft:blue_bed', 'minecraft:brown_bed',
-        'minecraft:green_bed', 'minecraft:red_bed', 'minecraft:black_bed')
-FURNACES = ('minecraft:furnace', 'minecraft:smoker', 'minecraft:blast_furnace')
-SHULKERBOXES = ('minecraft:shulker_box', 'minecraft:white_shulker_box',
-                'minecraft:orange_shulker_box',
-                'minecraft:magenta_shulker_box',
-                'minecraft:light_blue_shulker_box',
-                'minecraft:yellow_shulker_box',
-                'minecraft:lime_shulker_box', 'minecraft:pink_shulker_box',
-                'minecraft:gray_shulker_box',
-                'minecraft:light_gray_shulker_box',
-                'minecraft:cyan_shulker_box', 'minecraft:purple_shulker_box',
-                'minecraft:blue_shulker_box', 'minecraft:brown_shulker_box',
-                'minecraft:green_shulker_box', 'minecraft:red_shulker_box',
-                'minecraft:black_shulker_box')
-
-
-WOOL = 'FILL ME'
-CARPETS = ('minecraft:white_carpet', 'minecraft:orange_carpet',
-           'minecraft:magenta_carpet', 'minecraft:light_blue_carpet',
-           'minecraft:yellow_carpet', 'minecraft:lime_carpet',
-           'minecraft:pink_carpet', 'minecraft:gray_carpet',
-           'minecraft:light_gray_carpet', 'minecraft:cyan_carpet',
-           'minecraft:purple_carpet', 'minecraft:blue_carpet',
-           'minecraft:brown_carpet', 'minecraft:green_carpet',
-           'minecraft:red_carpet', 'minecraft:black_carpet')
-PRESSUREPLATES = 'FILL ME'
-
-
-DOORS = 'FILL ME'
-TRAPDOORS = 'FILL ME'
-GATES = ('minecraft:oak_fence_gate', 'minecraft:birch_fence_gate',
-         'minecraft:spruce_fence_gate', 'minecraft:jungle_fence_gate',
-         'minecraft:dark_oak_fence_gate', 'minecraft:acacia_fence_gate',
-         'minecraft:warped_fence_gate', 'minecraft:crimson_fence_gate')
-
-
+# construction
 STAIRS = ('minecraft:oak_stairs', 'minecraft:spruce_stairs',
           'minecraft:birch_stairs', 'minecraft:jungle_stairs',
           'minecraft:acacia_stairs', 'minecraft:dark_oak_stairs',
@@ -621,14 +517,170 @@ FENCES = ('minecraft:oak_fence', 'minecraft:birch_fence',
           'minecraft:spruce_fence', 'minecraft:jungle_fence',
           'minecraft:dark_oak_fence', 'minecraft:acacia_fence',
           'minecraft:warped_fence', 'minecraft:crimson_fence')
-WALLS = 'FILL ME'
+WALLS = ('minecraft:cobblestone_wall', 'minecraft:mossy_cobblestone_wall',
+         'minecraft:brick_wall', 'minecraft:prismarine_wall',
+         'minecraft:red_sandstone_wall', 'minecraft:mossy_stone_brick_wall',
+         'minecraft:granite_wall', 'minecraft:stone_brick_wall',
+         'minecraft:nether_brick_wall', 'minecraft:andesite_wall',
+         'minecraft:red_nether_brick_wall', 'minecraft:sandstone_wall',
+         'minecraft:end_stone_brick_wall', 'minecraft:diorite_wall',
+         'minecraft:blackstone_wall', 'minecraft:polished_blackstone_wall',
+         'minecraft:polished_blackstone_brick_wall',
+         'minecraft:cobbled_deepslate_wall', 'minecraft:deepslate_tile_wall',
+         'minecraft:polished_deepslate_wall')
+GLASS = ('minecraft:glass', 'minecraft:glass_pane',
+         'minecraft:white_stained_glass',
+         'minecraft:white_stained_glass_pane',
+         'minecraft:orange_stained_glass',
+         'minecraft:orange_stained_glass_pane',
+         'minecraft:magenta_stained_glass',
+         'minecraft:magenta_stained_glass_pane',
+         'minecraft:light_blue_stained_glass',
+         'minecraft:light_blue_stained_glass_pane',
+         'minecraft:yellow_stained_glass',
+         'minecraft:yellow_stained_glass_pane',
+         'minecraft:lime_stained_glass',
+         'minecraft:lime_stained_glass_pane',
+         'minecraft:pink_stained_glass',
+         'minecraft:pink_stained_glass_pane',
+         'minecraft:gray_stained_glass',
+         'minecraft:gray_stained_glass_pane',
+         'minecraft:light_gray_stained_glass',
+         'minecraft:light_gray_stained_glass_pane',
+         'minecraft:cyan_stained_glass',
+         'minecraft:cyan_stained_glass_pane',
+         'minecraft:purple_stained_glass',
+         'minecraft:purple_stained_glass_pane',
+         'minecraft:blue_stained_glass',
+         'minecraft:blue_stained_glass_pane',
+         'minecraft:brown_stained_glass',
+         'minecraft:brown_stained_glass_pane',
+         'minecraft:green_stained_glass',
+         'minecraft:green_stained_glass_pane',
+         'minecraft:red_stained_glass',
+         'minecraft:red_stained_glass_pane',
+         'minecraft:black_stained_glass',
+         'minecraft: black_stained_glass_pane')
 
-
+# lighting
 FIRES = ('minecraft:fire', 'minecraft:soul_fire')
 CAMPFIRES = ('minecraft:campfire', 'minecraft:soul_campfire')
 TORCHES = ('minecraft:torch', 'minecraft:soul_torch',
            'minecraft:redstone_torch')
 LANTERNS = ('minecraft:lantern', 'minecraft:soul_lantern')
+LIGHTBLOCKS = ('minecraft:beacon', 'minecraft:redstone_lamp',
+               'minecraft:jack_o_lantern', 'minecraft:sea_lantern',
+               'minecraft:glowstone')
+
+LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCK
+
+# mechanical
+WIRING = ('minecraft:redstone_wire',
+          'minecraft:repeater', 'minecraft:comparator')
+RAILS = ('minecraft:rail', 'minecraft:powered_rail',
+         'minecraft:detector_rail', 'minecraft:activator_rail',)
+SWITCHES = ('minecraft:lever',
+            'minecraft:stone_button', 'minecraft:oak_button',
+            'minecraft:spruce_button', 'minecraft:birch_button',
+            'minecraft:jungle_button', 'minecraft:acacia_button',
+            'minecraft:dark_oak_button',
+            'minecraft:crimson_button', 'minecraft:warped_button',
+            'minecraft:polished_blackstone_button',
+            'minecraft:tripwire_hook')
+PRESSUREPLATES = ('minecraft:crimson_pressure_plate',
+                  'minecraft:warped_pressure_plate',
+                  'minecraft:polished_blackstone_pressure_plate',
+                  'minecraft:light_weighted_pressure_plate',
+                  'minecraft:heavy_weighted_pressure_plate',
+                  'minecraft:stone_pressure_plate',
+                  'minecraft:oak_pressure_plate',
+                  'minecraft:wooden_pressure_plate',
+                  'minecraft:spruce_pressure_plate',
+                  'minecraft:birch_pressure_plate',
+                  'minecraft:jungle_pressure_plate',
+                  'minecraft:acacia_pressure_plate',
+                  'minecraft:dark_oak_pressure_plate')
+DOORS = ('minecraft:iron_door', 'minecraft:oak_door',
+         'minecraft:wooden_door', 'minecraft:spruce_door',
+         'minecraft:birch_door', 'minecraft:jungle_door',
+         'minecraft:acacia_door', 'minecraft:dark_oak_door',
+         'minecraft:crimson_door', 'minecraft:warped_door')
+TRAPDOORS = ('minecraft:oak_trapdoor', 'minecraft:trapdoor',
+             'minecraft:spruce_trapdoor', 'minecraft:birch_trapdoor',
+             'minecraft:jungle_trapdoor', 'minecraft:acacia_trapdoor',
+             'minecraft:dark_oak_trapdoor', 'minecraft:iron_trapdoor')
+GATES = ('minecraft:oak_fence_gate', 'minecraft:birch_fence_gate',
+         'minecraft:spruce_fence_gate', 'minecraft:jungle_fence_gate',
+         'minecraft:dark_oak_fence_gate', 'minecraft:acacia_fence_gate',
+         'minecraft:warped_fence_gate', 'minecraft:crimson_fence_gate')
+
+# decoration
+FLOORHEADS = ('minecraft:skeleton_skull',
+              'minecraft:wither_skeleton_skull',
+              'minecraft:zombie_head', 'minecraft:player_head',
+              'minecraft:creeper_head', 'minecraft:dragon_head')
+WALLHEADS = ('minecraft:skeleton_wall_skull',
+             'minecraft:wither_skeleton_wall_skull',
+             'minecraft:zombie_wall_head',
+             'minecraft:player_wall_head', 'minecraft:creeper_wall_head',
+             'minecraft:dragon_wall_head',)
+HEADS = FLOORHEADS + WALLHEADS
+
+FLOORSIGNS = ('minecraft:oak_sign', 'minecraft:birch_sign',
+              'minecraft:spruce_sign', 'minecraft:jungle_sign',
+              'minecraft:dark_oak_sign', 'minecraft:acacia_sign',
+              'minecraft:warped_sign', 'minecraft:crimson_sign')
+WALLSIGNS = ('minecraft:oak_wall_sign', 'minecraft:birch_wall_sign',
+             'minecraft:spruce_wall_sign', 'minecraft:jungle_wall_sign',
+             'minecraft:dark_oak_wall_sign', 'minecraft:acacia_wall_sign',
+             'minecraft:warped_wall_sign', 'minecraft:crimson_wall_sign')
+SIGNS = FLOORSIGNS + WALLSIGNS
+
+ANVILS = ('minecraft:anvil', 'minecraft:chipped_anvil',
+          'minecraft:damaged_anvil')
+BEDS = ('minecraft:white_bed', 'minecraft:orange_bed', 'minecraft:magenta_bed',
+        'minecraft:light_blue_bed', 'minecraft:yellow_bed',
+        'minecraft:lime_bed', 'minecraft:pink_bed', 'minecraft:gray_bed',
+        'minecraft:light_gray_bed', 'minecraft:cyan_bed',
+        'minecraft:purple_bed', 'minecraft:blue_bed', 'minecraft:brown_bed',
+        'minecraft:green_bed', 'minecraft:red_bed', 'minecraft:black_bed')
+FURNACES = ('minecraft:furnace', 'minecraft:smoker', 'minecraft:blast_furnace')
+SHULKERBOXES = ('minecraft:shulker_box', 'minecraft:white_shulker_box',
+                'minecraft:orange_shulker_box',
+                'minecraft:magenta_shulker_box',
+                'minecraft:light_blue_shulker_box',
+                'minecraft:yellow_shulker_box',
+                'minecraft:lime_shulker_box', 'minecraft:pink_shulker_box',
+                'minecraft:gray_shulker_box',
+                'minecraft:light_gray_shulker_box',
+                'minecraft:cyan_shulker_box', 'minecraft:purple_shulker_box',
+                'minecraft:blue_shulker_box', 'minecraft:brown_shulker_box',
+                'minecraft:green_shulker_box', 'minecraft:red_shulker_box',
+                'minecraft:black_shulker_box')
+
+WOOLS = ('minecraft:white_wool', 'minecraft:wool',
+         'minecraft:orange_wool', 'minecraft:magenta_wool',
+         'minecraft:light_blue_wool', 'minecraft:yellow_wool',
+         'minecraft:lime_wool', 'minecraft:pink_wool',
+         'minecraft:gray_wool', 'minecraft:light_gray_wool',
+         'minecraft:cyan_wool', 'minecraft:purple_wool',
+         'minecraft:blue_wool', 'minecraft:brown_wool',
+         'minecraft:green_wool', 'minecraft:red_wool',
+         'minecraft:black_wool')
+CARPETS = ('minecraft:white_carpet', 'minecraft:orange_carpet',
+           'minecraft:magenta_carpet', 'minecraft:light_blue_carpet',
+           'minecraft:yellow_carpet', 'minecraft:lime_carpet',
+           'minecraft:pink_carpet', 'minecraft:gray_carpet',
+           'minecraft:light_gray_carpet', 'minecraft:cyan_carpet',
+           'minecraft:purple_carpet', 'minecraft:blue_carpet',
+           'minecraft:brown_carpet', 'minecraft:green_carpet',
+           'minecraft:red_carpet', 'minecraft:black_carpet')
+
+
+ARTIFICIAL = ('minecraft:grass_path', 'minecraft:cobblestone') \
+    + STAIRS + SLABS + FENCES + WALLS + GLASS + LIGHTSOURCES \
+    + WIRING + RAILS + SWITCHES + PRESSUREPLATES + DOORS + TRAPDOORS + GATES \
+    + HEADS + SIGNS + ANVILS + BEDS + FURNACES + SHULKERBOXES + WOOLS + CARPETS
 
 # ================================================= grouped by obtrusiveness
 

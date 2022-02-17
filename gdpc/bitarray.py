@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 """### Read the bitarray format used by Minecraft."""
 __all__ = ['BitArray']
-__version__ = 'v4.2_dev'
+__version__ = 'v5.0'
 
 from math import floor
 
@@ -53,7 +53,6 @@ class BitArray:
         """**Return the binary value stored at index.**."""
         inclusiveBetween(0, (self.arraySize - 1), index)
         i = self.getPosOfLong(index)
-        # print("{} > {}".format(index, i))
         j = self.longArray[i]
         k = (index - i * self.entriesPerLong) * self.bitsPerEntry
         return j >> k & self.maxEntryValue

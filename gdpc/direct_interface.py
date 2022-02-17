@@ -5,14 +5,14 @@ This file contains various functions that map directly onto the HTTP interface.
 It is recommended to use `interface.py` instead.
 """
 __all__ = []
-__version__ = "v4.3_dev"
+__version__ = "v5.0"
 
 import requests
 from requests.exceptions import ConnectionError
 
 
 def getBlock(x, y, z):
-    """**Return the name of a block from the world**."""
+    """**Return the block ID from the world**."""
     url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.get(url).text
