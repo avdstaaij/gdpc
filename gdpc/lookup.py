@@ -2,7 +2,7 @@
 """### Store lists of various imformation on blocks, biomes and more."""
 
 # __all__ = []  # everything is available for import
-__version__ = "v4.2_dev"
+__version__ = "v5.1_dev"
 
 import os
 import sys
@@ -549,7 +549,15 @@ SHULKERBOXES = ('minecraft:shulker_box', 'minecraft:white_shulker_box',
                 'minecraft:black_shulker_box')
 
 
-WOOL = 'FILL ME'
+WOOL = ('minecraft:white_wool', 'minecraft:wool',
+        'minecraft:orange_wool', 'minecraft:magenta_wool',
+        'minecraft:light_blue_wool', 'minecraft:yellow_wool',
+        'minecraft:lime_wool', 'minecraft:pink_wool',
+        'minecraft:gray_wool', 'minecraft:light_gray_wool',
+        'minecraft:cyan_wool', 'minecraft:purple_wool',
+        'minecraft:blue_wool', 'minecraft:brown_wool',
+        'minecraft:green_wool', 'minecraft:red_wool',
+        'minecraft:black_wool')
 CARPETS = ('minecraft:white_carpet', 'minecraft:orange_carpet',
            'minecraft:magenta_carpet', 'minecraft:light_blue_carpet',
            'minecraft:yellow_carpet', 'minecraft:lime_carpet',
@@ -558,11 +566,30 @@ CARPETS = ('minecraft:white_carpet', 'minecraft:orange_carpet',
            'minecraft:purple_carpet', 'minecraft:blue_carpet',
            'minecraft:brown_carpet', 'minecraft:green_carpet',
            'minecraft:red_carpet', 'minecraft:black_carpet')
-PRESSUREPLATES = 'FILL ME'
+PRESSUREPLATES = ('minecraft:crimson_pressure_plate',
+                  'minecraft:warped_pressure_plate',
+                  'minecraft:polished_blackstone_pressure_plate',
+                  'minecraft:light_weighted_pressure_plate',
+                  'minecraft:heavy_weighted_pressure_plate',
+                  'minecraft:stone_pressure_plate',
+                  'minecraft:oak_pressure_plate',
+                  'minecraft:wooden_pressure_plate',
+                  'minecraft:spruce_pressure_plate',
+                  'minecraft:birch_pressure_plate',
+                  'minecraft:jungle_pressure_plate',
+                  'minecraft:acacia_pressure_plate',
+                  'minecraft:dark_oak_pressure_plate')
 
 
-DOORS = 'FILL ME'
-TRAPDOORS = 'FILL ME'
+DOORS = ('minecraft:iron_door', 'minecraft:oak_door',
+         'minecraft:wooden_door', 'minecraft:spruce_door',
+         'minecraft:birch_door', 'minecraft:jungle_door',
+         'minecraft:acacia_door', 'minecraft:dark_oak_door',
+         'minecraft:crimson_door', 'minecraft:warped_door')
+TRAPDOORS = ('minecraft:oak_trapdoor', 'minecraft:trapdoor',
+             'minecraft:spruce_trapdoor', 'minecraft:birch_trapdoor',
+             'minecraft:jungle_trapdoor', 'minecraft:acacia_trapdoor',
+             'minecraft:dark_oak_trapdoor', 'minecraft:iron_trapdoor')
 GATES = ('minecraft:oak_fence_gate', 'minecraft:birch_fence_gate',
          'minecraft:spruce_fence_gate', 'minecraft:jungle_fence_gate',
          'minecraft:dark_oak_fence_gate', 'minecraft:acacia_fence_gate',
@@ -621,7 +648,17 @@ FENCES = ('minecraft:oak_fence', 'minecraft:birch_fence',
           'minecraft:spruce_fence', 'minecraft:jungle_fence',
           'minecraft:dark_oak_fence', 'minecraft:acacia_fence',
           'minecraft:warped_fence', 'minecraft:crimson_fence')
-WALLS = 'FILL ME'
+WALLS = ('minecraft:cobblestone_wall', 'minecraft:mossy_cobblestone_wall',
+         'minecraft:brick_wall', 'minecraft:prismarine_wall',
+         'minecraft:red_sandstone_wall', 'minecraft:mossy_stone_brick_wall',
+         'minecraft:granite_wall', 'minecraft:stone_brick_wall',
+         'minecraft:nether_brick_wall', 'minecraft:andesite_wall',
+         'minecraft:red_nether_brick_wall', 'minecraft:sandstone_wall',
+         'minecraft:end_stone_brick_wall', 'minecraft:diorite_wall',
+         'minecraft:blackstone_wall', 'minecraft:polished_blackstone_wall',
+         'minecraft:polished_blackstone_brick_wall',
+         'minecraft:cobbled_deepslate_wall', 'minecraft:deepslate_tile_wall',
+         'minecraft:polished_deepslate_wall')
 
 
 FIRES = ('minecraft:fire', 'minecraft:soul_fire')

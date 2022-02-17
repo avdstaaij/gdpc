@@ -17,8 +17,8 @@ This file is not meant to be imported.
 """
 __all__ = []
 __author__ = "Blinkenlights"
-__version__ = "v4.3_dev"
-__date__ = "09 February 2022"
+__version__ = "v5.1_dev"
+__date__ = "16 February 2022"
 
 import numpy as np
 from gdpc import geometry as geo
