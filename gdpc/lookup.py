@@ -572,7 +572,7 @@ LIGHTBLOCKS = ('minecraft:beacon', 'minecraft:redstone_lamp',
                'minecraft:jack_o_lantern', 'minecraft:sea_lantern',
                'minecraft:glowstone')
 
-LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCK
+LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCKS
 
 # mechanical
 WIRING = ('minecraft:redstone_wire',
@@ -709,7 +709,7 @@ UNOBTRUSIVE = ('minecraft:ladder',
                'minecraft:lily_pad',
                'minecraft:scaffolding',
                'minecraft:snow') \
-    + GLASS + RAILS + WIRING + BUTTONS + TORCHES + SIGNS
+    + GLASS + RAILS + WIRING + SWITCHES + TORCHES + SIGNS
 
 # can be seen through moderately
 OBTRUSIVE = ('minecraft:bell', 'minecraft:brewing_stand', 'minecraft:cake',
@@ -737,7 +737,7 @@ MAPTRANSPARENT = ('minecraft:redstone_lamp',
                   'minecraft:nether_portal',
                   'minecraft:iron_bars',
                   'minecraft:chain') \
-    + INVISIBLE + WIRING + RAILS + BUTTONS + HEADS + TORCHES
+    + INVISIBLE + WIRING + RAILS + SWITCHES + HEADS + TORCHES
 
 # base map colours
 # WARNING: all non-transparent blocks are listed individually here again
