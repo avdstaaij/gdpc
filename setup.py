@@ -5,11 +5,8 @@ from setuptools import find_packages, setup
 __author__ = "Blinkenlights"
 __version__ = "v5.0"
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-with open("requirements.txt", "r") as fh:
-    requirements = fh.readlines()
+with open("README.md", "r") as readme:
+    long_description = readme.read()
 
 setup(name='gdpc',
       version=__version__,
@@ -24,7 +21,11 @@ setup(name='gdpc',
       author_email='blinkenlights@pm.me',
       license='MIT',
       packages=find_packages(),
-      install_requires=[req for req in requirements if req[:2] != "# "],
+      install_requires=['matplotlib',
+                        'NBT',
+                        'numpy',
+                        'opencv_python',
+                        'requests'],
       python_requires='>=3.6, <4',
       classifiers=[
         'Development Status :: 5 - Production/Stable',
