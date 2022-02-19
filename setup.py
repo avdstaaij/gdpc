@@ -3,7 +3,7 @@
 from setuptools import find_packages, setup
 
 __author__ = "Blinkenlights"
-__version__ = "v5.0"
+__version__ = "v5.0.2"
 
 with open("README.md", "r") as readme:
     long_description = readme.read()

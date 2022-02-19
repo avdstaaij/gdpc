@@ -16,7 +16,6 @@ import numpy as np
 
 from . import direct_interface as di
 from .bitarray import BitArray
-from .lookup import BIOMES
 
 
 class CachedSection:
@@ -151,6 +150,7 @@ class WorldSlice:
         Due to the noise around chunk borders,
             there is an inacurracy of +/-2 blocks.
         """
+        from .lookup import BIOMES
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         x = (x % 16) // 4
@@ -161,6 +161,7 @@ class WorldSlice:
 
     def getBiomesNear(self, x, y, z):
         """**Return a list of biomes in the same chunk**."""
+        from .lookup import BIOMES
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         # "sorted(list(set(data)))" is used to remove duplicates from data
@@ -168,6 +169,7 @@ class WorldSlice:
 
     def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
+        from .lookup import BIOMES
         chunkID = x // 16 + z // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         # "max(set(data), key=data.count)" is used to find the most common item
