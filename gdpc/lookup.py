@@ -425,6 +425,109 @@ BLOCKS = ('minecraft:acacia_button', 'minecraft:acacia_door',
 # ========================================================= grouped by model
 
 AIR = ('minecraft:air', 'minecraft:void_air', 'minecraft:cave_air')
+
+# flora
+LEAVES = ('minecraft:oak_leaves', 'minecraft:birch_leaves',
+          'minecraft:spruce_leaves', 'minecraft:jungle_leaves',
+          'minecraft:dark_oak_leaves', 'minecraft:acacia_leaves',)
+SHORTFLOWERS = ('minecraft:dandelion', 'minecraft:poppy',
+                'minecraft:blue_orchid', 'minecraft:allium',
+                'minecraft:azure_bluet', 'minecraft:red_tulip',
+                'minecraft:pink_tulip', 'minecraft:white_tulip',
+                'minecraft:orange_tulip', 'minecraft:oxeye_daisy',
+                'minecraft:cornflower', 'minecraft:lily_of_the_valley',
+                'minecraft:wither_rose')
+TALLFLOWERS = ('minecraft:sunflower', 'minecraft:lilac',
+               'minecraft:rose_bush', 'minecraft:peony')
+CROPS = ('minecraft:wheat', 'minecraft:beetroots',
+         'minecraft:carrots', 'minecraft:potatoes',
+         'minecraft:melon_stem', 'minecraft:pumpkin_stem')
+FUNGI = ('minecraft:red_mushroom', 'minecraft:brown_mushroom',
+         'minecraft:warped_fungus', 'minecraft:crimson_fungus')
+WILDCROPS = ('minecraft:cocoa', 'minecraft:sweet_berry_bush')
+TALLCROPS = ('minecraft:bamboo', 'minecraft:sugar_cane',
+             'minecraft:cactus')
+GRASSES = ('minecraft:grass', 'minecraft:tall_grass',
+           'minecraft:fern', 'minecraft:large_fern')
+VINES = ('minecraft:vine',
+         'minecraft:weeping_vines', 'minecraft:weeping_vines')
+
+FLOWERS = SHORTFLOWERS + TALLFLOWERS
+TALLPLANTS = TALLCROPS + TALLFLOWERS
+PLANTS = ('minecraft:dead_bush',) + FLOWERS + CROPS + FUNGI + WILDCROPS \
+    + TALLCROPS + GRASSES + VINES
+
+# landscape
+# TODO: LIQUIDS
+# TODO: SOILS
+# TODO: STONES
+# TODO: ORES
+
+
+# construction
+STAIRS = ('minecraft:oak_stairs', 'minecraft:spruce_stairs',
+          'minecraft:birch_stairs', 'minecraft:jungle_stairs',
+          'minecraft:acacia_stairs', 'minecraft:dark_oak_stairs',
+          'minecraft:crimson_stairs', 'minecraft:warped_stairs',
+          'minecraft:stone_stairs',
+          'minecraft:granite_stairs', 'minecraft:polished_granite_stairs',
+          'minecraft:diorite_stairs', 'minecraft:polished_diorite_stairs',
+          'minecraft:andesite_stairs', 'minecraft:polished_andesite_stairs',
+          'minecraft:cobblestone_stairs', 'minecraft:mossy_cobblestone_stairs',
+          'minecraft:stone_brick_stairs', 'minecraft:mossy_stone_brick_stairs',
+          'minecraft:brick_stairs', 'minecraft:end_stone_brick_stairs',
+          'minecraft:nether_brick_stairs', 'minecraft:red_nether_brick_stairs',
+          'minecraft:sandstone_stairs', 'minecraft:cut_sandstone_stairs',
+          'minecraft:smooth_sandstone_stairs',
+          'minecraft:red_sandstone_stairs',
+          'minecraft:cut_red_sandstone_stairs',
+          'minecraft:smooth_red_sandstone_stairs',
+          'minecraft:quartz_stairs', 'minecraft:smooth_quartz_stairs',
+          'minecraft:purpur_stairs',
+          'minecraft:prismarine_stairs', 'minecraft:prismarine_brick_stairs',
+          'minecraft:dark_prismarine_stairs',
+          'minecraft:petrified_oak_stairs',
+          'minecraft:blackstone_stairs',
+          'minecraft:polished_blackstone_stairs',
+          'minecraft:polished_blackstone_brick_stairs')
+SLABS = ('minecraft:oak_slab', 'minecraft:spruce_slab',
+         'minecraft:birch_slab', 'minecraft:jungle_slab',
+         'minecraft:acacia_slab', 'minecraft:dark_oak_slab',
+         'minecraft:crimson_slab', 'minecraft:warped_slab',
+         'minecraft:stone_slab', 'minecraft:smooth_stone_slab',
+         'minecraft:granite_slab', 'minecraft:polished_granite_slab',
+         'minecraft:diorite_slab', 'minecraft:polished_diorite_slab',
+         'minecraft:andesite_slab', 'minecraft:polished_andesite_slab',
+         'minecraft:cobblestone_slab', 'minecraft:mossy_cobblestone_slab',
+         'minecraft:stone_brick_slab', 'minecraft:mossy_stone_brick_slab',
+         'minecraft:brick_slab', 'minecraft:end_stone_brick_slab',
+         'minecraft:nether_brick_slab', 'minecraft:red_nether_brick_slab',
+         'minecraft:sandstone_slab', 'minecraft:cut_sandstone_slab',
+         'minecraft:smooth_sandstone_slab',
+         'minecraft:red_sandstone_slab', 'minecraft:cut_red_sandstone_slab',
+         'minecraft:smooth_red_sandstone_slab',
+         'minecraft:quartz_slab', 'minecraft:smooth_quartz_slab',
+         'minecraft:purpur_slab',
+         'minecraft:prismarine_slab', 'minecraft:prismarine_brick_slab',
+         'minecraft:dark_prismarine_slab',
+         'minecraft:petrified_oak_slab',
+         'minecraft:blackstone_slab', 'minecraft:polished_blackstone_slab',
+         'minecraft:polished_blackstone_brick_slab')
+FENCES = ('minecraft:oak_fence', 'minecraft:birch_fence',
+          'minecraft:spruce_fence', 'minecraft:jungle_fence',
+          'minecraft:dark_oak_fence', 'minecraft:acacia_fence',
+          'minecraft:warped_fence', 'minecraft:crimson_fence')
+WALLS = ('minecraft:cobblestone_wall', 'minecraft:mossy_cobblestone_wall',
+         'minecraft:brick_wall', 'minecraft:prismarine_wall',
+         'minecraft:red_sandstone_wall', 'minecraft:mossy_stone_brick_wall',
+         'minecraft:granite_wall', 'minecraft:stone_brick_wall',
+         'minecraft:nether_brick_wall', 'minecraft:andesite_wall',
+         'minecraft:red_nether_brick_wall', 'minecraft:sandstone_wall',
+         'minecraft:end_stone_brick_wall', 'minecraft:diorite_wall',
+         'minecraft:blackstone_wall', 'minecraft:polished_blackstone_wall',
+         'minecraft:polished_blackstone_brick_wall',
+         'minecraft:cobbled_deepslate_wall', 'minecraft:deepslate_tile_wall',
+         'minecraft:polished_deepslate_wall')
 GLASS = ('minecraft:glass', 'minecraft:glass_pane',
          'minecraft:white_stained_glass',
          'minecraft:white_stained_glass_pane',
@@ -459,52 +562,59 @@ GLASS = ('minecraft:glass', 'minecraft:glass_pane',
          'minecraft:black_stained_glass',
          'minecraft: black_stained_glass_pane')
 
+# lighting
+FIRES = ('minecraft:fire', 'minecraft:soul_fire')
+CAMPFIRES = ('minecraft:campfire', 'minecraft:soul_campfire')
+TORCHES = ('minecraft:torch', 'minecraft:soul_torch',
+           'minecraft:redstone_torch')
+LANTERNS = ('minecraft:lantern', 'minecraft:soul_lantern')
+LIGHTBLOCKS = ('minecraft:beacon', 'minecraft:redstone_lamp',
+               'minecraft:jack_o_lantern', 'minecraft:sea_lantern',
+               'minecraft:glowstone')
 
-LEAVES = ('minecraft:oak_leaves', 'minecraft:birch_leaves',
-          'minecraft:spruce_leaves', 'minecraft:jungle_leaves',
-          'minecraft:dark_oak_leaves', 'minecraft:acacia_leaves',)
-SHORTFLOWERS = ('minecraft:dandelion', 'minecraft:poppy',
-                'minecraft:blue_orchid', 'minecraft:allium',
-                'minecraft:azure_bluet', 'minecraft:red_tulip',
-                'minecraft:pink_tulip', 'minecraft:white_tulip',
-                'minecraft:orange_tulip', 'minecraft:oxeye_daisy',
-                'minecraft:cornflower', 'minecraft:lily_of_the_valley',
-                'minecraft:wither_rose')
-TALLFLOWERS = ('minecraft:sunflower', 'minecraft:lilac',
-               'minecraft:rose_bush', 'minecraft:peony')
-CROPS = ('minecraft:wheat', 'minecraft:beetroots',
-         'minecraft:carrots', 'minecraft:potatoes',
-         'minecraft:melon_stem', 'minecraft:pumpkin_stem')
-FUNGI = ('minecraft:red_mushroom', 'minecraft:brown_mushroom',
-         'minecraft:warped_fungus', 'minecraft:crimson_fungus')
-WILDCROPS = ('minecraft:cocoa', 'minecraft:sweet_berry_bush')
-TALLCROPS = ('minecraft:bamboo', 'minecraft:sugar_cane',
-             'minecraft:cactus')
-GRASSES = ('minecraft:grass', 'minecraft:tall_grass',
-           'minecraft:fern', 'minecraft:large_fern')
-VINES = ('minecraft:vine',
-         'minecraft:weeping_vines', 'minecraft:weeping_vines')
+LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCKS
 
-FLOWERS = SHORTFLOWERS + TALLFLOWERS
-TALLPLANTS = TALLCROPS + TALLFLOWERS
-PLANTS = ('minecraft:dead_bush',) + FLOWERS + CROPS + FUNGI + WILDCROPS \
-    + TALLCROPS + GRASSES + VINES
-
-
+# mechanical
 WIRING = ('minecraft:redstone_wire',
           'minecraft:repeater', 'minecraft:comparator')
 RAILS = ('minecraft:rail', 'minecraft:powered_rail',
          'minecraft:detector_rail', 'minecraft:activator_rail',)
-BUTTONS = ('minecraft:lever',
-           'minecraft:stone_button', 'minecraft:oak_button',
-           'minecraft:spruce_button', 'minecraft:birch_button',
-           'minecraft:jungle_button', 'minecraft:acacia_button',
-           'minecraft:dark_oak_button',
-           'minecraft:crimson_button', 'minecraft:warped_button',
-           'minecraft:polished_blackstone_button',
-           'minecraft:tripwire_hook')
+SWITCHES = ('minecraft:lever',
+            'minecraft:stone_button', 'minecraft:oak_button',
+            'minecraft:spruce_button', 'minecraft:birch_button',
+            'minecraft:jungle_button', 'minecraft:acacia_button',
+            'minecraft:dark_oak_button',
+            'minecraft:crimson_button', 'minecraft:warped_button',
+            'minecraft:polished_blackstone_button',
+            'minecraft:tripwire_hook')
+PRESSUREPLATES = ('minecraft:crimson_pressure_plate',
+                  'minecraft:warped_pressure_plate',
+                  'minecraft:polished_blackstone_pressure_plate',
+                  'minecraft:light_weighted_pressure_plate',
+                  'minecraft:heavy_weighted_pressure_plate',
+                  'minecraft:stone_pressure_plate',
+                  'minecraft:oak_pressure_plate',
+                  'minecraft:wooden_pressure_plate',
+                  'minecraft:spruce_pressure_plate',
+                  'minecraft:birch_pressure_plate',
+                  'minecraft:jungle_pressure_plate',
+                  'minecraft:acacia_pressure_plate',
+                  'minecraft:dark_oak_pressure_plate')
+DOORS = ('minecraft:iron_door', 'minecraft:oak_door',
+         'minecraft:wooden_door', 'minecraft:spruce_door',
+         'minecraft:birch_door', 'minecraft:jungle_door',
+         'minecraft:acacia_door', 'minecraft:dark_oak_door',
+         'minecraft:crimson_door', 'minecraft:warped_door')
+TRAPDOORS = ('minecraft:oak_trapdoor', 'minecraft:trapdoor',
+             'minecraft:spruce_trapdoor', 'minecraft:birch_trapdoor',
+             'minecraft:jungle_trapdoor', 'minecraft:acacia_trapdoor',
+             'minecraft:dark_oak_trapdoor', 'minecraft:iron_trapdoor')
+GATES = ('minecraft:oak_fence_gate', 'minecraft:birch_fence_gate',
+         'minecraft:spruce_fence_gate', 'minecraft:jungle_fence_gate',
+         'minecraft:dark_oak_fence_gate', 'minecraft:acacia_fence_gate',
+         'minecraft:warped_fence_gate', 'minecraft:crimson_fence_gate')
 
-
+# decoration
 FLOORHEADS = ('minecraft:skeleton_skull',
               'minecraft:wither_skeleton_skull',
               'minecraft:zombie_head', 'minecraft:player_head',
@@ -548,16 +658,15 @@ SHULKERBOXES = ('minecraft:shulker_box', 'minecraft:white_shulker_box',
                 'minecraft:green_shulker_box', 'minecraft:red_shulker_box',
                 'minecraft:black_shulker_box')
 
-
-WOOL = ('minecraft:white_wool', 'minecraft:wool',
-        'minecraft:orange_wool', 'minecraft:magenta_wool',
-        'minecraft:light_blue_wool', 'minecraft:yellow_wool',
-        'minecraft:lime_wool', 'minecraft:pink_wool',
-        'minecraft:gray_wool', 'minecraft:light_gray_wool',
-        'minecraft:cyan_wool', 'minecraft:purple_wool',
-        'minecraft:blue_wool', 'minecraft:brown_wool',
-        'minecraft:green_wool', 'minecraft:red_wool',
-        'minecraft:black_wool')
+WOOLS = ('minecraft:white_wool', 'minecraft:wool',
+         'minecraft:orange_wool', 'minecraft:magenta_wool',
+         'minecraft:light_blue_wool', 'minecraft:yellow_wool',
+         'minecraft:lime_wool', 'minecraft:pink_wool',
+         'minecraft:gray_wool', 'minecraft:light_gray_wool',
+         'minecraft:cyan_wool', 'minecraft:purple_wool',
+         'minecraft:blue_wool', 'minecraft:brown_wool',
+         'minecraft:green_wool', 'minecraft:red_wool',
+         'minecraft:black_wool')
 CARPETS = ('minecraft:white_carpet', 'minecraft:orange_carpet',
            'minecraft:magenta_carpet', 'minecraft:light_blue_carpet',
            'minecraft:yellow_carpet', 'minecraft:lime_carpet',
@@ -667,6 +776,12 @@ TORCHES = ('minecraft:torch', 'minecraft:soul_torch',
            'minecraft:redstone_torch')
 LANTERNS = ('minecraft:lantern', 'minecraft:soul_lantern')
 
+
+ARTIFICIAL = ('minecraft:grass_path', 'minecraft:cobblestone') \
+    + STAIRS + SLABS + FENCES + WALLS + GLASS + LIGHTSOURCES \
+    + WIRING + RAILS + SWITCHES + PRESSUREPLATES + DOORS + TRAPDOORS + GATES \
+    + HEADS + SIGNS + ANVILS + BEDS + FURNACES + SHULKERBOXES + WOOLS + CARPETS
+
 # ================================================= grouped by obtrusiveness
 
 INVISIBLE = AIR + ('minecraft:barrier', 'minecraft:structure_void')
@@ -694,7 +809,7 @@ UNOBTRUSIVE = ('minecraft:ladder',
                'minecraft:lily_pad',
                'minecraft:scaffolding',
                'minecraft:snow') \
-    + GLASS + RAILS + WIRING + BUTTONS + TORCHES + SIGNS
+    + GLASS + RAILS + WIRING + SWITCHES + TORCHES + SIGNS
 
 # can be seen through moderately
 OBTRUSIVE = ('minecraft:bell', 'minecraft:brewing_stand', 'minecraft:cake',
@@ -722,7 +837,7 @@ MAPTRANSPARENT = ('minecraft:redstone_lamp',
                   'minecraft:nether_portal',
                   'minecraft:iron_bars',
                   'minecraft:chain') \
-    + INVISIBLE + WIRING + RAILS + BUTTONS + HEADS + TORCHES
+    + INVISIBLE + WIRING + RAILS + SWITCHES + HEADS + TORCHES
 
 # base map colours
 # WARNING: all non-transparent blocks are listed individually here again

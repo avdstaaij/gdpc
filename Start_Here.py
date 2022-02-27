@@ -10,7 +10,6 @@ The source code of this module contains examples for:
 * Introduction to world slices (search 'WORLDSLICE')
 * Introduction to basic heightmaps (search 'HEIGHTMAP')
 * Introduction to basic geometric shapes (search 'GEO')
-For more advanced functionality, see Land_of_Oz.py
 
 NOTE: We recommend creating your own files instead of modifying or adding code
     to these pre-existing files.
@@ -36,8 +35,8 @@ This file is not meant to be imported.
 # These are technical values, you may ignore them or add them in your own files
 __all__ = []
 __author__ = "Blinkenlights"
-__version__ = "v4.3_dev"
-__date__ = "09 February 2022"
+__version__ = "v5.0"
+__date__ = "17 February 2022"
 
 
 # === STRUCTURE #1

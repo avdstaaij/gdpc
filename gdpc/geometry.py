@@ -7,7 +7,7 @@ __all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
            'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
 
 __author__ = "Blinkenlights"
-__version__ = "v4.3_dev"
+__version__ = "v5.0"
 
 import numpy as np
 
@@ -59,7 +59,7 @@ def placeVolume(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                 hollow=False, interface=gi):
-    """**Place a cubic shape that fills the entire region and may be hollow."""
+    """**Place a cubic shape that fills the entire region and may be hollow.**"""
     settings = blocks, replace, interface
     dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
 
@@ -69,7 +69,7 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
     elif dimension in (1, 2) or not hollow:  # line, rectangle or solid cuboid
         return placeVolume(x1, y1, z1, x2, y2, z2,  *settings)
 
-    elif dimension == 3 and hollow:                         # hollow cuboid
+    elif dimension == 3 and hollow:          # hollow cuboid
         bottom = placeVolume(x1, y1, z1, x2, y1, z2, *settings)      # bottom
         top = placeVolume(x1, y2, z1, x2, y2, z2, *settings)         # top
         north = placeVolume(x1, y1, z1, x1, y2, z2, *settings)       # north
@@ -87,7 +87,7 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
 
 def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
                           axis='y', tube=False, hollow=False, interface=gi):
-    """**Place a cylindric shape centered on xyz with height and radius."""
+    """**Place a cylindric shape centered on xyz with height and radius.**"""
     if axis == 'x':
         placeCylinder(x, y - r, z - r, x + h - 1, y + r, z + r,
                       blocks, replace, 'x', tube, hollow, interface)
@@ -103,7 +103,7 @@ def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
 
 def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                   axis='y', tube=False, hollow=False, interface=gi):
-    """**Place a cylindric shape that fills the entire region."""
+    """**Place a cylindric shape that fills the entire region.**"""
     settings = blocks, replace, interface
     dimension, flatSides = getDimension(x1, y1, z1, x2, y2, z2)
 

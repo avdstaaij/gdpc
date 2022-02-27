@@ -9,7 +9,7 @@ It is not meant to be imported.
 """
 
 __all__ = []
-__version__ = "v4.3_dev"
+__version__ = "v5.0"
 
 import random
 import sys

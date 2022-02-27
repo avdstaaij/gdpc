@@ -4,7 +4,7 @@
 This module contains functions to:
 * Request the build area as defined in-world
 * Run Minecraft commands
-* Get the name of a block at a particular coordinate
+* Get the block ID at a particular coordinate
 * Place blocks in the world
 """
 __all__ = ['Interface', 'runCommand',
@@ -16,7 +16,7 @@ __all__ = ['Interface', 'runCommand',
            'sendBlocks', 'checkOutOfBounds']
 
 __author__ = "Blinkenlights"
-__version__ = "v4.3_dev"
+__version__ = "v5.0"
 
 from collections import OrderedDict
 from random import choice
@@ -89,7 +89,7 @@ class Interface():
             f"{self.caching}, {self.cache.maxsize})"
 
     def getBlock(self, x, y, z):
-        """**Return the name of a block in the world**.
+        """**Return the block ID in the world**.
 
         Takes local coordinates, works with global coordinates
         """
