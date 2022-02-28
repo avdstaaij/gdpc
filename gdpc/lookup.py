@@ -51,6 +51,13 @@ VERSIONS = {
 
 AXES = ('x', 'y', 'z')
 DIRECTIONS = ('top', 'bottom', 'north', 'east', 'south', 'west')
+VECTORS = ((0, 1, 0), (0, -1, 0), (0, 0, -1), (1, 0, 0), (0, 0, 1), (-1, 0, 0))
+DIAGONALVECTORS = ((1, 1, 0), (1, 0, 1), (0, 1, 1),
+                   (1, -1, 0), (1, 0, -1), (0, 1, -1),
+                   (-1, 1, 0), (-1, 0, 1), (0, -1, 1),
+                   (-1, -1, 0), (-1, 0, -1), (0, -1, -1),
+                   (1, 1, 1), (1, 1, -1), (1, -1, 1), (-1, 1, 1),
+                   (1, -1, -1), (-1, -1, 1), (-1, 1, -1), (-1, -1, -1))
 INVERTDIRECTION = {'top': 'bottom', 'bottom': 'top',
                    'north': 'south', 'east': 'west',
                    'south': 'north', 'west': 'east'}
@@ -468,6 +475,7 @@ PLANTS = ('minecraft:dead_bush',) + FLOWERS + CROPS + FUNGI + WILDCROPS \
 
 
 # construction
+PLANKS = tuple([f'minecraft:{wood}_planks' for wood in WOODS])
 STAIRS = ('minecraft:oak_stairs', 'minecraft:spruce_stairs',
           'minecraft:birch_stairs', 'minecraft:jungle_stairs',
           'minecraft:acacia_stairs', 'minecraft:dark_oak_stairs',
@@ -780,8 +788,9 @@ TORCHES = ('minecraft:torch', 'minecraft:soul_torch',
 LANTERNS = ('minecraft:lantern', 'minecraft:soul_lantern')
 
 
-ARTIFICIAL = ('minecraft:grass_path', 'minecraft:cobblestone') \
-    + STAIRS + SLABS + FENCES + WALLS + GLASS + LIGHTSOURCES \
+ARTIFICIAL = ('minecraft:grass_path', 'minecraft:farmland',
+              'minecraft:cobblestone') \
+    + CROPS + PLANKS + STAIRS + SLABS + FENCES + WALLS + GLASS + LIGHTSOURCES \
     + WIRING + RAILS + SWITCHES + PRESSUREPLATES + DOORS + TRAPDOORS + GATES \
     + HEADS + SIGNS + ANVILS + BEDS + FURNACES + SHULKERBOXES + WOOLS + CARPETS
 

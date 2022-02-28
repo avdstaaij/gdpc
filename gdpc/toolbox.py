@@ -11,9 +11,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from . import lookup
-from .interface import getBlock
+from .interface import checkOutOfBounds, getBlock
 from .interface import globalinterface as gi
-from .interface import runCommand
+from .interface import placeBlock, runCommand
 
 __all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
            'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
@@ -75,6 +75,38 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
     x1, y1, z1, x2, y2, z2 = normalizeCoordinates(x1, y1, z1, x2, y2, z2)
 
     return product(range(x1, x2 + 1), range(y1, y2 + 1), range(z1, z2 + 1))
+
+
+def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
+                    result=[], observed=[], diagonal=False):
+    """Return a list of coordinates with blocks that fulfil the search.
+
+    Activating caching is *highly* recommended.
+    """
+    result += [(x, y, z)]
+    observed += [(x, y, z)]
+    placeBlock(x, y + 100, z, 'gold_block')
+    vectors = lookup.VECTORS
+    if diagonal:
+        vectors += lookup.DIAGONALVECTORS
+    try:
+        for dx, dy, dz in vectors:
+            if (x + dx, y + dy, z + dz) not in observed:
+                if (not checkOutOfBounds(x + dx, y + dy, z + dz, warn=False)
+                        and getBlock(x + dx, y + dy, z + dz) in search_blocks):
+                    result, observed = flood_search_3D(x + dx, y + dy, z + dz,
+                                                       x1, y1, z1, x2, y2, z2,
+                                                       search_blocks,
+                                                       result, observed,
+                                                       diagonal)
+                else:
+                    observed += [(x + dx, y + dy, z + dz)]
+                    placeBlock(x + dx, y + dy + 100, z + dz,
+                               'red_stained_glass', lookup.AIR)
+
+    except RecursionError:
+        print("Recursion Error")
+    return result, observed
 
 
 def index2slot(sx, sy, ox, oy):

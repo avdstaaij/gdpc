@@ -95,13 +95,15 @@ class Interface():
         """
         x, y, z = self.local2global(x, y, z)
 
-        if self.caching and (x, y, z) in self.cache:
+        if self.caching and (x, y, z) in self.cache.keys():
             return self.cache[(x, y, z)]
 
         if self.caching and globalWorldSlice is not None:
             dx, dy, dz = global2buildlocal(x, y, z)  # convert for decay index
             if not checkOutOfBounds(x, y, z) and not globalDecay[dx][dy][dz]:
                 block = globalWorldSlice.getBlockAt(x, y, z)
+                if block == 'minecraft:void_air':
+                    block = di.getBlock(x, y, z)
                 self.cache[(x, y, z)] = block
                 return block
 
@@ -124,13 +126,16 @@ class Interface():
                 return '0'
         elif isSequence(replace) and self.getBlock(x, y, z) not in replace:
             return '0'
+        elif (self.caching
+              and isinstance(block, str) and block in self.getBlock(x, y, z)):
+            return '0'
 
         if not isinstance(block, str) and isSequence(block):
             block = choice(block)
 
         if self.__buffering:
-            response = self.placeBlockBuffered(x, y, z, block, self.bufferlimit,
-                                               flags)
+            response = self.placeBlockBuffered(x, y, z, block,
+                                               self.bufferlimit, flags)
         else:
             response = self.placeBlockDirect(x, y, z, block, flags)
 
@@ -200,7 +205,10 @@ class Interface():
 
     def setCaching(self, value=False):
         """**Set self.caching**."""
-        self.caching = value
+        globalinterface.caching = value
+        if self == globalinterface and not value:
+            global globalDecay
+            globalDecay = None
 
     def getCacheLimit(self):
         """**Get maximum cache size**."""
@@ -356,22 +364,22 @@ def placeBlockFlags(doBlockUpdates=True, customFlags=None):
 
 def isCaching():
     """**Global isCaching**."""
-    return globalinterface.caching
+    return globalinterface.isCaching()
 
 
 def setCaching(value=False):
     """**Global setCaching**."""
-    globalinterface.caching = value
+    globalinterface.setCaching(value)
 
 
 def getCacheLimit():
     """**Global getCacheLimit**."""
-    return globalinterface.cache.maxsize
+    return globalinterface.getCacheLimit()
 
 
 def setCacheLimit(value=8192):
     """**Global setCacheLimit**."""
-    globalinterface.cache.maxsize = value
+    globalinterface.setCacheLimit(value)
 
 
 def isBuffering():
@@ -401,10 +409,18 @@ def sendBlocks(x=0, y=0, z=0, retries=5):
 # ----------------------------------------------------- utility functions
 
 
-def checkOutOfBounds(x, y, z, warn=True):
+def checkOutOfBounds(x, y, z,
+                     x1=None, y1=None, z1=None,
+                     x2=None, y2=None, z2=None,
+                     warn=True):
     """**Check whether a given coordinate is outside the build area**."""
-    x1, y1, z1, x2, y2, z2 = globalBuildArea
-    if not (x1 <= x <= x2 and y1 <= y <= y2 and z1 <= z <= z2):
+    x1 = globalBuildArea[0] if x1 is None else x1
+    y1 = globalBuildArea[1] if y1 is None else y1
+    z1 = globalBuildArea[2] if z1 is None else z1
+    x2 = globalBuildArea[3] if x2 is None else x2
+    y2 = globalBuildArea[4] if y2 is None else y2
+    z2 = globalBuildArea[5] if z2 is None else z2
+    if not (x1 <= x < x2 and y1 <= y < y2 and z1 <= z < z2):
         if warn:
             # building outside the build area can be less efficient
             print(f"{TCOLORS['orange']}WARNING: Block at {x, y, z} is outside "
@@ -417,6 +433,12 @@ def global2buildlocal(x, y, z):
     """**Convert global coordinates to ones relative to the build area**."""
     x0, y0, z0, _, _, _ = globalBuildArea
     return x - x0, y - y0, z - z0
+
+
+def buildlocal2global(x, y, z):
+    """**Convert global coordinates to ones relative to the build area**."""
+    x0, y0, z0, _, _, _ = globalBuildArea
+    return x + x0, y + y0, z + z0
 
 
 def resetGlobalDecay():

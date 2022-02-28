@@ -148,7 +148,7 @@ class WorldSlice:
         """**Return biome at given coordinates**.
 
         Due to the noise around chunk borders,
-            there is an inacurracy of +/-2 blocks.
+        there is an inacurracy of +/-2 blocks.
         """
         chunkID = (x - self.rect[0]) // 16 + \
             (z - self.rect[1]) // 16 * self.chunkRect[2]
