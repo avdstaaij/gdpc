@@ -42,14 +42,12 @@ class WorldSlice:
                                  "WORLD_SURFACE"]):
         """**Initialise WorldSlice with region and heightmaps**.
 
+        x1, x2, z1, z2 are global coordinates
         x2 and z2 are exclusive
         """
         self.rect = x1, z1, x2 - x1, z2 - z1
-        self.chunkRect = (self.rect[0] >> 4, self.rect[1] >> 4,
-                          ((self.rect[0] + self.rect[2] - 1) >> 4)
-                          - (self.rect[0] >> 4) + 1,
-                          ((self.rect[1] + self.rect[3] - 1) >> 4)
-                          - (self.rect[1] >> 4) + 1)
+        self.chunkRect = (x1 // 16, z1 // 16,
+                          (x2 - x1 - 1) // 16 + 1, (z2 - z1 - 1) // 16 + 1)
         self.heightmapTypes = heightmapTypes
 
         bytes = di.getChunks(*self.chunkRect, rtype='bytes')
@@ -121,9 +119,10 @@ class WorldSlice:
 
     def getBlockCompoundAt(self, x, y, z):
         """**Return block data**."""
-        chunkX = (x >> 4) - self.chunkRect[0]
-        chunkZ = (z >> 4) - self.chunkRect[1]
-        chunkY = y >> 4
+        # convert to relative chunk position
+        chunkX = (x // 16) - self.chunkRect[0]
+        chunkZ = (z // 16) - self.chunkRect[1]
+        chunkY = y // 16
 
         cachedSection = self.sections[chunkX][chunkZ][chunkY]
 
@@ -133,8 +132,8 @@ class WorldSlice:
         bitarray = cachedSection.blockStatesBitArray
         palette = cachedSection.palette
 
-        blockIndex = (y % 16) * 16 * 16 + \
-            (z % 16) * 16 + x % 16
+        # convert coordinates to chunk-relative coordinates
+        blockIndex = (y % 16) * 16 * 16 + (z % 16) * 16 + x % 16
         return palette[bitarray.getAt(blockIndex)]
 
     def getBlockAt(self, x, y, z):
@@ -151,7 +150,8 @@ class WorldSlice:
         Due to the noise around chunk borders,
             there is an inacurracy of +/-2 blocks.
         """
-        chunkID = x // 16 + z // 16 * self.chunkRect[2]
+        chunkID = (x - self.rect[0]) // 16 + \
+            (z - self.rect[1]) // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         x = (x % 16) // 4
         z = (z % 16) // 4
@@ -161,15 +161,17 @@ class WorldSlice:
 
     def getBiomesNear(self, x, y, z):
         """**Return a list of biomes in the same chunk**."""
-        chunkID = x // 16 + z // 16 * self.chunkRect[2]
+        chunkID = (x - self.rect[0]) // 16 + \
+            (z - self.rect[1]) // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         # "sorted(list(set(data)))" is used to remove duplicates from data
         return [BIOMES[i] for i in sorted(list(set(data)))]
 
     def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
-        chunkID = x // 16 + z // 16 * self.chunkRect[2]
+        chunkID = (x - self.rect[0]) // 16 + \
+            (z - self.rect[1]) // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
         # "max(set(data), key=data.count)" is used to find the most common item
         data = max(set(data), key=data.count)
-        return [BIOMES[i] for i in sorted(list(set(data)))]
+        return BIOMES[data]

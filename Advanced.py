@@ -43,8 +43,9 @@ This file is not meant to be imported.
 __all__ = []
 __author__ = "Blinkenlights"
 __version__ = "v5.1_dev"
-__date__ = "27 February 2022"
+__date__ = "28 February 2022"
 
+from copy import deepcopy
 from random import choice
 from time import time
 
@@ -65,6 +66,52 @@ if intf.requestBuildArea() != [0, 0, 0, 127, 255, 127]:
 WORLDSLICE = wl.WorldSlice(STARTX, STARTZ, ENDX, ENDZ)
 XCHUNKSPAN, ZCHUNKSPAN = WORLDSLICE.chunkRect[2], WORLDSLICE.chunkRect[3]
 
+chunk_info_template = {'designations': [], 'primary_biome': None, 'biomes': []}
+chunk_info = [[deepcopy(chunk_info_template) for _ in range(ZCHUNKSPAN)]
+              for _ in range(XCHUNKSPAN)]
+
+for x, z in toolbox.loop2d(XCHUNKSPAN, ZCHUNKSPAN):
+    chunk_info[x][z]['primary_biome'] = WORLDSLICE.getPrimaryBiomeNear(
+        STARTX + x * 16, 0, STARTZ + z * 16)
+    chunk_info[x][z]['biomes'] = WORLDSLICE.getBiomesNear(STARTX + x * 16, 0,
+                                                          STARTZ + z * 16)
+
+    chunk_info[x][z]['designations'] = []
+
+    # mark modifiers based on biomes (quicker than inspecting singular blocks)
+    if 'snowy' in chunk_info[x][z]['primary_biome']:
+        chunk_info[x][z]['designations'].append('snowy')
+
+    if ('ocean' in chunk_info[x][z]['primary_biome']
+        or 'river' in chunk_info[x][z]['primary_biome']
+            or 'swamp' in chunk_info[x][z]['primary_biome']):
+        chunk_info[x][z]['designations'].append('water')
+
+    elif ('beach' in chunk_info[x][z]['primary_biome']
+          or 'shore' in chunk_info[x][z]['primary_biome']):
+        chunk_info[x][z]['designations'].append('water-adjacent')
+
+    if ('forest' in chunk_info[x][z]['primary_biome']
+        or 'taiga' in chunk_info[x][z]['primary_biome']
+        or 'grove' in chunk_info[x][z]['primary_biome']
+            or 'wooded' in chunk_info[x][z]['primary_biome']):
+        chunk_info[x][z]['designations'].append('forest')
+
+    if ('peaks' in chunk_info[x][z]['primary_biome']
+        or 'hills' in chunk_info[x][z]['primary_biome']
+        or 'mountains' in chunk_info[x][z]['primary_biome']
+        or 'windswept' in chunk_info[x][z]['primary_biome']
+            or 'eroded' in chunk_info[x][z]['primary_biome']):
+        chunk_info[x][z]['designations'].append('harsh')
+
+    if ('plains' in chunk_info[x][z]['primary_biome']
+        or 'meadow' in chunk_info[x][z]['primary_biome']
+        or 'fields' in chunk_info[x][z]['primary_biome']
+        or 'sparse' in chunk_info[x][z]['primary_biome']
+        or 'plateau' in chunk_info[x][z]['primary_biome']
+            or 'desert' in chunk_info[x][z]['primary_biome']):
+        chunk_info[x][z]['designations'].append('flat')
+
 
 def calculateTreelessHeightmap(worldSlice, interface=gi):
     heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
@@ -82,52 +129,15 @@ def calculateTreelessHeightmap(worldSlice, interface=gi):
     return heightmap
 
 
-burial_site(population):
-    """Generate the burial site based on the population size"""
-
-    small_tumulus(x, y, z, axis=None, items=[], open=False):
-        if axis is None:
-            axis = choice('x', 'z')
-        if axis == 'x':
-            geo.placeLine(x - 1, y - 1, z, x + 1, y - 1, z, 'dark_oak_planks')
-            geo.placeLine(x - 1, y, z - 1, x + 1, y, z - 1,
-                          'spruce_trapdoor'
-                          '[facing=north, half=bottom, open=true]')
-            geo.placeLine(x - 1, y, z + 1, x + 1, y, z + 1,
-                          'spruce_trapdoor'
-                          '[facing=south, half=bottom, open=true]')
-            intf.placeBlock(x - 2, y, z,
-                            'spruce_trapdoor'
-                            '[facing=west, half=bottom, open=true]')
-            intf.placeBlock(x + 2, y, z,
-                            'spruce_trapdoor'
-                            '[facing=east, half=bottom, open=true]')
-            casket = [
-                (0, 0, 'emerald'), (0, 1, 'gold_ingot'), (0, 2, 'emerald'),
-                (1, 1, 'skeleton_skull'),
-                (2, 0, 'bone'), (2, 1, 'bone'), (2, 2, 'bone'),
-                (3, 0, 'bone'), (3, 1, 'bone'), (3, 2, 'bone'),
-                (4, 0, 'bone'), (4, 1, choice(items)), (4, 2, 'bone'),
-                (5, 1, 'bone'),
-                (6, 1, 'bone'),
-                (7, 1, 'bone'),
-                (8, 0, 'emerald'), (8, 1, 'gold_ingot'), (8, 2, 'emerald')
-            ]
-            toolbox.placeInventoryBlock(x, y, z, items=casket)
-            # place ominous banner on top of chest
-            # TODO: cover boat in cobble and earth, optionally make entrance
-
-    large_tumulus():
-        """Longboat inspired by https://www.youtube.com/watch?v=YY_z5cZ9DtM"""
+def burial_site(population):
+    """Generate the burial site based on the population size."""
+    # TODO: Place tumuli in burial grounds based on population
+    pass
 
 
-docks():
-    """"""
-
-    place_boat():
-
-    place_ship():
-    """Inspired by https://www.youtube.com/watch?v=YY_z5cZ9DtM"""
+def docks():
+    # TODO: Docks with ships out at sea
+    pass
 
 
 if __name__ == '__main__':
@@ -142,22 +152,36 @@ if __name__ == '__main__':
     # - agriculture (soil, water or irrigation)
     # - special points (highest, lava)
 
-    # start construction
-    troglo_cave_coords = troglo_cave()
+    conversion = {'snowy': 'snow_block',
+                  'water': 'lapis_block', 'water-adjacent': 'lapis_ore',
+                  'forest': 'oak_log', 'harsh': 'stone',
+                  'flat': 'grass_block'}
 
-    center_coords = village_center()
-    camp_coords = camp()
-    mine_coords = mine()
+    for x, z in toolbox.loop2d(len(chunk_info), len(chunk_info[0])):
+        blocks = [conversion[d] for d in chunk_info[x][z]['designations']]
+        if blocks == []:
+            blocks = 'redstone_block'
+        geo.placeVolume(STARTX + x * 16 + 7, 200, STARTZ + z * 16 + 7,
+                        STARTX + x * 16 + 10, 200, STARTZ + z * 16 + 10,
+                        blocks)
+
+    # # start construction
+    # troglo_cave_coords = troglo_cave()
+    #
+    # center_coords = village_center()
+    # camp_coords = camp()
+    # mine_coords = mine()
 
     # generate more until 60 seconds remain
     while time() - start <= ALLOWED_TIME - 60:
-        pass
+        break
 
     # cleanup and presentation
 
+    population = 0
     troglo_grave_coords = burial_site(population)
 
-    if docks_coords is None:
-        landing_site()
-
-    chronicle()
+    # if docks_coords is None:
+    #     landing_site()
+    #
+    # chronicle()

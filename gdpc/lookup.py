@@ -56,8 +56,11 @@ INVERTDIRECTION = {'top': 'bottom', 'bottom': 'top',
                    'south': 'north', 'west': 'east'}
 DIRECTION2VECTOR = {'top': (0, 1, 0), 'bottom': (0, -1, 0),
                     'north': (0, 0, -1), 'east': (1, 0, 0),
-                    'south': (0, 1), 'west': (-1, 0)}
+                    'south': (0, 0, 1), 'west': (-1, 0, 0)}
+VECTOR2DIRECTION = dict([(val, key) for key, val in DIRECTION2VECTOR.items()])
 AXIS2VECTOR = {'x': (1, 0, 0), 'y': (0, 1, 0), 'z': (0, 0, 1)}
+VECTOR2AXIS = dict([(val, key) for key, val in AXIS2VECTOR.items()])
+
 # ========================================================= materials
 
 COLORS = ('white', 'orange', 'magenta', 'light_blue', 'yellow', 'lime', 'pink',
