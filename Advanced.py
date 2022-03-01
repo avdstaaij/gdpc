@@ -181,7 +181,7 @@ if __name__ == '__main__':
     # for every chunk:
     for cx, cz in toolbox.loop2d(len(chunk_info), len(chunk_info[0])):
         chunkstart = intf.buildlocal2global(cx * 16, 0, cz * 16)
-        chunkend = intf.buildlocal2global(cx * 16 + 16, 0, cz * 16 + 16)
+        chunkend = intf.buildlocal2global(cx * 16 + 16, 255, cz * 16 + 16)
         observed = []
 
         # scan through every fourth block
@@ -193,6 +193,7 @@ if __name__ == '__main__':
                     and (globalx, y, globalz) not in to_avoid):
                 if 'structure' not in chunk_info[cx][cz]['designations']:
                     chunk_info[cx][cz]['designations'] += ['structure']
+                    print(*chunkstart, *chunkend)
                 result, newly_obs = toolbox.flood_search_3D(globalx, y,
                                                             globalz,
                                                             *chunkstart,
@@ -203,8 +204,6 @@ if __name__ == '__main__':
                 observed += newly_obs
                 for rx, ry, rz in result:
                     to_avoid[(rx, ry, rz)] = "Artificial structure detected"
-
-        input('next chunk...')
 
     debug_chunk_info()
 

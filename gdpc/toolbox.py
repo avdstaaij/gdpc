@@ -71,15 +71,15 @@ def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
     """
     result += [(x, y, z)]
     observed += [(x, y, z)]
-    placeBlock(x, y + 100, z, 'gold_block')
     vectors = lookup.VECTORS
     if diagonal:
         vectors += lookup.DIAGONALVECTORS
     try:
         for dx, dy, dz in vectors:
-            if (x + dx, y + dy, z + dz) not in observed:
-                if (not checkOutOfBounds(x + dx, y + dy, z + dz, warn=False)
-                        and getBlock(x + dx, y + dy, z + dz) in search_blocks):
+            if ((x + dx, y + dy, z + dz) not in observed
+                and not checkOutOfBounds(x + dx, y + dy, z + dz, x1, y1, z1,
+                                         x2, y2, z2, warn=False)):
+                if getBlock(x + dx, y + dy, z + dz) in search_blocks:
                     result, observed = flood_search_3D(x + dx, y + dy, z + dz,
                                                        x1, y1, z1, x2, y2, z2,
                                                        search_blocks,
@@ -87,8 +87,6 @@ def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
                                                        diagonal)
                 else:
                     observed += [(x + dx, y + dy, z + dz)]
-                    placeBlock(x + dx, y + dy + 100, z + dz,
-                               'red_stained_glass', lookup.AIR)
 
     except RecursionError:
         print("Recursion Error")
