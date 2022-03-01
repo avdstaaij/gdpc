@@ -50,10 +50,15 @@ from time import time
 
 from gdpc import geometry as geo
 from gdpc import interface as intf
-from gdpc import lookup, toolbox
+from gdpc import lookup
 from gdpc.interface import globalinterface as gi
+from gdpc.toolbox import flood_search_3D, loop2d
 
 ALLOWED_TIME = 600  # permitted processing time in seconds (10 min)
+
+
+# the grid resolution of sub-chunk searches
+SUB_CHUNK_RES = 4
 
 # custom default build area with override
 STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = 0, 0, 0, 999, 255, 999
@@ -72,54 +77,74 @@ chunk_info = [[deepcopy(chunk_info_template)
 # value may anything (e.g. reason for avoidance), since only the key is checked
 to_avoid = {}
 
-for x, z in toolbox.loop2d(XCHUNKSPAN, ZCHUNKSPAN):
-    chunk_info[x][z]['primary_biome'] = GLOBALSLICE.getPrimaryBiomeNear(
-        STARTX + x * 16, 0, STARTZ + z * 16)
-    chunk_info[x][z]['biomes'] = GLOBALSLICE.getBiomesNear(STARTX + x * 16, 0,
-                                                           STARTZ + z * 16)
+# waterways for checking connectivity to ocean and other bodies
+# key is a position while value is the name (e.g. ocean, named river or lake)
+# waterbody_info stores the biomes which it passes (key is identifier)
+# e.g. 'ocean':{'connections': [], 'biomes_touching': [], 'biome_adjacent': []}
+# waterbody_names is a lookup for the names of connected chunkwise bodies
+# waterfalls stores the locations of waterfalls
+RIVER_NAMES = ('Vindur', 'Slidr', 'Mjoll', 'Lifingr', 'Elyitsar', 'Moch',
+               'Kerlnosar')
+LAKE_NAMES = ()
+FOREST_LAKE_NAMES = ()
 
-    chunk_info[x][z]['designations'] = []
+waterways = {}
+waterbody_info = {}
+waterbody_names = {}
+waterfalls = []
 
-    # mark modifiers based on biomes (quicker than inspecting singular blocks)
-    if 'snowy' in chunk_info[x][z]['primary_biome']:
-        chunk_info[x][z]['designations'].append('snowy')
 
-    if ('forest' in chunk_info[x][z]['primary_biome']
-        or 'taiga' in chunk_info[x][z]['primary_biome']
-        or 'grove' in chunk_info[x][z]['primary_biome']
-            or 'wooded' in chunk_info[x][z]['primary_biome']):
-        chunk_info[x][z]['designations'].append('forest')
+def chunk_biome_analysis():
+    """Loop through all chunks in build area and identify biome traits."""
+    for x, z in loop2d(XCHUNKSPAN, ZCHUNKSPAN):
+        chunk_info[x][z]['primary_biome'] = GLOBALSLICE.getPrimaryBiomeNear(
+            STARTX + x * 16, 0, STARTZ + z * 16)
+        chunk_info[x][z]['biomes'] = GLOBALSLICE.getBiomesNear(STARTX + x * 16,
+                                                               0,
+                                                               STARTZ + z * 16)
 
-    if ('ocean' in chunk_info[x][z]['primary_biome']
-            or 'swamp' in chunk_info[x][z]['primary_biome']):
-        chunk_info[x][z]['designations'].append('water')
+        chunk_info[x][z]['designations'] = []
 
-    elif ('beach' in chunk_info[x][z]['primary_biome']
-          or 'river' in chunk_info[x][z]['primary_biome']
-          or 'shore' in chunk_info[x][z]['primary_biome']):
-        chunk_info[x][z]['designations'].append('water-adjacent')
+        # mark modifiers based on biomes (quicker than singular blocks)
+        if 'snowy' in chunk_info[x][z]['primary_biome']:
+            chunk_info[x][z]['designations'].append('snowy')
 
-    if ('peaks' in chunk_info[x][z]['primary_biome']
-        or 'hills' in chunk_info[x][z]['primary_biome']
-        or 'mountains' in chunk_info[x][z]['primary_biome']
-        or 'windswept' in chunk_info[x][z]['primary_biome']
-            or 'eroded' in chunk_info[x][z]['primary_biome']):
-        chunk_info[x][z]['designations'].append('harsh')
+        if ('forest' in chunk_info[x][z]['primary_biome']
+            or 'taiga' in chunk_info[x][z]['primary_biome']
+            or 'grove' in chunk_info[x][z]['primary_biome']
+                or 'wooded' in chunk_info[x][z]['primary_biome']):
+            chunk_info[x][z]['designations'].append('forest')
 
-    elif ('plains' in chunk_info[x][z]['primary_biome']
-          or 'meadow' in chunk_info[x][z]['primary_biome']
-          or 'fields' in chunk_info[x][z]['primary_biome']
-          or 'sparse' in chunk_info[x][z]['primary_biome']
-          or 'plateau' in chunk_info[x][z]['primary_biome']
-            or 'desert' in chunk_info[x][z]['primary_biome']):
-        chunk_info[x][z]['designations'].append('flat')
+        if ('ocean' in chunk_info[x][z]['primary_biome']
+                or 'swamp' in chunk_info[x][z]['primary_biome']):
+            chunk_info[x][z]['designations'].append('water')
+
+        elif ('beach' in chunk_info[x][z]['primary_biome']
+              or 'river' in chunk_info[x][z]['primary_biome']
+              or 'shore' in chunk_info[x][z]['primary_biome']):
+            chunk_info[x][z]['designations'].append('water-adjacent')
+
+        if ('peaks' in chunk_info[x][z]['primary_biome']
+            or 'hills' in chunk_info[x][z]['primary_biome']
+            or 'mountains' in chunk_info[x][z]['primary_biome']
+            or 'windswept' in chunk_info[x][z]['primary_biome']
+                or 'eroded' in chunk_info[x][z]['primary_biome']):
+            chunk_info[x][z]['designations'].append('harsh')
+
+        elif ('plains' in chunk_info[x][z]['primary_biome']
+              or 'meadow' in chunk_info[x][z]['primary_biome']
+              or 'fields' in chunk_info[x][z]['primary_biome']
+              or 'sparse' in chunk_info[x][z]['primary_biome']
+              or 'plateau' in chunk_info[x][z]['primary_biome']
+                or 'desert' in chunk_info[x][z]['primary_biome']):
+            chunk_info[x][z]['designations'].append('flat')
 
 
 def calculateTreelessHeightmap(worldSlice=GLOBALSLICE, interface=gi):
     heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
     area = worldSlice.rect
 
-    for x, z in toolbox.loop2d(area[2], area[3]):
+    for x, z in loop2d(area[2], area[3]):
         while True:
             y = heightmap[x, z]
             block = interface.getBlock(area[0] + x, y, area[1] + z)
@@ -152,7 +177,7 @@ if __name__ == '__main__':
                       'harsh': 'stone', 'flat': 'grass_block',
                       'structure': 'gold_block'}
 
-        for x, z in toolbox.loop2d(len(chunk_info), len(chunk_info[0])):
+        for x, z in loop2d(len(chunk_info), len(chunk_info[0])):
             blocks = [conversion[d] for d in chunk_info[x][z]['designations']]
             if blocks == []:
                 blocks = 'redstone_block'
@@ -175,35 +200,90 @@ if __name__ == '__main__':
     # activate block caching to speed up requests
     gi.setCaching(True)
 
+    # 16x16 chunk resolution analyses
+    chunk_biome_analysis()
+
     # fine terrain analysis
     heightmap = calculateTreelessHeightmap()
 
-    # for every chunk:
-    for cx, cz in toolbox.loop2d(len(chunk_info), len(chunk_info[0])):
+    # 4x4-resolution block analysis for every chunk
+    for cx, cz in loop2d(len(chunk_info), len(chunk_info[0])):
         chunkstart = intf.buildlocal2global(cx * 16, 0, cz * 16)
         chunkend = intf.buildlocal2global(cx * 16 + 16, 255, cz * 16 + 16)
-        observed = []
+        overlap_chunkstart = chunkstart[0] - \
+            1, chunkstart[1], chunkstart[2] - 1
+        overlap_chunkend = chunkend[0] + 1, chunkend[1], chunkend[2] + 1
+        obs_struc = []
+        obs_fluid = []
 
-        # scan through every fourth block
-        for jx, jz in toolbox.loop2d(4, 4):
-            localx, localz = cx * 16 + jx * 4, cz * 16 + jz * 4
+        # scan through the corner of every subchunk
+        for jx, jz in loop2d(SUB_CHUNK_RES, SUB_CHUNK_RES):
+            localx = cx * 16 + jx * SUB_CHUNK_RES
+            localz = cz * 16 + jz * SUB_CHUNK_RES
             globalx, _, globalz = intf.buildlocal2global(localx, 0, localz)
             y = heightmap[localx][localz]
             if (intf.getBlock(globalx, y, globalz) in lookup.ARTIFICIAL
                     and (globalx, y, globalz) not in to_avoid):
                 if 'structure' not in chunk_info[cx][cz]['designations']:
                     chunk_info[cx][cz]['designations'] += ['structure']
-                    print(*chunkstart, *chunkend)
-                result, newly_obs = toolbox.flood_search_3D(globalx, y,
-                                                            globalz,
-                                                            *chunkstart,
-                                                            *chunkend,
-                                                            lookup.ARTIFICIAL,
-                                                            observed=observed,
-                                                            diagonal=True)
-                observed += newly_obs
+                result, newly_obs = flood_search_3D(globalx, y,
+                                                    globalz,
+                                                    *chunkstart,
+                                                    *chunkend,
+                                                    lookup.ARTIFICIAL,
+                                                    observed=obs_struc,
+                                                    diagonal=True)
+                obs_struc += newly_obs
                 for rx, ry, rz in result:
                     to_avoid[(rx, ry, rz)] = "Artificial structure detected"
+            elif (intf.getBlock(globalx, y, globalz) in lookup.FLUID
+                    and (globalx, y, globalz) not in waterways):
+                if 'water' not in chunk_info[cx][cz]['designations']:
+                    chunk_info[cx][cz]['designations'] += ['water']
+                result, newly_obs = flood_search_3D(globalx, y,
+                                                    globalz,
+                                                    *overlap_chunkstart,
+                                                    *overlap_chunkend,
+                                                    lookup.FLUID,
+                                                    observed=obs_fluid)
+                obs_fluid += newly_obs
+
+                pbiome = chunk_info[cx][cz]['primary_biome']
+                if 'ocean' == pbiome[-5:]:
+                    name = f'ocean-{cx}-{cz}'
+                elif 'river' == pbiome:
+                    name = f'river-{cx}-{cz}'
+                elif 'swamp' == pbiome[:5]:
+                    name = f'swamp-{cx}-{cz}'
+                else:
+                    if len(result) < 256:
+                        name = f'pond-{cx}-{cz}'
+                    else:
+                        name = f'lake-{cx}-{cz}'
+
+                waterbody_info[name] = {'connections': [],
+                                        'biomes_touching': [],
+                                        'biome_adjacent': []}
+                for rx, ry, rz in result:
+                    if (rx, ry, rz) in waterways:
+                        if (waterways[(rx, ry, rz)]
+                                not in waterbody_info[name]['connections']):
+                            waterbody_info[name]['connections'] += [
+                                waterways[(rx, ry, rz)]
+                            ]
+                    else:
+                        waterways[(rx, ry, rz)] = name
+                        biomes = chunk_info[cx][cz]['biomes']
+                        waterbody_info[name]['biomes_touching'] = biomes
+                        surrounding = []
+
+                        surrounding += \
+                            chunk_info[cx + 1][cz + 1]['primary_biome'] + \
+                            chunk_info[cx - 1][cz + 1]['primary_biome'] + \
+                            chunk_info[cx + 1][cz - 1]['primary_biome'] + \
+                            chunk_info[cx - 1][cz - 1]['primary_biome']
+
+    input(waterbody_info.keys())
 
     debug_chunk_info()
 

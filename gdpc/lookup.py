@@ -794,6 +794,10 @@ ARTIFICIAL = ('minecraft:grass_path', 'minecraft:farmland',
     + WIRING + RAILS + SWITCHES + PRESSUREPLATES + DOORS + TRAPDOORS + GATES \
     + HEADS + SIGNS + ANVILS + BEDS + FURNACES + SHULKERBOXES + WOOLS + CARPETS
 
+WATER = ('minecraft:water', 'minecraft:flowing_water')
+LAVA = ('minecraft:lava', 'minecraft:flowing_lava')
+FLUID = WATER + LAVA
+
 # ================================================= grouped by obtrusiveness
 
 INVISIBLE = AIR + ('minecraft:barrier', 'minecraft:structure_void')
