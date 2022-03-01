@@ -28,6 +28,20 @@ from .lookup import TCOLORS
 from .worldLoader import WorldSlice
 
 
+def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
+    """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
+    # if 2D coords are provided reshape to 3D coords
+    if y2 is None or z2 is None:
+        x1, y1, z1, x2, y2, z2 = x1, 0, y1, z1, 255, x2
+    if x1 > x2:
+        x1, x2 = x2, x1
+    if y1 > y2:
+        y1, y2 = y2, y1
+    if z1 > z2:
+        z1, z2 = z2, z1
+    return x1, y1, z1, x2, y2, z2
+
+
 class OrderedByLookupDict(OrderedDict):
     """Limit size, evicting the least recently looked-up key when full.
 
@@ -303,7 +317,7 @@ def requestBuildArea():
     """
     global globalBuildArea
 
-    x1, _, z1, x2, _, z2 = globalBuildArea = di.requestBuildArea()
+    globalBuildArea = normalizeCoordinates(*di.requestBuildArea())
 
     if globalWorldSlice is not None:
         resetGlobalDecay()

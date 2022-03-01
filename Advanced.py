@@ -43,7 +43,7 @@ This file is not meant to be imported.
 __all__ = []
 __author__ = "Blinkenlights"
 __version__ = "v5.1_dev"
-__date__ = "28 February 2022"
+__date__ = "01 March 2022"
 
 from copy import deepcopy
 from time import time
@@ -149,7 +149,8 @@ if __name__ == '__main__':
     def debug_chunk_info():
         conversion = {'snowy': 'snow_block', 'forest': 'oak_log',
                       'water': 'lapis_block', 'water-adjacent': 'lapis_ore',
-                      'harsh': 'stone', 'flat': 'grass_block'}
+                      'harsh': 'stone', 'flat': 'grass_block',
+                      'structure': 'gold_block'}
 
         for x, z in toolbox.loop2d(len(chunk_info), len(chunk_info[0])):
             blocks = [conversion[d] for d in chunk_info[x][z]['designations']]
@@ -190,6 +191,8 @@ if __name__ == '__main__':
             y = heightmap[localx][localz]
             if (intf.getBlock(globalx, y, globalz) in lookup.ARTIFICIAL
                     and (globalx, y, globalz) not in to_avoid):
+                if 'structure' not in chunk_info[cx][cz]['designations']:
+                    chunk_info[cx][cz]['designations'] += ['structure']
                 result, newly_obs = toolbox.flood_search_3D(globalx, y,
                                                             globalz,
                                                             *chunkstart,
@@ -200,6 +203,8 @@ if __name__ == '__main__':
                 observed += newly_obs
                 for rx, ry, rz in result:
                     to_avoid[(rx, ry, rz)] = "Artificial structure detected"
+
+        input('next chunk...')
 
     debug_chunk_info()
 

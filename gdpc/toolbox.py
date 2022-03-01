@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 from . import lookup
 from .interface import checkOutOfBounds, getBlock
 from .interface import globalinterface as gi
-from .interface import placeBlock, runCommand
+from .interface import normalizeCoordinates, placeBlock, runCommand
 
 __all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
            'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
@@ -33,20 +33,6 @@ def isSequence(sequence):
         return True
     except TypeError:
         return False
-
-
-def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
-    """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
-    # if 2D coords are provided reshape to 3D coords
-    if y2 is None or z2 is None:
-        x1, y1, z1, x2, y2, z2 = x1, 0, y1, z1, 255, x2
-    if x1 > x2:
-        x1, x2 = x2, x1
-    if y1 > y2:
-        y1, y2 = y2, y1
-    if z1 > z2:
-        z1, z2 = z2, z1
-    return x1, y1, z1, x2, y2, z2
 
 
 def loop2d(a1, b1, a2=None, b2=None):
