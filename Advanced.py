@@ -56,6 +56,15 @@ from gdpc.toolbox import flood_search_3D, loop2d
 
 ALLOWED_TIME = 600  # permitted processing time in seconds (10 min)
 
+# world settings set when generator starts
+WORLDDIFFICULTY = "peaceful"
+GAMEMODE = "survival"
+GAMERULES = ("commandBlockOutput false", "doDaylightCycle false",
+             "doEntityDrops true", "doFireTick false",
+             "doInsomnia false", "doMobLoot false", "doTileDrops false"
+             "doWeatherCycle false", "mobGriefing false", "spawnRadius 1")
+WORLDTIME = 23460
+WORLDWEATHER = "clear"
 
 # the grid resolution of sub-chunk searches
 SUB_CHUNK_RES = 4
@@ -92,6 +101,37 @@ waterways = {}
 waterbody_info = {}
 waterbody_names = {}
 waterfalls = []
+
+
+def setup_world():
+    """Run commands to guarantee player experience is as expected."""
+    xcenter = STARTX + (ENDX - STARTX) / 2
+    zcenter = STARTZ + (ENDZ - STARTZ) / 2
+
+    # sets world difficulty to peaceful
+    intf.runCommand(f"difficulty {WORLDDIFFICULTY}")
+    # sets default and all current player's gamemode to survival
+    intf.runCommand(f"defaultgamemode {GAMEMODE}")
+    intf.runCommand(f"gamemode {GAMEMODE} @a")
+    # forced all chunks in build area to remain loaded to prevent generation
+    #   issues onvery large maps
+    intf.runCommand(f"forceload {STARTX} {STARTZ} {ENDX} {ENDZ}")
+
+    # implements all game rules as previously defined
+    for rule in GAMERULES:
+        intf.runCommand(f"gamerule {rule}")
+
+    # sets spawnpoint to center of build area
+    intf.runCommand(f"setworldspawn {xcenter} 255 {zcenter}")
+
+    # sets world time and weather
+    intf.runCommand(f"time set {WORLDTIME}")
+    intf.runCommand(f"weather set {WORLDWEATHER}")
+
+    # centers and resizes worldborder to match build area and makes it harmless
+    intf.runCommand(f"worldborder center {xcenter} {zcenter}")
+    intf.runCommand(f"worldborder set {max(ENDX-STARTX, ENDZ-STARTZ)} 5")
+    intf.runCommand("worldborder damage amount 0")
 
 
 def chunk_biome_analysis():
@@ -187,6 +227,8 @@ if __name__ == '__main__':
 
         input('Enter to clear')
         geo.placeVolume(STARTX, 250, STARTZ, ENDX - 1, 250, ENDZ - 1, 'air')
+
+    setup_world()
 
     # define regions
     # - landing site/docks (ocean, river bank, hills/mountains, forest)
