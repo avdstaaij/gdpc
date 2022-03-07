@@ -52,18 +52,18 @@ from gdpc import geometry as geo
 from gdpc import interface as intf
 from gdpc import lookup
 from gdpc.interface import globalinterface as gi
-from gdpc.toolbox import flood_search_3D, loop2d
+from gdpc.toolbox import flood_search_3D, loop2d, loop3d
 
 ALLOWED_TIME = 600  # permitted processing time in seconds (10 min)
 
 # world settings set when generator starts
 WORLDDIFFICULTY = "peaceful"
-GAMEMODE = "survival"
-GAMERULES = ("commandBlockOutput false", "doDaylightCycle false",
+GAMEMODE = "creative"
+GAMERULES = ("commandBlockOutput false", "doDaylightCycle true",
              "doEntityDrops true", "doFireTick false",
              "doInsomnia false", "doMobLoot false", "doTileDrops false"
              "doWeatherCycle false", "mobGriefing false", "spawnRadius 1")
-WORLDTIME = 23460
+WORLDTIME = 22300
 WORLDWEATHER = "clear"
 
 # the grid resolution of sub-chunk searches
@@ -82,9 +82,9 @@ chunk_info = [[deepcopy(chunk_info_template)
                for _ in range(ZCHUNKSPAN)]
               for _ in range(XCHUNKSPAN)]
 
-# blocks to avoid (key is 3D coords)
+# blocks that are occupied by something else (key is 3D coords)
 # value may anything (e.g. reason for avoidance), since only the key is checked
-to_avoid = {}
+occupied = {}
 
 # waterways for checking connectivity to ocean and other bodies
 # key is a position while value is the name (e.g. ocean, named river or lake)
@@ -101,6 +101,9 @@ waterways = {}
 waterbody_info = {}
 waterbody_names = {}
 waterfalls = []
+
+# cave_entrances stores location of cave entrances
+cave_entrances = []
 
 
 def setup_world():
@@ -146,6 +149,20 @@ def chunk_biome_analysis():
         chunk_info[x][z]['designations'] = []
 
         # mark modifiers based on biomes (quicker than singular blocks)
+        if 'frozen' in chunk_info[x][z]['biomes']:
+            chunk_info[x][z]['designations'].append('frozen_water')
+
+        if ('ocean' in chunk_info[x][z]['primary_biome']
+            or 'beach' in chunk_info[x][z]['biomes']
+                or 'shore' in chunk_info[x][z]['biomes']):
+            chunk_info[x][z]['designations'].append('briny_water')
+
+        elif 'swamp' in chunk_info[x][z]['biomes']:
+            chunk_info[x][z]['designations'].append('swamp_water')
+
+        elif 'river' in chunk_info[x][z]['biomes']:
+            chunk_info[x][z]['designations'].append('fresh_water')
+
         if 'snowy' in chunk_info[x][z]['primary_biome']:
             chunk_info[x][z]['designations'].append('snowy')
 
@@ -154,15 +171,6 @@ def chunk_biome_analysis():
             or 'grove' in chunk_info[x][z]['primary_biome']
                 or 'wooded' in chunk_info[x][z]['primary_biome']):
             chunk_info[x][z]['designations'].append('forest')
-
-        if ('ocean' in chunk_info[x][z]['primary_biome']
-                or 'swamp' in chunk_info[x][z]['primary_biome']):
-            chunk_info[x][z]['designations'].append('water')
-
-        elif ('beach' in chunk_info[x][z]['primary_biome']
-              or 'river' in chunk_info[x][z]['primary_biome']
-              or 'shore' in chunk_info[x][z]['primary_biome']):
-            chunk_info[x][z]['designations'].append('water-adjacent')
 
         if ('peaks' in chunk_info[x][z]['primary_biome']
             or 'hills' in chunk_info[x][z]['primary_biome']
@@ -178,6 +186,110 @@ def chunk_biome_analysis():
               or 'plateau' in chunk_info[x][z]['primary_biome']
                 or 'desert' in chunk_info[x][z]['primary_biome']):
             chunk_info[x][z]['designations'].append('flat')
+
+
+def detect_structures(x, y, z, cx, cz, start_boundries, end_boundries,
+                      observed=[]):
+    """Detect structures connected to coordinates."""
+    global occupied
+    global chunk_info
+
+    if 'structure' not in chunk_info[cx][cz]['designations']:
+        chunk_info[cx][cz]['designations'].append('structure')
+    result, newly_obs = flood_search_3D(x, y, z,
+                                        *start_boundries,
+                                        *end_boundries,
+                                        lookup.ARTIFICIAL,
+                                        observed=observed,
+                                        diagonal=True)
+    observed.update(newly_obs)
+    for rx, ry, rz in result:
+        occupied[(rx, ry, rz)] = "Artificial structure detected"
+    return observed
+
+
+def detect_water(x, y, z, cx, cz, start_boundries, end_boundries, observed=[]):
+    global chunk_info
+    if ('briny_water' not in chunk_info[cx][cz]['designations']
+        and 'fresh_water' not in chunk_info[cx][cz]['designations']
+        and 'swamp_water' not in chunk_info[cx][cz]['designations']
+        and 'frozen_water'
+            not in chunk_info[cx][cz]['designations']
+        and 'stagnant_water'
+            not in chunk_info[cx][cz]['designations']):
+        chunk_info[cx][cz]['designations'].append('stagnant_water')
+
+    # optimisation for ocean chunks
+    if (set('ocean') == set([b[-5:] for b in chunk_info[cx][cz]['biomes']])):
+        observed = result = set([p for p
+                                 in loop3d(*start_boundries, *end_boundries)])
+    else:
+        result, newly_obs = flood_search_3D(x, y, z,
+                                            *start_boundries,
+                                            *end_boundries,
+                                            lookup.FLUID,
+                                            vectors=lookup.VECTORS[2:],
+                                            observed=observed)
+        observed.update(newly_obs)
+
+    if 'briny_water' in chunk_info[cx][cz]['designations']:
+        name = f'ocean-{cx}-{cz}'
+    elif 'fresh_water' in chunk_info[cx][cz]['designations']:
+        name = f'river-{cx}-{cz}'
+    elif 'swamp_water' in chunk_info[cx][cz]['designations']:
+        name = f'swamp-{cx}-{cz}'
+    else:
+        if len(result) < 256:
+            name = f'pond-{cx}-{cz}'
+        else:
+            name = f'lake-{cx}-{cz}'
+
+    waterbody_info[name] = {'connections': [],
+                            'biomes_touching': [],
+                            'biome_adjacent': []}
+    for rx, ry, rz in result:
+        if (rx, ry, rz) in waterways:
+            if (waterways[(rx, ry, rz)]
+                    not in waterbody_info[name]['connections']):
+                waterbody_info[name]['connections'].extend(
+                    waterways[(rx, ry, rz)])
+        else:
+            try:
+                waterways[(rx, ry, rz)] = name
+                biomes = chunk_info[cx][cz]['biomes']
+                waterbody_info[name]['biomes_touching'] = biomes
+                surrounding = []
+
+                surrounding.append(chunk_info[cx + 1][cz + 1]['primary_biome'])
+                surrounding.append(chunk_info[cx - 1][cz + 1]['primary_biome'])
+                surrounding.append(chunk_info[cx + 1][cz - 1]['primary_biome'])
+                surrounding.append(chunk_info[cx - 1][cz - 1]['primary_biome'])
+            except IndexError as e:
+                if (cx != 0 and cz != 0
+                    and cx != len(chunk_info) - 1
+                        and cz != len(chunk_info[0]) - 1):
+                    raise e
+    return observed
+
+
+def detect_cave(x, y, z, cx, cz, start_boundries, end_boundries, observed=[]):
+    global chunk_info
+    global cave_entrances
+
+    if 'cave_entrance' not in chunk_info[cx][cz]['designations']:
+        chunk_info[cx][cz]['designations'].append('cave_entrance')
+
+    # # CAVE NETWORK DETECTION
+    # result, newly_obs = flood_search_3D(x, y, z,
+    #                                     *start_boundries,
+    #                                     *end_boundries,
+    #                                     'minecraft:cave_air',
+    #                                     observed=observed)
+    # observed.update(newly_obs)
+    #
+    # for rx, ry, rz in result:
+    #     cave_entrances.append(x, y, z)
+    return observed
 
 
 def calculateTreelessHeightmap(worldSlice=GLOBALSLICE, interface=gi):
@@ -213,16 +325,21 @@ if __name__ == '__main__':
 
     def debug_chunk_info():
         conversion = {'snowy': 'snow_block', 'forest': 'oak_log',
-                      'water': 'lapis_block', 'water-adjacent': 'lapis_ore',
+                      'briny_water': 'prismarine',
+                      'frozen_water': 'packed_ice',
+                      'fresh_water': 'light_blue_wool',
+                      'swamp_water': 'stripped_warped_hyphae',
+                      'stagnant_water': 'light_blue_shulker_box',
                       'harsh': 'stone', 'flat': 'grass_block',
-                      'structure': 'gold_block'}
+                      'structure': 'emerald_block',
+                      'cave_entrance': 'spruce_trapdoor'}
 
         for x, z in loop2d(len(chunk_info), len(chunk_info[0])):
             blocks = [conversion[d] for d in chunk_info[x][z]['designations']]
             if blocks == []:
                 blocks = 'redstone_block'
-            geo.placeVolume(STARTX + x * 16 + 7, 250, STARTZ + z * 16 + 7,
-                            STARTX + x * 16 + 10, 250, STARTZ + z * 16 + 10,
+            geo.placeVolume(STARTX + x * 16 + 5, 250, STARTZ + z * 16 + 5,
+                            STARTX + x * 16 + 8, 250, STARTZ + z * 16 + 8,
                             blocks)
 
         input('Enter to clear')
@@ -250,13 +367,15 @@ if __name__ == '__main__':
 
     # 4x4-resolution block analysis for every chunk
     for cx, cz in loop2d(len(chunk_info), len(chunk_info[0])):
+        print((cx, cz))
         chunkstart = intf.buildlocal2global(cx * 16, 0, cz * 16)
         chunkend = intf.buildlocal2global(cx * 16 + 16, 255, cz * 16 + 16)
         overlap_chunkstart = chunkstart[0] - \
             1, chunkstart[1], chunkstart[2] - 1
-        overlap_chunkend = chunkend[0] + 1, chunkend[1], chunkend[2] + 1
-        obs_struc = []
-        obs_fluid = []
+        overlap_chunkend = chunkend[0], chunkend[1], chunkend[2]
+        obs_struc = set()
+        obs_fluid = set()
+        obs_cave = set()
 
         # scan through the corner of every subchunk
         for jx, jz in loop2d(SUB_CHUNK_RES, SUB_CHUNK_RES):
@@ -264,68 +383,23 @@ if __name__ == '__main__':
             localz = cz * 16 + jz * SUB_CHUNK_RES
             globalx, _, globalz = intf.buildlocal2global(localx, 0, localz)
             y = heightmap[localx][localz]
+
+            # STRUCTURE DETECTION
             if (intf.getBlock(globalx, y, globalz) in lookup.ARTIFICIAL
-                    and (globalx, y, globalz) not in to_avoid):
-                if 'structure' not in chunk_info[cx][cz]['designations']:
-                    chunk_info[cx][cz]['designations'] += ['structure']
-                result, newly_obs = flood_search_3D(globalx, y,
-                                                    globalz,
-                                                    *chunkstart,
-                                                    *chunkend,
-                                                    lookup.ARTIFICIAL,
-                                                    observed=obs_struc,
-                                                    diagonal=True)
-                obs_struc += newly_obs
-                for rx, ry, rz in result:
-                    to_avoid[(rx, ry, rz)] = "Artificial structure detected"
+                    and (globalx, y, globalz) not in occupied):
+                obs_struc = detect_structures(globalx, y, globalz, cx, cz,
+                                              chunkstart, chunkend, obs_struc)
+            # WATER DETECTION
             elif (intf.getBlock(globalx, y, globalz) in lookup.FLUID
                     and (globalx, y, globalz) not in waterways):
-                if 'water' not in chunk_info[cx][cz]['designations']:
-                    chunk_info[cx][cz]['designations'] += ['water']
-                result, newly_obs = flood_search_3D(globalx, y,
-                                                    globalz,
-                                                    *overlap_chunkstart,
-                                                    *overlap_chunkend,
-                                                    lookup.FLUID,
-                                                    observed=obs_fluid)
-                obs_fluid += newly_obs
-
-                pbiome = chunk_info[cx][cz]['primary_biome']
-                if 'ocean' == pbiome[-5:]:
-                    name = f'ocean-{cx}-{cz}'
-                elif 'river' == pbiome:
-                    name = f'river-{cx}-{cz}'
-                elif 'swamp' == pbiome[:5]:
-                    name = f'swamp-{cx}-{cz}'
-                else:
-                    if len(result) < 256:
-                        name = f'pond-{cx}-{cz}'
-                    else:
-                        name = f'lake-{cx}-{cz}'
-
-                waterbody_info[name] = {'connections': [],
-                                        'biomes_touching': [],
-                                        'biome_adjacent': []}
-                for rx, ry, rz in result:
-                    if (rx, ry, rz) in waterways:
-                        if (waterways[(rx, ry, rz)]
-                                not in waterbody_info[name]['connections']):
-                            waterbody_info[name]['connections'] += [
-                                waterways[(rx, ry, rz)]
-                            ]
-                    else:
-                        waterways[(rx, ry, rz)] = name
-                        biomes = chunk_info[cx][cz]['biomes']
-                        waterbody_info[name]['biomes_touching'] = biomes
-                        surrounding = []
-
-                        surrounding += \
-                            chunk_info[cx + 1][cz + 1]['primary_biome'] + \
-                            chunk_info[cx - 1][cz + 1]['primary_biome'] + \
-                            chunk_info[cx + 1][cz - 1]['primary_biome'] + \
-                            chunk_info[cx - 1][cz - 1]['primary_biome']
-
-    input(waterbody_info.keys())
+                obs_fluid = detect_water(globalx, y, globalz, cx, cz,
+                                         overlap_chunkstart, overlap_chunkend,
+                                         obs_fluid)
+            # CAVE DETECTION
+            elif intf.getBlock(globalx, y, globalz) == 'minecraft:cave_air':
+                obs_cave = detect_cave(globalx, y, globalz, cx, cz,
+                                       overlap_chunkstart, overlap_chunkend,
+                                       obs_cave)
 
     debug_chunk_info()
 

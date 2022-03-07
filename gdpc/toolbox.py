@@ -64,17 +64,21 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
 
 
 def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
-                    result=[], observed=[], diagonal=False):
+                    result=set(), observed=set(), diagonal=False,
+                    vectors=None, depth=256):
     """Return a list of coordinates with blocks that fulfil the search.
 
     Activating caching is *highly* recommended.
     """
-    result += [(x, y, z)]
-    observed += [(x, y, z)]
-    vectors = lookup.VECTORS
-    if diagonal:
-        vectors += lookup.DIAGONALVECTORS
-    try:
+    result.add((x, y, z))
+    observed.add((x, y, z))
+    if vectors is None:
+        vectors = lookup.VECTORS
+        if diagonal:
+            vectors += lookup.DIAGONALVECTORS
+
+    # prevent RecursionError by limiting recursion depth
+    if depth > 0:
         for dx, dy, dz in vectors:
             if ((x + dx, y + dy, z + dz) not in observed
                 and not checkOutOfBounds(x + dx, y + dy, z + dz, x1, y1, z1,
@@ -84,12 +88,10 @@ def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
                                                        x1, y1, z1, x2, y2, z2,
                                                        search_blocks,
                                                        result, observed,
-                                                       diagonal)
+                                                       diagonal, vectors,
+                                                       depth - 1)
                 else:
-                    observed += [(x + dx, y + dy, z + dz)]
-
-    except RecursionError:
-        print("Recursion Error")
+                    observed.add((x + dx, y + dy, z + dz))
     return result, observed
 
 
