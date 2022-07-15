@@ -54,6 +54,7 @@ from gdpc import lookup
 from gdpc.interface import globalinterface as gi
 from gdpc.toolbox import flood_search_3D, loop2d, loop3d
 
+PREP_TIME = 120      # permitted preparation time in seconds (2 min)
 ALLOWED_TIME = 600  # permitted processing time in seconds (10 min)
 
 # world settings set when generator starts
@@ -345,7 +346,19 @@ if __name__ == '__main__':
         input('Enter to clear')
         geo.placeVolume(STARTX, 250, STARTZ, ENDX - 1, 250, ENDZ - 1, 'air')
 
+    def simulate():
+        """Simulate the passing of a day."""
+        pass
+
     setup_world()
+
+    # simulate civilisation
+    cycle = 0
+    people = []
+
+    while time() - start <= PREP_TIME:
+        cycle += 1
+        simulate()
 
     # define regions
     # - landing site/docks (ocean, river bank, hills/mountains, forest)
