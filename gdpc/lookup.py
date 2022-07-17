@@ -247,7 +247,7 @@ NETHER_ORE_TYPES = {"gold", "quartz", }
 
 LIMITED_SANDSTONE_TYPES = {None, "smooth", }
 SANDSTONE_TYPES = {"cut", "chiseled", } | LIMITED_SANDSTONE_TYPES
-BASALT_TYPES = {None, "smooth", }
+BASALT_TYPES = {None, "smooth", "polished", }
 OBSIDIAN_TYPES = {None, "crying", }
 STEMFRUIT_TYPES = {"pumpkin", "melon", }
 
@@ -283,9 +283,16 @@ STONE_BRICK_TYPES = {"cracked", "chiseled", } | LIMITED_STONE_BRICK_TYPES
 
 NETHER_BRICK_TYPES = {None, "red", }
 
-LIMITED_QUARTZ_TYPES = {None, "smooth", }
+QUARTZ_TYPES = {None, "smooth", }
+QUARTZ_BLOCK_TYPES = {"block", "pillar", "bricks", }
 POLISHED_BLACKSTONE_TYPES = {None, "bricks"}
-
+SMOOTH_SANDSTONE_TYPES = variate(SAND_TYPES, "smooth",
+                                 isprefix=True, namespace=None)
+CUT_SANDSTONE_TYPES = variate(SAND_TYPES, "cut",
+                              isprefix=True, namespace=None)
+PRISMARINE_TYPES = {None, "dark", }
+NETHER_BRICK_TYPES = {None, "red", "cracked", "chiseled"}
+PURPUR_TYPES = {}
 
 # NAMED MATERIAL TYPES
 # for usage as an extension
@@ -303,6 +310,10 @@ NAMED_CORAL_TYPES = NAMED_LIVE_CORAL_TYPES | NAMED_DEAD_CORAL_TYPES
 NAMED_POLISHED_BLACKSTONE_TYPES = \
     variate(POLISHED_BLACKSTONE_TYPES, "polished_blackstone",
             isprefix=True, namespace=None)
+NAMED_POLISHED_IGNEOUS_TYPES = variate(IGNEOUS_TYPES, "polished",
+                                       isprefix=True, namespace=None)
+NAMED_PRISMARINE_TYPES = variate(PRISMARINE_TYPES, "prismarine",
+                                 namespace=None)
 
 # ========================================================= grouped by model
 
@@ -354,6 +365,9 @@ NETHER_ORES = {"minecraft:gilded_blackstone", } | NETHERRACK_ORES
 END_ORES = set()
 
 ORES = OVERWORLD_ORES | NETHER_ORES | END_ORES
+
+OVERWORLD_MINERAL_BLOCKS = {"minecraft:quartz_block", } \
+    | variate(ORE_TYPES, "block")
 
 # liquids
 SNOWS = {"minecraft:powder_snow", "minecraft:snow", "minecraft:snow_block", }
@@ -504,7 +518,7 @@ EGGS = {"minecraft:dragon_egg", "minecraft:turtle_egg", }
 NESTS = {"minecraft:bee_nest", "minecraft:cobweb", }
 REMAINS = {"minecraft:bone_block", }
 
-OVERWORLD_ANIMAL_PRODUCTS = {"minecraft:turtle_egg", } \
+OVERWORLD_ANIMAL_PRODUCTS = {"minecraft:turtle_egg", "honeycomb_block"} \
     | NESTS
 NETHER_ANIMAL_PRODUCTS = set()
 END_ANIMAL_PRODUCTS = {"minecraft:dragon_egg", }
@@ -533,28 +547,52 @@ GLASS = GLASS_BLOCKS | GLASS_PANES
 WOOD_SLABS = variate(WOOD_TYPES, "slab")
 FUNGUS_SLABS = variate(FUNGUS_TYPES, "slab")
 WOODY_SLABS = WOOD_SLABS | FUNGUS_SLABS
-STONE_SLABS = {"minecraft:stone_slab", "minecraft:smooth_stone_slab"}
+STONE_SLABS = {"minecraft:stone_slab", "minecraft:smooth_stone_slab", }
 RAW_IGNEOUS_SLABS = variate(IGNEOUS_TYPES, "slab")
-POLISHED_IGNEOUS_SLABS =
+POLISHED_IGNEOUS_SLABS = variate(NAMED_POLISHED_IGNEOUS_TYPES, "slab")
 IGNEOUS_SLABS = RAW_IGNEOUS_SLABS | POLISHED_IGNEOUS_SLABS
 COBBLESTONE_SLABS = variate(COBBLESTONE_TYPES, "cobblestone_slab")
 STONE_BRICK_SLABS = variate(LIMITED_STONE_BRICK_TYPES, "stone_brick_slab")
 RAW_SANDSTONE_SLABS = variate(SAND_TYPES, "sandstone_slab")
-SMOOTH_SANDSTONE_SLABS =
-CUT_SANDSTONE_SLABS =
+SMOOTH_SANDSTONE_SLABS = variate(SMOOTH_SANDSTONE_TYPES, "sandstone_slab")
+CUT_SANDSTONE_SLABS = variate(CUT_SANDSTONE_TYPES, "sandstone_slab")
 SANDSTONE_SLABS = RAW_SANDSTONE_SLABS | SMOOTH_SANDSTONE_SLABS \
     | CUT_SANDSTONE_SLABS
-PRISMARINE_SLABS =
+PRISMARINE_SLABS = {"minecraft:prismarine_brick_slab", } \
+    | variate(NAMED_PRISMARINE_TYPES, "slab")
 NETHER_BRICK_SLABS = variate(NETHER_BRICK_TYPES, "nether_brick_slab")
-QUARTZ_SLABS =
-BLACKSTONE_SLABS =
+QUARTZ_SLABS = variate(QUARTZ_TYPES, "quartz_slab")
+BLACKSTONE_SLABS = {"minecraft:blackstone_slab", } \
+    | variate(NAMED_POLISHED_BLACKSTONE_TYPES, "_slab")
 OVERWORLD_SLABS = {"minecraft:brick_slab", }
 NETHER_SLABS = NETHER_BRICK_SLABS | QUARTZ_SLABS | BLACKSTONE_SLABS
 END_SLABS = {"minecraft:end_stone_brick_slab", "minecraft:purpur_slab", }
 SLABS = OVERWORLD_SLABS | NETHER_SLABS | END_SLABS
 
 # stairs
-# TODO: same as slabs, but missing smooth stone and cut sandstones
+WOOD_STAIRS = variate(WOOD_TYPES, "stairs")
+FUNGUS_STAIRS = variate(FUNGUS_TYPES, "stairs")
+WOODY_STAIRS = WOOD_STAIRS | FUNGUS_STAIRS
+STONE_STAIRS = {"minecraft:stone_stairs", }
+RAW_IGNEOUS_STAIRS = variate(IGNEOUS_TYPES, "stairs")
+POLISHED_IGNEOUS_STAIRS = variate(NAMED_POLISHED_IGNEOUS_TYPES, "stairs")
+IGNEOUS_STAIRS = RAW_IGNEOUS_STAIRS | POLISHED_IGNEOUS_STAIRS
+COBBLESTONE_STAIRS = variate(COBBLESTONE_TYPES, "cobblestone_stairs")
+STONE_BRICK_STAIRS = variate(LIMITED_STONE_BRICK_TYPES, "stone_brick_stairs")
+RAW_SANDSTONE_STAIRS = variate(SAND_TYPES, "sandstone_stairs")
+SMOOTH_SANDSTONE_STAIRS = variate(SMOOTH_SANDSTONE_TYPES, "sandstone_stairs")
+SANDSTONE_STAIRS = RAW_SANDSTONE_STAIRS | SMOOTH_SANDSTONE_STAIRS
+PRISMARINE_STAIRS = {"minecraft:prismarine_brick_stairs", } \
+    | variate(NAMED_PRISMARINE_TYPES, "stairs")
+NETHER_BRICK_STAIRS = variate(NETHER_BRICK_TYPES, "nether_brick_stairs")
+QUARTZ_STAIRS = variate(QUARTZ_TYPES, "quartz_stairs")
+BLACKSTONE_STAIRS = {"minecraft:blackstone_stairs", } \
+    | variate(NAMED_POLISHED_BLACKSTONE_TYPES, "_stairs")
+OVERWORLD_STAIRS = {"minecraft:brick_stairs", }
+NETHER_STAIRS = NETHER_BRICK_STAIRS | QUARTZ_STAIRS | BLACKSTONE_STAIRS
+END_STAIRS = {"minecraft:end_stone_brick_stairs", "minecraft:purpur_stairs", }
+STAIRS = OVERWORLD_STAIRS | NETHER_STAIRS | END_STAIRS
+
 
 # barriers
 WOOD_FENCES = variate(WOOD_TYPES, "fence")
@@ -621,14 +659,49 @@ NETHER_ENTRYWAYS = NETHER_DOORS | NETHER_GATES | NETHER_TRAPDOORS
 END_ENTRYWAYS = END_DOORS | END_GATES | END_TRAPDOORS
 ENTRYWAYS = OVERWORLD_ENTRYWAYS | NETHER_ENTRYWAYS | END_ENTRYWAYS
 
-# TODO: hay bale, bookshelf, chain, iron bars, honeycomb block
+# structural
+WOOD_PLANKS = variate(WOOD_TYPES, "planks")
+FUNGUS_PLANKS = variate(FUNGUS_TYPES, "planks")
+PLANKS = WOOD_PLANKS | FUNGUS_PLANKS
+
+STONE_BRICKS = {"minecraft:smooth_stone", } \
+    | variate(STONE_BRICK_TYPES, "stone_bricks")
+OVERWORLD_BRICKS = {"minecraft:bricks", "minecraft:prismarine_bricks"} \
+    | STONE_BRICKS
+NETHER_BRICKS = variate(NETHER_BRICK_TYPES, "nether_bricks")
+END_BRICKS = {"minecraft:end_stone_bricks", }
+BRICKS = OVERWORLD_BRICKS | NETHER_BRICKS | END_BRICKS
+
+CONCRETE_POWDERS = variate(DYE_COLORS, "concrete_powder")
+REGULAR_SANDSTONES = variate(SANDSTONE_TYPES, "sandstone")
+RED_SANDSTONES = variate(SANDSTONE_TYPES, "red_sandstone")
+SANDSTONES = REGULAR_SANDSTONES | RED_SANDSTONES
+
+QUARTZ_BLOCKS = variate("minecraft:smooth_quartz", "minecraft_chiseled quartz",
+                        "minecraft:quartz_block", "minecraft_quartz_brick",
+                        "minecraft:quartz_pillar")
+CONCRETES = variate(DYE_COLORS, "concrete")
+POLISHED_IGNEOUS = variate(IGNEOUS_TYPES, "polished", isprefix=True)
+PRISMARINE = {"minecraft:prismarine_bricks", } \
+    | variate(PRISMARINE_TYPES, "prismarine")
+PURPUR = variate(PURPUR_TYPES, "purpur", isprefix=True)
+
+OVERWORLD_STRUCTURE_BLOCKS = {"minecraft:hay_bale", "minecraft:bookshelf",
+                              "minecraft:chain", "minecraft:iron bars", } \
+    | SANDSTONES | OVERWORLD_BRICKS | WOOD_PLANKS
+
+
+TORCHES = variate()
+OVERWORLD_LIGHTING =
+NETHER_LIGHTING =
+END_LIGHTING =
+
+
+# TODO: hay bale, bookshelf, chain, iron bars,
 
 
 # # construction
-# STONE_BRICKS = variate(STONE_BRICK_TYPES, "stone_bricks")
-# PLANKS = tuple([f"minecraft:{wood}_planks" for wood in WOODS])
 # # lighting
-# FIRES = ("minecraft:fire", "minecraft:soul_fire")
 # CAMPFIRES = ("minecraft:campfire", "minecraft:soul_campfire")
 # TORCHES = ("minecraft:torch", "minecraft:soul_torch",
 #            "minecraft:redstone_torch")
