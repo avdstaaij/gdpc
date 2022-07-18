@@ -4,9 +4,10 @@
 # __all__ = []  # everything is available for import
 __version__ = "v5.1_dev"
 
+from typing import Set
 import os
 import sys
-from toolbox import isSequence
+from .toolbox import isSequence
 
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs
@@ -254,7 +255,7 @@ STEMFRUIT_TYPES = {"pumpkin", "melon", }
 AIR_TYPES = {None, "void", "cave", }
 FIRE_TYPES = {None, "soul", }
 
-ICE_TYPES = {None, "blue", "packed", }
+ICE_TYPES = {None, "blue", "packed", "frosted"}
 LIQUID_TYPES = {None, "flowing", }
 
 WOOD_TYPES = {"oak", "birch", "spruce", "jungle",
@@ -285,14 +286,29 @@ NETHER_BRICK_TYPES = {None, "red", }
 
 QUARTZ_TYPES = {None, "smooth", }
 QUARTZ_BLOCK_TYPES = {"block", "pillar", "bricks", }
-POLISHED_BLACKSTONE_TYPES = {None, "bricks"}
+POLISHED_BLACKSTONE_TYPES = {None, "bricks", }
+POLISHED_BLACKSTONE_BRICK_TYPES = {None, "cracked", }
 SMOOTH_SANDSTONE_TYPES = variate(SAND_TYPES, "smooth",
                                  isprefix=True, namespace=None)
 CUT_SANDSTONE_TYPES = variate(SAND_TYPES, "cut",
                               isprefix=True, namespace=None)
 PRISMARINE_TYPES = {None, "dark", }
-NETHER_BRICK_TYPES = {None, "red", "cracked", "chiseled"}
-PURPUR_TYPES = {}
+NETHER_BRICK_TYPES = {None, "red", "cracked", "chiseled", }
+PURPUR_TYPES = {"block", "pillar", }
+
+ANVIL_TYPES = {None, "chipped", "damaged", }
+CHEST_TYPES = {None, "trapped", "end", }
+CAULDRON_TYPES = {None, "lave", "powder_snow", "water", }
+
+SPONGE_TYPES = {None, "wet", }
+HEAD_TYPES = {"skeleton", "wither_skeleton", "zombie", "player", "creeper",
+              "dragon", }
+
+WEIGHTED_PRESSURE_PLATE_TYPES = {"heavy", "light", }
+SENSOR_RAIL_TYPES = {"detector", }
+ACTUATOR_RAIL_TYPES = {None, "activator", "powered", }
+PISTON_TYPES = {None, "sticky", }
+COMMAND_BLOCK_TYPES = {None, "chain", "repeating", }
 
 # NAMED MATERIAL TYPES
 # for usage as an extension
@@ -318,21 +334,36 @@ NAMED_PRISMARINE_TYPES = variate(PRISMARINE_TYPES, "prismarine",
 # ========================================================= grouped by model
 
 # natural
+# minerals
+OVERWORLD_ORES = variate(ORE_TYPES, "ore")
+
+NETHERRACK_ORES = variate(NETHER_ORE_TYPES, "ore")
+NETHER_ORES = {"minecraft:gilded_blackstone", } | NETHERRACK_ORES
+
+END_ORES: Set[str] = set()
+
+ORES = OVERWORLD_ORES | NETHER_ORES | END_ORES
+
+MINERAL_BLOCKS = {"minecraft:quartz_block", } \
+    | variate(ORE_TYPES, "block")
+
 # soils
 SPREADING_DIRTS = {"minecraft:mycelium", "minecraft:grass_block", }
 DIRTS = {"minecraft:coarse_dirt", "minecraft:dirt",
-         "minecraft:dirt_path", "minecraft:podzol", } | SPREADING_DIRTS
+         "minecraft:dirt_path", "minecraft:farmland", "minecraft:podzol", } \
+    | SPREADING_DIRTS
 SANDS = variate(SAND_TYPES, "sand")
-GRANULAR = {"minecraft:gravel", } | SANDS
+GRANULARS = {"minecraft:gravel", } | SANDS
 RIVERBED_SOILS = {"minecraft:dirt", "minecraft:clay",
                   "minecraft:sand", "minecraft:gravel", }
-OVERWORLD_SOILS = DIRTS | GRANULAR | RIVERBED_SOILS
+OVERWORLD_SOILS = DIRTS | GRANULARS | RIVERBED_SOILS
 
 NYLIUMS = variate(FUNGUS_TYPES, "nylium")
+NETHERRACKS = {"minecraft:netherrack", } | NYLIUMS | NETHERRACK_ORES
 SOUL_SOILS = {"minecraft:soul_sand", "minecraft:soul_soil", }
 NETHER_SOILS = NYLIUMS | SOUL_SOILS
 
-END_SOILS = set()
+END_SOILS: Set[str] = set()
 
 SOILS = OVERWORLD_SOILS | NETHER_SOILS | END_SOILS
 
@@ -348,26 +379,13 @@ OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIANS | COBBLESTONES \
     | INFESTED | RAW_SANDSTONES | TERRACOTTAS
 
 BASALTS = variate(BASALT_TYPES, "basalt")
-NETHER_STONES = {"minecraft:blackstone", "minecraft:glowstone", }
+NETHER_STONES = {"minecraft:blackstone", }
 
 END_STONES = {"minecraft:end_stone", }
 
 VOLCANIC = {"minecraft:magma_block", } | BASALTS | OBSIDIANS
 STONES = {"minecraft:bedrock", } | VOLCANIC \
     | OVERWORLD_STONES | NETHER_STONES | END_STONES
-
-# minerals
-OVERWORLD_ORES = variate(ORE_TYPES, "ore")
-
-NETHERRACK_ORES = variate(NETHER_ORE_TYPES, "ore")
-NETHER_ORES = {"minecraft:gilded_blackstone", } | NETHERRACK_ORES
-
-END_ORES = set()
-
-ORES = OVERWORLD_ORES | NETHER_ORES | END_ORES
-
-OVERWORLD_MINERAL_BLOCKS = {"minecraft:quartz_block", } \
-    | variate(ORE_TYPES, "block")
 
 # liquids
 SNOWS = {"minecraft:powder_snow", "minecraft:snow", "minecraft:snow_block", }
@@ -377,10 +395,11 @@ WATER_BASED = {"minecraft:bubble_column", } | SNOWS | ICES | WATERS
 LAVAS = variate(LIQUID_TYPES, "lava")
 LAVA_BASED = VOLCANIC | LAVAS
 LIQUIDS = WATERS | LAVAS
+LIQUID_BASED = WATER_BASED | LAVA_BASED
 
 # non-physical
 AIRS = variate(AIR_TYPES, "air")
-FLUIDS = LIQUIDS + AIRS
+FLUIDS = LIQUIDS | AIRS
 FIRES = variate(FIRE_TYPES, "fire")
 
 # life
@@ -408,13 +427,14 @@ STRIPPED_FUNGUS_STALKS = STRIPPED_FUNGUS_STEMS | STRIPPED_FUNGUS_HYPHAE
 FUNGUS_STEMS = BARKED_FUNGUS_STEMS | STRIPPED_FUNGUS_STEMS
 FUNGUS_HYPHAE = BARKED_FUNGUS_HYPHAE | STRIPPED_FUNGUS_HYPHAE
 FUNGUS_STALKS = FUNGUS_STEMS | FUNGUS_HYPHAE
-FUNGUS_BLOCKS = {"minecraft:shroomlight", } | WART_BLOCKS | FUNGUS_STALKS
-FUNGI = SMALL_FUNGI | FUNGUS_BLOCKS
+FUNGUS_GROWTH_BLOCKS = {"minecraft:shroomlight", } \
+    | WART_BLOCKS | FUNGUS_STALKS
+FUNGI = SMALL_FUNGI | FUNGUS_GROWTH_BLOCKS
 
 SMALL_FUNGALS = SMALL_MUSHROOMS | SMALL_FUNGI
 FUNGAL_CAPS = MUSHROOM_CAPS | WART_BLOCKS
 FUNGAL_STEMS = MUSHROOM_STEMS | FUNGUS_STEMS
-FUNGAL_BLOCKS = MUSHROOM_BLOCKS | FUNGUS_BLOCKS
+FUNGAL_BLOCKS = MUSHROOM_BLOCKS | FUNGUS_GROWTH_BLOCKS
 FUNGALS = SMALL_FUNGALS | FUNGAL_BLOCKS
 
 VINES = {"minecraft:vines", } | FUNGUS_VINES
@@ -436,7 +456,7 @@ TRUNKS = BARKED_TRUNKS | STRIPPED_TRUNKS
 
 BARKED_TREE_BLOCKS = LEAVES | BARKED_WOODS | BARKED_LOGS
 TREE_BLOCKS = LEAVES | WOODS | LOGS
-TREES = SAPLINGS + TREE_BLOCKS
+TREES = SAPLINGS | TREE_BLOCKS
 
 # grasses
 TRUE_GRASSES = {"minecraft:grass_block",
@@ -474,17 +494,17 @@ FLOWERS = SMALL_FLOWERS | TALL_FLOWERS
 # aquatic flora
 SEAGRASSES = {"minecraft:seagrass", "minecraft:tall_seagrass", }
 KELP = {"minecraft:kelp_plant", "minecraft:kelp", }
-WATER_PLANTS = {"minecraft:lily_pad"} | SEAGRASSES | KELP
+WATER_PLANTS = {"minecraft:lily_pad", } | SEAGRASSES | KELP
 
 OVERWORLD_PLANT_BLOCKS = MUSHROOM_BLOCKS | TREE_BLOCKS
 OVERWORLD_PLANTS = {"minecraft:cactus", "minecraft:dead_bush", } \
     | MUSHROOMS | FOLIAGE | TREES | GRASSES | CROPS | FLOWERS | WATER_PLANTS
 
-NETHER_PLANT_BLOCKS = FUNGUS_BLOCKS
+NETHER_PLANT_BLOCKS = FUNGUS_GROWTH_BLOCKS
 NETHER_PLANTS = FUNGI
 
 CHORUS = {"minecraft:chorus_plant", "minecraft:chorus_flower", }
-END_PLANT_BLOCKS = set()
+END_PLANT_BLOCKS: Set[str] = set()
 END_PLANTS = CHORUS
 
 PLANT_BLOCKS = OVERWORLD_PLANT_BLOCKS | NETHER_PLANT_BLOCKS | END_PLANT_BLOCKS
@@ -506,21 +526,22 @@ CORAL_FANS = LIVE_CORAL_FANS | DEAD_CORAL_FANS
 CORALS = LIVE_CORALS | DEAD_CORALS
 
 MARINE_ANIMALS = {"minecraft:sea_pickle", } | CORALS
-MARINE_LIFE = WATER_PLANTS + MARINE_ANIMALS
+MARINE_LIFE = WATER_PLANTS | MARINE_ANIMALS
 
 OVERWORLD_ANIMALS = MARINE_ANIMALS
-NETHER_ANIMALS = set()
-END_ANIMALS = set()
+NETHER_ANIMALS: Set[str] = set()
+END_ANIMALS: Set[str] = set()
 ANIMALS = OVERWORLD_ANIMALS | NETHER_ANIMALS | END_ANIMALS
 
 # animal product
 EGGS = {"minecraft:dragon_egg", "minecraft:turtle_egg", }
+BEE_NESTS = {"minecraft:beehive", "minecraft:bee_nest", }
 NESTS = {"minecraft:bee_nest", "minecraft:cobweb", }
 REMAINS = {"minecraft:bone_block", }
 
 OVERWORLD_ANIMAL_PRODUCTS = {"minecraft:turtle_egg", "honeycomb_block"} \
-    | NESTS
-NETHER_ANIMAL_PRODUCTS = set()
+    | EGGS | NESTS
+NETHER_ANIMAL_PRODUCTS: Set[str] = set()
 END_ANIMAL_PRODUCTS = {"minecraft:dragon_egg", }
 ANIMAL_PRODUCTS = REMAINS \
     | OVERWORLD_ANIMAL_PRODUCTS | NETHER_ANIMAL_PRODUCTS | END_ANIMAL_PRODUCTS
@@ -532,7 +553,7 @@ LIFE = OVERWORLD_LIFE | NETHER_LIFE | END_LIFE
 
 # building
 # decoration
-WOOL = variate(DYE_COLORS, "wool")
+WOOLS = variate(DYE_COLORS, "wool")
 CARPETS = variate(DYE_COLORS, "carpet")
 
 STAINED_GLASS_BLOCKS = variate(DYE_COLORS, "stained_glass")
@@ -600,7 +621,7 @@ FUNGUS_FENCES = variate(FUNGUS_TYPES, "fence")
 WOODY_FENCES = WOOD_FENCES | FUNGUS_FENCES
 OVERWORLD_FENCES = WOOD_FENCES
 NETHER_FENCES = {"minecraft:nether_brick_fence", } | FUNGUS_FENCES
-END_FENCES = set()
+END_FENCES: Set[str] = set()
 FENCES = OVERWORLD_FENCES | NETHER_FENCES | END_FENCES
 
 COBBLESTONE_WALLS = variate(COBBLESTONE_TYPES, "cobblestone_wall")
@@ -631,10 +652,10 @@ NETHER_DOORS = FUNGUS_DOORS | METAL_DOORS
 END_DOORS = METAL_DOORS
 DOORS = OVERWORLD_DOORS | NETHER_DOORS | END_DOORS
 
-WOOD_GATES = variate(WOOD_TYPES, "gate")
-FUNGUS_GATES = variate(FUNGUS_TYPES, "gate")
+WOOD_GATES = variate(WOOD_TYPES, "fence_gate")
+FUNGUS_GATES = variate(FUNGUS_TYPES, "fence_gate")
 WOODY_GATES = WOOD_GATES | FUNGUS_GATES
-METAL_GATES = set()
+METAL_GATES: Set[str] = set()
 OVERWORLD_GATES = WOOD_GATES | METAL_GATES
 NETHER_GATES = FUNGUS_GATES | METAL_GATES
 END_GATES = METAL_GATES
@@ -664,271 +685,220 @@ WOOD_PLANKS = variate(WOOD_TYPES, "planks")
 FUNGUS_PLANKS = variate(FUNGUS_TYPES, "planks")
 PLANKS = WOOD_PLANKS | FUNGUS_PLANKS
 
+POLISHED_IGNEOUS = variate(IGNEOUS_TYPES, "polished", isprefix=True)
+
 STONE_BRICKS = {"minecraft:smooth_stone", } \
     | variate(STONE_BRICK_TYPES, "stone_bricks")
+POLISHED_BLACKSTONE_BRICKS = \
+    variate(POLISHED_BLACKSTONE_TYPES, "polished_blackstone_bricks")
+NETHER_BRICK_BRICKS = variate(NETHER_BRICK_TYPES, "nether_bricks")
+
 OVERWORLD_BRICKS = {"minecraft:bricks", "minecraft:prismarine_bricks"} \
     | STONE_BRICKS
-NETHER_BRICKS = variate(NETHER_BRICK_TYPES, "nether_bricks")
+NETHER_DIMENSION_BRICKS = POLISHED_BLACKSTONE_BRICKS | NETHER_BRICK_BRICKS
 END_BRICKS = {"minecraft:end_stone_bricks", }
-BRICKS = OVERWORLD_BRICKS | NETHER_BRICKS | END_BRICKS
+BRICKS = OVERWORLD_BRICKS | NETHER_DIMENSION_BRICKS | END_BRICKS
 
+CONCRETES = variate(DYE_COLORS, "concrete")
 CONCRETE_POWDERS = variate(DYE_COLORS, "concrete_powder")
+
 REGULAR_SANDSTONES = variate(SANDSTONE_TYPES, "sandstone")
 RED_SANDSTONES = variate(SANDSTONE_TYPES, "red_sandstone")
 SANDSTONES = REGULAR_SANDSTONES | RED_SANDSTONES
 
-QUARTZ_BLOCKS = variate("minecraft:smooth_quartz", "minecraft_chiseled quartz",
-                        "minecraft:quartz_block", "minecraft_quartz_brick",
-                        "minecraft:quartz_pillar")
-CONCRETES = variate(DYE_COLORS, "concrete")
-POLISHED_IGNEOUS = variate(IGNEOUS_TYPES, "polished", isprefix=True)
-PRISMARINE = {"minecraft:prismarine_bricks", } \
+PRISMARINES = {"minecraft:prismarine_bricks", } \
     | variate(PRISMARINE_TYPES, "prismarine")
-PURPUR = variate(PURPUR_TYPES, "purpur", isprefix=True)
+
+POLISHED_BLACKSTONES = {"minecraft:polished_blackstone",
+                        "minecraft_chiseled_polished_blackstone"} \
+    | POLISHED_BLACKSTONE_BRICKS
+QUARTZES = variate("minecraft:smooth_quartz", "minecraft_chiseled quartz",
+                   "minecraft:quartz_block", "minecraft_quartz_brick",
+                   "minecraft:quartz_pillar")
+PURPURS = variate(PURPUR_TYPES, "purpur", isprefix=True)
 
 OVERWORLD_STRUCTURE_BLOCKS = {"minecraft:hay_bale", "minecraft:bookshelf",
                               "minecraft:chain", "minecraft:iron bars", } \
-    | SANDSTONES | OVERWORLD_BRICKS | WOOD_PLANKS
+    | WOOD_PLANKS | SANDSTONES | OVERWORLD_BRICKS \
+    | CONCRETES | CONCRETE_POWDERS | PRISMARINES
+NETHER_STRUCTURE_BLOCKS = FUNGUS_PLANKS | NETHER_DIMENSION_BRICKS \
+    | POLISHED_BLACKSTONES | QUARTZES
+END_STRUCTURE_BLOCKS = PURPURS
+STRUCTURE_BLOCKS = OVERWORLD_STRUCTURE_BLOCKS | NETHER_STRUCTURE_BLOCKS \
+    | END_STRUCTURE_BLOCKS
+
+# lights
+TORCHES = variate(FIRE_TYPES, "torch")
+LANTERNS = variate(FIRE_TYPES, "lantern")
+BLOCK_LIGHTS = {"minecraft:glowstone", "minecraft:jack_o_lantern",
+                "minecraft:sea_lantern", }
+LIGHTS = {"minecraft:end_rod"} | TORCHES | LANTERNS | BLOCK_LIGHTS
 
 
-TORCHES = variate()
-OVERWORLD_LIGHTING =
-NETHER_LIGHTING =
-END_LIGHTING =
+# interactable
+WOOD_FLOOR_SIGNS = variate(WOOD_TYPES, "sign")
+FUNGUS_FLOOR_SIGNS = variate(FUNGUS_TYPES, "sign")
+WOODY_FLOOR_SIGNS = WOOD_FLOOR_SIGNS | FUNGUS_FLOOR_SIGNS
+FLOOR_SIGNS = WOODY_FLOOR_SIGNS
+WOOD_WALL_SIGNS = variate(WOOD_TYPES, "wall_sign")
+FUNGUS_WALL_SIGNS = variate(FUNGUS_TYPES, "wall_sign")
+WOODY_WALL_SIGNS = WOOD_WALL_SIGNS | FUNGUS_WALL_SIGNS
+WALL_SIGNS = WOODY_WALL_SIGNS
+WOOD_SIGNS = WOOD_FLOOR_SIGNS | WOOD_WALL_SIGNS
+FUNGUS_SIGNS = FUNGUS_FLOOR_SIGNS | FUNGUS_WALL_SIGNS
+SIGNS = FLOOR_SIGNS | WALL_SIGNS
 
+CAULDRONS = variate(CAULDRON_TYPES, "cauldron")
+FURNACES = {"minecraft:blast_furnace", "minecraft:furnace",
+            "minecraft:smoker", }
+ANVILS = variate(ANVIL_TYPES, "anvil")
+JOB_SITE_BLOCKS = {"minecraft:barrel", "minecraft:blast_furnace",
+                   "minecraft:brewing_stand", "minecraft:cartography_table",
+                   "minecraft:composter",
+                   "minecraft:fletching_table", "minecraft:grindstone",
+                   "minecraft:lectern", "minecraft:loom",
+                   "minecraft:smithing_table", "minecraft:stonecutter", } \
+    | CAULDRONS
 
-# TODO: hay bale, bookshelf, chain, iron bars,
+SHULKER_BOXES = variate({None, } | set(DYE_COLORS), "shulker_box")
+CHESTS = variate(CHEST_TYPES, "chest")
+UI_BLOCKS = {"minecraft:beacon",
+             "minecraft:crafting_bench", "minecraft:enchanting_table", } \
+    | SIGNS | FURNACES | ANVILS | JOB_SITE_BLOCKS | CHESTS | SHULKER_BOXES
 
+BANNERS = variate(DYE_COLORS, "banner")
+BEDS = variate(DYE_COLORS, "beds")
+CAMPFIRES = variate(FIRE_TYPES, "campfire")
 
-# # construction
-# # lighting
-# CAMPFIRES = ("minecraft:campfire", "minecraft:soul_campfire")
-# TORCHES = ("minecraft:torch", "minecraft:soul_torch",
-#            "minecraft:redstone_torch")
-# LANTERNS = ("minecraft:lantern", "minecraft:soul_lantern")
-# LIGHTBLOCKS = (
-#     "minecraft:beacon",
-#     "minecraft:redstone_lamp",
-#     "minecraft:jack_o_lantern",
-#     "minecraft:sea_lantern",
-#     "minecraft:glowstone",
-# )
-# LIGHTSOURCES = FIRES + CAMPFIRES + TORCHES + LANTERNS + LIGHTBLOCKS
-# # mechanical
-# WIRING = ("minecraft:redstone_wire",
-#           "minecraft:repeater", "minecraft:comparator")
-# RAILS = (
-#     "minecraft:rail",
-#     "minecraft:powered_rail",
-#     "minecraft:detector_rail",
-#     "minecraft:activator_rail",
-# )
-# SWITCHES = (
-#     "minecraft:lever",
-#     "minecraft:stone_button",
-#     "minecraft:oak_button",
-#     "minecraft:spruce_button",
-#     "minecraft:birch_button",
-#     "minecraft:jungle_button",
-#     "minecraft:acacia_button",
-#     "minecraft:dark_oak_button",
-#     "minecraft:crimson_button",
-#     "minecraft:warped_button",
-#     "minecraft:polished_blackstone_button",
-#     "minecraft:tripwire_hook",
-# )
-# PRESSUREPLATES = (
-#     "minecraft:crimson_pressure_plate",
-#     "minecraft:warped_pressure_plate",
-#     "minecraft:polished_blackstone_pressure_plate",
-#     "minecraft:light_weighted_pressure_plate",
-#     "minecraft:heavy_weighted_pressure_plate",
-#     "minecraft:stone_pressure_plate",
-#     "minecraft:oak_pressure_plate",
-#     "minecraft:wooden_pressure_plate",
-#     "minecraft:spruce_pressure_plate",
-#     "minecraft:birch_pressure_plate",
-#     "minecraft:jungle_pressure_plate",
-#     "minecraft:acacia_pressure_plate",
-#     "minecraft:dark_oak_pressure_plate",
-# )
-# # decoration
-# FLOORHEADS = (
-#     "minecraft:skeleton_skull",
-#     "minecraft:wither_skeleton_skull",
-#     "minecraft:zombie_head",
-#     "minecraft:player_head",
-#     "minecraft:creeper_head",
-#     "minecraft:dragon_head",
-# )
-# WALLHEADS = (
-#     "minecraft:skeleton_wall_skull",
-#     "minecraft:wither_skeleton_wall_skull",
-#     "minecraft:zombie_wall_head",
-#     "minecraft:player_wall_head",
-#     "minecraft:creeper_wall_head",
-#     "minecraft:dragon_wall_head",
-# )
-# HEADS = FLOORHEADS + WALLHEADS
-# FLOORSIGNS = (
-#     "minecraft:oak_sign",
-#     "minecraft:birch_sign",
-#     "minecraft:spruce_sign",
-#     "minecraft:jungle_sign",
-#     "minecraft:dark_oak_sign",
-#     "minecraft:acacia_sign",
-#     "minecraft:warped_sign",
-#     "minecraft:crimson_sign",
-# )
-# WALLSIGNS = (
-#     "minecraft:oak_wall_sign",
-#     "minecraft:birch_wall_sign",
-#     "minecraft:spruce_wall_sign",
-#     "minecraft:jungle_wall_sign",
-#     "minecraft:dark_oak_wall_sign",
-#     "minecraft:acacia_wall_sign",
-#     "minecraft:warped_wall_sign",
-#     "minecraft:crimson_wall_sign",
-# )
-# SIGNS = FLOORSIGNS + WALLSIGNS
-# ANVILS = ("minecraft:anvil", "minecraft:chipped_anvil",
-#           "minecraft:damaged_anvil")
-# BEDS = (
-#     "minecraft:white_bed",
-#     "minecraft:orange_bed",
-#     "minecraft:magenta_bed",
-#     "minecraft:light_blue_bed",
-#     "minecraft:yellow_bed",
-#     "minecraft:lime_bed",
-#     "minecraft:pink_bed",
-#     "minecraft:gray_bed",
-#     "minecraft:light_gray_bed",
-#     "minecraft:cyan_bed",
-#     "minecraft:purple_bed",
-#     "minecraft:blue_bed",
-#     "minecraft:brown_bed",
-#     "minecraft:green_bed",
-#     "minecraft:red_bed",
-#     "minecraft:black_bed",
-# )
-# FURNACES = ("minecraft:furnace", "minecraft:smoker", "minecraft:blast_furnace")
-# SHULKERBOXES = (
-#     "minecraft:shulker_box",
-#     "minecraft:white_shulker_box",
-#     "minecraft:orange_shulker_box",
-#     "minecraft:magenta_shulker_box",
-#     "minecraft:light_blue_shulker_box",
-#     "minecraft:yellow_shulker_box",
-#     "minecraft:lime_shulker_box",
-#     "minecraft:pink_shulker_box",
-#     "minecraft:gray_shulker_box",
-#     "minecraft:light_gray_shulker_box",
-#     "minecraft:cyan_shulker_box",
-#     "minecraft:purple_shulker_box",
-#     "minecraft:blue_shulker_box",
-#     "minecraft:brown_shulker_box",
-#     "minecraft:green_shulker_box",
-#     "minecraft:red_shulker_box",
-#     "minecraft:black_shulker_box",
-# )
-# PRESSUREPLATES = (
-#     "minecraft:crimson_pressure_plate",
-#     "minecraft:warped_pressure_plate",
-#     "minecraft:polished_blackstone_pressure_plate",
-#     "minecraft:light_weighted_pressure_plate",
-#     "minecraft:heavy_weighted_pressure_plate",
-#     "minecraft:stone_pressure_plate",
-#     "minecraft:oak_pressure_plate",
-#     "minecraft:wooden_pressure_plate",
-#     "minecraft:spruce_pressure_plate",
-#     "minecraft:birch_pressure_plate",
-#     "minecraft:jungle_pressure_plate",
-#     "minecraft:acacia_pressure_plate",
-#     "minecraft:dark_oak_pressure_plate",
-# )
-# FIRES = ("minecraft:fire", "minecraft:soul_fire")
-# CAMPFIRES = ("minecraft:campfire", "minecraft:soul_campfire")
-# TORCHES = ("minecraft:torch", "minecraft:soul_torch",
-#            "minecraft:redstone_torch")
-# LANTERNS = ("minecraft:lantern", "minecraft:soul_lantern")
+OVERWORLD_PORTALS: Set[str] = set()
+OVERWORLD_PORTAL_BLOCKS = OVERWORLD_PORTALS
+NETHER_PORTALS = {"minecraft:nether_portal", }
+NETHER_PORTAL_BLOCKS = NETHER_PORTALS | OBSIDIANS
+END_PORTALS = {"minecraft:end_gateway", "minecraft:end_portal", }
+END_PORTAL_BLOCKS = {"minecraft:end_portal_block", "minecraft:bedrock"} \
+    | END_PORTALS
+PORTALS = OVERWORLD_PORTALS | NETHER_PORTALS | END_PORTALS
+PORTAL_BLOCKS = OVERWORLD_PORTAL_BLOCKS | NETHER_PORTAL_BLOCKS \
+    | END_PORTAL_BLOCKS
 
+SPONGES = variate(SPONGE_TYPES, "sponge")
 
-# NOTE: reshuffle
-NETHERRACKS = {"minecraft:netherrack", } | NYLIUMS | NETHERRACK_ORES
-FLAMMABLE =
-LAVA_IGNITABLE =
+WOOD_BUTTONS = variate(WOOD_TYPES, "button")
+FUNGUS_BUTTONS = variate(FUNGUS_TYPES, "button")
+WOODY_BUTTONS = WOOD_BUTTONS | FUNGUS_BUTTONS
+BUTTONS = {"minecraft:stone_button"} | WOODY_BUTTONS
+SWITCHES = {"minecraft:lever"} | BUTTONS
 
-BLOCKS = {}  # TODO: add all possible blocks
+# interaction has an immediate effect (no UI)
+USABLE_BLOCKS = {"minecraft:bell", "minecraft:cake", "minecraft:conduit",
+                 "minecraft:flower_pot", "minecraft:jukebox",
+                 "minecraft:lodestone", "minecraft:respawn_anchor",
+                 "minecraft:spawner", "minecraft:tnt"} \
+    | BEE_NESTS | CAMPFIRES | CAULDRONS | SWITCHES
+
+INTERACTABLE_BLOCKS = USABLE_BLOCKS | UI_BLOCKS
+
+SENSOR_RAILS = variate(SENSOR_RAIL_TYPES, "rail")
+ACTUATOR_RAILS = variate(ACTUATOR_RAIL_TYPES, "rail")
+RAILS = {"minecraft:rail", } | SENSOR_RAILS | ACTUATOR_RAILS
+
+WOOD_PRESSURE_PLATES = variate(WOOD_TYPES, "pressure_plate")
+FUNGUS_PRESSURE_PLATES = variate(FUNGUS_TYPES, "pressure_plate")
+WOODY_PRESSURE_PLATES = WOOD_PRESSURE_PLATES | FUNGUS_PRESSURE_PLATES
+STONE_PRESSURE_PLATES = {"minecraft:stone_pressure_plate",
+                         "minecraft:polished_blackstone_pressure_plate"}
+WEIGHTED_PRESSURE_PLATES = variate(WEIGHTED_PRESSURE_PLATE_TYPES,
+                                   "weighted_pressure_plate")
+PRESSURE_PLATES = WOODY_PRESSURE_PLATES | STONE_PRESSURE_PLATES \
+    | WEIGHTED_PRESSURE_PLATES
+
+SENSORS = {"minecraft:daylight_sensor", "minecraft:target", "minecraft:"} \
+    | SENSOR_RAILS | SWITCHES | PRESSURE_PLATES
+
+PISTON_BODIES = variate(PISTON_TYPES, "piston")
+PISTONS = {"minecraft:piston_head", "minecraft:moving_piston", } \
+    | PISTON_BODIES
+
+COMMAND_BLOCKS = variate(COMMAND_BLOCK_TYPES, "command_block")
+COMMAND_ONLY_ACTUATORS = {"minecraft:structure_block", } | COMMAND_BLOCKS
+ACTUATORS = {"minecraft:bell", "minecraft:dispenser", "minecraft:dragon_head",
+             "minecraft:dropper", "minecraft:hopper", "minecraft:note_block",
+             "minecraft:tnt", "minecraft:trapped_chest",
+             "minecraft:tripwire_hook"} \
+    | PISTONS | ENTRYWAYS | ACTUATOR_RAILS | COMMAND_ONLY_ACTUATORS
+WIRING = {"minecraft:redstone_wire", "minecraft:redstone_torch",
+          "minecraft:repeater", "minecraft:comparator"}
+REDSTONE = SENSORS | ACTUATORS | WIRING
+
+SLIMELIKES = {"minecraft:slime_block", "minecraft:honey_block", }
+
+FLOOR_HEADS = variate(HEAD_TYPES,  "head")
+WALL_HEADS = variate(HEAD_TYPES, "wall_head")
+HEADS = FLOOR_HEADS | WALL_HEADS
+
+CREATIVE_ONLY = {"minecraft:player_head", "minecraft:player_wall_head",
+                 "minecraft:petrified_oak_slab", }
+COMMANDS_ONLY = {"minecraft:barrier", "minecraft:"}
+
+FALLING_BLOCKS = {"minecraft:dragon_egg", }\
+    | ANVILS | CONCRETE_POWDERS | GRANULARS
+
+WOOD_BLOCKS = TRUNKS | WOOD_BUTTONS | WOOD_ENTRYWAYS | WOOD_FENCES \
+    | WOOD_PLANKS | WOOD_PRESSURE_PLATES | WOOD_SLABS | WOOD_STAIRS \
+    | WOOD_SIGNS
+FUNGUS_BLOCKS = FUNGUS_GROWTH_BLOCKS | FUNGUS_BUTTONS | FUNGUS_ENTRYWAYS \
+    | FUNGUS_FENCES | FUNGUS_PLANKS | FUNGUS_PRESSURE_PLATES | FUNGUS_SLABS \
+    | FUNGUS_STAIRS | FUNGUS_SIGNS
+WOODY_BLOCKS = WOOD_BLOCKS | FUNGUS_BLOCKS
+
+LAVA_FLAMMABLE = {"minecraft:composter", "minecraft:tnt",
+                  "minecraft:bookshelf", "minecraft:lectern",
+                  "minecraft:dead_bush"} \
+    | WOOD_BLOCKS | BEE_NESTS | FOLIAGE | WOOLS | CARPETS | BAMBOOS \
+    | TALL_FLOWERS | TRUE_GRASSES - {"minecraft:grass_block"}
+FLAMMABLE = {"minecraft:coal_block", "minecraft:target",
+             "minecraft:dried_kelp_block", "minecraft:hay_bale",
+             "minecraft:scaffolding", "minecraft:"} \
+    | LAVA_FLAMMABLE
+
+BLOCKS = ORES | MINERAL_BLOCKS | SOILS | STONES | FLUIDS | LIQUID_BASED \
+    | FIRES | LIFE | GLASS | SLABS | STAIRS | BARRIERS | ENTRYWAYS \
+    | STRUCTURE_BLOCKS | LIGHTS | INTERACTABLE_BLOCKS | REDSTONE | SLIMELIKES \
+    | HEADS | CREATIVE_ONLY | COMMANDS_ONLY
+
+INVENTORY_BLOCKS = {"minecraft:barrel",
+                    "minecraft:hopper", } | CHESTS | SHULKER_BOXES
+
+CLIMBABLE = {"minecraft:ladder", "minecraft:scaffolding", } | VINES
 
 # ================================================= grouped by obtrusiveness
 
-INVISIBLE = AIR + ("minecraft:barrier", "minecraft:structure_void")
+INVISIBLE = AIRS | {"minecraft:barrier", "minecraft:structure_void"}
 
 # filter skylight
-FILTERING = (
-    (
-        "minecraft:water",
-        "minecraft:bubble_column",
-        "minecraft:ice",
-        "minecraft:frosted_ice",
-        "minecraft:cobweb",
-        "minecraft:slime_block",
-        "minecraft:honey_block",
-        "minecraft:spawner",
-        "minecraft:lava",
-        "minecraft:beacon",
-        "minecraft:end_gateway",
-        "minecraft:chorus_plant",
-        "minecraft:chorus_flower",
-    )
-    + LEAVES
-    + SHULKERBOXES
-)
+FILTERING = {"minecraft:bubble_column",
+             "minecraft:ice", "minecraft:frosted_ice",
+             "minecraft:cobweb",
+             "minecraft:slime_block", "minecraft:honey_block",
+             "minecraft:spawner", "minecraft:beacon",
+             "minecraft:end_gateway",
+             "minecraft:chorus_plant", "minecraft:chorus_flower", } \
+    | WATERS | LAVAS | LEAVES | SHULKER_BOXES
 
 # can be seen through easily
-UNOBTRUSIVE = (
-    (
-        "minecraft:ladder",
-        "minecraft:tripwire",
-        "minecraft:end_rod",
-        "minecraft:nether_portal",
-        "minecraft:iron_bars",
-        "minecraft:chain",
-        "minecraft:conduit",
-        "minecraft:lily_pad",
-        "minecraft:scaffolding",
-        "minecraft:snow",
-    )
-    + GLASS
-    + RAILS
-    + WIRING
-    + SWITCHES
-    + TORCHES
-    + SIGNS
-)
+UNOBTRUSIVE = {"minecraft:ladder", "minecraft:tripwire", "minecraft:end_rod",
+               "minecraft:nether_portal", "minecraft:iron_bars",
+               "minecraft:chain", "minecraft:conduit", "minecraft:lily_pad",
+               "minecraft:scaffolding", "minecraft:snow", } \
+    | GLASS | RAILS | WIRING | SWITCHES | TORCHES | SIGNS
 
 # can be seen through moderately
-OBTRUSIVE = (
-    (
-        "minecraft:bell",
-        "minecraft:brewing_stand",
-        "minecraft:cake",
-        "minecraft:campfire",
-        "minecraft:dragon_egg",
-        "minecraft:flower_pot",
-        "minecraft:lectern",
-        "turtle_egg",
-    )
-    + ANVILS
-    + HEADS
-    + PLANTS
-    + BEDS
-    + FENCES
-    + GATES
-    + SLABS
-)
+OBTRUSIVE = {"minecraft:bell", "minecraft:brewing_stand", "minecraft:cake",
+             "minecraft:flower_pot", "minecraft:lectern", } \
+    | ANVILS | HEADS | PLANTS | BEDS | FENCES | GATES | SLABS | EGGS \
+    | CAMPFIRES
 
-TRANSPARENT = INVISIBLE + FILTERING + UNOBTRUSIVE + OBTRUSIVE
+TRANSPARENT = INVISIBLE | FILTERING | UNOBTRUSIVE | OBTRUSIVE
 
 # all esle is considered opaque
 
@@ -938,27 +908,13 @@ TRANSPARENT = INVISIBLE + FILTERING + UNOBTRUSIVE + OBTRUSIVE
 # liberty was taken to move stained glass panes and various flowers
 # into the appropriate colour category
 
-MAPTRANSPARENT = (
-    (
-        "minecraft:redstone_lamp",
-        "minecraft:cake",
-        "minecraft:ladder",
-        "minecraft:tripwire",
-        "minecraft:flower_pot",
-        "minecraft:end_rod",
-        "minecraft:glass",
-        "minecraft:glass_pane",
-        "minecraft:nether_portal",
-        "minecraft:iron_bars",
-        "minecraft:chain",
-    )
-    + INVISIBLE
-    + WIRING
-    + RAILS
-    + SWITCHES
-    + HEADS
-    + TORCHES
-)
+MAPTRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
+                  "minecraft:ladder", "minecraft:tripwire",
+                  "minecraft:flower_pot", "minecraft:end_rod",
+                  "minecraft:glass", "minecraft:glass_pane",
+                  "minecraft:nether_portal", "minecraft:iron_bars",
+                  "minecraft:chain", } \
+    | INVISIBLE | WIRING | RAILS | SWITCHES | HEADS | TORCHES
 
 # base map colours
 # WARNING: all non-transparent blocks are listed individually here again
@@ -1651,7 +1607,8 @@ PALETTE = {
         "minecraft:stripped_crimson_stem",
         "minecraft:crimson_trapdoor",
     ),
-    0x5C191D: ("minecraft:crimson_hyphae", "minecraft:stripped_crimson_hyphae"),
+    0x5C191D: ("minecraft:crimson_hyphae",
+               "minecraft:stripped_crimson_hyphae"),
     0x167E86: ("minecraft:warped_nylium",),
     0x3A8E8C: (
         "minecraft:warped_fence",
@@ -1913,10 +1870,9 @@ else:
     }  # colour codes not printed
 
 INVENTORYDIMENSIONS = {
-    (9, 3): ("minecraft:barrel", "minecraft:chest", "minecraft:trapped_chest")
-    + SHULKERBOXES,
-    (3, 3): ("minecraft:dispenser", "minecraft:dropper"),
-    (5, 1): ("minecraft:hopper", "minecraft:brewing_stand"),
+    (9, 3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
+    (3, 3): {"minecraft:dispenser", "minecraft:dropper", },
+    (5, 1): {"minecraft:hopper", "minecraft:brewing_stand", },
     (3, 1): FURNACES,
 }
 INVENTORYLOOKUP = {}
