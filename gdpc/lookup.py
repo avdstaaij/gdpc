@@ -1,13 +1,12 @@
 #! /usr/bin/python3
 """### Store lists of various information on blocks, biomes and more."""
 
-# __all__ = []  # everything is available for import
-__version__ = "v5.1_dev"
-
-from typing import Set
 import os
 import sys
-from .toolbox import isSequence
+from typing import Set
+
+# __all__ = []  # everything is available for import
+__version__ = "v5.1_dev"
 
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs
@@ -115,21 +114,31 @@ VECTOR2AXIS = dict([(val, key) for key, val in AXIS2VECTOR.items()])
 
 
 def variate(variations, extensions=None, isprefix=False,
-            namespace="minecraft:", separator="_", ns_separator=":") -> set:
-    """Generate block variations.
+            namespace="minecraft", separator="_", ns_separator=":") -> set:
+    """**Generate block variations**.
 
     TODO: documentation
     TODO: refactor to take optional suffix and prefix, replace named types
     """
-    if not isSequence(variations):
+
+    def is_iterable(iterable):
+        """**Determine whether iterable is an iterable**."""
+        try:
+            _ = iter(iterable)
+            return True
+        except TypeError:
+            return False
+
+    if not is_iterable(variations):
         # TODO: improve error message
         raise ValueError()
     joined = None
+    combinations = set()
     if extensions is None:
         joined = variations
     elif isinstance(extensions, str):
         combinations = {(v, extensions) for v in variations}
-    elif isSequence(extensions):
+    elif is_iterable(extensions):
         combinations = {(v, e) for v in variations for e in extensions}
     if isprefix:
         combinations = {(e, v) for v, e in combinations}
@@ -141,7 +150,13 @@ def variate(variations, extensions=None, isprefix=False,
         separator = ""
 
     if joined is None:
-        joined = {separator.join(c) for c in combinations}
+        joined = set()
+        for c in combinations:
+            if None in c:
+                temp = list(c)
+                temp.remove(None)
+                c = tuple(temp)
+            joined.add(separator.join(c))
     return {f"{namespace}{ns_separator}{j}" for j in joined}
 
 
@@ -265,12 +280,12 @@ WART_TYPES = {"nether", "warped", }
 FUNGUS_TYPES = {"crimson", "warped", }
 FUNGUS_VINE_TYPES = {"weeping", "twisting", }
 
-TULIP_TYPES = {"red", "orange", "white", "pink"}
+TULIP_TYPES = {"red", "orange", "white", "pink", }
 SMALL_FLOWER_TYPES = {"dandelion", "poppy", "blue_orchid", "allium",
                       "azure_bluet", "oxeye_daisy", "cornflower",
-                      "lily_of_the_valley", "wither_rose"} \
+                      "lily_of_the_valley", "wither_rose", } \
     | variate(TULIP_TYPES, "tulip", namespace=None)
-TALL_FLOWER_TYPES = {"sunflower", "lilac", "rose_bush", "peony"}
+TALL_FLOWER_TYPES = {"sunflower", "lilac", "rose_bush", "peony", }
 
 LIVE_CORAL_TYPES = set(CORAL_SHADES) - {"dead"}
 DEAD_CORAL_TYPES = variate(LIVE_CORAL_TYPES, "dead",
@@ -298,11 +313,12 @@ PURPUR_TYPES = {"block", "pillar", }
 
 ANVIL_TYPES = {None, "chipped", "damaged", }
 CHEST_TYPES = {None, "trapped", "end", }
-CAULDRON_TYPES = {None, "lave", "powder_snow", "water", }
+CAULDRON_TYPES = {None, "lava", "powder_snow", "water", }
 
 SPONGE_TYPES = {None, "wet", }
-HEAD_TYPES = {"skeleton", "wither_skeleton", "zombie", "player", "creeper",
-              "dragon", }
+SKULL_TYPES = {"skeleton", "wither_skeleton", }
+HEAD_TYPES = {"zombie", "player", "creeper", "dragon", }
+CRANIUM_TYPES = SKULL_TYPES | HEAD_TYPES
 
 WEIGHTED_PRESSURE_PLATE_TYPES = {"heavy", "light", }
 SENSOR_RAIL_TYPES = {"detector", }
@@ -374,7 +390,7 @@ COBBLESTONES = variate(COBBLESTONE_TYPES, "cobblestone")
 INFESTED = variate(STONE_TYPES | NAMED_STONE_BRICK_TYPES, "infested",
                    isprefix=True)
 RAW_SANDSTONES = variate(SAND_TYPES, "sandstone")
-TERRACOTTAS = {{None, } | set(DYE_COLORS), "terracotta"}
+TERRACOTTAS = variate({None, } | set(DYE_COLORS), "terracotta")
 OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIANS | COBBLESTONES \
     | INFESTED | RAW_SANDSTONES | TERRACOTTAS
 
@@ -558,7 +574,7 @@ CARPETS = variate(DYE_COLORS, "carpet")
 
 STAINED_GLASS_BLOCKS = variate(DYE_COLORS, "stained_glass")
 GLASS_BLOCKS = {"minecraft:glass", } | STAINED_GLASS_BLOCKS
-STAINED_GLASS_PANES = variate(DYE_COLORS, "stained_glass_panes")
+STAINED_GLASS_PANES = variate(DYE_COLORS, "stained_glass_pane")
 GLASS_PANES = {"minecraft:glass_pane", } | STAINED_GLASS_PANES
 STAINED_GLASS = STAINED_GLASS_BLOCKS | STAINED_GLASS_PANES
 PLAIN_GLASS = {"minecraft:glass", "minecraft:glass_pane", }
@@ -584,7 +600,7 @@ PRISMARINE_SLABS = {"minecraft:prismarine_brick_slab", } \
 NETHER_BRICK_SLABS = variate(NETHER_BRICK_TYPES, "nether_brick_slab")
 QUARTZ_SLABS = variate(QUARTZ_TYPES, "quartz_slab")
 BLACKSTONE_SLABS = {"minecraft:blackstone_slab", } \
-    | variate(NAMED_POLISHED_BLACKSTONE_TYPES, "_slab")
+    | variate(NAMED_POLISHED_BLACKSTONE_TYPES, "slab")
 OVERWORLD_SLABS = {"minecraft:brick_slab", }
 NETHER_SLABS = NETHER_BRICK_SLABS | QUARTZ_SLABS | BLACKSTONE_SLABS
 END_SLABS = {"minecraft:end_stone_brick_slab", "minecraft:purpur_slab", }
@@ -608,7 +624,7 @@ PRISMARINE_STAIRS = {"minecraft:prismarine_brick_stairs", } \
 NETHER_BRICK_STAIRS = variate(NETHER_BRICK_TYPES, "nether_brick_stairs")
 QUARTZ_STAIRS = variate(QUARTZ_TYPES, "quartz_stairs")
 BLACKSTONE_STAIRS = {"minecraft:blackstone_stairs", } \
-    | variate(NAMED_POLISHED_BLACKSTONE_TYPES, "_stairs")
+    | variate(NAMED_POLISHED_BLACKSTONE_TYPES, "stairs")
 OVERWORLD_STAIRS = {"minecraft:brick_stairs", }
 NETHER_STAIRS = NETHER_BRICK_STAIRS | QUARTZ_STAIRS | BLACKSTONE_STAIRS
 END_STAIRS = {"minecraft:end_stone_brick_stairs", "minecraft:purpur_stairs", }
@@ -712,9 +728,9 @@ PRISMARINES = {"minecraft:prismarine_bricks", } \
 POLISHED_BLACKSTONES = {"minecraft:polished_blackstone",
                         "minecraft_chiseled_polished_blackstone"} \
     | POLISHED_BLACKSTONE_BRICKS
-QUARTZES = variate("minecraft:smooth_quartz", "minecraft_chiseled quartz",
-                   "minecraft:quartz_block", "minecraft_quartz_brick",
-                   "minecraft:quartz_pillar")
+QUARTZES = {"minecraft:smooth_quartz", "minecraft:chiseled_quartz",
+            "minecraft:quartz_block", "minecraft:quartz_brick",
+            "minecraft:quartz_pillar", }
 PURPURS = variate(PURPUR_TYPES, "purpur", isprefix=True)
 
 OVERWORLD_STRUCTURE_BLOCKS = {"minecraft:hay_bale", "minecraft:bookshelf",
@@ -748,7 +764,8 @@ WOOD_SIGNS = WOOD_FLOOR_SIGNS | WOOD_WALL_SIGNS
 FUNGUS_SIGNS = FUNGUS_FLOOR_SIGNS | FUNGUS_WALL_SIGNS
 SIGNS = FLOOR_SIGNS | WALL_SIGNS
 
-CAULDRONS = variate(CAULDRON_TYPES, "cauldron")
+# 1.17 NOTE: CAULDRONS = variate(CAULDRON_TYPES, "cauldron")
+CAULDRONS = {"minecraft:cauldron", }
 FURNACES = {"minecraft:blast_furnace", "minecraft:furnace",
             "minecraft:smoker", }
 ANVILS = variate(ANVIL_TYPES, "anvil")
@@ -812,7 +829,7 @@ WEIGHTED_PRESSURE_PLATES = variate(WEIGHTED_PRESSURE_PLATE_TYPES,
 PRESSURE_PLATES = WOODY_PRESSURE_PLATES | STONE_PRESSURE_PLATES \
     | WEIGHTED_PRESSURE_PLATES
 
-SENSORS = {"minecraft:daylight_sensor", "minecraft:target", "minecraft:"} \
+SENSORS = {"minecraft:daylight_detector", "minecraft:target", "minecraft:"} \
     | SENSOR_RAILS | SWITCHES | PRESSURE_PLATES
 
 PISTON_BODIES = variate(PISTON_TYPES, "piston")
@@ -832,9 +849,15 @@ REDSTONE = SENSORS | ACTUATORS | WIRING
 
 SLIMELIKES = {"minecraft:slime_block", "minecraft:honey_block", }
 
+FLOOR_SKULLS = variate(SKULL_TYPES,  "skull")
+WALL_SKULLS = variate(SKULL_TYPES, "wall_skull")
+SKULLS = FLOOR_SKULLS | WALL_SKULLS
 FLOOR_HEADS = variate(HEAD_TYPES,  "head")
 WALL_HEADS = variate(HEAD_TYPES, "wall_head")
 HEADS = FLOOR_HEADS | WALL_HEADS
+FLOOR_CRANIUMS = FLOOR_SKULLS | FLOOR_HEADS
+WALL_CRANIUMS = WALL_SKULLS | WALL_HEADS
+CRANIUMS = FLOOR_CRANIUMS | WALL_CRANIUMS
 
 CREATIVE_ONLY = {"minecraft:player_head", "minecraft:player_wall_head",
                  "minecraft:petrified_oak_slab", }
@@ -861,6 +884,9 @@ FLAMMABLE = {"minecraft:coal_block", "minecraft:target",
              "minecraft:scaffolding", "minecraft:"} \
     | LAVA_FLAMMABLE
 
+
+# FIXME: missing: BEDS, GLAZED_TERRACOTTAS, BANNERS, CARPETS,
+#           COBBLESTONE_STAIRS, WOOLS, POLISHED_IGNEOUS_SLABS, ...
 BLOCKS = ORES | MINERAL_BLOCKS | SOILS | STONES | FLUIDS | LIQUID_BASED \
     | FIRES | LIFE | GLASS | SLABS | STAIRS | BARRIERS | ENTRYWAYS \
     | STRUCTURE_BLOCKS | LIGHTS | INTERACTABLE_BLOCKS | REDSTONE | SLIMELIKES \
@@ -1627,9 +1653,9 @@ PALETTE = {
     0x14B485: ("minecraft:warped_wart_block",),
 }
 PALETTELOOKUP = {}
-for hex, blocks in PALETTE.items():
+for hexval, blocks in PALETTE.items():
     for block in blocks:
-        PALETTELOOKUP[block] = hex
+        PALETTELOOKUP[block] = hexval
 
 
 # ========================================================= biome-related
@@ -1881,53 +1907,3 @@ for dimensions, blocks in INVENTORYDIMENSIONS.items():
         INVENTORYLOOKUP[block] = dimensions
 
 # version checking
-
-
-def closestVersion(version):
-    """Retrieve next-best version code to given version code."""
-    if version in VERSIONS:
-        return version
-    for v in sorted(VERSIONS.keys(), reverse=True):
-        if version - v >= 0:
-            return v
-    return 0
-
-
-def checkVersion():
-    """Retrieve Minecraft version and check compatibility."""
-    from .worldLoader import WorldSlice
-
-    slice = WorldSlice(0, 0, 1, 1)  # single-chunk slice
-    current = int(slice.nbtfile["Chunks"][0]["DataVersion"].value)
-    closestname = "Unknown"
-    # check compatibility
-    if current not in VERSIONS or VERSIONS[SUPPORTS] not in VERSIONS[current]:
-        closest = closestVersion(current)
-        closestname = VERSIONS[closest]
-        closestname += " snapshot" if current > closest else ""
-        if closest > SUPPORTS:
-            print(
-                f"{TCOLORS['orange']}WARNING: You are using a newer "
-                "version of Minecraft then GDPC supports!\n"
-                f"\tSupports: {VERSIONS[SUPPORTS]} "
-                f"Detected: {closestname}{TCOLORS['CLR']}"
-            )
-        elif closest < SUPPORTS:
-            print(
-                f"{TCOLORS['orange']}WARNING: You are using an older "
-                "version of Minecraft then GDPC supports!\n"
-                f"\tSupports: {VERSIONS[SUPPORTS]} "
-                f"Detected: {closestname}{TCOLORS['CLR']}"
-            )
-        else:
-            raise ValueError(
-                f"{TCOLORS['red']}Invalid supported version: "
-                f"SUPPORTS = {current}!{TCOLORS['CLR']}"
-            )
-    else:
-        closestname = VERSIONS[current]
-
-    return (current, closestname)
-
-
-CURRENTV, CURRENTVNAME = checkVersion()

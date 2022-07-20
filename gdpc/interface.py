@@ -7,6 +7,17 @@ This module contains functions to:
 * Get the block ID at a particular coordinate
 * Place blocks in the world
 """
+
+from collections import OrderedDict
+from random import choice
+
+import numpy as np
+
+from . import direct_interface as di
+from .lookup import TCOLORS
+from .toolbox import is_sequence, normalizeCoordinates
+from .worldLoader import WorldSlice
+
 __all__ = ['Interface', 'runCommand',
            'setBuildArea', 'requestBuildArea', 'requestPlayerArea',
            'makeGlobalSlice', 'getBlock', 'placeBlock',
@@ -17,29 +28,6 @@ __all__ = ['Interface', 'runCommand',
 
 __author__ = "Blinkenlights"
 __version__ = "v5.0"
-
-from collections import OrderedDict
-from random import choice
-
-import numpy as np
-
-from . import direct_interface as di
-from .lookup import TCOLORS
-from .worldLoader import WorldSlice
-
-
-def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
-    """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
-    # if 2D coords are provided reshape to 3D coords
-    if y2 is None or z2 is None:
-        x1, y1, z1, x2, y2, z2 = x1, 0, y1, z1, 255, x2
-    if x1 > x2:
-        x1, x2 = x2, x1
-    if y1 > y2:
-        y1, y2 = y2, y1
-    if z1 > z2:
-        z1, z2 = z2, z1
-    return x1, y1, z1, x2, y2, z2
 
 
 class OrderedByLookupDict(OrderedDict):
@@ -134,17 +122,16 @@ class Interface():
         Takes local coordinates, works with local and global coordinates
         """
         flags = doBlockUpdates, customFlags
-        from .toolbox import isSequence
         if isinstance(replace, str):
             if self.getBlock(x, y, z) != replace:
                 return '0'
-        elif isSequence(replace) and self.getBlock(x, y, z) not in replace:
+        elif is_sequence(replace) and self.getBlock(x, y, z) not in replace:
             return '0'
         elif (self.caching
               and isinstance(block, str) and block in self.getBlock(x, y, z)):
             return '0'
 
-        if not isinstance(block, str) and isSequence(block):
+        if not isinstance(block, str) and is_sequence(block):
             block = choice(block)
 
         if self.__buffering:
@@ -348,7 +335,7 @@ globalinterface = Interface()
 def makeGlobalSlice():
     """**Instantiate a global WorldSlice and refresh building area**."""
     global globalWorldSlice
-    x1, y1, z1, x2, y2, z2 = requestBuildArea()
+    x1, _, z1, x2, _, z2 = requestBuildArea()
     globalWorldSlice = WorldSlice(x1, z1, x2, z2)
     resetGlobalDecay()
     return globalWorldSlice

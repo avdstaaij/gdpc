@@ -6,13 +6,13 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
-__version__ = "v5.0"
+__version__ = "v5.1"
 
 from io import BytesIO
-from math import ceil, log2
 
 import nbt
 import numpy as np
+from numpy import ceil, log2
 
 from . import direct_interface as di
 from .bitarray import BitArray
