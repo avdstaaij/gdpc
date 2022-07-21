@@ -46,13 +46,18 @@ __version__ = "v5.1_dev"
 __date__ = "01 March 2022"
 
 from copy import deepcopy
+from dataclasses import dataclass
+from enum import Enum, auto
 from time import time
+from typing import List
+from random import randrange
 
 from gdpc import geometry as geo
 from gdpc import interface as intf
 from gdpc import lookup
 from gdpc.interface import globalinterface as gi
-from gdpc.toolbox import flood_search_3D, loop2d, loop3d
+from gdpc.toolbox import loop2d, loop3d
+from gdpc.interface_toolbox import flood_search_3D
 
 PREP_TIME = 120      # permitted preparation time in seconds (2 min)
 ALLOWED_TIME = 600  # permitted processing time in seconds (10 min)
@@ -98,13 +103,116 @@ RIVER_NAMES = ('Vindur', 'Slidr', 'Mjoll', 'Lifingr', 'Elyitsar', 'Moch',
 LAKE_NAMES = ()
 FOREST_LAKE_NAMES = ()
 
-waterways = {}
-waterbody_info = {}
-waterbody_names = {}
+waterways = dict()
+waterbody_info = dict()
+waterbody_names = dict()
 waterfalls = []
 
 # cave_entrances stores location of cave entrances
 cave_entrances = []
+
+
+class Dimension(Enum):
+    """Available dimensions."""
+    OVERWORLD = auto()
+    NETHER = auto()
+    END = auto()
+
+
+@dataclass
+class Position():
+    """Represents a location in the world."""
+    x: int = 0
+    y: int = 65
+    z: int = 0
+    dimension: Dimension = Dimension.OVERWORLD
+
+    def __add__(self, b):
+        if self.dimension != b.dimension:
+            raise NotImplementedError("Cannot add Positions "
+                                      "with different dimensions.")
+        return Position(self.x+b.x, self.y+b.y, self.z+b.z)
+
+    def __sub__(self, b):
+        if self.dimension != b.dimension:
+            raise NotImplementedError("Cannot subtract Positions "
+                                      "with different dimensions.")
+        return Position(self.x-b.x, self.y-b.y, self.z-b.z)
+
+
+@dataclass
+class EventType():
+    """Describes a type of Event."""
+    name: str
+    short: str
+    long: str
+
+
+EVENTS = {
+    "birth": EventType("{subj.name}'s birth", "{subj.short} was born",
+                       "{subj.long} was born in {obj}"),
+    "death": EventType("{subj.name}'s death", "{subj.short} has died",
+                       "{subj.long} has died of {obj}"),
+    "acquiral, unique": EventType("aquiral of {subj.name}",
+                                  "{obj.name} aquired {subj.name}",
+                                  "{subj.long} had been aquired by {obj.short}"
+                                  ),
+    "acquiral, gross": EventType("aquiral of {subj.name}",
+                                 "{obj.name} aquired {amount} {subj.name}",
+                                 "{amount} {subj.long} had been aquired by "
+                                 "{obj.short}"),
+    "starvation": EventType(*3*"starvation"),
+    "food": EventType(*3*"food"),
+}
+
+
+@dataclass
+class Event():
+    """Stores a specific event."""
+    date: int
+    subj: None
+    obj: None
+    text: EventType
+    amount: int = 1
+
+
+class Village():
+
+    def __init__(self, resources: dict, food=10, villagers=10):
+        self.resources = {k: (0, v) for k, v in resources.items()}
+        self.food = food
+        self.villagers = [Person()]
+        self.time = 0
+
+
+class Person():
+    """Represents an inhabitant."""
+    village: Village
+    name: str = None
+    position: Position = Position()
+    age: int = 0
+    history: List(Event) = []
+
+    def live(self):
+        event = None
+        if self.village.food < 1:
+            return self.die(EVENTS["starvation"])
+        elif self.village.food < len(self.village.people):
+            return self.forage()
+        # TODO: add more actions
+        return event
+
+    def die(self, reason: EventType):
+        event = Event(self.village.time,
+                      EVENTS[self.name], reason, EVENTS["death"])
+        self.history.append(event)
+        return event
+
+    def forage(self):
+        event = Event(self.village.time, EVENTS["food"], EVENTS[self.name],
+                      EVENTS['acquiral, gross'], randrange(0, 4))
+        self.history.append(event)
+        return event
 
 
 def setup_world():
