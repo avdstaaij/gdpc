@@ -76,6 +76,18 @@ def verifyPaletteBlocks():
                             "Please check you are running"
                             f" on Minecraft {VERSIONNAME}")
 
+    p = {v for nv in lookup.PALETTE.values() for v in nv} \
+        | lookup.MAPTRANSPARENT
+    b = lookup.BLOCKS
+    discrepancy = len(p-b) + len(b-p)
+    if discrepancy != 0:
+        raise TestException(f"{lookup.TCOLORS['orange']}"
+                            f"There is a discrepancy of {discrepancy} blocks "
+                            f"between BLOCKS and PALETTE:\n"
+                            f"{lookup.TCOLORS['gray']}Missing in BLOCKS:\n"
+                            f"{p-b}\n"
+                            f"Missing in PALETTE:\n{b-p}\n")
+
     print(f"{lookup.TCOLORS['green']}"
           f"All {counter} blocks successfully verified!")
 
@@ -458,11 +470,19 @@ def testBlocks():
             missing_set.add(test_block)
             continue
 
-    if len(missing_set) + len(test_set) > 0:
-        raise TestException("There was a discrepancy between "
-                            "the blocks provided and the blocks checked:\n"
-                            f"Missing:\t\n{missing_set}\n"
-                            f"Not found:\t\n{test_set}\n")
+    if len(missing_set) > 0:
+        raise TestException(f"{lookup.TCOLORS['orange']}"
+                            "There is a discrepancy between "
+                            "the blocks provided and the blocks checked:"
+                            f"{lookup.TCOLORS['gray']}\n"
+                            f"Missing from BLOCKS:\n{missing_set}\n"
+                            f"Not found in world:\t\n{test_set}\n")
+    elif len(test_set) > 0:
+        print(f"{lookup.TCOLORS['orange']}"
+              "The block test world is incomplete and should be updated by "
+              f"{len(test_set)} blocks:"
+              f"{lookup.TCOLORS['gray']}\n"
+              f"Not found in world:\t\n{test_set}\n")
 
     print("\tTesting blocks done.")
     print(f"{lookup.TCOLORS['green']}Block test complete!")
