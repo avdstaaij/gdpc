@@ -5,6 +5,8 @@ import os
 import sys
 from typing import Set
 
+from pyrsistent import v
+
 # __all__ = []  # everything is available for import
 __version__ = "v5.1_dev"
 
@@ -388,30 +390,30 @@ SOILS = OVERWORLD_SOILS | NETHER_SOILS | END_SOILS
 
 # stones
 IGNEOUS = variate(IGNEOUS_TYPES)
-OBSIDIANS = variate(OBSIDIAN_TYPES, "obsidian")
+OBSIDIAN_BLOCKS = variate(OBSIDIAN_TYPES, "obsidian")
 COBBLESTONES = variate(COBBLESTONE_TYPES, "cobblestone")
 INFESTED = variate(STONE_TYPES | NAMED_STONE_BRICK_TYPES, "infested",
                    isprefix=True)
 RAW_SANDSTONES = variate(SAND_TYPES, "sandstone")
 TERRACOTTAS = variate({None, } | set(DYE_COLORS), "terracotta")
-OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIANS | COBBLESTONES \
+OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIAN_BLOCKS | COBBLESTONES \
     | INFESTED | RAW_SANDSTONES | TERRACOTTAS
 
-BASALTS = variate(BASALT_TYPES, "basalt")
+BASALT_BLOCKS = variate(BASALT_TYPES, "basalt")
 NETHER_STONES = {"minecraft:blackstone", "minecraft:ancient_debris", }
 
 END_STONES = {"minecraft:end_stone", }
 
-VOLCANIC = {"minecraft:magma_block", } | BASALTS | OBSIDIANS
+VOLCANIC = {"minecraft:magma_block", } | BASALT_BLOCKS | OBSIDIAN_BLOCKS
 STONES = {"minecraft:bedrock", } | VOLCANIC \
     | OVERWORLD_STONES | NETHER_STONES | END_STONES
 
 # liquids
 # 1.17 NOTE: "minecraft:powder_snow",
 SNOWS = {"minecraft:snow", "minecraft:snow_block", }
-ICES = variate(ICE_TYPES, "ice")
+ICE_BLOCKS = variate(ICE_TYPES, "ice")
 WATERS = variate(LIQUID_TYPES, "water")
-WATER_BASED = {"minecraft:bubble_column", } | SNOWS | ICES | WATERS
+WATER_BASED = {"minecraft:bubble_column", } | SNOWS | ICE_BLOCKS | WATERS
 LAVAS = variate(LIQUID_TYPES, "lava")
 LAVA_BASED = VOLCANIC | LAVAS
 LIQUIDS = WATERS | LAVAS
@@ -743,7 +745,7 @@ REGULAR_SANDSTONES = variate(SANDSTONE_TYPES, "sandstone")
 RED_SANDSTONES = variate(SANDSTONE_TYPES, "red_sandstone")
 SANDSTONES = REGULAR_SANDSTONES | RED_SANDSTONES
 
-PRISMARINES = {"minecraft:prismarine_bricks", } \
+PRISMARINE_BLOCKS = {"minecraft:prismarine_bricks", } \
     | variate(PRISMARINE_TYPES, "prismarine")
 
 POLISHED_BLACKSTONES = {"minecraft:polished_blackstone",
@@ -752,7 +754,7 @@ POLISHED_BLACKSTONES = {"minecraft:polished_blackstone",
 QUARTZES = {"minecraft:smooth_quartz", "minecraft:chiseled_quartz_block",
             "minecraft:quartz_block", "minecraft:quartz_bricks",
             "minecraft:quartz_pillar", }
-PURPURS = variate(PURPUR_TYPES, "purpur", isprefix=True)
+PURPUR_BLOCKS = variate(PURPUR_TYPES, "purpur", isprefix=True)
 
 SHULKER_BOXES = variate({None, } | set(DYE_COLORS), "shulker_box")
 DYEABLE_BLOCKS = WOOLS | CARPETS | BEDS | BANNERS | STAINED_GLASSES \
@@ -764,10 +766,10 @@ ORNAMENTAL_BLOCKS = {"minecraft:bookshelf", "minecraft:hay_block",
     | DYEABLE_BLOCKS | GLASSES | SLABS | STAIRS | BARRIERS
 
 OVERWORLD_STRUCTURE_BLOCKS = ORNAMENTAL_BLOCKS | WOOD_PLANKS | SANDSTONES \
-    | OVERWORLD_BRICKS | POLISHED_IGNEOUS_BLOCKS | PRISMARINES
+    | OVERWORLD_BRICKS | POLISHED_IGNEOUS_BLOCKS | PRISMARINE_BLOCKS
 NETHER_STRUCTURE_BLOCKS = FUNGUS_PLANKS | NETHER_DIMENSION_BRICKS \
     | POLISHED_BLACKSTONES | QUARTZES
-END_STRUCTURE_BLOCKS = END_BRICKS | PURPURS
+END_STRUCTURE_BLOCKS = END_BRICKS | PURPUR_BLOCKS
 STRUCTURE_BLOCKS = OVERWORLD_STRUCTURE_BLOCKS | NETHER_STRUCTURE_BLOCKS \
     | END_STRUCTURE_BLOCKS
 
@@ -815,7 +817,7 @@ CAMPFIRES = variate(FIRE_TYPES, "campfire")
 OVERWORLD_PORTALS: Set[str] = set()
 OVERWORLD_PORTAL_BLOCKS = OVERWORLD_PORTALS
 NETHER_PORTALS = {"minecraft:nether_portal", }
-NETHER_PORTAL_BLOCKS = NETHER_PORTALS | OBSIDIANS
+NETHER_PORTAL_BLOCKS = NETHER_PORTALS | OBSIDIAN_BLOCKS
 END_PORTALS = {"minecraft:end_gateway", "minecraft:end_portal", }
 END_PORTAL_BLOCKS = {"minecraft:end_portal_frame", "minecraft:bedrock", } \
     | END_PORTALS
@@ -923,6 +925,208 @@ BLOCKS = ORES | MINERAL_BLOCKS | SOILS | STONES | FLUIDS | LIQUID_BASED \
 INVENTORY_BLOCKS = {"minecraft:barrel",
                     "minecraft:hopper", } | CHESTS | SHULKER_BOXES
 
+
+# ================================================= grouped by structure
+# underwater
+COLD_OCEAN_RUIN_BLOCKS = {"minecraft:gravel", "minecraft:prismarine",
+                          "minecraft:magma_block", "minecraft:sand",
+                          "minecraft:chest", "minecraft:polished_granite",
+                          "minecraft:purple_glazed_terracotta",
+                          "minecraft:sea_lantern", "minecraft:bricks",
+                          "minecraft:spruce_planks",
+                          "minecraft:dark_oak_planks",
+                          "minecraft:obsidian", } \
+    | STONE_BRICKS
+WARM_OCEAN_RUIN_BLOCKS = {"minecraft:sand", "minecraft:polished_granite",
+                          "minecraft:magma_block", } \
+    | REGULAR_SANDSTONES
+OCEAN_RUINS_BLOCKS = WARM_OCEAN_RUIN_BLOCKS | COLD_OCEAN_RUIN_BLOCKS
+SHIPWRECK_BLOCKS = {"minecraft:chest", } \
+    | BARKED_LOGS | WOOD_PLANKS | WOOD_FENCES | WOOD_SLABS | WOOD_STAIRS \
+    | WOOD_TRAPDOORS | WOOD_DOORS
+OCEAN_MONUMENT_BLOCKS = {"minecraft:gold_block", "minecraft:sea_lantern",
+                         "minecraft:wet_sponge"} \
+    | KELPS | SEAGRASSES | PRISMARINE_BLOCKS | WATERS
+ICEBERG_BLOCKS = ICE_BLOCKS | SNOWS - {"minecraft:frosted_ice", }
+
+# underground
+REGULAR_MINESHAFT_BLOCKS = {"minecraft:rail",
+                            "minecraft:torch", "minecraft:cobweb",
+                            "minecraft:spawner", "minecraft:chain",
+                            "minecraft:oak_log", "minecraft:oak_fence",
+                            "miencraft:oak_planks", }
+BADLANDS_MINESHAFT_BLOCKS = {"minecraft:rail",
+                             "minecraft:torch", "minecraft:cobweb",
+                             "minecraft:spawner", "minecraft:chain",
+                             "minecraft:dark_oak_log",
+                             "minecraft:dark_oak_fence",
+                             "miencraft:dark_oak_planks", }
+MINESHAFT_BLOCKS = REGULAR_MINESHAFT_BLOCKS | BADLANDS_MINESHAFT_BLOCKS
+STRONGHOLD_BLOCKS = {"minecraft:spawner", "minecraft:end_portal_frame",
+                     "minecraft:end_portal_block", "minecraft:torch",
+                     "minecraft:oak_fence", "minecraft:chest",
+                     "minecraft:stone_brick_slab", "minecraft:cobblestone",
+                     "minecraft:stone_brick_stairs", "minecraft:oak_planks",
+                     "minecraft:ladder", "minecraft:smooth_stone_slab",
+                     "minecraft:stone_button", "miencraft:iron_door",
+                     "miencraft:oak_door", "minecraft:cobblestone_stairs",
+                     "minecraft:bookshelf", "minecraft:cobweb", } \
+    | STONE_BRICKS | INFESTED | WATERS | LAVAS
+BURIED_TREASURE_BLOCKS = {"minecraft:chest", }
+DUNGEON_BLOCKS = {"minecraft:chest", "mineraft:spawner", } | COBBLESTONES
+DESERT_WELL_BLOCKS = {"minecraft:sandstone", "minecraft:sandstone_slab", } \
+    | WATERS
+FOREST_ROCK_BLOCKS = {"minecraft:mossy_cobblestone", }
+OVERWORLD_FOSSIL_BLOCKS = {"minecraft:bone_block", "minecraft:coal_ore",
+                           "minecraft:diamond_ore", }
+
+# overground
+DESERT_PYRAMID_BLOCKS = {"minecraft:blue_terracotta", "minecraft:chest",
+                         "minecraft:orange_terracotta",
+                         "minecraft:sandstone_slab",
+                         "minecraft:sandstone_stairs",
+                         "minecraft:stone_pressure_plate",
+                         "minecraft:tnt", } \
+    | REGULAR_SANDSTONES
+IGLOO_BLOCKS =
+JUNGLE_TEMPLE_BLOCKS = {"minecraft:chest", "minecraft:chiseled_stone_bricks",
+                        "minecraft:cobblestone_stairs", "minecraft:dispenser",
+                        "minecraft:lever", "minecraft:repeater",
+                        "minecraft:redstone_wire", "minecraft:sticky_piston",
+                        "minecraft:tripwire", "minecraft:tripwire_hook",
+                        "minecraft_vines", } \
+    | COBBLESTONES
+PILLAGER_OUTPOST_BLOCKS =
+SWAMP_HUT = {"minecraft:crafting_table", "minecraft:flower_pot",
+             "minecraft:oak_fence", "minecraft:oak_log",
+             "minecraft:spruce_planks", "minecraft:spruce_stairs", } \
+    | CAULDRONS
+
+PLAINS_VILLAGE_BLOCKS =
+DESERT_VILLAGE_BLOCKS =
+SAVANNA_VILLAGE_BLOCKS =
+TAIGA_VILLAGE_BLOCKS =
+SNOWY_VILLAGE_BLOCKS =
+VILLAGE_BLOCKS = PLAINS_VILLAGE_BLOCKS | DESERT_VILLAGE_BLOCKS \
+    | SAVANNA_VILLAGE_BLOCKS | TAIGA_VILLAGE_BLOCKS | SNOWY_VILLAGE_BLOCKS
+
+WOODLAND_MANSION_BLOCKS =
+
+# mixed
+OVERWORLD_RUINED_PORTAL_BLOCKS = {"minecraft:gold_block",
+                                  "minecraft:chest",
+                                  "minecraft:magma_block",
+                                  "minecraft:netherrack",
+                                  "minecraft:iron_bars",
+                                  "minecraft:stone",
+                                  } \
+    | OBSIDIAN_BLOCKS | LAVAS | STONE_SLABS \
+    | STONE_BRICKS | STONE_BRICK_SLABS | STONE_BRICK_STAIRS | STONE_BRICK_WALLS
+
+
+REGULAR_OVERWORLD_STRUCTURE_BLOCKS = MINESHAFT_BLOCKS | STRONGHOLD_BLOCKS \
+    | OVERWORLD_RUINED_PORTAL_BLOCKS | DUNGEON_BLOCKS
+BEACHES_STRUCTURE_BLOCKS = BURIED_TREASURE_BLOCKS
+DARK_FOREST_STRUCTURE_BLOCKS = WOODLAND_MANSION_BLOCKS
+DESERT_STRUCTURE_BLOCKS = DESERT_PYRAMID_BLOCKS | DESERT_VILLAGE_BLOCKS \
+    | DESERT_WELL_BLOCKS | PILLAGER_OUTPOST_BLOCKS | OVERWORLD_FOSSIL_BLOCKS
+JUNGLE_STRUCTURE_BLOCKS = JUNGLE_TEMPLE_BLOCKS
+FROZEN_OCEAN_STRUCTURE_BLOCKS = ICEBERG_BLOCKS
+OCEAN_STRUCTURE_BLOCKS = FROZEN_OCEAN_STRUCTURE_BLOCKS \
+    | OCEAN_RUINS_BLOCKS | SHIPWRECK_BLOCKS | OCEAN_MONUMENT_BLOCKS
+PLAINS_STRUCTURE_BLOCKS = PILLAGER_OUTPOST_BLOCKS | PLAINS_VILLAGE_BLOCKS
+SAVANNA_STRUCTURE_BLOCKS = PILLAGER_OUTPOST_BLOCKS | SAVANNA_VILLAGE_BLOCKS
+SNOWY_STRUCTURE_BLOCKS = SNOWY_VILLAGE_BLOCKS | IGLOO_BLOCKS \
+    | PILLAGER_OUTPOST_BLOCKS
+SWAMP_STRUCTURE_BLOCKS = SWAMP_HUT | OVERWORLD_FOSSIL_BLOCKS
+OLD_GROWTH_TAIGA_BLOCKS = FOREST_ROCK_BLOCKS
+TAIGA_STRUCTURE_BLOCKS = OLD_GROWTH_TAIGA_BLOCKS \
+    | PILLAGER_OUTPOST_BLOCKS | TAIGA_VILLAGE_BLOCKS
+OVERWORLD_GENERATED_STRUCTURE_BLOCKS = REGULAR_OVERWORLD_STRUCTURE_BLOCKS \
+    | BEACHES_STRUCTURE_BLOCKS | DARK_FOREST_STRUCTURE_BLOCKS \
+    | DESERT_STRUCTURE_BLOCKS | JUNGLE_STRUCTURE_BLOCKS \
+    | OCEAN_STRUCTURE_BLOCKS | PLAINS_STRUCTURE_BLOCKS \
+    | SAVANNA_STRUCTURE_BLOCKS | SNOWY_STRUCTURE_BLOCKS \
+    | SWAMP_STRUCTURE_BLOCKS | TAIGA_STRUCTURE_BLOCKS
+
+# nether
+NETHER_FORTRESS_BLOCKS = {"minecraft:nether_bricks",
+                          "minecraft:nether_brick_fence",
+                          "minecraft:nether_brick_stairs",
+                          "miencraft:soul_sand", "minecraft:nether_wart",
+                          "minecraft:chest", "minecraft:spawner", } \
+    | LAVAS
+BASTION_REMNANT_BLOCKS = {"minecraft:bgold_block",
+                          "minecraft:blackstone",
+                          "minecraft:blackstone_slab",
+                          "minecraft:blackstone_stairs",
+                          "minecraft:blackstone_wall",
+                          "minecraft:gilded_blackstone",
+                          "minecraft:polished_blackstone_brick_stairs",
+                          "minecraft:chiseled_polished_blackstone",
+                          "minecraft:chain",
+                          "minecraft:lantern",
+                          "minecraft:chest",
+                          "minecraft:glowstone",
+                          "minecraft:magma_block",
+                          "minecraft:nether_wart",
+                          "minecraft:netherrack",
+                          "minecraft:quartz",
+                          "minecraft:smooth_quartz",
+                          "minecraft:smooth_quartz_slab",
+                          "minecraft:soul_sand",
+                          "minecraft:spawner", } \
+    | BASALT_BLOCKS | POLISHED_BLACKSTONE_BRICKS | LAVAS
+NETHER_RUINED_PORTAL_BLOCKS = {"minecraft:gold_block",
+                               "minecraft:chest",
+                               "minecraft:magma_block",
+                               "minecraft:netherrack",
+                               "minecraft:chain",
+                               "minecraft:chiseled_polished_blackstone",
+                               "minecraft:polished_blackstone",
+                               "minecraft:polished_blackstone_stairs",
+                               "minecraft:polished_blackstone_brick_slab",
+                               "minecraft:polished_blackstone_brick_stairs",
+                               "minecraft:polished_blackstone_brick_wall", } \
+    | OBSIDIAN_BLOCKS | LAVAS | POLISHED_BLACKSTONE_BRICKS
+NETHER_FOSSIL_BLOCKS = {"minecraft:bone_block", }
+
+REGULAR_NETHER_STRUCTURE_BLOCKS = NETHER_FORTRESS_BLOCKS \
+    | NETHER_RUINED_PORTAL_BLOCKS
+NETHER_WASTES_STRUCTURE_BLOCKS = BASTION_REMNANT_BLOCKS
+CRIMSON_FOREST_STRUCTURE_BLOCKS = BASTION_REMNANT_BLOCKS
+WARPED_FOREST_STRUCTURE_BLOCKS = BASTION_REMNANT_BLOCKS
+SOUL_SAND_VALLEY_STRUCTURE_BLOCKS = BASTION_REMNANT_BLOCKS \
+    | NETHER_FOSSIL_BLOCKS
+NETHER_GENERATED_STRUCTURE_BLOCKS = REGULAR_NETHER_STRUCTURE_BLOCKS \
+    | NETHER_WASTES_STRUCTURE_BLOCKS | CRIMSON_FOREST_STRUCTURE_BLOCKS \
+    | WARPED_FOREST_STRUCTURE_BLOCKS | SOUL_SAND_VALLEY_STRUCTURE_BLOCKS
+
+# end
+END_CITY_BLOCKS = {"minecraft:chest", "minecraft:end_rod",
+                   "minecraft:end_stone_bricks",
+                   "minecraft:ender_chest",
+                   "minecraft:magenta_wall_banner",
+                   "minecraft:ladder",
+                   "miencraft:magenta_stained_glass",
+                   "minecraft:purpur_slab",
+                   "minecraft:purpur_stairs", } \
+    | PURPUR_BLOCKS
+END_SHIP_BLOCKS = {"minecraft:ender_dragon_wall_head",
+                   "minecraft:obsidian", } \
+    | END_CITY_BLOCKS \
+    - {"minecraft:magenta_wall_banner", "minecraft:ender_chest"}
+
+REGULAR_END_STRUCTURE_BLOCKS = END_CITY_BLOCKS | END_SHIP_BLOCKS
+END_GENERATED_STRUCTURE_BLOCKS = REGULAR_END_STRUCTURE_BLOCKS
+
+# groups
+RUINED_PORTAL_BLOCKS = OVERWORLD_RUINED_PORTAL_BLOCKS \
+    | NETHER_RUINED_PORTAL_BLOCKS
+FOSSIL_BLOCKS = OVERWORLD_FOSSIL_BLOCKS | NETHER_FOSSIL_BLOCKS
+GENERATED_STRUCTURE_BLOCKS = OVERWORLD_GENERATED_STRUCTURE_BLOCKS \
+    | NETHER_NATURAL_STRUCTURE_BLOCKS | END_GENERATED_STRUCTURE_BLOCKS
+
 # ================================================= grouped by obtrusiveness
 
 INVISIBLE = INVISIBLE_BLOCKS
@@ -1009,7 +1213,7 @@ PALETTE = {
         "minecraft:fire",
         "minecraft:redstone_block",
     } | LAVAS,
-    0xA0A0FF: ICES,
+    0xA0A0FF: ICE_BLOCKS,
     0xA7A7A7: {
         "minecraft:iron_block",
         "minecraft:iron_door",
@@ -1499,7 +1703,7 @@ PALETTE = {
         "minecraft:chiseled_polished_blackstone",
         "minecraft:gilded_blackstone",
         "minecraft:wither_rose",
-    } | BASALTS | POLISHED_BLACKSTONE_BRICKS,
+    } | BASALT_BLOCKS | POLISHED_BLACKSTONE_BRICKS,
     0xFAEE4D: (
         "minecraft:gold_block",
         "minecraft:light_weighted_pressure_plate",
