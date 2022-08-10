@@ -5,8 +5,6 @@ import os
 import sys
 from typing import Set
 
-from pyrsistent import v
-
 # __all__ = []  # everything is available for import
 __version__ = "v5.1_dev"
 
@@ -392,12 +390,14 @@ SOILS = OVERWORLD_SOILS | NETHER_SOILS | END_SOILS
 IGNEOUS = variate(IGNEOUS_TYPES)
 OBSIDIAN_BLOCKS = variate(OBSIDIAN_TYPES, "obsidian")
 COBBLESTONES = variate(COBBLESTONE_TYPES, "cobblestone")
-INFESTED = variate(STONE_TYPES | NAMED_STONE_BRICK_TYPES, "infested",
-                   isprefix=True)
+INFESTED_STONE_BRICKS = variate(
+    NAMED_STONE_BRICK_TYPES, "infested", isprefix=True)
+INFESTED = variate(STONE_TYPES, "infested", isprefix=True) \
+    | INFESTED_STONE_BRICKS
 RAW_SANDSTONES = variate(SAND_TYPES, "sandstone")
 TERRACOTTAS = variate({None, } | set(DYE_COLORS), "terracotta")
-OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIAN_BLOCKS | COBBLESTONES \
-    | INFESTED | RAW_SANDSTONES | TERRACOTTAS
+OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIAN_BLOCKS \
+    | COBBLESTONES | INFESTED | RAW_SANDSTONES | TERRACOTTAS
 
 BASALT_BLOCKS = variate(BASALT_TYPES, "basalt")
 NETHER_STONES = {"minecraft:blackstone", "minecraft:ancient_debris", }
@@ -833,11 +833,12 @@ BUTTONS = {"minecraft:stone_button", "minecraft:polished_blackstone_button"} \
 SWITCHES = {"minecraft:lever", } | BUTTONS
 
 # interaction has an immediate effect (no UI)
+FLOWER_POTS = {"minecraft:flower_pot", } |  # FIXME: add potted flowers
 USABLE_BLOCKS = {"minecraft:bell", "minecraft:cake", "minecraft:conduit",
-                 "minecraft:flower_pot", "minecraft:jukebox",
-                 "minecraft:lodestone", "minecraft:respawn_anchor",
-                 "minecraft:spawner", "minecraft:tnt", } \
-    | BEE_NESTS | CAMPFIRES | CAULDRONS | SWITCHES
+                 "minecraft:jukebox", "minecraft:lodestone",
+                 "minecraft:respawn_anchor", "minecraft:spawner",
+                 "minecraft:tnt", } \
+    | BEE_NESTS | CAMPFIRES | CAULDRONS | SWITCHES | FLOWER_POTS
 
 INTERACTABLE_BLOCKS = USABLE_BLOCKS | UI_BLOCKS
 
@@ -928,17 +929,23 @@ INVENTORY_BLOCKS = {"minecraft:barrel",
 
 # ================================================= grouped by structure
 # underwater
-COLD_OCEAN_RUIN_BLOCKS = {"minecraft:gravel", "minecraft:prismarine",
-                          "minecraft:magma_block", "minecraft:sand",
-                          "minecraft:chest", "minecraft:polished_granite",
+COLD_OCEAN_RUIN_BLOCKS = {"minecraft:gravel", "minecraft:sand",
+                          "minecraft:prismarine", "minecraft:polished_granite",
+                          "minecraft:sea_lantern", "minecraft:magma_block",
+                          "minecraft:chest",
                           "minecraft:purple_glazed_terracotta",
-                          "minecraft:sea_lantern", "minecraft:bricks",
+                          "minecraft:bricks",
                           "minecraft:spruce_planks",
                           "minecraft:dark_oak_planks",
                           "minecraft:obsidian", } \
     | STONE_BRICKS
-WARM_OCEAN_RUIN_BLOCKS = {"minecraft:sand", "minecraft:polished_granite",
-                          "minecraft:magma_block", } \
+WARM_OCEAN_RUIN_BLOCKS = {"minecraft:sand", "minecraft:gravel",
+                          "minecraft:polished_granite",
+                          "minecraft:polished_diorite",
+                          "minecraft:sea_lantern", "minecraft:magma_block",
+                          "minecraft:chest",
+                          "minecraft:light_blue_terracotta",
+                          "minecraft:sandstone_stairs", } \
     | REGULAR_SANDSTONES
 OCEAN_RUINS_BLOCKS = WARM_OCEAN_RUIN_BLOCKS | COLD_OCEAN_RUIN_BLOCKS
 SHIPWRECK_BLOCKS = {"minecraft:chest", } \
@@ -954,13 +961,13 @@ REGULAR_MINESHAFT_BLOCKS = {"minecraft:rail",
                             "minecraft:torch", "minecraft:cobweb",
                             "minecraft:spawner", "minecraft:chain",
                             "minecraft:oak_log", "minecraft:oak_fence",
-                            "miencraft:oak_planks", }
+                            "minecraft:oak_planks", }
 BADLANDS_MINESHAFT_BLOCKS = {"minecraft:rail",
                              "minecraft:torch", "minecraft:cobweb",
                              "minecraft:spawner", "minecraft:chain",
                              "minecraft:dark_oak_log",
                              "minecraft:dark_oak_fence",
-                             "miencraft:dark_oak_planks", }
+                             "minecraft:dark_oak_planks", }
 MINESHAFT_BLOCKS = REGULAR_MINESHAFT_BLOCKS | BADLANDS_MINESHAFT_BLOCKS
 STRONGHOLD_BLOCKS = {"minecraft:spawner", "minecraft:end_portal_frame",
                      "minecraft:end_portal_block", "minecraft:torch",
@@ -968,8 +975,8 @@ STRONGHOLD_BLOCKS = {"minecraft:spawner", "minecraft:end_portal_frame",
                      "minecraft:stone_brick_slab", "minecraft:cobblestone",
                      "minecraft:stone_brick_stairs", "minecraft:oak_planks",
                      "minecraft:ladder", "minecraft:smooth_stone_slab",
-                     "minecraft:stone_button", "miencraft:iron_door",
-                     "miencraft:oak_door", "minecraft:cobblestone_stairs",
+                     "minecraft:stone_button", "minecraft:iron_door",
+                     "minecraft:oak_door", "minecraft:cobblestone_stairs",
                      "minecraft:bookshelf", "minecraft:cobweb", } \
     | STONE_BRICKS | INFESTED | WATERS | LAVAS
 BURIED_TREASURE_BLOCKS = {"minecraft:chest", }
@@ -988,16 +995,46 @@ DESERT_PYRAMID_BLOCKS = {"minecraft:blue_terracotta", "minecraft:chest",
                          "minecraft:stone_pressure_plate",
                          "minecraft:tnt", } \
     | REGULAR_SANDSTONES
-IGLOO_BLOCKS =
+IGLOO_LAB_BLOCKS = {"minecraft:oak_trapdoor", "minecraft:ladder",
+                    "minecraft:torch", "minecraft:stone", "minecraft:chest",
+                    "minecraft:red_carpet", "minecraft:polished_andesite",
+                    "minecraft:cobweb", "minecraft:iron_bars",
+                    "minecraft:oak_wall_sign", "minecraft:cauldron",
+                    "minecraft:spruce_stairs", "minecraft:spruce_slab",
+                    "minecraft:brewing_stand", "minecraft:potted_cactus", } \
+    | STONE_BRICKS | INFESTED_STONE_BRICKS
+IGLOO_BLOCKS = {"minecraft:snow",
+                "minecraft:white_carpet", "minecraft:light_gray_carpet",
+                "minecraft:ice", "minecraft:packed_ice",
+                "minecraft:redstone_torch", "minecraft:furnace",
+                "minecraft:red_bed", "minecraft:crafting_table", } \
+    | IGLOO_LAB_BLOCKS
 JUNGLE_TEMPLE_BLOCKS = {"minecraft:chest", "minecraft:chiseled_stone_bricks",
                         "minecraft:cobblestone_stairs", "minecraft:dispenser",
                         "minecraft:lever", "minecraft:repeater",
                         "minecraft:redstone_wire", "minecraft:sticky_piston",
                         "minecraft:tripwire", "minecraft:tripwire_hook",
-                        "minecraft_vines", } \
+                        "minecraft:vines", } \
     | COBBLESTONES
-PILLAGER_OUTPOST_BLOCKS =
-SWAMP_HUT = {"minecraft:crafting_table", "minecraft:flower_pot",
+PILLAGER_WATCHTOWER = {"minecraft:dark_oak_planks", "minecraft:dark_oak_log",
+                       "minecraft:dark_oak_stairs", "minecraft:dark_oak_slab",
+                       "minecraft:dark_oak_fence",
+                       "minecraft:cobblestone", "minecraft:cobblestone_stairs",
+                       "minecraft:cobblestone_slab",
+                       "minecraft:cobblestone_wall",
+                       "minecraft:torch", "minecraft:chest",
+                       "minecraft:birch_planks",
+                       "minecraft:white_wall_banner", }
+PILLAGER_CAGE = {"minecraft:dark_oak_fence", "minecraft:dark_oak_log",
+                 "minecraft:dark_oak_stairs", "minecraft:dark_oak_slab", }
+PILLAGER_LOGS = {"minecraft:dark_oak_log", }
+PILLAGER_TARGETS = {"minecraft:dark_oak_fence", "minecraft:carved_pumpkin",
+                    "minecraft:hay_block", }
+PILLAGER_TENT = {"minecraft:white_wool", "minecraft:dark_oak_fence",
+                 "minecraft:pumpkin", "minecraft:crafting_table", }
+PILLAGER_OUTPOST_BLOCKS = PILLAGER_WATCHTOWER | PILLAGER_CAGE | PILLAGER_LOGS \
+    | PILLAGER_TARGETS | PILLAGER_TENT
+SWAMP_HUT = {"minecraft:crafting_table", "minecraft:potted_red_mushroom",
              "minecraft:oak_fence", "minecraft:oak_log",
              "minecraft:spruce_planks", "minecraft:spruce_stairs", } \
     | CAULDRONS
@@ -1010,7 +1047,75 @@ SNOWY_VILLAGE_BLOCKS =
 VILLAGE_BLOCKS = PLAINS_VILLAGE_BLOCKS | DESERT_VILLAGE_BLOCKS \
     | SAVANNA_VILLAGE_BLOCKS | TAIGA_VILLAGE_BLOCKS | SNOWY_VILLAGE_BLOCKS
 
-WOODLAND_MANSION_BLOCKS =
+WOODLAND_MANSION_BLOCKS = {"minecraft:birch_fence", "minecraft:birch_planks",
+                           "minecraft:birch_slab", "minecraft:birch_stairs",
+                           "minecraft:black_wall_banner",
+                           "minecraft:black_carpet", "minecraft:black_wool",
+                           "minecraft:blue_carpet", "minecraft:blue_wool",
+                           "minecraft:bookshelf",
+                           "minecraft:brown_carpet", "minecraft:brown_wool",
+                           "minecraft:carved_pumpkin", "minecraft:cauldron",
+                           "minecraft:chest", "minecraft:trapped_chest",
+                           "minecraft:coarse_dirt",
+                           "minecraft:cobblestone",
+                           "minecraft:cobblestone_slab",
+                           "minecraft:cobblestone_stairs",
+                           "minecraft:cobblestone_wall",
+                           "minecraft:cobweb",
+                           "minecraft:cyan_carpet", "minecraft:cyan_wool",
+                           "minecraft:damaged_anvil",
+                           "minecraft:dark_oak_door",
+                           "minecraft:dark_oak_fence",
+                           "minecraft:dark_oak_fence_gate",
+                           "minecraft:dark_oak_leaves",
+                           "minecraft:dark_oak_log",
+                           "minecraft:dark_oak_sapling",
+                           "minecraft:dark_oak_stairs",
+                           "minecraft:diamond_block", "minecraft:dirt",
+                           "minecraft:farmland",
+                           "minecraft:glass", "minecraft:glass_pane",
+                           "minecraft:gray_wall_banner",
+                           "minecraft:gray_carpet", "minecraft:gray_wool",
+                           "minecraft:green_carpet", "minecraft:green_wool",
+                           "minecraft:infested_cobblestone",
+                           "minecraft:iron_bars", "minecraft:iron_door",
+                           "minecraft:ladder", "minecraft:lapis_block",
+                           "minecraft:lever",
+                           "minecraft:light_blue_wool",
+                           "minecraft:light_gray_wall_banner",
+                           "minecraft:light_gray_carpet",
+                           "minecraft:light_gray_wool",
+                           "minecraft:lily_pad",
+                           "minecraft:lime_carpet", "minecraft:lime_wool",
+                           "minecraft:magenta_carpet",
+                           "minecraft:oak_fence", "minecraft:oak_planks",
+                           "minecraft:oak_slab", "minecraft:oak_stairs",
+                           "minecraft:obsidian",
+                           "minecraft:orange_wool",
+                           "minecraft:pink_carpet",
+                           "minecraft:polished_andesite",
+                           "minecraft:potted_allium",
+                           "minecraft:potted_azure_bluet",
+                           "minecraft:potted_birch_sapling",
+                           "minecraft:potted_blue_orchid",
+                           "minecraft:potted_dandelion",
+                           "minecraft:potted_oxeye_daisy",
+                           "minecraft:potted_poppy",
+                           "minecraft:potted_red_tulip",
+                           "minecraft:potted_white_tulip",
+                           "minecraft:purple_carpet",
+                           "minecraft:rail",
+                           "minecraft:red_carpet", "minecraft:red_wool",
+                           "minecraft:redstone_wire",
+                           "minecraft:smooth_stone_slab",
+                           "minecraft:spawner", "minecraft:tnt",
+                           "minecraft:torch", "minecraft:wall_torch",
+                           "minecraft:vines",
+                           "minecraft:wheat",
+                           "minecraft:white_carpet", "minecraft:white_wool",
+                           "minecraft:yellow_carpet", "minecraft:yellow_wool",
+                           } \
+    | BLOCK_CROPS | SMALL_MUSHROOMS | LAVAS | WATERS
 
 # mixed
 OVERWORLD_RUINED_PORTAL_BLOCKS = {"minecraft:gold_block",
@@ -1053,7 +1158,7 @@ OVERWORLD_GENERATED_STRUCTURE_BLOCKS = REGULAR_OVERWORLD_STRUCTURE_BLOCKS \
 NETHER_FORTRESS_BLOCKS = {"minecraft:nether_bricks",
                           "minecraft:nether_brick_fence",
                           "minecraft:nether_brick_stairs",
-                          "miencraft:soul_sand", "minecraft:nether_wart",
+                          "minecraft:soul_sand", "minecraft:nether_wart",
                           "minecraft:chest", "minecraft:spawner", } \
     | LAVAS
 BASTION_REMNANT_BLOCKS = {"minecraft:bgold_block",
@@ -1108,7 +1213,7 @@ END_CITY_BLOCKS = {"minecraft:chest", "minecraft:end_rod",
                    "minecraft:ender_chest",
                    "minecraft:magenta_wall_banner",
                    "minecraft:ladder",
-                   "miencraft:magenta_stained_glass",
+                   "minecraft:magenta_stained_glass",
                    "minecraft:purpur_slab",
                    "minecraft:purpur_stairs", } \
     | PURPUR_BLOCKS
@@ -1149,9 +1254,9 @@ UNOBTRUSIVE = {"minecraft:ladder", "minecraft:tripwire", "minecraft:end_rod",
 
 # can be seen through moderately
 OBTRUSIVE = {"minecraft:bell", "minecraft:brewing_stand", "minecraft:cake",
-             "minecraft:flower_pot", "minecraft:lectern", } \
+             "minecraft:lectern", } \
     | ANVILS | CRANIUMS | PLANTS | BEDS | FENCES | GATES | SLABS | EGGS \
-    | CAMPFIRES
+    | CAMPFIRES | FLOWER_POTS
 
 TRANSPARENT = INVISIBLE | FILTERING | UNOBTRUSIVE | OBTRUSIVE
 
@@ -1166,11 +1271,11 @@ TRANSPARENT = INVISIBLE | FILTERING | UNOBTRUSIVE | OBTRUSIVE
 MAPTRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
                   "minecraft:ladder",
                   "minecraft:tripwire_hook", "minecraft:tripwire",
-                  "minecraft:flower_pot", "minecraft:end_rod",
+                  "minecraft:end_rod",
                   "minecraft:glass", "minecraft:glass_pane",
                   "minecraft:nether_portal", "minecraft:iron_bars",
                   "minecraft:chain", } \
-    | INVISIBLE | WIRING | RAILS | SWITCHES | CRANIUMS | TORCHES
+    | INVISIBLE | WIRING | RAILS | SWITCHES | CRANIUMS | TORCHES | FLOWER_POTS
 
 # base map colours
 # WARNING: all non-transparent blocks are listed individually here again
