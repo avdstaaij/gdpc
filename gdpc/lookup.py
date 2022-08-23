@@ -275,8 +275,7 @@ ICE_TYPES = {None, "blue", "packed", "frosted"}
 # bedrock NOTE: "flowing",
 LIQUID_TYPES = {None, }
 
-WOOD_TYPES = {"oak", "birch", "spruce", "jungle",
-              "dark_oak", "acacia", }
+WOOD_TYPES = {"oak", "birch", "spruce", "jungle", "dark_oak", "acacia", }
 MUSHROOM_TYPES = {"brown", "red", }
 WART_TYPES = {"nether", "warped", }
 FUNGUS_TYPES = {"crimson", "warped", }
@@ -288,6 +287,16 @@ SMALL_FLOWER_TYPES = {"dandelion", "poppy", "blue_orchid", "allium",
                       "lily_of_the_valley", "wither_rose", } \
     | variate(TULIP_TYPES, "tulip", namespace=None)
 TALL_FLOWER_TYPES = {"sunflower", "lilac", "rose_bush", "peony", }
+
+POTTED_PLANT_TYPES = {"dandelion", "poppy", "blue_orchid", "allium",
+                      "azure_bluet", "oxeye_daisy",
+                      "red_tulip", "orange_tulip", "white_tulip", "pink_tulip",
+                      "cornflower", "lily_of_the_valley", "wither_rose",
+                      "fern", "dead_bush", "cactus", "bamboo", ""} \
+    | variate(WOOD_TYPES, "sapling", namespace=None) \
+    | variate(MUSHROOM_TYPES, "mushroom", namespace=None) \
+    | variate(FUNGUS_TYPES, "fungus", namespace=None) \
+    | variate(FUNGUS_TYPES, "roots", namespace=None)
 
 LIVE_CORAL_TYPES = set(CORAL_SHADES) - {"dead"}
 DEAD_CORAL_TYPES = variate(LIVE_CORAL_TYPES, "dead",
@@ -331,6 +340,7 @@ COMMAND_BLOCK_TYPES = {None, "chain", "repeating", }
 
 # NAMED MATERIAL TYPES
 # for usage as an extension
+# FIXME: replace with better `variate()` functionality
 NAMED_STONE_BRICK_TYPES = variate(STONE_BRICK_TYPES, "stone_bricks",
                                   namespace=None)
 NAMED_WOOD_TYPES = variate(WOOD_TYPES, "wood", namespace=None)
@@ -833,7 +843,8 @@ BUTTONS = {"minecraft:stone_button", "minecraft:polished_blackstone_button"} \
 SWITCHES = {"minecraft:lever", } | BUTTONS
 
 # interaction has an immediate effect (no UI)
-FLOWER_POTS = {"minecraft:flower_pot", } |  # FIXME: add potted flowers
+FLOWER_POTS = {"minecraft:flower_pot", } \
+    | variate(POTTED_PLANT_TYPES, "potted", isprefix=True)
 USABLE_BLOCKS = {"minecraft:bell", "minecraft:cake", "minecraft:conduit",
                  "minecraft:jukebox", "minecraft:lodestone",
                  "minecraft:respawn_anchor", "minecraft:spawner",
@@ -1039,11 +1050,188 @@ SWAMP_HUT = {"minecraft:crafting_table", "minecraft:potted_red_mushroom",
              "minecraft:spruce_planks", "minecraft:spruce_stairs", } \
     | CAULDRONS
 
-PLAINS_VILLAGE_BLOCKS =
-DESERT_VILLAGE_BLOCKS =
-SAVANNA_VILLAGE_BLOCKS =
-TAIGA_VILLAGE_BLOCKS =
-SNOWY_VILLAGE_BLOCKS =
+PLAINS_VILLAGE_LAMP = {"minecraft:stripped_oak_wood", "minecraft:oak_fence",
+                       "minecraft:torch", }
+PLAINS_VILLAGE_HOUSES = {"minecraft:cobblestone",
+                         "minecraft:cobblestone_stairs",
+                         "minecraft:stripped_oak_log", "minecraft:oak_fence",
+                         "minecraft:glass_pane", "minecraft:oak_log",
+                         "minecraft:oak_planks", "minecraft:oak_door",
+                         "minecraft:oak_pressure_plate",
+                         "minecraft:oak_stairs", "minecraft:oak_trapdoor",
+                         "minecraft:grass_block", "minecraft:poppy",
+                         "minecraft:white_bed", "minecraft:yellow_bed",
+                         "minecraft:torch", "minecraft:chest",
+                         "minecraft:white_terracotta",
+                         "minecraft:farmland", } | WATERS
+PLAINS_VILLAGE_ACCESSORIES = {"minecraft:grass_block",
+                              "minecraft:oak_trapdoor",
+                              "minecraft:poppy", "minecraft:oxeye_daisy",
+                              "minecraft:dandelion", }
+PLAINS_VILLAGE_MEETING_POINT = {"minecraft:grass_path",
+                                "minecraft:grass_block", "minecraft:dirt",
+                                "minecraft:cobblestone",
+                                "minecraft:cobblestone_stairs",
+                                "minecraft:oak_fence",
+                                "minecraft:oak_fence",
+                                "minecraft:torch", "minecraft:bell",
+                                "minecraft:white_wool",
+                                "minecraft:yellow_wool", } \
+    | WATERS  # FIXME: still working on blocks
+PLAINS_VILLAGE_PENS = {"minecraft:grass_block", "minecraft:oak_fence",
+                       "minecraft:oak_fence_gate", "minecraft:poppy",
+                       "minecraft:dandelion", "minecraft:hay_block",
+                       "minecraft:torch"} | WATERS
+PLAINS_VILLAGE_FARM =
+PLAINS_VILLAGE_ARMORER = {"minecraft:cobblestone",
+                          "minecraft:cobblestone_stairs",
+                          "minecraft:oak_log", "minecraft:glass_pane",
+                          "minecraft:oak_door", "minecraft:oak_slab",
+                          "minecraft:oak_stairs", "minecraft:cobblestone_wall",
+                          "minecraft:blast_furnace", "minecraft:smooth_stone",
+                          "minecraft:bricks", "minecraft:torch", }
+PLAINS_VILLAGE_BUCHER =
+PLAINS_VILLAGE_CARTOGRAPHER =
+PLAINS_VILLAGE_FISHER =
+PLAINS_VILLAGE_FLETCHER =
+PLAINS_VILLAGE_LIBRARY =
+PLAINS_VILLAGE_MASON =
+PLAINS_VILLAGE_SHEPHERD =
+PLAINS_VILLAGE_STABLE =
+PLAINS_VILLAGE_TANNERY =
+PLAINS_VILLAGE_TEMPLE =
+PLAINS_VILLAGE_TOOLSMITH =
+PLAINS_VILLAGE_WEAPONSMITH =
+PLAINS_VILLAGE_BLOCKS = PLAINS_VILLAGE_LAMP | PLAINS_VILLAGE_HOUSES \
+    | PLAINS_VILLAGE_ACCESSORIES | PLAINS_VILLAGE_FOUNTAIN \
+    | PLAINS_VILLAGE_MEETING_POINT \
+    | PLAINS_VILLAGE_PENS | PLAINS_VILLAGE_FARM \
+    | PLAINS_VILLAGE_ARMORER | PLAINS_VILLAGE_BUCHER \
+    | PLAINS_VILLAGE_CARTOGRAPHER | PLAINS_VILLAGE_FISHER \
+    | PLAINS_VILLAGE_FLETCHER | PLAINS_VILLAGE_LIBRARY \
+    | PLAINS_VILLAGE_MASON | PLAINS_VILLAGE_SHEPHERD | PLAINS_VILLAGE_STABLE \
+    | PLAINS_VILLAGE_TANNERY | PLAINS_VILLAGE_TEMPLE \
+    | PLAINS_VILLAGE_TOOLSMITH | PLAINS_VILLAGE_WEAPONSMITH
+DESERT_VILLAGE_LAMP =
+DESERT_VILLAGE_HOUSES =
+DESERT_VILLAGE_ACCESSORIES =
+DESERT_VILLAGE_FOUNTAIN =
+DESERT_VILLAGE_MEETING_POINT =
+DESERT_VILLAGE_PENS =
+DESERT_VILLAGE_FARM =
+DESERT_VILLAGE_ARMORER =
+DESERT_VILLAGE_BUCHER =
+DESERT_VILLAGE_CARTOGRAPHER =
+DESERT_VILLAGE_FISHER =
+DESERT_VILLAGE_FLETCHER =
+DESERT_VILLAGE_LIBRARY =
+DESERT_VILLAGE_MASON =
+DESERT_VILLAGE_SHEPHERD =
+DESERT_VILLAGE_STABLE =
+DESERT_VILLAGE_TANNERY =
+DESERT_VILLAGE_TEMPLE =
+DESERT_VILLAGE_TOOLSMITH =
+DESERT_VILLAGE_WEAPONSMITH =
+DESERT_VILLAGE_BLOCKS = DESERT_VILLAGE_LAMP | DESERT_VILLAGE_HOUSES \
+    | DESERT_VILLAGE_ACCESSORIES | DESERT_VILLAGE_FOUNTAIN \
+    | DESERT_VILLAGE_MEETING_POINT \
+    | DESERT_VILLAGE_PENS | DESERT_VILLAGE_FARM \
+    | DESERT_VILLAGE_ARMORER | DESERT_VILLAGE_BUCHER \
+    | DESERT_VILLAGE_CARTOGRAPHER | DESERT_VILLAGE_FISHER \
+    | DESERT_VILLAGE_FLETCHER | DESERT_VILLAGE_LIBRARY \
+    | DESERT_VILLAGE_MASON | DESERT_VILLAGE_SHEPHERD | DESERT_VILLAGE_STABLE \
+    | DESERT_VILLAGE_TANNERY | DESERT_VILLAGE_TEMPLE \
+    | DESERT_VILLAGE_TOOLSMITH | DESERT_VILLAGE_WEAPONSMITH
+SAVANNA_VILLAGE_LAMP =
+SAVANNA_VILLAGE_HOUSES =
+SAVANNA_VILLAGE_ACCESSORIES =
+SAVANNA_VILLAGE_FOUNTAIN =
+SAVANNA_VILLAGE_MEETING_POINT =
+SAVANNA_VILLAGE_PENS =
+SAVANNA_VILLAGE_FARM =
+SAVANNA_VILLAGE_ARMORER =
+SAVANNA_VILLAGE_BUCHER =
+SAVANNA_VILLAGE_CARTOGRAPHER =
+SAVANNA_VILLAGE_FISHER =
+SAVANNA_VILLAGE_FLETCHER =
+SAVANNA_VILLAGE_LIBRARY =
+SAVANNA_VILLAGE_MASON =
+SAVANNA_VILLAGE_SHEPHERD =
+SAVANNA_VILLAGE_STABLE =
+SAVANNA_VILLAGE_TANNERY =
+SAVANNA_VILLAGE_TEMPLE =
+SAVANNA_VILLAGE_TOOLSMITH =
+SAVANNA_VILLAGE_WEAPONSMITH =
+SAVANNA_VILLAGE_BLOCKS = SAVANNA_VILLAGE_LAMP | SAVANNA_VILLAGE_HOUSES \
+    | SAVANNA_VILLAGE_ACCESSORIES | SAVANNA_VILLAGE_FOUNTAIN \
+    | SAVANNA_VILLAGE_MEETING_POINT \
+    | SAVANNA_VILLAGE_PENS | SAVANNA_VILLAGE_FARM \
+    | SAVANNA_VILLAGE_ARMORER | SAVANNA_VILLAGE_BUCHER \
+    | SAVANNA_VILLAGE_CARTOGRAPHER | SAVANNA_VILLAGE_FISHER \
+    | SAVANNA_VILLAGE_FLETCHER | SAVANNA_VILLAGE_LIBRARY \
+    | SAVANNA_VILLAGE_MASON | SAVANNA_VILLAGE_SHEPHERD | SAVANNA_VILLAGE_STABLE \
+    | SAVANNA_VILLAGE_TANNERY | SAVANNA_VILLAGE_TEMPLE \
+    | SAVANNA_VILLAGE_TOOLSMITH | SAVANNA_VILLAGE_WEAPONSMITH
+TAIGA_VILLAGE_LAMP =
+TAIGA_VILLAGE_HOUSES =
+TAIGA_VILLAGE_ACCESSORIES =
+TAIGA_VILLAGE_FOUNTAIN =
+TAIGA_VILLAGE_MEETING_POINT =
+TAIGA_VILLAGE_PENS =
+TAIGA_VILLAGE_FARM =
+TAIGA_VILLAGE_ARMORER =
+TAIGA_VILLAGE_BUCHER =
+TAIGA_VILLAGE_CARTOGRAPHER =
+TAIGA_VILLAGE_FISHER =
+TAIGA_VILLAGE_FLETCHER =
+TAIGA_VILLAGE_LIBRARY =
+TAIGA_VILLAGE_MASON =
+TAIGA_VILLAGE_SHEPHERD =
+TAIGA_VILLAGE_STABLE =
+TAIGA_VILLAGE_TANNERY =
+TAIGA_VILLAGE_TEMPLE =
+TAIGA_VILLAGE_TOOLSMITH =
+TAIGA_VILLAGE_WEAPONSMITH =
+TAIGA_VILLAGE_BLOCKS = TAIGA_VILLAGE_LAMP | TAIGA_VILLAGE_HOUSES \
+    | TAIGA_VILLAGE_ACCESSORIES | TAIGA_VILLAGE_FOUNTAIN \
+    | TAIGA_VILLAGE_MEETING_POINT \
+    | TAIGA_VILLAGE_PENS | TAIGA_VILLAGE_FARM \
+    | TAIGA_VILLAGE_ARMORER | TAIGA_VILLAGE_BUCHER \
+    | TAIGA_VILLAGE_CARTOGRAPHER | TAIGA_VILLAGE_FISHER \
+    | TAIGA_VILLAGE_FLETCHER | TAIGA_VILLAGE_LIBRARY \
+    | TAIGA_VILLAGE_MASON | TAIGA_VILLAGE_SHEPHERD | TAIGA_VILLAGE_STABLE \
+    | TAIGA_VILLAGE_TANNERY | TAIGA_VILLAGE_TEMPLE \
+    | TAIGA_VILLAGE_TOOLSMITH | TAIGA_VILLAGE_WEAPONSMITH
+SNOWY_VILLAGE_LAMP =
+SNOWY_VILLAGE_HOUSES =
+SNOWY_VILLAGE_ACCESSORIES =
+SNOWY_VILLAGE_FOUNTAIN =
+SNOWY_VILLAGE_MEETING_POINT =
+SNOWY_VILLAGE_PENS =
+SNOWY_VILLAGE_FARM =
+SNOWY_VILLAGE_ARMORER =
+SNOWY_VILLAGE_BUCHER =
+SNOWY_VILLAGE_CARTOGRAPHER =
+SNOWY_VILLAGE_FISHER =
+SNOWY_VILLAGE_FLETCHER =
+SNOWY_VILLAGE_LIBRARY =
+SNOWY_VILLAGE_MASON =
+SNOWY_VILLAGE_SHEPHERD =
+SNOWY_VILLAGE_STABLE =
+SNOWY_VILLAGE_TANNERY =
+SNOWY_VILLAGE_TEMPLE =
+SNOWY_VILLAGE_TOOLSMITH =
+SNOWY_VILLAGE_WEAPONSMITH =
+SNOWY_VILLAGE_BLOCKS = SNOWY_VILLAGE_LAMP | SNOWY_VILLAGE_HOUSES \
+    | SNOWY_VILLAGE_ACCESSORIES | SNOWY_VILLAGE_FOUNTAIN \
+    | SNOWY_VILLAGE_MEETING_POINT \
+    | SNOWY_VILLAGE_PENS | SNOWY_VILLAGE_FARM \
+    | SNOWY_VILLAGE_ARMORER | SNOWY_VILLAGE_BUCHER \
+    | SNOWY_VILLAGE_CARTOGRAPHER | SNOWY_VILLAGE_FISHER \
+    | SNOWY_VILLAGE_FLETCHER | SNOWY_VILLAGE_LIBRARY \
+    | SNOWY_VILLAGE_MASON | SNOWY_VILLAGE_SHEPHERD | SNOWY_VILLAGE_STABLE \
+    | SNOWY_VILLAGE_TANNERY | SNOWY_VILLAGE_TEMPLE \
+    | SNOWY_VILLAGE_TOOLSMITH | SNOWY_VILLAGE_WEAPONSMITH
 VILLAGE_BLOCKS = PLAINS_VILLAGE_BLOCKS | DESERT_VILLAGE_BLOCKS \
     | SAVANNA_VILLAGE_BLOCKS | TAIGA_VILLAGE_BLOCKS | SNOWY_VILLAGE_BLOCKS
 
@@ -1230,7 +1418,7 @@ RUINED_PORTAL_BLOCKS = OVERWORLD_RUINED_PORTAL_BLOCKS \
     | NETHER_RUINED_PORTAL_BLOCKS
 FOSSIL_BLOCKS = OVERWORLD_FOSSIL_BLOCKS | NETHER_FOSSIL_BLOCKS
 GENERATED_STRUCTURE_BLOCKS = OVERWORLD_GENERATED_STRUCTURE_BLOCKS \
-    | NETHER_NATURAL_STRUCTURE_BLOCKS | END_GENERATED_STRUCTURE_BLOCKS
+    | NETHER_GENERATED_STRUCTURE_BLOCKS | END_GENERATED_STRUCTURE_BLOCKS
 
 # ================================================= grouped by obtrusiveness
 
