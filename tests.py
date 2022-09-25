@@ -8,14 +8,18 @@ The tests contained in this file include:
 It is not meant to be imported.
 """
 
-__all__ = []
-__version__ = "v5.0"
-
 import random
 import sys
 import time
+from copy import deepcopy
 
-from gdpc import direct_interface, geometry, interface, lookup, toolbox
+from gdpc import (direct_interface, geometry, interface, interface_toolbox,
+                  lookup, toolbox)
+
+__all__ = []
+__version__ = "v5.1"
+
+VERSIONNAME = toolbox.check_version()[1]
 
 # import timeit
 
@@ -27,6 +31,8 @@ from gdpc import direct_interface, geometry, interface, lookup, toolbox
 
 
 class TestException(Exception):
+    """Exception raised when a test fails.    """
+
     def __init__(self, *args):
         super().__init__(*args)
 
@@ -68,7 +74,19 @@ def verifyPaletteBlocks():
                             "or could not be verified.\n"
                             f"{lookup.TCOLORS['orange']}"
                             "Please check you are running"
-                            f" on Minecraft {lookup.VERSION}")
+                            f" on Minecraft {VERSIONNAME}")
+
+    p = {v for nv in lookup.PALETTE.values() for v in nv} \
+        | lookup.MAPTRANSPARENT
+    b = lookup.BLOCKS
+    discrepancy = len(p-b) + len(b-p)
+    if discrepancy != 0:
+        raise TestException(f"{lookup.TCOLORS['orange']}"
+                            f"There is a discrepancy of {discrepancy} blocks "
+                            f"between BLOCKS and PALETTE:\n"
+                            f"{lookup.TCOLORS['gray']}Missing in BLOCKS:\n"
+                            f"{p-b}\n"
+                            f"Missing in PALETTE:\n{b-p}\n")
 
     print(f"{lookup.TCOLORS['green']}"
           f"All {counter} blocks successfully verified!")
@@ -274,7 +292,7 @@ def testBooks():
     print("\tWriting book done.")
 
     print("\tPlacing lectern...", end="\r")
-    toolbox.placeLectern(0, 255, 0, book, 'east')
+    interface_toolbox.placeLectern(0, 255, 0, book, 'east')
     print("\tPlacing lectern done.")
 
     print("\tPrompting user...", end="\r")
@@ -433,23 +451,61 @@ def testCache():
     interface.globalDecay = None
 
 
+def testBlocks():
+    pos1, pos2 = (-147, 4, -12), (-147, 4, 664)
+    print(f"\n{lookup.TCOLORS['yellow']}Running block test...")
+    print(f"\t{lookup.TCOLORS['gray']}Testing blocks from...", end='\r')
+
+    test_set = deepcopy(lookup.BLOCKS)
+    tested_set = set()
+    missing_set = set()
+
+    for x, y, z in toolbox.loop3d(*pos1, *pos2):
+        test_block = interface.getBlock(x, y, z)
+        if test_block in test_set:
+            tested_set.add(test_block)
+            test_set.remove(test_block)
+            continue
+        if test_block not in tested_set:
+            missing_set.add(test_block)
+            continue
+
+    if len(missing_set) > 0:
+        raise TestException(f"{lookup.TCOLORS['orange']}"
+                            "There is a discrepancy between "
+                            "the blocks provided and the blocks checked:"
+                            f"{lookup.TCOLORS['gray']}\n"
+                            f"Missing from BLOCKS:\n{missing_set}\n"
+                            f"Not found in world:\t\n{test_set}\n")
+    elif len(test_set) > 0:
+        print(f"{lookup.TCOLORS['orange']}"
+              "The block test world is incomplete and should be updated by "
+              f"{len(test_set)} blocks:"
+              f"{lookup.TCOLORS['gray']}\n"
+              f"Not found in world:\t\n{test_set}\n")
+
+    print("\tTesting blocks done.")
+    print(f"{lookup.TCOLORS['green']}Block test complete!")
+
+
 if __name__ == '__main__':
-    AUTOTESTS = (verifyPaletteBlocks, testCache, testSynchronisation)
-    MANUALTESTS = (testBooks, testShapes)
-    tests = AUTOTESTS + MANUALTESTS
+    AUTOTESTS = {verifyPaletteBlocks, testCache, testSynchronisation,
+                 testBlocks}
+    MANUALTESTS = {testBooks, testShapes}
+    tests = AUTOTESTS | MANUALTESTS
 
     if len(sys.argv) > 1:
         if sys.argv[1] == '--manual':
             tests = MANUALTESTS
         elif sys.argv[1] == '--loadonly':
-            tests = ()
+            tests = set()
     else:
         tests = AUTOTESTS
 
     print(f"Beginning test suite for "
           f"{lookup.TCOLORS['blue']}GDPC {__version__} "
           f"{lookup.TCOLORS['CLR']}on "
-          f"{lookup.TCOLORS['blue']}Minecraft {lookup.CURRENTVNAME}: "
+          f"{lookup.TCOLORS['blue']}Minecraft {VERSIONNAME}: "
           f"{len(tests)} tests{lookup.TCOLORS['CLR']}")
     interface.setBuildArea(0, 0, 0, 255, 255, 255)
     failed = 0

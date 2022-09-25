@@ -2,12 +2,13 @@
 """### Provides tools for creating multidimensional shapes."""
 __all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
            'placeCuboid', 'placeCylinder', 'placeFromList',
-           'getShapeBoundaries', 'getDimension', 'padDimension', 'cutDimension',
+           'getShapeBoundaries', 'getDimension', 'padDimension',
+           'cutDimension',
            'translate', 'repeat', 'fill2d', 'fill3d',
            'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
 
 __author__ = "Blinkenlights"
-__version__ = "v5.0"
+__version__ = "v5.1"
 
 import numpy as np
 
@@ -18,7 +19,7 @@ from .interface import globalinterface as gi
 def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
     """**Draw a line from point to point efficiently**."""
     settings = blocks, replace, interface
-    dimension, flatSides = getDimension(x1, y1, z1, x2, y2, z2)
+    dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
     if dimension == 0:
         return interface.placeBlock(x1, y1, z1, blocks, replace)
     elif dimension == 1:
@@ -37,7 +38,7 @@ def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
     polygon = set()
     polygon.update(lineSequence(points))
     polygon.update(line3d(*points[0], *points[-1]))
-    dimension, vector = getDimension(*getShapeBoundaries(polygon))
+    dimension, _ = getDimension(*getShapeBoundaries(polygon))
     if filled and dimension == 2:
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
@@ -46,6 +47,23 @@ def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
 
 
 def placeVolume(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
+    """Fill volume with blocks.
+
+    Args:
+        x1 (int): starting X
+        y1 (int): starting Y
+        z1 (int): starting Z
+        x2 (int): ending X
+        y2 (int): ending Y
+        z2 (int): ending Z
+        blocks (Union(list, str)): A block or list of blocks to be used.
+        replace (Union(list, str), optional): Only replace these blocks.
+                                                Defaults to None.
+        interface (Interface, optional): Interface to be used. Defaults to gi.
+
+    Returns:
+        Any: Result of block placement.
+    """
     buffering = interface.isBuffering()
     if not buffering:
         interface.setBuffering(True, False)
@@ -59,7 +77,10 @@ def placeVolume(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                 hollow=False, interface=gi):
-    """**Place a cubic shape that fills the entire region and may be hollow.**"""
+    """**Place a cubic shape that fills the entire region and may be hollow**.
+
+    Adjusts function call based on dimensionality.
+    """
     settings = blocks, replace, interface
     dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
 
@@ -87,7 +108,7 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
 
 def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
                           axis='y', tube=False, hollow=False, interface=gi):
-    """**Place a cylindric shape centered on xyz with height and radius.**"""
+    """**Place a cylindric shape centered on xyz with height and radius**."""
     if axis == 'x':
         placeCylinder(x, y - r, z - r, x + h - 1, y + r, z + r,
                       blocks, replace, 'x', tube, hollow, interface)
@@ -103,7 +124,7 @@ def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
 
 def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                   axis='y', tube=False, hollow=False, interface=gi):
-    """**Place a cylindric shape that fills the entire region.**"""
+    """**Place a cylindric shape that fills the entire region**."""
     settings = blocks, replace, interface
     dimension, flatSides = getDimension(x1, y1, z1, x2, y2, z2)
 
@@ -155,13 +176,13 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
         raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
 
 
-def placeFromList(list, blocks, replace=None, interface=gi):
+def placeFromList(pos_list, blocks, replace=None, interface=gi):
     """**Replace all blocks at coordinates in list with blocks**."""
     result = 0
     ERRORMESSAGE = (f"\n{lookup.TCOLORS['orange']}"
                     f"Fails:\n{lookup.TCOLORS['gray']}")
     errors = ERRORMESSAGE
-    for x, y, z in list:
+    for x, y, z in pos_list:
         response = interface.placeBlock(x, y, z, blocks, replace)
         if response.isnumeric():
             result += int(response)
@@ -361,10 +382,10 @@ def line3d(x1, y1, z1, x2, y2, z2):
 
     def bresenham_line_next_point(x, y, z, xs, ys, zs, dx, dy, dz, p1, p2):
         x += xs
-        if (p1 >= 0):
+        if p1 >= 0:
             y += ys
             p1 -= 2 * dx
-        if (p2 >= 0):
+        if p2 >= 0:
             z += zs
             p2 -= 2 * dx
         p1 += 2 * dy
@@ -381,10 +402,10 @@ def line3d(x1, y1, z1, x2, y2, z2):
     zs = if_greater_pos_else_neg(z2, z1)
 
     # Driving axis is X-axis"
-    if (dx >= dy and dx >= dz):
+    if dx >= dy and dx >= dz:
         p1 = 2 * dy - dx
         p2 = 2 * dz - dx
-        while (x1 != x2):
+        while x1 != x2:
             x1, y1, z1, p1, p2 = bresenham_line_next_point(x1, y1, z1,
                                                            xs, ys, zs,
                                                            dx, dy, dz,
@@ -392,10 +413,10 @@ def line3d(x1, y1, z1, x2, y2, z2):
             points.add((x1, y1, z1))
 
     # Driving axis is Y-axis"
-    elif (dy >= dx and dy >= dz):
+    elif dy >= dx and dy >= dz:
         p1 = 2 * dx - dy
         p2 = 2 * dz - dy
-        while (y1 != y2):
+        while y1 != y2:
             y1, x1, z1, p1, p2 = bresenham_line_next_point(y1, x1, z1,
                                                            ys, xs, zs,
                                                            dy, dx, dz,
@@ -406,7 +427,7 @@ def line3d(x1, y1, z1, x2, y2, z2):
     else:
         p1 = 2 * dy - dz
         p2 = 2 * dx - dz
-        while (z1 != z2):
+        while z1 != z2:
             z1, x1, y1, p1, p2 = bresenham_line_next_point(z1, x1, y1,
                                                            zs, xs, ys,
                                                            dz, dx, dy,
@@ -460,7 +481,7 @@ def circle(x1, y1, x2, y2, filled=False):
     x, y = 0, r
     d = 3 - 2 * r
     eightPoints(x, y)
-    while (y >= x):
+    while y >= x:
         # for each pixel we will
         # draw all eight pixels
 
@@ -469,7 +490,7 @@ def circle(x1, y1, x2, y2, filled=False):
         # check for decision parameter
         # and correspondingly
         # update d, x, y
-        if (d > 0):
+        if d > 0:
             y -= 1
             d = d + 4 * (x - y) + 10
         else:
@@ -520,13 +541,13 @@ def ellipse(x1, y1, x2, y2, filled=False):
     dy = 2 * rx * rx * y
 
     # For region 1
-    while (dx < dy):
+    while dx < dy:
 
         fourpoints(x, y)
 
         # Checking and updating value of
         # decision parameter based on algorithm
-        if (d1 < 0):
+        if d1 < 0:
             x += 1
             dx = dx + (2 * ry * ry)
             d1 = d1 + dx + (ry * ry)
@@ -542,13 +563,13 @@ def ellipse(x1, y1, x2, y2, filled=False):
           + ((rx * rx) * ((y - 1) * (y - 1))) - (rx * rx * ry * ry))
 
     # Plotting points of region 2
-    while (y >= 0):
+    while y >= 0:
 
         fourpoints(x, y)
 
         # Checking and updating parameter
         # value based on algorithm
-        if (d2 > 0):
+        if d2 > 0:
             y -= 1
             dy = dy - (2 * rx * rx)
             d2 = d2 + (rx * rx) - dy

@@ -4,11 +4,28 @@
 This file contains various functions that map directly onto the HTTP interface.
 It is recommended to use `interface.py` instead.
 """
-__all__ = []
-__version__ = "v5.0"
-
 import requests
 from requests.exceptions import ConnectionError
+
+
+__all__ = []
+__version__ = "v5.1"
+
+
+def get(*args):
+    try:
+        return requests.get(*args)
+    except ConnectionError:
+        raise ConnectionError("Connection could not be established!"
+                              " (is Minecraft running?)")
+
+
+def post(*args):
+    try:
+        return requests.post(*args)
+    except ConnectionError:
+        raise ConnectionError("Connection could not be established!"
+                              " (is Minecraft running?)")
 
 
 def getBlock(x, y, z):

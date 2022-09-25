@@ -1,14 +1,12 @@
 #! /usr/bin/python3
 """### Read the bitarray format used by Minecraft."""
 __all__ = ['BitArray']
-__version__ = 'v5.0'
-
-from math import floor
+__version__ = 'v5.1'
 
 
 def inclusiveBetween(start, end, value):
     """**Raise an exception when the value is out of bounds**."""
-    if not (start <= value <= end):
+    if not start <= value <= end:
         raise ValueError(
             f"The value {value} is not in the inclusive range "
             f"of {start} to {end}")
@@ -27,9 +25,8 @@ class BitArray:
         self.arraySize = arraySizeIn
         self.bitsPerEntry = bitsPerEntryIn
         self.maxEntryValue = (1 << bitsPerEntryIn) - 1
-        self.entriesPerLong = floor(64 / bitsPerEntryIn)
-        j = floor((arraySizeIn + self.entriesPerLong - 1)
-                  / self.entriesPerLong)
+        self.entriesPerLong = 64 // bitsPerEntryIn
+        j = (arraySizeIn + self.entriesPerLong - 1) // self.entriesPerLong
         if data is not None:
             if len(data) != j:
                 raise Exception(
