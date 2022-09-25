@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Install gdpc itself in editable mode, so that it can be found by the tests
+# and the examples
+-e .
