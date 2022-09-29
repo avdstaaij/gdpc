@@ -102,7 +102,7 @@ class WorldSlice:
 
                     palette = section['Palette']
                     rawBlockStates = section['BlockStates']
-                    bitsPerEntry = max(4, ceil(log2(len(palette))))
+                    bitsPerEntry = int(max(4, ceil(log2(len(palette)))))
                     blockStatesBitArray = BitArray(bitsPerEntry, 16 * 16 * 16,
                                                    rawBlockStates)
 
