@@ -26,9 +26,6 @@ __all__ = ['Interface', 'runCommand',
            'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
            'sendBlocks', 'checkOutOfBounds']
 
-__author__ = "Blinkenlights"
-__version__ = "v5.0"
-
 
 class OrderedByLookupDict(OrderedDict):
     """Limit size, evicting the least recently looked-up key when full.

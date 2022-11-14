@@ -1,16 +1,31 @@
-"""The repository setup file."""
+import os
+from setuptools import setup
 
-from setuptools import find_packages, setup
 
-__author__ = "Blinkenlights"
-__version__ = "v5.0.2"
+SCRIPT_DIR         = os.path.abspath(os.path.dirname(__file__))
+METADATA_FILE_PATH = os.path.join(SCRIPT_DIR, "gdpc/__init__.py")
+
+
+# Based on https://github.com/pypa/pip/blob/9aa422da16e11b8e56d3597f34551f983ba9fbfd/setup.py
+def get_metadata(name: str) -> str:
+    with open(METADATA_FILE_PATH) as file:
+        contents = file.read()
+    for line in contents.splitlines():
+        dunderString = f"__{name}__"
+        if line.startswith(f"{dunderString}"):
+            # __{name}__ = "{value}"
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    raise RuntimeError(f"Unable to find {dunderString} value.")
+
 
 with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
+
 setup(
     name="gdpc",
-    version=__version__,
+    version=get_metadata("version"),
     description=(
         "The Generative Design Python Client is a Python-based "
         "interface for the Minecraft HTTP Interface mod.\n"
@@ -20,7 +35,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/avdstaaij/gdpc",
-    author="Blinkenlights",
+    author=get_metadata("author"),
     author_email="blinkenlights@pm.me",
     maintainer="Arthur van der Staaij",
     maintainer_email="arthurvanderstaaij@gmail.com",

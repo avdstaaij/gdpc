@@ -6,7 +6,6 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 __all__ = ['WorldSlice']
-__version__ = "v5.1"
 
 from io import BytesIO
 

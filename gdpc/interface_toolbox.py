@@ -12,10 +12,6 @@ from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
 
 __all__ = []
 
-__author__ = "Blinkenlights"
-__version__ = "v5.1"
-__year__ = date.now().year
-
 
 def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
                     result=None, observed=None, diagonal=False,

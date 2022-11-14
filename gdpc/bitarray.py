@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 """### Read the bitarray format used by Minecraft."""
 __all__ = ['BitArray']
-__version__ = 'v5.1'
 
 
 def inclusiveBetween(start, end, value):

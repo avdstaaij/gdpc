@@ -9,7 +9,6 @@ from requests.exceptions import ConnectionError
 
 
 __all__ = []
-__version__ = "v5.1"
 
 
 def get(*args):

@@ -6,7 +6,6 @@ import sys
 from typing import Set
 
 # __all__ = []  # everything is available for import
-__version__ = "v5.1_dev"
 
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs

@@ -7,8 +7,6 @@ __all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
            'translate', 'repeat', 'fill2d', 'fill3d',
            'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
 
-__author__ = "Blinkenlights"
-__version__ = "v5.1"
 
 import numpy as np
 

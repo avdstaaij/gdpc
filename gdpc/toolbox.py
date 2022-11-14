@@ -18,10 +18,6 @@ __all__ = ['is_sequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
            'invertDirection', 'direction2rotation', 'direction2vector',
            'axis2vector']
 
-__author__ = "Blinkenlights"
-__version__ = "v5.1"
-__year__ = date.now().year
-
 
 def is_sequence(sequence):
     """**Determine whether sequence is a sequence**."""
