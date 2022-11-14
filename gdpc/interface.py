@@ -1,5 +1,4 @@
-# ! /usr/bin/python3
-"""### Provide tools for placing and getting blocks and more.
+""" Provide tools for placing and getting blocks and more.
 
 This module contains functions to:
 * Request the build area as defined in-world
@@ -7,6 +6,14 @@ This module contains functions to:
 * Get the block ID at a particular coordinate
 * Place blocks in the world
 """
+
+__all__ = ['Interface', 'runCommand',
+           'setBuildArea', 'requestBuildArea', 'requestPlayerArea',
+           'makeGlobalSlice', 'getBlock', 'placeBlock',
+           'getBlockFlags', 'placeBlockFlags',
+           'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
+           'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
+           'sendBlocks', 'checkOutOfBounds']
 
 from collections import OrderedDict
 from random import choice
@@ -17,14 +24,6 @@ from . import direct_interface as di
 from .lookup import TCOLORS
 from .toolbox import is_sequence, normalizeCoordinates
 from .worldLoader import WorldSlice
-
-__all__ = ['Interface', 'runCommand',
-           'setBuildArea', 'requestBuildArea', 'requestPlayerArea',
-           'makeGlobalSlice', 'getBlock', 'placeBlock',
-           'getBlockFlags', 'placeBlockFlags',
-           'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
-           'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
-           'sendBlocks', 'checkOutOfBounds']
 
 
 class OrderedByLookupDict(OrderedDict):

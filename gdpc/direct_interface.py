@@ -1,14 +1,13 @@
-#! /usr/bin/python3
-"""### Provide access to the HTTP interface of the Minecraft HTTP server.
+""" Provide access to the HTTP interface of the Minecraft HTTP server.
 
 This file contains various functions that map directly onto the HTTP interface.
 It is recommended to use `interface.py` instead.
 """
-import requests
-from requests.exceptions import ConnectionError
-
 
 __all__ = []
+
+import requests
+from requests.exceptions import ConnectionError
 
 
 def get(*args):

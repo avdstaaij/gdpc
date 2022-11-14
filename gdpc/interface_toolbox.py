@@ -1,7 +1,8 @@
 #! /usr/bin/python3
-"""### Provides various small functions for the interface."""
+""" Provides various small functions for the interface. """
 
-from datetime import datetime as date
+__all__ = []
+
 from random import choice
 
 from . import lookup
@@ -9,8 +10,6 @@ from .interface import checkOutOfBounds, getBlock
 from .interface import globalinterface as gi
 from .interface import runCommand
 from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
-
-__all__ = []
 
 
 def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,

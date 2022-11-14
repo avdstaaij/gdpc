@@ -1,5 +1,5 @@
-#! /usr/bin/python3
-"""### Read the bitarray format used by Minecraft."""
+""" Read the bitarray format used by Minecraft. """
+
 __all__ = ['BitArray']
 
 

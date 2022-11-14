@@ -1,11 +1,9 @@
-#! /usr/bin/python3
-"""### Store lists of various information on blocks, biomes and more."""
+""" Store lists of various information on blocks, biomes and more. """
 
 import os
 import sys
 from typing import Set
 
-# __all__ = []  # everything is available for import
 
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs

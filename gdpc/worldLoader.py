@@ -1,10 +1,10 @@
-# ! /usr/bin/python3
-"""### Provides tools for reading chunk data.
+""" Provides tools for reading chunk data.
 
 This module contains functions to:
 * Calculate a heightmap ideal for building
 * Visualise numpy arrays
 """
+
 __all__ = ['WorldSlice']
 
 from io import BytesIO

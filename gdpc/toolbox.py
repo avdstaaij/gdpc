@@ -1,7 +1,10 @@
-#! /usr/bin/python3
-"""### Provides various small functions for the average workflow."""
+""" Provides various small functions for the average workflow. """
 
-from datetime import datetime as date
+__all__ = ['is_sequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
+           'writeBook', 'visualizeHeightmap',
+           'invertDirection', 'direction2rotation', 'direction2vector',
+           'axis2vector']
+
 from functools import lru_cache
 from itertools import product
 
@@ -12,11 +15,6 @@ from matplotlib import pyplot as plt
 from . import lookup
 from .lookup import SUPPORTS, TCOLORS, VERSIONS
 from .worldLoader import WorldSlice
-
-__all__ = ['is_sequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
-           'writeBook', 'visualizeHeightmap',
-           'invertDirection', 'direction2rotation', 'direction2vector',
-           'axis2vector']
 
 
 def is_sequence(sequence):

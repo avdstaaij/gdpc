@@ -1,12 +1,11 @@
-#! /usr/bin/python3
-"""### Provides tools for creating multidimensional shapes."""
+""" Provides tools for creating multidimensional shapes. """
+
 __all__ = ['placeLine', 'placeJointedLine', 'placePolygon',
            'placeCuboid', 'placeCylinder', 'placeFromList',
            'getShapeBoundaries', 'getDimension', 'padDimension',
            'cutDimension',
            'translate', 'repeat', 'fill2d', 'fill3d',
            'line2d', 'line3d', 'lineSequence', 'circle', 'ellipse']
-
 
 import numpy as np
 
