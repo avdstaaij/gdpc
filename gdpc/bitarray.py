@@ -1,7 +1,5 @@
 """ Read the bitarray format used by Minecraft. """
 
-__all__ = ['BitArray']
-
 
 def inclusiveBetween(start, end, value):
     """**Raise an exception when the value is out of bounds**."""

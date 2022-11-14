@@ -1,7 +1,4 @@
-#! /usr/bin/python3
 """ Provides various small functions for the interface. """
-
-__all__ = []
 
 from random import choice
 

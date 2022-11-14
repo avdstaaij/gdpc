@@ -7,14 +7,6 @@ This module contains functions to:
 * Place blocks in the world
 """
 
-__all__ = ['Interface', 'runCommand',
-           'setBuildArea', 'requestBuildArea', 'requestPlayerArea',
-           'makeGlobalSlice', 'getBlock', 'placeBlock',
-           'getBlockFlags', 'placeBlockFlags',
-           'isCaching', 'setCaching', 'getCacheLimit', 'setCacheLimit',
-           'isBuffering', 'setBuffering', 'getBufferLimit', 'setBufferLimit',
-           'sendBlocks', 'checkOutOfBounds']
-
 from collections import OrderedDict
 from random import choice
 

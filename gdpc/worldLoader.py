@@ -5,8 +5,6 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 
-__all__ = ['WorldSlice']
-
 from io import BytesIO
 
 import nbt
