@@ -24,22 +24,17 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 
 setup(
-    name="gdpc",
+    name=get_metadata("title"),
     version=get_metadata("version"),
-    description=(
-        "The Generative Design Python Client is a Python-based "
-        "interface for the Minecraft HTTP Interface mod.\n"
-        "It was created for use in the "
-        "Generative Design in Minecraft Competition."
-    ),
+    description=get_metadata("description"),
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/avdstaaij/gdpc",
+    url=get_metadata("url"),
     author=get_metadata("author"),
-    author_email="blinkenlights@pm.me",
-    maintainer="Arthur van der Staaij",
-    maintainer_email="arthurvanderstaaij@gmail.com",
-    license="MIT",
+    author_email=get_metadata("author_email"),
+    maintainer=get_metadata("maintainer"),
+    maintainer_email=get_metadata("maintainer_email"),
+    license=get_metadata("license"),
     packages=["gdpc"], # Note: subpackages must be listed explicitly
     install_requires=[
         "matplotlib",
