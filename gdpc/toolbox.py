@@ -115,7 +115,7 @@ def index2slot(sx, sy, ox, oy):
     return sx + sy * ox
 
 
-def writeBook(text, title="Chronicle", author=__author__,
+def writeBook(text, title="Chronicle", author="Anonymous",
               description="I wonder what\\'s inside?", desccolor='gold'):
     r"""**Return NBT data for a correctly formatted book**.
 
@@ -236,7 +236,7 @@ def writeBook(text, title="Chronicle", author=__author__,
                      '║           ⁂         `║\\\\n'
                      '║                      `║\\\\n'
                      '║         GDMC       `║\\\\n'
-                     f'║         {__year__}       `║\\\\n'
+                     '║                      `║\\\\n'
                      '║                      `║\\\\n'
                      '║                      `║\\\\n'
                      '╚══════════╝\\\\n'
@@ -340,7 +340,7 @@ def visualizeHeightmap(*arrays, title=None, autonormalize=True):
 
 def invertDirection(direction):
     """**Return the inverted direction of direcion**."""
-    if isSequence(direction):
+    if is_sequence(direction):
         return [lookup.INVERTDIRECTION[n] for n in direction]
     return lookup.INVERTDIRECTION[direction]
 

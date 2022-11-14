@@ -83,7 +83,7 @@ def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
                   f"incorrectly placed items.")
 
     # we received a single item
-    if 3 <= len(items) <= 4 and type(items[0]) == int:
+    if 3 <= len(items) <= 4 and isinstance(items[0], int):
         items = [items, ]
 
     response = '0'

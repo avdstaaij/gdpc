@@ -14,7 +14,7 @@ def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
         return interface.placeBlock(x1, y1, z1, blocks, replace)
     elif dimension == 1:
         return placeVolume(x1, y1, z1, x2, y2, z2, *settings)
-    elif dimension == 2 or dimension == 3:
+    else: # dimension == 2 or dimension == 3
         return placeFromList(line3d(x1, y1, z1, x2, y2, z2), *settings)
 
 

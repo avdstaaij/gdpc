@@ -5,23 +5,25 @@ It is recommended to use `interface.py` instead.
 """
 
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError as RequestConnectionError
 
 
 def get(*args):
     try:
         return requests.get(*args)
-    except ConnectionError:
-        raise ConnectionError("Connection could not be established!"
-                              " (is Minecraft running?)")
+    except RequestConnectionError as e:
+        raise RequestConnectionError(
+            "Connection could not be established! (is Minecraft running?)"
+        ) from e
 
 
 def post(*args):
     try:
         return requests.post(*args)
-    except ConnectionError:
-        raise ConnectionError("Connection could not be established!"
-                              " (is Minecraft running?)")
+    except RequestConnectionError as e:
+        raise RequestConnectionError(
+            "Connection could not be established! (is Minecraft running?)"
+        ) from e
 
 
 def getBlock(x, y, z):
@@ -29,7 +31,7 @@ def getBlock(x, y, z):
     url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.get(url).text
-    except ConnectionError:
+    except RequestConnectionError:
         return "minecraft:void_air"
     return response
 
@@ -45,7 +47,7 @@ def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
            f'&{blockUpdateQueryParam}')
     try:
         response = requests.put(url, blockStr)
-    except ConnectionError:
+    except RequestConnectionError:
         return "0"
     return response.text
 
@@ -57,7 +59,7 @@ def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
     try:
         response = placeBlock(x, y, z, body, doBlockUpdates, customFlags)
         return response
-    except ConnectionError as e:
+    except RequestConnectionError as e:
         print("Request failed: {} Retrying ({} left)".format(e, retries))
         if retries > 0:
             return sendBlocks(x, y, z, retries - 1)
@@ -69,7 +71,7 @@ def runCommand(command):
     url = 'http://localhost:9000/command'
     try:
         response = requests.post(url, bytes(command, "utf-8"))
-    except ConnectionError:
+    except RequestConnectionError:
         return "connection error"
     return response.text
 

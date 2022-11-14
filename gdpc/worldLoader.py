@@ -13,6 +13,7 @@ from numpy import ceil, log2
 
 from . import direct_interface as di
 from .bitarray import BitArray
+from .lookup import BIOMES
 
 
 class CachedSection:
@@ -32,10 +33,10 @@ class WorldSlice:
     """**Contains information on a slice of the world**."""
 
     def __init__(self, x1, z1, x2, z2,
-                 heightmapTypes=["MOTION_BLOCKING",
+                 heightmapTypes=("MOTION_BLOCKING",
                                  "MOTION_BLOCKING_NO_LEAVES",
                                  "OCEAN_FLOOR",
-                                 "WORLD_SURFACE"]):
+                                 "WORLD_SURFACE")):
         """**Initialise WorldSlice with region and heightmaps**.
 
         x1, x2, z1, z2 are global coordinates
@@ -46,8 +47,8 @@ class WorldSlice:
                           (x2 - x1 - 1) // 16 + 1, (z2 - z1 - 1) // 16 + 1)
         self.heightmapTypes = heightmapTypes
 
-        bytes = di.getChunks(*self.chunkRect, rtype='bytes')
-        file_like = BytesIO(bytes)
+        chunk_bytes = di.getChunks(*self.chunkRect, rtype='bytes')
+        file_like = BytesIO(chunk_bytes)
 
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)
 
@@ -137,8 +138,7 @@ class WorldSlice:
         blockCompound = self.getBlockCompoundAt(x, y, z)
         if blockCompound is None:
             return "minecraft:void_air"
-        else:
-            return blockCompound["Name"].value
+        return blockCompound["Name"].value
 
     def getBiomeAt(self, x, y, z):
         """**Return biome at given coordinates**.
@@ -146,7 +146,6 @@ class WorldSlice:
         Due to the noise around chunk borders,
         there is an inacurracy of +/-2 blocks.
         """
-        from .lookup import BIOMES
         chunkID = (x - self.rect[0]) // 16 + \
             (z - self.rect[1]) // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
@@ -154,11 +153,10 @@ class WorldSlice:
         z = (z % 16) // 4
         y = y // 4
         index = x + 4 * z + 16 * y
-        return(BIOMES[data[index]])
+        return BIOMES[data[index]]
 
     def getBiomesNear(self, x, y, z):
         """**Return a list of biomes in the same chunk**."""
-        from .lookup import BIOMES
         chunkID = (x - self.rect[0]) // 16 + \
             (z - self.rect[1]) // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
@@ -167,7 +165,6 @@ class WorldSlice:
 
     def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
-        from .lookup import BIOMES
         chunkID = (x - self.rect[0]) // 16 + \
             (z - self.rect[1]) // 16 * self.chunkRect[2]
         data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
