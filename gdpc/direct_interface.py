@@ -7,79 +7,88 @@ It is recommended to use `interface.py` instead.
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
-
-def get(*args):
-    try:
-        return requests.get(*args)
-    except RequestConnectionError as e:
-        raise RequestConnectionError(
-            "Connection could not be established! (is Minecraft running?)"
-        ) from e
+from .util import eprint
 
 
-def post(*args):
-    try:
-        return requests.post(*args)
-    except RequestConnectionError as e:
-        raise RequestConnectionError(
-            "Connection could not be established! (is Minecraft running?)"
-        ) from e
+HOST = "http://localhost:9000"
 
 
-def getBlock(x, y, z):
+def _get(*args, retries: int, **kwargs):
+    retriesLeft = retries
+    while True:
+        try:
+            return requests.get(*args, **kwargs) # pylint: disable=missing-timeout
+        except RequestConnectionError as e:
+            if retriesLeft == 0:
+                raise e
+            eprint(f"HTTP request failed! Retrying {retriesLeft} more times.")
+            retriesLeft -= 1
+
+
+def _put(*args, retries: int, **kwargs):
+    retriesLeft = retries
+    while True:
+        try:
+            return requests.put(*args, **kwargs) # pylint: disable=missing-timeout
+        except RequestConnectionError as e:
+            if retriesLeft == 0:
+                raise e
+            eprint(f"HTTP request failed! Retrying {retriesLeft} more times.")
+            retriesLeft -= 1
+
+
+def _post(*args, retries: int, **kwargs):
+    retriesLeft = retries
+    while True:
+        try:
+            return requests.post(*args, **kwargs) # pylint: disable=missing-timeout
+        except RequestConnectionError as e:
+            if retriesLeft == 0:
+                raise e
+            eprint(f"HTTP request failed! Retrying {retriesLeft} more times.")
+            retriesLeft -= 1
+
+
+def getBlock(x, y, z, retries=5, timeout=None):
     """Return the block ID from the world."""
-    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
-    try:
-        response = requests.get(url).text
-    except RequestConnectionError:
-        return "minecraft:void_air"
-    return response
+    url = f'{HOST}/blocks?x={x}&y={y}&z={z}'
+    return _get(url, retries=retries, timeout=timeout).text
 
 
-def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
+def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None, retries=5, timeout=None):
     """Place one or multiple blocks in the world."""
     if customFlags is not None:
         blockUpdateQueryParam = f"customFlags={customFlags}"
     else:
         blockUpdateQueryParam = f"doBlockUpdates={doBlockUpdates}"
 
-    url = (f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
-           f'&{blockUpdateQueryParam}')
-    try:
-        response = requests.put(url, blockStr)
-    except RequestConnectionError:
-        return "0"
-    return response.text
+    url = (f'{HOST}/blocks?x={x}&y={y}&z={z}&{blockUpdateQueryParam}')
+    return _put(url, blockStr, retries=retries, timeout=timeout).text
 
 
-def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
-               doBlockUpdates=True, customFlags=None):
+def sendBlocks(
+    blockList,
+    x=0, y=0, z=0,
+    doBlockUpdates=True,
+    customFlags=None,
+    retries=5,
+    timeout=None
+):
     """Take a list of blocks and place them into the world in one go."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
-    try:
-        response = placeBlock(x, y, z, body, doBlockUpdates, customFlags)
-        return response
-    except RequestConnectionError as e:
-        print("Request failed: {} Retrying ({} left)".format(e, retries))
-        if retries > 0:
-            return sendBlocks(x, y, z, retries - 1)
-    return False
+    return placeBlock(x, y, z, body, doBlockUpdates, customFlags, retries=retries, timeout=timeout)
 
 
-def runCommand(command):
+def runCommand(command, retries=5, timeout=None):
     """Run a Minecraft command in the world."""
-    url = 'http://localhost:9000/command'
-    try:
-        response = requests.post(url, bytes(command, "utf-8"))
-    except RequestConnectionError:
-        return "connection error"
-    return response.text
+    url = '{HOST}/command'
+    return _post(url, bytes(command, "utf-8"), retries=retries, timeout=timeout).text
 
 
-def requestBuildArea():
+def requestBuildArea(retries=5, timeout=None):
     """Return the building area."""
     area = 0, 0, 0, 128, 256, 128   # default area for beginners
-    response = requests.get('http://localhost:9000/buildarea')
+    response = _get('{HOST}/buildarea', retries=retries, timeout=timeout)
     if response.ok:
         buildArea = response.json()
         if buildArea != -1:
@@ -91,22 +100,21 @@ def requestBuildArea():
             z2 = buildArea["zTo"]
             area = x1, y1, z1, x2, y2, z2
     else:
-        print(response.text)
-        print("Using default build area (0, 0, 0, 128, 256, 128).")
+        eprint(response.text)
+        eprint("Using default build area (0, 0, 0, 128, 256, 128).")
     return area
 
 
-def getChunks(x, z, dx, dz, rtype='text'):
+def getChunks(x, z, dx, dz, rtype='text', retries=5, timeout=None):
     """Get raw chunk data."""
-    url = f'http://localhost:9000/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
+    url = f'{HOST}/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
-    response = requests.get(url, headers={"Accept": acceptType})
+    response = _get(url, headers={"Accept": acceptType}, retries=retries, timeout=timeout)
     if response.status_code >= 400:
-        print(f"Error: {response.text}")
+        eprint(f"Error: {response.text}")
 
     if rtype == 'text':
         return response.text
-    elif rtype == 'bytes':
+    if rtype == 'bytes':
         return response.content
-    else:
-        raise Exception(f"{rtype} is not a valid return type.")
+    raise ValueError(f"{rtype} is not a valid return type.")
