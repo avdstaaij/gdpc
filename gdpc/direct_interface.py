@@ -1,4 +1,4 @@
-""" Provide access to the HTTP interface of the Minecraft HTTP server.
+"""Provide access to the HTTP interface of the Minecraft HTTP server.
 
 This file contains various functions that map directly onto the HTTP interface.
 It is recommended to use `interface.py` instead.
@@ -27,7 +27,7 @@ def post(*args):
 
 
 def getBlock(x, y, z):
-    """**Return the block ID from the world**."""
+    """Return the block ID from the world."""
     url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.get(url).text
@@ -37,7 +37,7 @@ def getBlock(x, y, z):
 
 
 def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
-    """**Place one or multiple blocks in the world**."""
+    """Place one or multiple blocks in the world."""
     if customFlags is not None:
         blockUpdateQueryParam = f"customFlags={customFlags}"
     else:
@@ -54,7 +54,7 @@ def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
 
 def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
                doBlockUpdates=True, customFlags=None):
-    """**Take a list of blocks and place them into the world in one go**."""
+    """Take a list of blocks and place them into the world in one go."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:
         response = placeBlock(x, y, z, body, doBlockUpdates, customFlags)
@@ -67,7 +67,7 @@ def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
 
 
 def runCommand(command):
-    """**Run a Minecraft command in the world**."""
+    """Run a Minecraft command in the world."""
     url = 'http://localhost:9000/command'
     try:
         response = requests.post(url, bytes(command, "utf-8"))
@@ -77,7 +77,7 @@ def runCommand(command):
 
 
 def requestBuildArea():
-    """**Return the building area**."""
+    """Return the building area."""
     area = 0, 0, 0, 128, 256, 128   # default area for beginners
     response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
@@ -97,7 +97,7 @@ def requestBuildArea():
 
 
 def getChunks(x, z, dx, dz, rtype='text'):
-    """**Get raw chunk data**."""
+    """Get raw chunk data."""
     url = f'http://localhost:9000/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
     response = requests.get(url, headers={"Accept": acceptType})

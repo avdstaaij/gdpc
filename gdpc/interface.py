@@ -1,10 +1,10 @@
-""" Provide tools for placing and getting blocks and more.
+"""Provide tools for placing and getting blocks and more.
 
 This module contains functions to:
-* Request the build area as defined in-world
-* Run Minecraft commands
-* Get the block ID at a particular coordinate
-* Place blocks in the world
+- Request the build area as defined in-world
+- Run Minecraft commands
+- Get the block ID at a particular coordinate
+- Place blocks in the world
 """
 
 from collections import OrderedDict
@@ -46,7 +46,7 @@ class OrderedByLookupDict(OrderedDict):
 
 
 class Interface():
-    """**Provides tools for interacting with the HTML interface**.
+    """Provides tools for interacting with the HTML interface.
 
     All function parameters and returns are in local coordinates.
     """
@@ -54,7 +54,7 @@ class Interface():
     def __init__(self, x=0, y=0, z=0,
                  buffering=False, bufferlimit=1024,
                  caching=False, cachelimit=8192):
-        """**Initialise an interface with offset and buffering**."""
+        """Initialise an interface with offset and buffering."""
         self.offset = x, y, z
         self.__buffering = buffering
         self.bufferlimit = bufferlimit
@@ -67,19 +67,19 @@ class Interface():
         # Interface.cache.maxsize to change size
 
     def __del__(self):
-        """**Clean up before destruction**."""
+        """Clean up before destruction."""
         self.sendBlocks()
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
-        """**Represent the Interface as a constructor**."""
+        """Represent the Interface as a constructor."""
         return "Interface(" \
             f"{self.offset[0]}, {self.offset[1]}, {self.offset[2]}, " \
             f"{self.__buffering}, {self.bufferlimit}, " \
             f"{self.caching}, {self.cache.maxsize})"
 
     def getBlock(self, x, y, z):
-        """**Return the block ID in the world**.
+        """Return the block ID in the world.
 
         Takes local coordinates, works with global coordinates
         """
@@ -105,7 +105,7 @@ class Interface():
 
     def placeBlock(self, x, y, z, block, replace=None,
                    doBlockUpdates=-1, customFlags=-1):
-        """**Place a block in the world depending on buffer activation**.
+        """Place a block in the world depending on buffer activation.
 
         Takes local coordinates, works with local and global coordinates
         """
@@ -141,7 +141,7 @@ class Interface():
 
     def placeBlockDirect(self, x, y, z, blockStr,
                          doBlockUpdates=-1, customFlags=-1):
-        """**Place a single block in the world directly**.
+        """Place a single block in the world directly.
 
         Takes local coordinates, works with global coordinates
         """
@@ -158,21 +158,21 @@ class Interface():
         return result
 
     def getBlockFlags(self):
-        """**Get default block placement flags**."""
+        """Get default block placement flags."""
         return self.placeBlockflags
 
     def placeBlockFlags(self, doBlockUpdates=True, customFlags=None):
-        """**Set default block placement flags**."""
+        """Set default block placement flags."""
         self.placeBlockflags = doBlockUpdates, customFlags
 
     # ----------------------------------------------------- block buffers
 
     def isBuffering(self):
-        """**Get self.__buffering**."""
+        """Get self.__buffering."""
         return self.__buffering
 
     def setBuffering(self, value, notify=True):
-        """**Set self.__buffering**."""
+        """Set self.__buffering."""
         self.__buffering = value
         if self.__buffering and notify:
             print("Buffering has been activated.")
@@ -181,35 +181,35 @@ class Interface():
             print("Buffering has been deactivated.")
 
     def getBufferLimit(self):
-        """**Get self.bufferlimit**."""
+        """Get self.bufferlimit."""
         return self.bufferlimit
 
     def setBufferLimit(self, value):
-        """**Set self.bufferlimit**."""
+        """Set self.bufferlimit."""
         self.bufferlimit = value
 
     def isCaching(self):
-        """**Get self.caching**."""
+        """Get self.caching."""
         return self.caching
 
     def setCaching(self, value=False):
-        """**Set self.caching**."""
+        """Set self.caching."""
         globalinterface.caching = value
         if self == globalinterface and not value:
             global globalDecay
             globalDecay = None
 
     def getCacheLimit(self):
-        """**Get maximum cache size**."""
+        """Get maximum cache size."""
         return self.cache.maxsize
 
     def setCacheLimit(self, value=8192):
-        """**Set maximum cache size**."""
+        """Set maximum cache size."""
         self.cache.maxsize = value
 
     def placeBlockBuffered(self, x, y, z, blockStr, limit=50,
                            doBlockUpdates=-1, customFlags=-1):
-        """**Place a block in the buffer and send once limit is exceeded**.
+        """Place a block in the buffer and send once limit is exceeded.
 
         Takes local coordinates and works with global coordinates
         """
@@ -231,10 +231,10 @@ class Interface():
             return '0'
 
     def sendBlocks(self, x=0, y=0, z=0, retries=5):
-        """**Send the buffer to the server and clear it**.
+        """Send the buffer to the server and clear it.
 
-        Since the buffer contains global coordinates
-            no conversion takes place in this function
+        Since the buffer contains global coordinates,
+        no conversion takes place in this function.
         """
         if self.buffer == []:
             return '0'
@@ -250,7 +250,7 @@ class Interface():
     # ----------------------------------------------------- utility functions
 
     def local2global(self, x, y, z):
-        """**Translate local to global coordinates**."""
+        """Translate local to global coordinates."""
         result = []
         if x is not None:
             result.append(x + self.offset[0])
@@ -261,7 +261,7 @@ class Interface():
         return result
 
     def global2local(self, x, y, z):
-        """**Translate global to local coordinates**."""
+        """Translate global to local coordinates."""
         result = []
         if x is not None:
             result.append(x - self.offset[0])
@@ -273,20 +273,20 @@ class Interface():
 
 
 def runCommand(command):
-    """**Run a Minecraft command in the world**."""
+    """Run a Minecraft command in the world."""
     if command[0] == '/':
         command = command[1:]
     return di.runCommand(command)
 
 
 def setBuildArea(x1, y1, z1, x2, y2, z2):
-    """**Set and return the build area**."""
+    """Set and return the build area."""
     runCommand(f"setbuildarea {x1} {y1} {z1} {x2} {y2} {z2}")
     return requestBuildArea()
 
 
 def requestBuildArea():
-    """**Return the current building area**.
+    """Return the current building area.
 
     Will reset anything dependant on the build area.
     """
@@ -301,7 +301,7 @@ def requestBuildArea():
 
 
 def requestPlayerArea(dx=128, dz=128):
-    """**Return the building area surrounding the player**."""
+    """Return the building area surrounding the player."""
     # Correcting for offset from player position
     dx -= 1
     dz -= 1
@@ -321,7 +321,7 @@ globalinterface = Interface()
 
 
 def makeGlobalSlice():
-    """**Instantiate a global WorldSlice and refresh building area**."""
+    """Instantiate a global WorldSlice and refresh building area."""
     global globalWorldSlice
     x1, _, z1, x2, _, z2 = requestBuildArea()
     globalWorldSlice = WorldSlice(x1, z1, x2, z2)
@@ -330,69 +330,69 @@ def makeGlobalSlice():
 
 
 def getBlock(x, y, z):
-    """**Global getBlock**."""
+    """Global getBlock."""
     return globalinterface.getBlock(x, y, z)
 
 
 def placeBlock(x, y, z, blocks, replace=None):
-    """**Global placeBlock**."""
+    """Global placeBlock."""
     return globalinterface.placeBlock(x, y, z, blocks, replace)
 
 
 def getBlockFlags():
-    """**Global getBlockFlags**."""
+    """Global getBlockFlags."""
     return globalinterface.getBlockFlags()
 
 
 def placeBlockFlags(doBlockUpdates=True, customFlags=None):
-    """**Global placeBlockFlags**."""
+    """Global placeBlockFlags."""
     globalinterface.placeBlockFlags(doBlockUpdates, customFlags)
 
 # ----------------------------------------------------- block buffers
 
 
 def isCaching():
-    """**Global isCaching**."""
+    """Global isCaching."""
     return globalinterface.isCaching()
 
 
 def setCaching(value=False):
-    """**Global setCaching**."""
+    """Global setCaching."""
     globalinterface.setCaching(value)
 
 
 def getCacheLimit():
-    """**Global getCacheLimit**."""
+    """Global getCacheLimit."""
     return globalinterface.getCacheLimit()
 
 
 def setCacheLimit(value=8192):
-    """**Global setCacheLimit**."""
+    """Global setCacheLimit."""
     globalinterface.setCacheLimit(value)
 
 
 def isBuffering():
-    """**Global isBuffering**."""
+    """Global isBuffering."""
     return globalinterface.isBuffering()
 
 
 def setBuffering(val):
-    """**Global setBuffering**."""
+    """Global setBuffering."""
     globalinterface.setBuffering(val)
 
 
 def getBufferLimit():
-    """**Global getBufferLimit**."""
+    """Global getBufferLimit."""
     return globalinterface.getBufferLimit()
 
 
 def setBufferLimit(val):
-    """**Global setBufferLimit**."""
+    """Global setBufferLimit."""
     globalinterface.setBufferLimit(val)
 
 
 def sendBlocks(x=0, y=0, z=0, retries=5):
-    """**Global sendBlocks**."""
+    """Global sendBlocks."""
     return globalinterface.sendBlocks(x, y, z, retries)
 
 # ----------------------------------------------------- utility functions
@@ -402,7 +402,7 @@ def checkOutOfBounds(x, y, z,
                      x1=None, y1=None, z1=None,
                      x2=None, y2=None, z2=None,
                      warn=True):
-    """**Check whether a given coordinate is outside the build area**."""
+    """Check whether a given coordinate is outside the build area."""
     x1 = globalBuildArea[0] if x1 is None else x1
     y1 = globalBuildArea[1] if y1 is None else y1
     z1 = globalBuildArea[2] if z1 is None else z1
@@ -419,19 +419,19 @@ def checkOutOfBounds(x, y, z,
 
 
 def global2buildlocal(x, y, z):
-    """**Convert global coordinates to ones relative to the build area**."""
+    """Convert global coordinates to ones relative to the build area."""
     x0, y0, z0, _, _, _ = globalBuildArea
     return x - x0, y - y0, z - z0
 
 
 def buildlocal2global(x, y, z):
-    """**Convert global coordinates to ones relative to the build area**."""
+    """Convert global coordinates to ones relative to the build area."""
     x0, y0, z0, _, _, _ = globalBuildArea
     return x + x0, y + y0, z + z0
 
 
 def resetGlobalDecay():
-    """**Reset the global decay marker**."""
+    """Reset the global decay marker."""
     global globalDecay
     x1, _, z1, x2, _, z2 = globalBuildArea
     globalDecay = np.zeros((x2 - x1, 256, z2 - z1), dtype=bool)

@@ -1,4 +1,4 @@
-""" Provides various small functions for the average workflow. """
+"""Provides various small functions for the average workflow."""
 
 from functools import lru_cache
 from itertools import product
@@ -13,7 +13,7 @@ from .worldLoader import WorldSlice
 
 
 def is_sequence(sequence):
-    """**Determine whether sequence is a sequence**."""
+    """Determine whether sequence is a sequence."""
     try:
         _ = sequence[0:-1]
         return True
@@ -67,7 +67,7 @@ def check_version():
 
 
 def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
-    """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
+    """Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)."""
     # if 2D coords are provided reshape to 3D coords
     if y2 is None or z2 is None:
         y1, z1, x2, y2, z2 = 0, y1, z1, 255, x2
@@ -81,11 +81,11 @@ def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
 
 
 def loop2d(a1, b1, a2=None, b2=None):
-    """**Return all coordinates in a 2D region**.
+    """Return all coordinates in a 2D region.
 
-    If only one pair is provided, the loop will yield a1*b1 values
-    If two pairs are provided the loop will yield all results between them
-        inclusively
+    If only one pair is provided, the loop will yield a1*b1 values.
+
+    If two pairs are provided the loop will yield all results between them inclusively.
     """
     if a2 is None or b2 is None:
         a1, b1, a2, b2 = 0, 0, a1 - 1, b1 - 1
@@ -96,7 +96,7 @@ def loop2d(a1, b1, a2=None, b2=None):
 
 
 def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
-    """**Return all coordinates in a region of size dx, dy, dz**.
+    """Return all coordinates in a region of size dx, dy, dz.
 
     Behaves like loop2d
     """
@@ -109,7 +109,7 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
 
 
 def index2slot(sx, sy, ox, oy):
-    """**Return slot number of an inventory correlating to a 2d index**."""
+    """Return slot number of an inventory correlating to a 2d index."""
     if not (0 <= sx < ox and 0 <= sy < oy):
         raise ValueError(f"{sx, sy} is not within (0, 0) and {ox, oy}!")
     return sx + sy * ox
@@ -117,7 +117,7 @@ def index2slot(sx, sy, ox, oy):
 
 def writeBook(text, title="Chronicle", author="Anonymous",
               description="I wonder what\\'s inside?", desccolor='gold'):
-    r"""**Return NBT data for a correctly formatted book**.
+    r"""Return NBT data for a correctly formatted book.
 
     The following special characters are used for formatting the book:
     - `\n`: New line
@@ -152,9 +152,10 @@ def writeBook(text, title="Chronicle", author="Anonymous",
     - `\\r`: When at start of line, align text to right side
 
     NOTE: For supported special characters see
-        https://minecraft.fandom.com/wiki/Language#Font
+    https://minecraft.fandom.com/wiki/Language#Font
+
     IMPORTANT: When using `\\s` text is directly interpreted by Minecraft,
-        so all line breaks must be `\\\\n` to function
+    so all line breaks must be `\\\\n` to function
     """
     pages_left = 97                     # per book
     characters_left = CHARACTERS = 255  # per page
@@ -164,7 +165,7 @@ def writeBook(text, title="Chronicle", author="Anonymous",
 
     @lru_cache()
     def fontwidth(word):
-        """**Return the length of a word based on character width**.
+        """Return the length of a word based on character width.
 
         If a letter is not found, a width of 9 is assumed
         A character spacing of 1 is automatically integrated
@@ -295,7 +296,7 @@ def writeBook(text, title="Chronicle", author="Anonymous",
 
 
 def identifyObtrusiveness(blockStr):
-    """**Return the percieved obtrusiveness of a given block**.
+    """Return the percieved obtrusiveness of a given block.
 
     Returns a numeric weight from 0 (invisible) to 4 (opaque)
     """
@@ -311,9 +312,9 @@ def identifyObtrusiveness(blockStr):
 
 
 def visualizeHeightmap(*arrays, title=None, autonormalize=True):
-    """**Visualizes one or multiple numpy arrays**."""
+    """Visualizes one or multiple numpy arrays."""
     def normalize(array):
-        """**Normalize the array to contain values from 0 to 1**."""
+        """Normalize the array to contain values from 0 to 1."""
         return (array - array.min()) / (array.max() - array.min())
 
     for array in arrays:
@@ -339,14 +340,14 @@ def visualizeHeightmap(*arrays, title=None, autonormalize=True):
 
 
 def invertDirection(direction):
-    """**Return the inverted direction of direcion**."""
+    """Return the inverted direction of direcion."""
     if is_sequence(direction):
         return [lookup.INVERTDIRECTION[n] for n in direction]
     return lookup.INVERTDIRECTION[direction]
 
 
 def direction2rotation(direction):
-    """**Convert a direction to a rotation**.
+    """Convert a direction to a rotation.
 
     If a sequence is provided, the average is returned.
     """
@@ -367,10 +368,10 @@ def direction2rotation(direction):
 
 
 def direction2vector(direction):
-    """**Convert a direction to a vector**."""
+    """Convert a direction to a vector."""
     return lookup.DIRECTION2VECTOR[direction]
 
 
 def axis2vector(axis):
-    """**Convert an axis to a vector**."""
+    """Convert an axis to a vector."""
     return lookup.AXIS2VECTOR[axis]

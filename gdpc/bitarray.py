@@ -1,8 +1,8 @@
-""" Read the bitarray format used by Minecraft. """
+"""Read the bitarray format used by Minecraft."""
 
 
 def inclusiveBetween(start, end, value):
-    """**Raise an exception when the value is out of bounds**."""
+    """Raise an exception when the value is out of bounds."""
     if not start <= value <= end:
         raise ValueError(
             f"The value {value} is not in the inclusive range "
@@ -10,14 +10,14 @@ def inclusiveBetween(start, end, value):
 
 
 class BitArray:
-    """**Store an array of binary values and its metrics**.
+    """Store an array of binary values and its metrics.
 
     Minecraft stores block and heightmap data in compacted arrays of longs.
     This class performs index mapping and bit shifting to access the data.
     """
 
     def __init__(self, bitsPerEntryIn, arraySizeIn, data):
-        """**Initialise a BitArray**."""
+        """Initialise a BitArray."""
         inclusiveBetween(1, 32, bitsPerEntryIn)
         self.arraySize = arraySizeIn
         self.bitsPerEntry = bitsPerEntryIn
@@ -36,15 +36,15 @@ class BitArray:
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
-        """**Represent the BitArray as a constructor**."""
+        """Represent the BitArray as a constructor."""
         return f"BitArray{(self.bitsPerEntry, self.arraySize, self.longArray)}"
 
     def getPosOfLong(self, index):
-        """**Return the position of the long that contains index**."""
+        """Return the position of the long that contains index."""
         return index // self.entriesPerLong
 
     def getAt(self, index):
-        """**Return the binary value stored at index.**."""
+        """Return the binary value stored at index."""
         inclusiveBetween(0, (self.arraySize - 1), index)
         i = self.getPosOfLong(index)
         j = self.longArray[i]
@@ -52,5 +52,5 @@ class BitArray:
         return j >> k & self.maxEntryValue
 
     def size(self):
-        """**Return self.arraySize**."""
+        """Return self.arraySize."""
         return self.arraySize

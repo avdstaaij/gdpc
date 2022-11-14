@@ -1,4 +1,4 @@
-""" Provides tools for creating multidimensional shapes. """
+"""Provides tools for creating multidimensional shapes."""
 
 import numpy as np
 
@@ -7,7 +7,7 @@ from .interface import globalinterface as gi
 
 
 def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
-    """**Draw a line from point to point efficiently**."""
+    """Draw a line from point to point efficiently."""
     settings = blocks, replace, interface
     dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
     if dimension == 0:
@@ -19,12 +19,12 @@ def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 
 def placeJointedLine(points, blocks, replace=None, interface=gi):
-    """**Place a line that runs from point to point**."""
+    """Place a line that runs from point to point."""
     return placeFromList(lineSequence(points), blocks, replace, interface)
 
 
 def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
-    """**Place a polygon that runs from line to line and may be filled**."""
+    """Place a polygon that runs from line to line and may be filled."""
     polygon = set()
     polygon.update(lineSequence(points))
     polygon.update(line3d(*points[0], *points[-1]))
@@ -67,7 +67,7 @@ def placeVolume(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
 
 def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                 hollow=False, interface=gi):
-    """**Place a cubic shape that fills the entire region and may be hollow**.
+    """Place a cubic shape that fills the entire region and may be hollow.
 
     Adjusts function call based on dimensionality.
     """
@@ -98,7 +98,7 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
 
 def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
                           axis='y', tube=False, hollow=False, interface=gi):
-    """**Place a cylindric shape centered on xyz with height and radius**."""
+    """Place a cylindric shape centered on xyz with height and radius."""
     if axis == 'x':
         placeCylinder(x, y - r, z - r, x + h - 1, y + r, z + r,
                       blocks, replace, 'x', tube, hollow, interface)
@@ -114,12 +114,12 @@ def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
 
 def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                   axis='y', tube=False, hollow=False, interface=gi):
-    """**Place a cylindric shape that fills the entire region**."""
+    """Place a cylindric shape that fills the entire region."""
     settings = blocks, replace, interface
     dimension, flatSides = getDimension(x1, y1, z1, x2, y2, z2)
 
     def placeCylinderBody(a1, b1, a2, b2, h0, hn):
-        """**Build a cylinder**."""
+        """Build a cylinder."""
         tubePoints, basePoints = ellipse(a1, b1, a2, b2, filled=True)
         basePoints = padDimension(basePoints, h0, axis)
         tubePoints = padDimension(tubePoints, h0, axis)
@@ -167,7 +167,7 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
 
 
 def placeFromList(pos_list, blocks, replace=None, interface=gi):
-    """**Replace all blocks at coordinates in list with blocks**."""
+    """Replace all blocks at coordinates in list with blocks."""
     result = 0
     ERRORMESSAGE = (f"\n{lookup.TCOLORS['orange']}"
                     f"Fails:\n{lookup.TCOLORS['gray']}")
@@ -186,7 +186,7 @@ def placeFromList(pos_list, blocks, replace=None, interface=gi):
 
 
 def getShapeBoundaries(points):
-    """**Return the smallest and largest values used in a shape**."""
+    """Return the smallest and largest values used in a shape."""
     points = np.array(points)
     dimension = len(points[0])
     if dimension == 2:
@@ -202,7 +202,7 @@ def getShapeBoundaries(points):
 
 
 def getDimension(x1, y1, z1, x2, y2, z2):
-    """**Determine the number of dimensions the input uses**."""
+    """Determine the number of dimensions the input uses."""
     if (x1, y1, z1) == (x2, y2, z2):
         return 0, list(lookup.AXES)
     # NOTE: if dimension needs to be known, return isdifferent
@@ -215,7 +215,7 @@ def getDimension(x1, y1, z1, x2, y2, z2):
 
 
 def padDimension(points, value=0, axis='z'):
-    """**Pad a list of 2D points with a value in the appropriate position**.
+    """Pad a list of 2D points with a value in the appropriate position.
 
     May also be used to replace all values in an axis.
     """
@@ -230,7 +230,7 @@ def padDimension(points, value=0, axis='z'):
 
 
 def cutDimension(points, axis='z'):
-    """**Cut the appropriate axis from a list of points**."""
+    """Cut the appropriate axis from a list of points."""
     try:
         if axis == 'x':
             return [(i[0:]) for i in points]
@@ -249,7 +249,7 @@ def cutDimension(points, axis='z'):
 
 
 def translate(points, amount, axis='y'):
-    """**Return a clone of the points translateed by amount in axis**."""
+    """Return a clone of the points translateed by amount in axis."""
     points = set(points)
     vx, vy, vz = lookup.AXIS2VECTOR[axis]
     clone = [(x + amount * vx, y + amount * vy, z + amount * vz)
@@ -258,7 +258,7 @@ def translate(points, amount, axis='y'):
 
 
 def repeat(points, times, axis='y', step=1):
-    """**Return points with duplicates shifted along the appropriate axis**."""
+    """Return points with duplicates shifted along the appropriate axis."""
     clone = set(points)
     for n in range(1, times + 2):
         clone.update(translate(points, step * n, axis))
@@ -266,7 +266,7 @@ def repeat(points, times, axis='y', step=1):
 
 
 def fill2d(points):
-    """**Return all filling within the shape of points**."""
+    """Return all filling within the shape of points."""
     points = list(points)
     filling = []
     minx, miny = np.array(points).min(axis=0)
@@ -291,7 +291,7 @@ def fill2d(points):
 
 
 def fill3d(points):
-    """**Return all filling within the shape of points**."""
+    """Return all filling within the shape of points."""
     points = list(points)
     filling = []
     minx, miny, minz = np.array(points).min(axis=0)
@@ -322,10 +322,9 @@ def fill3d(points):
 
 
 def line2d(x1, y1, x2, y2):
-    """**Return coordinates for a 2D line from point to point**.
+    """Return coordinates for a 2D line from point to point.
 
-    From
-    https://www.codegrepper.com/code-examples/python/line+algorithm+in+python
+    From https://www.codegrepper.com/code-examples/python/line+algorithm+in+python
     """
     dx = x2 - x1
     dy = y2 - y1
@@ -361,7 +360,7 @@ def line2d(x1, y1, x2, y2):
 
 
 def line3d(x1, y1, z1, x2, y2, z2):
-    """**Return coordinates for a 3D line from point to point**.
+    """Return coordinates for a 3D line from point to point.
 
     With 'inspiration' from
     https://www.geeksforgeeks.org/bresenhams-algorithm-for-3-d-line-drawing/
@@ -428,7 +427,7 @@ def line3d(x1, y1, z1, x2, y2, z2):
 
 
 def lineSequence(points):
-    """**Return all points connecting points in sequence**."""
+    """Return all points connecting points in sequence."""
     last = points[0]
     dimension = len(last)
     toPlace = set()
@@ -445,7 +444,7 @@ def lineSequence(points):
 
 
 def circle(x1, y1, x2, y2, filled=False):
-    """**Return the points of a circle with a given centre and diameter**.
+    """Return the points of a circle with a given centre and diameter.
 
     With 'inspiration' from:
     https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
@@ -493,7 +492,7 @@ def circle(x1, y1, x2, y2, filled=False):
 
 
 def ellipse(x1, y1, x2, y2, filled=False):
-    """**Return the points of an ellipse with a given centre and size**.
+    """Return the points of an ellipse with a given centre and size.
 
     Modified version 'inspired' by chandan_jnu from
     https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/

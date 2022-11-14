@@ -1,4 +1,4 @@
-""" Store lists of various information on blocks, biomes and more. """
+"""Store lists of various information on blocks, biomes and more."""
 
 import os
 import sys
@@ -112,14 +112,14 @@ VECTOR2AXIS = dict([(val, key) for key, val in AXIS2VECTOR.items()])
 
 def variate(variations, extensions=None, isprefix=False,
             namespace="minecraft", separator="_", ns_separator=":") -> set:
-    """**Generate block variations**.
+    """Generate block variations.
 
     TODO: documentation
     TODO: refactor to take optional suffix and prefix, replace named types
     """
 
     def is_iterable(iterable):
-        """**Determine whether iterable is an iterable**."""
+        """Determine whether iterable is an iterable."""
         try:
             _ = iter(iterable)
             return True

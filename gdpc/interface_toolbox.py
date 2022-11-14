@@ -1,4 +1,4 @@
-""" Provides various small functions for the interface. """
+"""Provides various small functions for the interface."""
 
 from random import choice
 
@@ -44,7 +44,7 @@ def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
 
 
 def placeLectern(x, y, z, bookData, facing=None, interface=gi):
-    """**Place a lectern with a book in the world**."""
+    """Place a lectern with a book in the world."""
     if facing is None:
         facing = choice(getOptimalDirection(x, y, z))
     interface.placeBlock(x, y, z, f"lectern[facing={facing}, has_book=true]")
@@ -61,10 +61,10 @@ def placeLectern(x, y, z, bookData, facing=None, interface=gi):
 
 def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
                         items=None, replace=True, interface=gi):
-    """**Place an inventorised block with any number of items in the world**.
+    """Place an inventorised block with any number of items in the world.
 
     Items is expected to be a sequence of (x, y, item[, amount])
-        or a sequence of such sequences e.g. ((x, y, item), (x, y, item), ...)
+    or a sequence of such sequences e.g. ((x, y, item), (x, y, item), ...)
     """
     items = [] if items is None else items
     if block not in lookup.INVENTORYLOOKUP:
@@ -103,14 +103,14 @@ def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
 def placeSign(x, y, z, facing=None, rotation=None,
               text1="", text2="", text3="", text4="",
               wood='oak', wall=False, interface=gi):
-    """**Place a written sign in the world**.
+    """Place a written sign in the world.
 
     Facing is for wall placement, rotation for ground placement
     If there is no supporting wall the sign will revert to ground placement
     By default the sign will attempt to orient itself to be most legible
 
     Note: If you are experiencing performance issues provide your own facing
-        and rotation values to reduce the required calculations
+    and rotation values to reduce the required calculations
     """
     if wood not in lookup.WOODS:
         raise ValueError(f"{wood} is not a valid wood type!")
@@ -155,7 +155,7 @@ def placeSign(x, y, z, facing=None, rotation=None,
 
 
 def getOptimalDirection(x, y, z):
-    """**Return the least obstructed direction to have something facing**."""
+    """Return the least obstructed direction to have something facing."""
     north = (identifyObtrusiveness(getBlock(x, y, z - 1)), 'north')
     east = (identifyObtrusiveness(getBlock(x + 1, y, z)), 'east')
     south = (identifyObtrusiveness(getBlock(x, y, z + 1)), 'south')
