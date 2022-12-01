@@ -5,6 +5,7 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 
+
 from io import BytesIO
 
 import nbt

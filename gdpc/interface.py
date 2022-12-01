@@ -7,6 +7,7 @@ This module contains functions to:
 - Place blocks in the world
 """
 
+
 from collections import OrderedDict
 from random import choice
 

@@ -1,5 +1,6 @@
 """Provides various small functions for the interface."""
 
+
 from random import choice
 
 from . import lookup

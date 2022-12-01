@@ -1,5 +1,6 @@
 """Provides various small functions for the average workflow."""
 
+
 from functools import lru_cache
 from itertools import product
 

@@ -1,5 +1,6 @@
 """Store lists of various information on blocks, biomes and more."""
 
+
 import os
 import sys
 from typing import Set
