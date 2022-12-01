@@ -38,10 +38,14 @@ setup(
     packages=["gdpc"], # Note: subpackages must be listed explicitly
     install_requires=[
         "matplotlib",
+        "more-itertools",
         "NBT",
         "numpy",
         "opencv_python",
-        "requests"
+        "PyGLM",
+        "pyglm-typing",
+        "requests",
+        "scipy",
     ],
     python_requires=">=3.6, <4",
     classifiers=[
@@ -52,7 +56,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Topic :: Games/Entertainment :: Simulation",
         "Topic :: Software Development :: Libraries :: Application Frameworks",
-        "Topic :: Software Development :: Version Control :: Git"
+        "Topic :: Software Development :: Version Control :: Git",
     ],
     keywords="GDMC, generative design, Minecraft, HTTP, development",
     project_urls={
