@@ -50,6 +50,8 @@ class BitArray:
         return index // self.entriesPerLong
 
     def getAt(self, index):
+        if len(self.longArray) == 0:
+            return 0
         """**Return the binary value stored at index.**."""
         inclusiveBetween(0, (self.arraySize - 1), index)
         i = self.getPosOfLong(index)
