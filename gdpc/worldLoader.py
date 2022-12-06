@@ -33,7 +33,7 @@ class CachedSection:
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
         return f"CachedSection({repr(self.blockPalette)}, " \
-            f"{repr(self.blockStatesBitArray)})"
+               f"{repr(self.blockStatesBitArray)})"
 
 
 class WorldSlice:
@@ -144,13 +144,13 @@ class WorldSlice:
                 break
 
         if cachedSection is None:
-            return None  # TODO return air compound instead
+            return None
 
         bitarray = cachedSection.blockStatesBitArray
         palette = cachedSection.blockPalette
 
         blockIndex = (y % 16) * 16 * 16 + \
-            (z % 16) * 16 + x % 16
+                     (z % 16) * 16 + x % 16
         return palette[bitarray.getAt(blockIndex)]
 
     def getBlockAt(self, x, y, z):
@@ -161,7 +161,6 @@ class WorldSlice:
         else:
             return blockCompound["Name"].value
 
-    # TODO figure out how to find biome at position in Minecraft >=1.18
     def getBiomeAt(self, x, y, z):
         """**Return biome at given coordinates**."""
         chunkX = (x >> 4) - self.chunkRect[0]
@@ -175,21 +174,47 @@ class WorldSlice:
                 break
 
         if cachedSection is None:
-            return None  # TODO return air compound instead
+            return None
+
+        # Constrain pos to inside this chunk, then shift 2 bits since biome data is encoded
+        # in groups of 4x4x4 per chunk.
+        biomeX = (x % 16) >> 2
+        biomeY = (y % 16) >> 2
+        biomeZ = (z % 16) >> 2
+        biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
 
         bitArray = cachedSection.biomesBitArray
         palette = cachedSection.biomesPalette
-
-        blockIndex = (y % 16) * 16 * 16 + \
-                     (z % 16) * 16 + x % 16
-
-        return palette[bitArray.getAt(blockIndex)]
+        return palette[bitArray.getAt(biomeIndex)]
 
     def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
-        from .lookup import BIOMES
-        chunkID = x // 16 + z // 16 * self.chunkRect[2]
-        data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
-        # "max(set(data), key=data.count)" is used to find the most common item
-        data = max(set(data), key=data.count)
-        return [BIOMES[i] for i in sorted(list(set(data)))]
+        chunkX = (x >> 4) - self.chunkRect[0]
+        chunkZ = (z >> 4) - self.chunkRect[1]
+        chunkY = y >> 4
+
+        cachedSection = None
+        for section in self.sections:
+            if section.x == chunkX and section.y == chunkY and section.z == chunkZ:
+                cachedSection = section
+                break
+
+        if cachedSection is None:
+            return None
+
+        # Find and count each biome type for each biome area (a 4x4x4 block) of the chunk.
+        bitArray = cachedSection.biomesBitArray
+        palette = cachedSection.biomesPalette
+        foundBiomes = dict()
+        for biomeX in range(0, 4):
+            for biomeY in range(0, 4):
+                for biomeZ in range(0, 4):
+                    biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
+                    foundBiome: str = palette[bitArray.getAt(biomeIndex)]
+                    if foundBiome not in foundBiomes:
+                        foundBiomes[foundBiome] = 1
+                    else:
+                        foundBiomes[foundBiome] = foundBiomes.get(foundBiome) + 1
+
+        # Return the biome that was found the most.
+        return max(foundBiomes, key=foundBiomes.get)
