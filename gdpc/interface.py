@@ -243,9 +243,10 @@ class Interface():
         if all(map(lambda val: val.isnumeric(), response)):  # no errors
             self.buffer = []
             return str(sum(map(int, response)))
-        else:
-            print(f"{TCOLORS['orange']}Warning: Server returned error upon "
-                  f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
+
+        print(f"{TCOLORS['orange']}Warning: Server returned error upon "
+              f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
+        return repr(response)
 
     # ----------------------------------------------------- utility functions
 
