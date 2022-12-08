@@ -1,4 +1,5 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
+
 """### Generate a simple example village.
 
 This file contains a comprehensive collection of functions designed
@@ -30,14 +31,6 @@ INFO: Should you have any questions regarding this software, feel free to visit
 
 This file is not meant to be imported.
 """
-
-# === STRUCTURE #0
-# These are technical values, you may ignore them or add them in your own files
-__all__ = []
-__author__ = "Blinkenlights"
-__version__ = "v5.0"
-__date__ = "17 February 2022"
-
 
 # === STRUCTURE #1
 # These are the modules (libraries) we will use in this code
