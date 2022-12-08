@@ -62,7 +62,7 @@ def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
     except RequestConnectionError as e:
         print("Request failed: {} Retrying ({} left)".format(e, retries))
         if retries > 0:
-            return sendBlocks(x, y, z, retries - 1)
+            return sendBlocks(blockList, x, y, z, retries - 1, doBlockUpdates, customFlags)
     return False
 
 
