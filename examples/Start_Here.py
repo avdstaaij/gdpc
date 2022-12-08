@@ -40,6 +40,7 @@ from random import randint
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 from gdpc import toolbox as TB
+from gdpc import interface_toolbox as ITB
 from gdpc import worldLoader as WL
 
 # === STRUCTURE #2
@@ -184,7 +185,7 @@ def buildCity():
     # See the wiki for book formatting codes
     INTF.placeBlock(xaxis, y, zaxis, "emerald_block")
     bookData = TB.writeBook("This book has a page!")
-    TB.placeLectern(xaxis, y + 1, zaxis, bookData)
+    ITB.placeLectern(xaxis, y + 1, zaxis, bookData)
 
 
 def buildTower(x, z):
