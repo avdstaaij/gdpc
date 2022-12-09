@@ -71,13 +71,16 @@ class WorldSlice:
 
         rectOffset = [self.rect[0] % 16, self.rect[1] % 16]
 
-        # heightmaps
+        # For each type of heightmap, create a 2D array of zeros in the shape
+        # of the build area.
         self.heightmaps = {}
         for hmName in self.heightmapTypes:
             self.heightmaps[hmName] = np.zeros(
                 (self.rect[2] + 1, self.rect[3] + 1), dtype=int)
 
-        # heightmaps
+        # For each x-z position in the build area, get the height from the
+        # heightmap data from the corresponding chunk for all types of
+        # heightmap data.
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
@@ -90,6 +93,11 @@ class WorldSlice:
                     for cz in range(16):
                         for cx in range(16):
                             try:
+                                # In the heightmap data the lowest point is
+                                # encoded as 0, while since Minecraft 1.18 the
+                                # actual lowest y position is below zero at -64.
+                                # Subtract 64 from the heightmap value to
+                                # compensate for this difference.
                                 heightmap[-rectOffset[0] + x * 16 + cx,
                                           -rectOffset[1] + z * 16 + cz] \
                                     = heightmapBitArray.getAt(cz * 16 + cx) - 64
@@ -97,7 +105,7 @@ class WorldSlice:
                                 pass
 
         # sections
-        # Flat list of all chunks in this world slice
+        # Flat dict of all chunk sections in this world slice
         self.sections = dict()
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
@@ -137,8 +145,8 @@ class WorldSlice:
         x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
         return f"WorldSlice{(x1, z1, x2, z2)}"
 
-    def getChunkPosition(self, x, y, z):
-        """**Get chunk x,y,z index from global x, y, z position**"""
+    def getChunkSectionPos(self, x, y, z):
+        """**Get chunk section x,y,z index from global x, y, z position**"""
         chunkX = (x >> 4) - self.chunkRect[0]
         chunkZ = (z >> 4) - self.chunkRect[1]
         chunkY = y >> 4
@@ -146,7 +154,7 @@ class WorldSlice:
 
     def getBlockCompoundAt(self, x, y, z):
         """**Return block data**."""
-        cachedSection = self.sections.get(self.getChunkPosition(x, y, z))
+        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
 
@@ -165,7 +173,7 @@ class WorldSlice:
     def getBiomeAt(self, x, y, z):
         """**Return biome at given coordinates**."""
 
-        cachedSection = self.sections.get(self.getChunkPosition(x, y, z))
+        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
 
@@ -179,7 +187,7 @@ class WorldSlice:
 
     def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
-        cachedSection = self.sections.get(self.getChunkPosition(x, y, z))
+        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
 
