@@ -14,12 +14,12 @@ The source code of this module contains examples for:
 NOTE: We recommend creating your own files instead of modifying or adding code
     to these pre-existing files.
 NOTE: If part of the program is running to fast for you to understand, insert
-    # >>> from time import sleep
+    >>> from time import sleep
     and
-    # >>> sleep(0.1)
+    >>> sleep(0.1)
     at the appropriate locations for a delay of 1/10 of a second
     Alternatively, inserting
-    # >>> input("Waiting for user to press [Enter]")
+    >>> input("Waiting for user to press [Enter]")
     will pause the program at the point.
 NOTE: This file will only be updated in the case of breaking changes
     and will not showcase new features!
