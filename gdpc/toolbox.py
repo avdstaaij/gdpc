@@ -1,45 +1,76 @@
-#! /usr/bin/python3
-"""### Provides various small functions for the average workflow."""
+"""Provides various small functions for the average workflow."""
 
-from datetime import datetime as date
 from functools import lru_cache
 from itertools import product
-from random import choice
 
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
 from . import lookup
-from .interface import getBlock
-from .interface import globalinterface as gi
-from .interface import runCommand
-
-__all__ = ['isSequence', 'normalizeCoordinates', 'loop2d', 'loop3d',
-           'writeBook', 'placeLectern', 'placeInventoryBlock', 'placeSign',
-           'getOptimalDirection', 'visualizeHeightmap',
-           'invertDirection', 'direction2rotation', 'direction2vector',
-           'axis2vector']
-
-__author__ = "Blinkenlights"
-__version__ = "v5.0"
-__year__ = date.now().year
+from .lookup import SUPPORTS, TCOLORS, VERSIONS
+from .worldLoader import WorldSlice
 
 
-def isSequence(sequence):
-    """**Determine whether sequence is a sequence**."""
+def is_sequence(sequence):
+    """Determine whether sequence is a sequence."""
     try:
-        sequence[0:-1]
+        _ = sequence[0:-1]
         return True
     except TypeError:
         return False
 
 
+def closest_version(version):
+    """Retrieve next-best version code to given version code."""
+    if version in VERSIONS:
+        return version
+    for val in sorted(VERSIONS.keys(), reverse=True):
+        if version - val >= 0:
+            return val
+    return 0
+
+
+def check_version():
+    """Retrieve Minecraft version and check compatibility."""
+    wslice = WorldSlice(0, 0, 1, 1)  # single-chunk slice
+    current = int(wslice.nbtfile["Chunks"][0]["DataVersion"].value)
+    closestname = "Unknown"
+    # check compatibility
+    if current not in VERSIONS or VERSIONS[SUPPORTS] not in VERSIONS[current]:
+        closest = closest_version(current)
+        closestname = VERSIONS[closest]
+        closestname += " snapshot" if current > closest else ""
+        if closest > SUPPORTS:
+            print(
+                f"{TCOLORS['orange']}WARNING: You are using a newer "
+                "version of Minecraft then GDPC supports!\n"
+                f"\tSupports: {VERSIONS[SUPPORTS]} "
+                f"Detected: {closestname}{TCOLORS['CLR']}"
+            )
+        elif closest < SUPPORTS:
+            print(
+                f"{TCOLORS['orange']}WARNING: You are using an older "
+                "version of Minecraft then GDPC supports!\n"
+                f"\tSupports: {VERSIONS[SUPPORTS]} "
+                f"Detected: {closestname}{TCOLORS['CLR']}"
+            )
+        else:
+            raise ValueError(
+                f"{TCOLORS['red']}Invalid supported version: "
+                f"SUPPORTS = {current}!{TCOLORS['CLR']}"
+            )
+    else:
+        closestname = VERSIONS[current]
+
+    return (current, closestname)
+
+
 def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
-    """**Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)**."""
+    """Return set of coordinates where (x1, y1, z1) <= (x2, y2, z2)."""
     # if 2D coords are provided reshape to 3D coords
     if y2 is None or z2 is None:
-        x1, y1, z1, x2, y2, z2 = x1, 0, y1, z1, 255, x2
+        y1, z1, x2, y2, z2 = 0, y1, z1, 255, x2
     if x1 > x2:
         x1, x2 = x2, x1
     if y1 > y2:
@@ -50,11 +81,11 @@ def normalizeCoordinates(x1, y1, z1, x2, y2=None, z2=None):
 
 
 def loop2d(a1, b1, a2=None, b2=None):
-    """**Return all coordinates in a 2D region**.
+    """Return all coordinates in a 2D region.
 
-    If only one pair is provided, the loop will yield a1*b1 values
-    If two pairs are provided the loop will yield all results between them
-        inclusively
+    If only one pair is provided, the loop will yield a1*b1 values.
+
+    If two pairs are provided the loop will yield all results between them inclusively.
     """
     if a2 is None or b2 is None:
         a1, b1, a2, b2 = 0, 0, a1 - 1, b1 - 1
@@ -65,7 +96,7 @@ def loop2d(a1, b1, a2=None, b2=None):
 
 
 def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
-    """**Return all coordinates in a region of size dx, dy, dz**.
+    """Return all coordinates in a region of size dx, dy, dz.
 
     Behaves like loop2d
     """
@@ -78,15 +109,15 @@ def loop3d(x1, y1, z1, x2=None, y2=None, z2=None):
 
 
 def index2slot(sx, sy, ox, oy):
-    """**Return slot number of an inventory correlating to a 2d index**."""
+    """Return slot number of an inventory correlating to a 2d index."""
     if not (0 <= sx < ox and 0 <= sy < oy):
         raise ValueError(f"{sx, sy} is not within (0, 0) and {ox, oy}!")
     return sx + sy * ox
 
 
-def writeBook(text, title="Chronicle", author=__author__,
+def writeBook(text, title="Chronicle", author="Anonymous",
               description="I wonder what\\'s inside?", desccolor='gold'):
-    r"""**Return NBT data for a correctly formatted book**.
+    r"""Return NBT data for a correctly formatted book.
 
     The following special characters are used for formatting the book:
     - `\n`: New line
@@ -121,9 +152,10 @@ def writeBook(text, title="Chronicle", author=__author__,
     - `\\r`: When at start of line, align text to right side
 
     NOTE: For supported special characters see
-        https://minecraft.fandom.com/wiki/Language#Font
+    https://minecraft.fandom.com/wiki/Language#Font
+
     IMPORTANT: When using `\\s` text is directly interpreted by Minecraft,
-        so all line breaks must be `\\\\n` to function
+    so all line breaks must be `\\\\n` to function
     """
     pages_left = 97                     # per book
     characters_left = CHARACTERS = 255  # per page
@@ -133,7 +165,7 @@ def writeBook(text, title="Chronicle", author=__author__,
 
     @lru_cache()
     def fontwidth(word):
-        """**Return the length of a word based on character width**.
+        """Return the length of a word based on character width.
 
         If a letter is not found, a width of 9 is assumed
         A character spacing of 1 is automatically integrated
@@ -205,7 +237,7 @@ def writeBook(text, title="Chronicle", author=__author__,
                      '║           ⁂         `║\\\\n'
                      '║                      `║\\\\n'
                      '║         GDMC       `║\\\\n'
-                     f'║         {__year__}       `║\\\\n'
+                     '║                      `║\\\\n'
                      '║                      `║\\\\n'
                      '║                      `║\\\\n'
                      '╚══════════╝\\\\n'
@@ -263,155 +295,8 @@ def writeBook(text, title="Chronicle", author=__author__,
     return bookData
 
 
-def placeLectern(x, y, z, bookData, facing=None):
-    """**Place a lectern with a book in the world**."""
-    if facing is None:
-        facing = choice(getOptimalDirection(x, y, z))
-    gi.placeBlock(x, y, z, f"lectern[facing={facing}, has_book=true]")
-    command = (f'data merge block {x} {y} {z} '
-               f'{{Book: {{id: "minecraft:written_book", '
-               f'Count: 1b, tag: {bookData}'
-               '}, Page: 0}')
-    response = runCommand(command)
-    if not response.isnumeric():
-        print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
-              f"upon placing book in lectern:\n\t{lookup.TCOLORS['CLR']}"
-              f"{response}")
-
-
-def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
-                        items=[], replace=True):
-    """**Place an inventorised block with any number of items in the world**.
-
-    Items is expected to be a sequence of (x, y, item[, amount])
-        or a sequence of such sequences e.g. ((x, y, item), (x, y, item), ...)
-    """
-    if block not in lookup.INVENTORYLOOKUP:
-        raise ValueError(f"The inventory for {block} is not available.\n"
-                         "Make sure you are using the namespaced ID.")
-    dx, dy = lookup.INVENTORYLOOKUP[block]
-    if replace:
-        if facing is None:
-            facing = choice(getOptimalDirection(x, y, z))
-        gi.placeBlock(x, y, z, f"{block}[facing={facing}]")
-    else:
-        if block not in gi.getBlock(x, y, z):
-            print(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
-                  f"is not of specified type {block}!\n"
-                  f"\t{lookup.TCOLORS['CLR']}This may result in "
-                  f"incorrectly placed items.")
-
-    # we received a single item
-    if 3 <= len(items) <= 4 and type(items[0]) == int:
-        items = [items, ]
-
-    response = '0'
-    for item in items:
-        slot = index2slot(item[0], item[1], dx, dy)
-        if len(item) == 3:
-            item = list(item)
-            item.append(1)
-        response = runCommand(f"replaceitem block {x} {y} {z} "
-                              f"container.{slot} {item[2]} {item[3]}")
-
-    if not response.isnumeric():
-        print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
-              f"upon placing items:\n\t{lookup.TCOLORS['CLR']}{response}")
-
-
-def placeSign(x, y, z, facing=None, rotation=None,
-              text1="", text2="", text3="", text4="",
-              wood='oak', wall=False):
-    """**Place a written sign in the world**.
-
-    Facing is for wall placement, rotation for ground placement
-    If there is no supporting wall the sign will revert to ground placement
-    By default the sign will attempt to orient itself to be most legible
-
-    Note: If you are experiencing performance issues provide your own facing
-        and rotation values to reduce the required calculations
-    """
-    if wood not in lookup.WOODS:
-        raise ValueError(f"{wood} is not a valid wood type!")
-
-    if facing is not None and facing not in lookup.DIRECTIONS:
-        print(f"{facing} is not a valid direction.\n"
-              "Working with default behaviour.")
-        facing = None
-    try:
-        if not 0 <= int(rotation) <= 15:
-            raise TypeError
-    except TypeError:
-        if rotation is not None:
-            print(f"{rotation} is not a valid rotation.\n"
-                  "Working with default behaviour.")
-        rotation = None
-
-    if facing is None and rotation is None:
-        facing = getOptimalDirection(x, y, z)
-
-    if wall:
-        wall = False
-        for direction in facing:
-            inversion = lookup.INVERTDIRECTION[direction]
-            dx, dz = lookup.DIRECTION2VECTOR[inversion]
-            if getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
-                break
-            wall = True
-            gi.placeBlock(
-                x, y, z, f"{wood}_wall_sign[facing={choice(facing)}]")
-
-    if not wall:
-        if rotation is None:
-            rotation = direction2rotation(facing)
-        gi.placeBlock(x, y, z, f"{wood}_sign[rotation={rotation}]")
-
-    data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
-    data += f'Text2:\'{{"text":"{text2}"}}\','
-    data += f'Text3:\'{{"text":"{text3}"}}\','
-    data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
-    runCommand(f"data merge block {x} {y} {z} {data}")
-
-
-def getOptimalDirection(x, y, z):
-    """**Return the least obstructed direction to have something facing**."""
-    north = (identifyObtrusiveness(getBlock(x, y, z - 1)), 'north')
-    east = (identifyObtrusiveness(getBlock(x + 1, y, z)), 'east')
-    south = (identifyObtrusiveness(getBlock(x, y, z + 1)), 'south')
-    west = (identifyObtrusiveness(getBlock(x - 1, y, z)), 'west')
-
-    min_obstruction = min(north[0], east[0], south[0], west[0])
-    max_obstruction = max(north[0], east[0], south[0], west[0])
-
-    surrounding = [north, east, south, west]
-
-    while surrounding[0][0] != max_obstruction:
-        surrounding.append(surrounding.pop(0))
-
-    directions = []
-    while len(directions) == 0:
-        if min_obstruction == max_obstruction:
-            return lookup.DIRECTIONS[2:]
-
-        if surrounding[2][0] == min_obstruction:
-            directions.append(surrounding[2][1])
-        if (surrounding[1][0] == min_obstruction
-                and surrounding[3][0] != min_obstruction):
-            directions.append(surrounding[1][1])
-        elif (surrounding[3][0] == min_obstruction
-                and surrounding[1][0] != min_obstruction):
-            directions.append(surrounding[3][1])
-        elif len(directions) == 0:
-            directions.append(surrounding[1][1])
-            directions.append(surrounding[3][1])
-
-        min_obstruction += 1
-
-    return directions
-
-
 def identifyObtrusiveness(blockStr):
-    """**Return the percieved obtrusiveness of a given block**.
+    """Return the percieved obtrusiveness of a given block.
 
     Returns a numeric weight from 0 (invisible) to 4 (opaque)
     """
@@ -427,9 +312,9 @@ def identifyObtrusiveness(blockStr):
 
 
 def visualizeHeightmap(*arrays, title=None, autonormalize=True):
-    """**Visualizes one or multiple numpy arrays**."""
+    """Visualizes one or multiple numpy arrays."""
     def normalize(array):
-        """**Normalize the array to contain values from 0 to 1**."""
+        """Normalize the array to contain values from 0 to 1."""
         return (array - array.min()) / (array.max() - array.min())
 
     for array in arrays:
@@ -455,14 +340,14 @@ def visualizeHeightmap(*arrays, title=None, autonormalize=True):
 
 
 def invertDirection(direction):
-    """**Return the inverted direction of direcion**."""
-    if isSequence(direction):
+    """Return the inverted direction of direcion."""
+    if is_sequence(direction):
         return [lookup.INVERTDIRECTION[n] for n in direction]
     return lookup.INVERTDIRECTION[direction]
 
 
 def direction2rotation(direction):
-    """**Convert a direction to a rotation**.
+    """Convert a direction to a rotation.
 
     If a sequence is provided, the average is returned.
     """
@@ -483,10 +368,10 @@ def direction2rotation(direction):
 
 
 def direction2vector(direction):
-    """**Convert a direction to a vector**."""
+    """Convert a direction to a vector."""
     return lookup.DIRECTION2VECTOR[direction]
 
 
 def axis2vector(axis):
-    """**Convert an axis to a vector**."""
+    """Convert an axis to a vector."""
     return lookup.AXIS2VECTOR[axis]

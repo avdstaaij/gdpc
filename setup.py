@@ -1,47 +1,65 @@
-"""The repository setup file."""
+import os
+from setuptools import setup
 
-from setuptools import find_packages, setup
 
-__author__ = "Blinkenlights"
-__version__ = "v5.0.2"
+SCRIPT_DIR         = os.path.abspath(os.path.dirname(__file__))
+METADATA_FILE_PATH = os.path.join(SCRIPT_DIR, "gdpc/__init__.py")
 
-with open("README.md", "r") as readme:
+
+# Based on https://github.com/pypa/pip/blob/9aa422da16e11b8e56d3597f34551f983ba9fbfd/setup.py
+def get_metadata(name: str) -> str:
+    with open(METADATA_FILE_PATH) as file:
+        contents = file.read()
+    for line in contents.splitlines():
+        dunderString = f"__{name}__"
+        if line.startswith(f"{dunderString}"):
+            # __{name}__ = "{value}"
+            delim = '"' if '"' in line else "'"
+            return line.split(delim)[1]
+    raise RuntimeError(f"Unable to find {dunderString} value.")
+
+
+with open("README.md", "r", encoding="utf-8") as readme:
     long_description = readme.read()
 
-setup(name='gdpc',
-      version=__version__,
-      description='The Generative Design Python Client is a Python-based '
-      + 'interface for the Minecraft HTTP Interface mod.\n'
-      + 'It was created for use in the '
-      + 'Generative Design in Minecraft Competition.',
-      long_description=long_description,
-      long_description_content_type='text/markdown',
-      url='http://github.com/nilsgawlik/gdmc_http_client_python',
-      author='Blinkenlights',
-      author_email='blinkenlights@pm.me',
-      license='MIT',
-      packages=find_packages(),
-      install_requires=['matplotlib',
-                        'NBT',
-                        'numpy',
-                        'opencv_python',
-                        'requests'],
-      python_requires='>=3.6, <4',
-      classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Topic :: Games/Entertainment :: Simulation',
-        'Topic :: Software Development :: Libraries :: Application Frameworks',
-        'Topic :: Software Development :: Version Control :: Git'
-      ],
-      keywords='GDMC, generative design, Minecraft, HTTP, development',
-      project_urls={
-          'Bug Reports': 'https://github.com/nilsgawlik/gdmc_http_client_python/issues',
-          'Official Competition': 'https://gendesignmc.engineering.nyu.edu/',
-          'Chat about it on Discord': 'https://discord.gg/V9MW65bD',
-          'Source': 'https://github.com/nilsgawlik/gdmc_http_client_python/',
-      },
-      zip_safe=False)
+
+setup(
+    name=get_metadata("title"),
+    version=get_metadata("version"),
+    description=get_metadata("description"),
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url=get_metadata("url"),
+    author=get_metadata("author"),
+    author_email=get_metadata("author_email"),
+    maintainer=get_metadata("maintainer"),
+    maintainer_email=get_metadata("maintainer_email"),
+    license=get_metadata("license"),
+    packages=["gdpc"], # Note: subpackages must be listed explicitly
+    install_requires=[
+        "matplotlib",
+        "NBT",
+        "numpy",
+        "opencv_python",
+        "requests"
+    ],
+    python_requires=">=3.6, <4",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3",
+        "Topic :: Games/Entertainment :: Simulation",
+        "Topic :: Software Development :: Libraries :: Application Frameworks",
+        "Topic :: Software Development :: Version Control :: Git"
+    ],
+    keywords="GDMC, generative design, Minecraft, HTTP, development",
+    project_urls={
+        "Bug Reports": "https://github.com/avdstaaij/gdpc/issues",
+        "Official Competition": "https://gendesignmc.engineering.nyu.edu",
+        "Chat about it on Discord": "https://discord.gg/V9MW65bD",
+        "Source": "https://github.com/avdstaaij/gdpc",
+    },
+    zip_safe=False
+)

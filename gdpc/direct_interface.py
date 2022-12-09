@@ -1,28 +1,43 @@
-#! /usr/bin/python3
-"""### Provide access to the HTTP interface of the Minecraft HTTP server.
+"""Provide access to the HTTP interface of the Minecraft HTTP server.
 
 This file contains various functions that map directly onto the HTTP interface.
 It is recommended to use `interface.py` instead.
 """
-__all__ = []
-__version__ = "v5.0"
 
 import requests
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError as RequestConnectionError
+
+
+def get(*args):
+    try:
+        return requests.get(*args)
+    except RequestConnectionError as e:
+        raise RequestConnectionError(
+            "Connection could not be established! (is Minecraft running?)"
+        ) from e
+
+
+def post(*args):
+    try:
+        return requests.post(*args)
+    except RequestConnectionError as e:
+        raise RequestConnectionError(
+            "Connection could not be established! (is Minecraft running?)"
+        ) from e
 
 
 def getBlock(x, y, z):
-    """**Return the block ID from the world**."""
+    """Return the block ID from the world."""
     url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
     try:
         response = requests.get(url).text
-    except ConnectionError:
+    except RequestConnectionError:
         return "minecraft:void_air"
     return response
 
 
 def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
-    """**Place one or multiple blocks in the world**."""
+    """Place one or multiple blocks in the world."""
     if customFlags is not None:
         blockUpdateQueryParam = f"customFlags={customFlags}"
     else:
@@ -32,37 +47,37 @@ def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
            f'&{blockUpdateQueryParam}')
     try:
         response = requests.put(url, blockStr)
-    except ConnectionError:
+    except RequestConnectionError:
         return "0"
     return response.text
 
 
 def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
                doBlockUpdates=True, customFlags=None):
-    """**Take a list of blocks and place them into the world in one go**."""
+    """Take a list of blocks and place them into the world in one go."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:
         response = placeBlock(x, y, z, body, doBlockUpdates, customFlags)
         return response
-    except ConnectionError as e:
+    except RequestConnectionError as e:
         print("Request failed: {} Retrying ({} left)".format(e, retries))
         if retries > 0:
-            return sendBlocks(x, y, z, retries - 1)
+            return sendBlocks(blockList, x, y, z, retries - 1, doBlockUpdates, customFlags)
     return False
 
 
 def runCommand(command):
-    """**Run a Minecraft command in the world**."""
+    """Run a Minecraft command in the world."""
     url = 'http://localhost:9000/command'
     try:
         response = requests.post(url, bytes(command, "utf-8"))
-    except ConnectionError:
+    except RequestConnectionError:
         return "connection error"
     return response.text
 
 
 def requestBuildArea():
-    """**Return the building area**."""
+    """Return the building area."""
     area = 0, 0, 0, 128, 256, 128   # default area for beginners
     response = requests.get('http://localhost:9000/buildarea')
     if response.ok:
@@ -82,7 +97,7 @@ def requestBuildArea():
 
 
 def getChunks(x, z, dx, dz, rtype='text'):
-    """**Get raw chunk data**."""
+    """Get raw chunk data."""
     url = f'http://localhost:9000/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
     response = requests.get(url, headers={"Accept": acceptType})
