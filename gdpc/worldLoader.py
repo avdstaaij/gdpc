@@ -30,6 +30,12 @@ class CachedSection:
         self.y = y
         self.z = z
 
+    def getBlockCompoundAtIndex(self, index):
+        return self.blockPalette[self.blockStatesBitArray.getAt(index)]
+
+    def getBiomeAtIndex(self, index):
+        return self.biomesPalette[self.biomesBitArray.getAt(index)]
+
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
         return f"CachedSection({repr(self.blockPalette)}, " \
@@ -92,7 +98,7 @@ class WorldSlice:
 
         # sections
         # Flat list of all chunks in this world slice
-        self.sections = []
+        self.sections = dict()
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
@@ -120,8 +126,8 @@ class WorldSlice:
                     biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette))))
                     biomesDataBitArray = BitArray(biomesBitsPerEntry, 64, biomesData)
 
-                    self.sections.append(
-                        CachedSection(x, y, z, blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray)
+                    self.sections[(x, y, z)] = CachedSection(
+                        x, y, z, blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
                     )
 
     # __repr__ displays the class well enough so __str__ is omitted
@@ -131,27 +137,22 @@ class WorldSlice:
         x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
         return f"WorldSlice{(x1, z1, x2, z2)}"
 
-    def getBlockCompoundAt(self, x, y, z):
-        """**Return block data**."""
+    def getChunkPosition(self, x, y, z):
+        """**Get chunk x,y,z index from global x, y, z position**"""
         chunkX = (x >> 4) - self.chunkRect[0]
         chunkZ = (z >> 4) - self.chunkRect[1]
         chunkY = y >> 4
+        return chunkX, chunkY, chunkZ
 
-        cachedSection = None
-        for section in self.sections:
-            if section.x == chunkX and section.y == chunkY and section.z == chunkZ:
-                cachedSection = section
-                break
-
+    def getBlockCompoundAt(self, x, y, z):
+        """**Return block data**."""
+        cachedSection = self.sections.get(self.getChunkPosition(x, y, z))
         if cachedSection is None:
             return None
 
-        bitarray = cachedSection.blockStatesBitArray
-        palette = cachedSection.blockPalette
-
         blockIndex = (y % 16) * 16 * 16 + \
                      (z % 16) * 16 + x % 16
-        return palette[bitarray.getAt(blockIndex)]
+        return cachedSection.getBlockCompoundAtIndex(blockIndex)
 
     def getBlockAt(self, x, y, z):
         """**Return the block's namespaced id at blockPos**."""
@@ -163,16 +164,8 @@ class WorldSlice:
 
     def getBiomeAt(self, x, y, z):
         """**Return biome at given coordinates**."""
-        chunkX = (x >> 4) - self.chunkRect[0]
-        chunkZ = (z >> 4) - self.chunkRect[1]
-        chunkY = y >> 4
 
-        cachedSection = None
-        for section in self.sections:
-            if section.x == chunkX and section.y == chunkY and section.z == chunkZ:
-                cachedSection = section
-                break
-
+        cachedSection = self.sections.get(self.getChunkPosition(x, y, z))
         if cachedSection is None:
             return None
 
@@ -182,35 +175,21 @@ class WorldSlice:
         biomeY = (y % 16) >> 2
         biomeZ = (z % 16) >> 2
         biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
-
-        bitArray = cachedSection.biomesBitArray
-        palette = cachedSection.biomesPalette
-        return palette[bitArray.getAt(biomeIndex)]
+        return cachedSection.getBiomeAtIndex(biomeIndex)
 
     def getPrimaryBiomeNear(self, x, y, z):
         """**Return the most prevelant biome in the same chunk**."""
-        chunkX = (x >> 4) - self.chunkRect[0]
-        chunkZ = (z >> 4) - self.chunkRect[1]
-        chunkY = y >> 4
-
-        cachedSection = None
-        for section in self.sections:
-            if section.x == chunkX and section.y == chunkY and section.z == chunkZ:
-                cachedSection = section
-                break
-
+        cachedSection = self.sections.get(self.getChunkPosition(x, y, z))
         if cachedSection is None:
             return None
 
         # Find and count each biome type for each biome area (a 4x4x4 block) of the chunk.
-        bitArray = cachedSection.biomesBitArray
-        palette = cachedSection.biomesPalette
         foundBiomes = dict()
         for biomeX in range(0, 4):
             for biomeY in range(0, 4):
                 for biomeZ in range(0, 4):
                     biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
-                    foundBiome: str = palette[bitArray.getAt(biomeIndex)]
+                    foundBiome: str = cachedSection.getBiomeAtIndex(biomeIndex)
                     if foundBiome not in foundBiomes:
                         foundBiomes[foundBiome] = 1
                     else:
