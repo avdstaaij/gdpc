@@ -1,12 +1,9 @@
-# ! /usr/bin/python3
-"""### Provides tools for reading chunk data.
+"""Provides tools for reading chunk data.
 
 This module contains functions to:
 * Calculate a heightmap ideal for building
 * Visualise numpy arrays
 """
-__all__ = ['WorldSlice']
-__version__ = "v5.0"
 
 from io import BytesIO
 from math import ceil, log2
@@ -19,7 +16,7 @@ from .bitarray import BitArray
 
 
 class CachedSection:
-    """**Represents a cached chunk section (16x16x16)**."""
+    """Represents a cached chunk section (16x16x16)."""
 
     def __init__(self, x, y, z, blockPalette, blockStatesBitArray, biomesPalette, biomesBitArray):
         self.blockPalette = blockPalette
@@ -43,12 +40,11 @@ class CachedSection:
 
 
 class WorldSlice:
-    """**Contains information on a slice of the world**."""
+    """Contains information on a slice of the world."""
 
     def __init__(self, x1, z1, x2, z2,
                  heightmapTypes=None):
-        """**Initialise WorldSlice with region and heightmaps**.
-
+        """Initialise WorldSlice with region and heightmap.
         x2 and z2 are exclusive
         """
         if heightmapTypes is None:
@@ -140,20 +136,20 @@ class WorldSlice:
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
-        """**Represent the WorldSlice as a constructor**."""
+        """Represent the WorldSlice as a constructor."""
         x1, z1 = self.rect[:2]
         x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
         return f"WorldSlice{(x1, z1, x2, z2)}"
 
     def getChunkSectionPos(self, x, y, z):
-        """**Get chunk section x,y,z index from global x, y, z position**"""
+        """Get chunk section x,y,z index from global x, y, z position."""
         chunkX = (x >> 4) - self.chunkRect[0]
         chunkZ = (z >> 4) - self.chunkRect[1]
         chunkY = y >> 4
         return chunkX, chunkY, chunkZ
 
     def getBlockCompoundAt(self, x, y, z):
-        """**Return block data**."""
+        """Return block data at global x, y, z position."""
         cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
@@ -163,7 +159,7 @@ class WorldSlice:
         return cachedSection.getBlockCompoundAtIndex(blockIndex)
 
     def getBlockAt(self, x, y, z):
-        """**Return the block's namespaced id at blockPos**."""
+        """Return the block's namespaced id at global x, y, z position."""
         blockCompound = self.getBlockCompoundAt(x, y, z)
         if blockCompound is None:
             return "minecraft:void_air"
@@ -171,8 +167,7 @@ class WorldSlice:
             return blockCompound["Name"].value
 
     def getBiomeAt(self, x, y, z):
-        """**Return biome at given coordinates**."""
-
+        """Return biome at global x, y, z position."""
         cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
@@ -186,7 +181,7 @@ class WorldSlice:
         return cachedSection.getBiomeAtIndex(biomeIndex)
 
     def getBiomesNear(self, x, y, z):
-        """**Return a dict of biomes in the same chunk**."""
+        """Return a dict of biomes in the same chunk."""
         cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
@@ -205,7 +200,7 @@ class WorldSlice:
         return foundBiomes
 
     def getPrimaryBiomeNear(self, x, y, z):
-        """**Return the most prevelant biome in the same chunk**."""
+        """Return the most prevelant biome in the same chunk."""
         foundBiomes = self.getBiomesNear(x, y, z)
         # Return the biome that was found the most.
         return max(foundBiomes, key=foundBiomes.get)
