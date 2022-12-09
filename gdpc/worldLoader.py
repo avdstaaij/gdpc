@@ -185,8 +185,8 @@ class WorldSlice:
         biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
         return cachedSection.getBiomeAtIndex(biomeIndex)
 
-    def getPrimaryBiomeNear(self, x, y, z):
-        """**Return the most prevelant biome in the same chunk**."""
+    def getBiomesNear(self, x, y, z):
+        """**Return a dict of biomes in the same chunk**."""
         cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
             return None
@@ -202,6 +202,10 @@ class WorldSlice:
                         foundBiomes[foundBiome] = 1
                     else:
                         foundBiomes[foundBiome] = foundBiomes.get(foundBiome) + 1
+        return foundBiomes
 
+    def getPrimaryBiomeNear(self, x, y, z):
+        """**Return the most prevelant biome in the same chunk**."""
+        foundBiomes = self.getBiomesNear(x, y, z)
         # Return the biome that was found the most.
         return max(foundBiomes, key=foundBiomes.get)
