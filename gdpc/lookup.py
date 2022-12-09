@@ -15,12 +15,17 @@ from typing import Set
 # >>> def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
 
 # See https://minecraft.fandom.com/wiki/Data_version#List_of_data_versions
-SUPPORTS = 2566  # Supported Minecraft version code
+SUPPORTS = 3120  # Supported Minecraft version code
 
 # all major Minecraft version codes
 VERSIONS = {
+    3105: "1.19",
+    3117: "1.19.1",
+    3120: "1.19.2",
+    3218: "1.19.3",
     2860: "1.18",
     2865: "1.18.1",
+    2975: "1.18.2",
     2724: "1.17",
     2730: "1.17.1",
     2566: "1.16",
