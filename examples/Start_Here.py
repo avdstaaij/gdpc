@@ -1,4 +1,5 @@
-#! /usr/bin/python3
+#!/usr/bin/env python3
+
 """### Generate a simple example village.
 
 This file contains a comprehensive collection of functions designed
@@ -31,14 +32,6 @@ INFO: Should you have any questions regarding this software, feel free to visit
 This file is not meant to be imported.
 """
 
-# === STRUCTURE #0
-# These are technical values, you may ignore them or add them in your own files
-__all__ = []
-__author__ = "Blinkenlights"
-__version__ = "v5.0"
-__date__ = "17 February 2022"
-
-
 # === STRUCTURE #1
 # These are the modules (libraries) we will use in this code
 # We are giving these modules shorter, but distinct, names for convenience
@@ -47,6 +40,7 @@ from random import randint
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 from gdpc import toolbox as TB
+from gdpc import interface_toolbox as ITB
 from gdpc import worldLoader as WL
 
 # === STRUCTURE #2
@@ -99,11 +93,11 @@ def buildPerimeter():
 
     for x in range(STARTX, ENDX + 1):
         # the northern wall
-        y = heights[(x, STARTZ)]
+        y = heights[(x - STARTX, 0)]
         GEO.placeCuboid(x, y - 2, STARTZ, x, y, STARTZ, "granite")
         GEO.placeCuboid(x, y + 1, STARTZ, x, y + 4, STARTZ, "granite_wall")
         # the southern wall
-        y = heights[(x, ENDZ)]
+        y = heights[(x - STARTX, ENDZ - STARTZ)]
         GEO.placeCuboid(x, y - 2, ENDZ, x, y, ENDZ, "red_sandstone")
         GEO.placeCuboid(x, y + 1, ENDZ, x, y + 4, ENDZ, "red_sandstone_wall")
 
@@ -111,11 +105,11 @@ def buildPerimeter():
     # building the north-south walls
     for z in range(STARTZ, ENDZ + 1):
         # the western wall
-        y = heights[(STARTX, z)]
+        y = heights[(0, z - STARTZ)]
         GEO.placeCuboid(STARTX, y - 2, z, STARTX, y, z, "sandstone")
         GEO.placeCuboid(STARTX, y + 1, z, STARTX, y + 4, z, "sandstone_wall")
         # the eastern wall
-        y = heights[(ENDX, z)]
+        y = heights[(ENDX - STARTX, z - STARTZ)]
         GEO.placeCuboid(ENDX, y - 2, z, ENDX, y, z, "prismarine")
         GEO.placeCuboid(ENDX, y + 1, z, ENDX, y + 4, z, "prismarine_wall")
 
@@ -128,12 +122,12 @@ def buildRoads():
 
     print("Calculating road height...")
     # caclulating the average height along where we want to build our road
-    y = heights[(xaxis, zaxis)]
+    y = heights[(xaxis - STARTX, zaxis - STARTZ)]
     for x in range(STARTX, ENDX + 1):
-        newy = heights[(x, zaxis)]
+        newy = heights[(x - STARTX, zaxis - STARTZ)]
         y = (y + newy) // 2
     for z in range(STARTZ, ENDZ + 1):
-        newy = heights[(xaxis, z)]
+        newy = heights[(xaxis - STARTX, z - STARTZ)]
         y = (y + newy) // 2
 
     # GLOBAL
@@ -191,7 +185,7 @@ def buildCity():
     # See the wiki for book formatting codes
     INTF.placeBlock(xaxis, y, zaxis, "emerald_block")
     bookData = TB.writeBook("This book has a page!")
-    TB.placeLectern(xaxis, y + 1, zaxis, bookData)
+    ITB.placeLectern(xaxis, y + 1, zaxis, bookData)
 
 
 def buildTower(x, z):
@@ -269,7 +263,8 @@ if __name__ == '__main__':
     #     possible so you can find mistakes more easily
 
     try:
-        height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(STARTX, STARTY)]
+        # height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(STARTX, STARTY)]
+        height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(0, 0)]
         INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
         print(f"/tp @a {STARTX} {height} {STARTZ}")
         buildPerimeter()

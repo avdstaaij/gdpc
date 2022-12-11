@@ -1,9 +1,11 @@
 """Read the bitarray format used by Minecraft."""
 
+from math import floor
+
 
 def inclusiveBetween(start, end, value):
     """Raise an exception when the value is out of bounds."""
-    if not start <= value <= end:
+    if not (start <= value <= end):
         raise ValueError(
             f"The value {value} is not in the inclusive range "
             f"of {start} to {end}")
@@ -22,8 +24,9 @@ class BitArray:
         self.arraySize = arraySizeIn
         self.bitsPerEntry = bitsPerEntryIn
         self.maxEntryValue = (1 << bitsPerEntryIn) - 1
-        self.entriesPerLong = 64 // bitsPerEntryIn
-        j = (arraySizeIn + self.entriesPerLong - 1) // self.entriesPerLong
+        self.entriesPerLong = floor(64 / bitsPerEntryIn)
+        j = floor((arraySizeIn + self.entriesPerLong - 1)
+                  / self.entriesPerLong)
         if data is not None:
             if len(data) != j:
                 raise Exception(
@@ -45,6 +48,10 @@ class BitArray:
 
     def getAt(self, index):
         """Return the binary value stored at index."""
+        # If longArray size is 0, this is because the corresponding palette
+        # only contains a single value.
+        if len(self.longArray) == 0:
+            return 0
         inclusiveBetween(0, (self.arraySize - 1), index)
         i = self.getPosOfLong(index)
         j = self.longArray[i]

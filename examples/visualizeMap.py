@@ -1,7 +1,6 @@
-# ! /usr/bin/python3
+#!/usr/bin/env python3
+
 """### Displays a map of the build area."""
-__all__ = ['WorldSlice']
-__version__ = 'v5.0'
 
 import cv2
 import matplotlib.pyplot as plt
@@ -36,7 +35,7 @@ if __name__ == '__main__':
         # check up to 5 blocks below the heightmap
         for dy in range(5):
             # calculate absolute coordinates
-            y = int(heightmap[(x, z)]) - dy
+            y = int(heightmap[(x - x1, z - z1)]) - dy
 
             blockID = slice.getBlockAt(x, y, z)
             if blockID in lookup.MAPTRANSPARENT:
@@ -47,7 +46,7 @@ if __name__ == '__main__':
                     # unknown blocks remembered for debug purposes
                     unknownBlocks.add(blockID)
                 else:
-                    topcolor[(x, z)] = palette[blockID]
+                    topcolor[(x - x1, z - z1)] = palette[blockID]
                 break
 
     if len(unknownBlocks) > 0:

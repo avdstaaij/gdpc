@@ -244,9 +244,10 @@ class Interface():
         if all(map(lambda val: val.isnumeric(), response)):  # no errors
             self.buffer = []
             return str(sum(map(int, response)))
-        else:
-            print(f"{TCOLORS['orange']}Warning: Server returned error upon "
-                  f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
+
+        print(f"{TCOLORS['orange']}Warning: Server returned error upon "
+              f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
+        return repr(response)
 
     # ----------------------------------------------------- utility functions
 
@@ -410,7 +411,7 @@ def checkOutOfBounds(x, y, z,
     x2 = globalBuildArea[3] if x2 is None else x2
     y2 = globalBuildArea[4] if y2 is None else y2
     z2 = globalBuildArea[5] if z2 is None else z2
-    if not (x1 <= x < x2 and y1 <= y < y2 and z1 <= z < z2):
+    if not (x1 <= x <= x2 and y1 <= y <= y2 and z1 <= z <= z2):
         if warn:
             # building outside the build area can be less efficient
             print(f"{TCOLORS['orange']}WARNING: Block at {x, y, z} is outside "
