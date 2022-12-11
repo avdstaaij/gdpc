@@ -6,107 +6,133 @@ This module contains functions to:
 """
 
 from io import BytesIO
+from math import ceil, log2
 
 import nbt
 import numpy as np
-from numpy import ceil, log2
 
 from . import direct_interface as di
 from .bitarray import BitArray
-from .lookup import BIOMES
 
 
 class CachedSection:
     """Represents a cached chunk section (16x16x16)."""
 
-    def __init__(self, palette, blockStatesBitArray):
-        self.palette = palette
+    def __init__(self, x, y, z, blockPalette, blockStatesBitArray, biomesPalette, biomesBitArray):
+        self.blockPalette = blockPalette
         self.blockStatesBitArray = blockStatesBitArray
+        self.biomesPalette = biomesPalette
+        self.biomesBitArray = biomesBitArray
+        self.x = x
+        self.y = y
+        self.z = z
+
+    def getBlockCompoundAtIndex(self, index):
+        return self.blockPalette[self.blockStatesBitArray.getAt(index)]
+
+    def getBiomeAtIndex(self, index):
+        return self.biomesPalette[self.biomesBitArray.getAt(index)]
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
-        return f"CachedSection({repr(self.palette)}, " \
-            f"{repr(self.blockStatesBitArray)})"
+        return f"CachedSection({repr(self.blockPalette)}, " \
+               f"{repr(self.blockStatesBitArray)})"
 
 
 class WorldSlice:
     """Contains information on a slice of the world."""
 
     def __init__(self, x1, z1, x2, z2,
-                 heightmapTypes=("MOTION_BLOCKING",
-                                 "MOTION_BLOCKING_NO_LEAVES",
-                                 "OCEAN_FLOOR",
-                                 "WORLD_SURFACE")):
-        """Initialise WorldSlice with region and heightmaps.
-
-        x1, x2, z1, z2 are global coordinates.
-
-        x2 and z2 are exclusive.
+                 heightmapTypes=None):
+        """Initialise WorldSlice with region and heightmap.
+        x2 and z2 are exclusive
         """
+        if heightmapTypes is None:
+            heightmapTypes = ["MOTION_BLOCKING",
+                              "MOTION_BLOCKING_NO_LEAVES",
+                              "OCEAN_FLOOR",
+                              "WORLD_SURFACE"]
         self.rect = x1, z1, x2 - x1, z2 - z1
-        self.chunkRect = (x1 // 16, z1 // 16,
-                          (x2 - x1 - 1) // 16 + 1, (z2 - z1 - 1) // 16 + 1)
+        self.chunkRect = (self.rect[0] >> 4, self.rect[1] >> 4,
+                          ((self.rect[0] + self.rect[2] - 1) >> 4)
+                          - (self.rect[0] >> 4) + 1,
+                          ((self.rect[1] + self.rect[3] - 1) >> 4)
+                          - (self.rect[1] >> 4) + 1)
         self.heightmapTypes = heightmapTypes
 
-        chunk_bytes = di.getChunks(*self.chunkRect, rtype='bytes')
-        file_like = BytesIO(chunk_bytes)
+        chunkBytes = di.getChunks(*self.chunkRect, rtype='bytes')
+        file_like = BytesIO(chunkBytes)
 
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)
 
         rectOffset = [self.rect[0] % 16, self.rect[1] % 16]
 
-        # heightmaps
+        # For each type of heightmap, create a 2D array of zeros in the shape
+        # of the build area.
         self.heightmaps = {}
         for hmName in self.heightmapTypes:
             self.heightmaps[hmName] = np.zeros(
                 (self.rect[2] + 1, self.rect[3] + 1), dtype=int)
 
-        # Sections are in x,z,y order!!! (reverse minecraft order :p)
-        self.sections = [[[None for i in range(16)] for z in range(
-            self.chunkRect[3])] for x in range(self.chunkRect[2])]
-
-        # heightmaps
+        # For each x-z position in the build area, get the height from the
+        # heightmap data from the corresponding chunk for all types of
+        # heightmap data.
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
 
-                hms = self.nbtfile['Chunks'][chunkID]['Level']['Heightmaps']
+                hms = self.nbtfile['Chunks'][chunkID]['Heightmaps']
                 for hmName in self.heightmapTypes:
-                    # hmRaw = hms['MOTION_BLOCKING']
                     hmRaw = hms[hmName]
                     heightmapBitArray = BitArray(9, 16 * 16, hmRaw)
                     heightmap = self.heightmaps[hmName]
                     for cz in range(16):
                         for cx in range(16):
                             try:
+                                # In the heightmap data the lowest point is
+                                # encoded as 0, while since Minecraft 1.18 the
+                                # actual lowest y position is below zero at -64.
+                                # Subtract 64 from the heightmap value to
+                                # compensate for this difference.
                                 heightmap[-rectOffset[0] + x * 16 + cx,
                                           -rectOffset[1] + z * 16 + cz] \
-                                    = heightmapBitArray.getAt(cz * 16 + cx)
+                                    = heightmapBitArray.getAt(cz * 16 + cx) - 64
                             except IndexError:
                                 pass
 
         # sections
+        # Flat dict of all chunk sections in this world slice
+        self.sections = dict()
         for x in range(self.chunkRect[2]):
             for z in range(self.chunkRect[3]):
                 chunkID = x + z * self.chunkRect[2]
                 chunk = self.nbtfile['Chunks'][chunkID]
-                chunkSections = chunk['Level']['Sections']
+                chunkSections = chunk['sections']
 
                 for section in chunkSections:
                     y = section['Y'].value
 
-                    if (not ('BlockStates' in section)
-                            or len(section['BlockStates']) == 0):
+                    if (not ('block_states' in section)
+                            or len(section['block_states']) == 0):
                         continue
 
-                    palette = section['Palette']
-                    rawBlockStates = section['BlockStates']
-                    bitsPerEntry = int(max(4, ceil(log2(len(palette)))))
-                    blockStatesBitArray = BitArray(bitsPerEntry, 16 * 16 * 16,
-                                                   rawBlockStates)
+                    blockPalette = section['block_states']['palette']
+                    blockData = None
+                    if 'data' in section['block_states']:
+                        blockData = section['block_states']['data']
+                    blockPaletteBitsPerEntry = max(4, ceil(log2(len(blockPalette))))
+                    blockDataBitArray = BitArray(blockPaletteBitsPerEntry, 16 * 16 * 16, blockData)
 
-                    self.sections[x][z][y] = CachedSection(palette,
-                                                           blockStatesBitArray)
+                    biomesPalette = section['biomes']['palette']
+                    biomesData = None
+                    if 'data' in section['biomes']:
+                        biomesData = section['biomes']['data']
+                    biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette))))
+                    biomesDataBitArray = BitArray(biomesBitsPerEntry, 64, biomesData)
+
+                    self.sections[(x, y, z)] = CachedSection(
+                        x, y, z, blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
+                    )
 
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
@@ -115,60 +141,66 @@ class WorldSlice:
         x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
         return f"WorldSlice{(x1, z1, x2, z2)}"
 
+    def getChunkSectionPos(self, x, y, z):
+        """Get chunk section x,y,z index from global x, y, z position."""
+        chunkX = (x >> 4) - self.chunkRect[0]
+        chunkZ = (z >> 4) - self.chunkRect[1]
+        chunkY = y >> 4
+        return chunkX, chunkY, chunkZ
+
     def getBlockCompoundAt(self, x, y, z):
-        """Return block data."""
-        # convert to relative chunk position
-        chunkX = (x // 16) - self.chunkRect[0]
-        chunkZ = (z // 16) - self.chunkRect[1]
-        chunkY = y // 16
-
-        cachedSection = self.sections[chunkX][chunkZ][chunkY]
-
+        """Return block data at global x, y, z position."""
+        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
         if cachedSection is None:
-            return None  # TODO return air compound instead
+            return None
 
-        bitarray = cachedSection.blockStatesBitArray
-        palette = cachedSection.palette
-
-        # convert coordinates to chunk-relative coordinates
-        blockIndex = (y % 16) * 16 * 16 + (z % 16) * 16 + x % 16
-        return palette[bitarray.getAt(blockIndex)]
+        blockIndex = (y % 16) * 16 * 16 + \
+                     (z % 16) * 16 + x % 16
+        return cachedSection.getBlockCompoundAtIndex(blockIndex)
 
     def getBlockAt(self, x, y, z):
-        """Return the block's namespaced id at blockPos."""
+        """Return the block's namespaced id at global x, y, z position."""
         blockCompound = self.getBlockCompoundAt(x, y, z)
         if blockCompound is None:
             return "minecraft:void_air"
-        return blockCompound["Name"].value
+        else:
+            return blockCompound["Name"].value
 
     def getBiomeAt(self, x, y, z):
-        """Return biome at given coordinates.
+        """Return biome at global x, y, z position."""
+        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
+        if cachedSection is None:
+            return None
 
-        Due to the noise around chunk borders,
-        there is an inacurracy of +/-2 blocks.
-        """
-        chunkID = (x - self.rect[0]) // 16 + \
-            (z - self.rect[1]) // 16 * self.chunkRect[2]
-        data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
-        x = (x % 16) // 4
-        z = (z % 16) // 4
-        y = y // 4
-        index = x + 4 * z + 16 * y
-        return BIOMES[data[index]]
+        # Constrain pos to inside this chunk, then shift 2 bits since biome data is encoded
+        # in groups of 4x4x4 per chunk.
+        biomeX = (x % 16) >> 2
+        biomeY = (y % 16) >> 2
+        biomeZ = (z % 16) >> 2
+        biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
+        return cachedSection.getBiomeAtIndex(biomeIndex)
 
     def getBiomesNear(self, x, y, z):
-        """Return a list of biomes in the same chunk."""
-        chunkID = (x - self.rect[0]) // 16 + \
-            (z - self.rect[1]) // 16 * self.chunkRect[2]
-        data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
-        # "sorted(list(set(data)))" is used to remove duplicates from data
-        return [BIOMES[i] for i in sorted(list(set(data)))]
+        """Return a dict of biomes in the same chunk."""
+        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
+        if cachedSection is None:
+            return None
+
+        # Find and count each biome type for each biome area (a 4x4x4 block) of the chunk.
+        foundBiomes = dict()
+        for biomeX in range(0, 4):
+            for biomeY in range(0, 4):
+                for biomeZ in range(0, 4):
+                    biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
+                    foundBiome: str = cachedSection.getBiomeAtIndex(biomeIndex)
+                    if foundBiome not in foundBiomes:
+                        foundBiomes[foundBiome] = 1
+                    else:
+                        foundBiomes[foundBiome] = foundBiomes.get(foundBiome) + 1
+        return foundBiomes
 
     def getPrimaryBiomeNear(self, x, y, z):
         """Return the most prevelant biome in the same chunk."""
-        chunkID = (x - self.rect[0]) // 16 + \
-            (z - self.rect[1]) // 16 * self.chunkRect[2]
-        data = self.nbtfile['Chunks'][chunkID]['Level']['Biomes']
-        # "max(set(data), key=data.count)" is used to find the most common item
-        data = max(set(data), key=data.count)
-        return BIOMES[data]
+        foundBiomes = self.getBiomesNear(x, y, z)
+        # Return the biome that was found the most.
+        return max(foundBiomes, key=foundBiomes.get)
