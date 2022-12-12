@@ -13,8 +13,8 @@ import sys
 import time
 from copy import deepcopy
 
-from gdpc import (direct_interface, geometry, interface, interface_toolbox,
-                  lookup, toolbox)
+from gdpc import (direct_interface, interface_toolbox,
+                  lookup, old_geometry, old_interface, toolbox)
 
 __all__ = []
 __version__ = "v5.1"
@@ -44,7 +44,7 @@ def verifyPaletteBlocks():
     print(f"\n{lookup.TCOLORS['yellow']}Running blockColours palette test...")
 
     print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
-    tester = interface.Interface()
+    tester = old_interface.Interface()
     counter = 0
     badcounter = 0
     passed = []
@@ -96,12 +96,12 @@ def testSynchronisation():
     print(f"\n{lookup.TCOLORS['yellow']}Running synchronization test...")
     print(f"\t{lookup.TCOLORS['gray']}Testing y-indexes...", end='\r')
 
-    buildarea = interface.requestBuildArea()
+    buildarea = old_interface.requestBuildArea()
     center = ((buildarea[0] + buildarea[3]) // 2,
               (buildarea[2] + buildarea[5]) // 2)
 
     # Creating world datafiles
-    ws = interface.makeGlobalSlice()
+    ws = old_interface.makeGlobalSlice()
 
     x, z = center
 
@@ -127,113 +127,113 @@ def testShapes():
     # TODO: Fill me!
     print(f"\n{lookup.TCOLORS['yellow']}Running shape test..."
           f"{lookup.TCOLORS['gray']}\n\tPlacing shapes...")
-    geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
+    old_geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
 
     # placeLine
-    geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')            # 0D
+    old_geometry.placeLine(0, 128, 0, 0, 128, 0, 'red_concrete')            # 0D
 
-    geometry.placeLine(0, 128, 16, 15, 128, 16, 'red_concrete')         # 1D x
-    geometry.placeLine(0, 128, 16, 0, 143, 16, 'red_concrete')          # 1D y
-    geometry.placeLine(0, 128, 16, 0, 128, 31, 'red_concrete')          # 1D z
+    old_geometry.placeLine(0, 128, 16, 15, 128, 16, 'red_concrete')         # 1D x
+    old_geometry.placeLine(0, 128, 16, 0, 143, 16, 'red_concrete')          # 1D y
+    old_geometry.placeLine(0, 128, 16, 0, 128, 31, 'red_concrete')          # 1D z
 
-    geometry.placeLine(0, 128, 32, 15, 143, 32, 'red_concrete')         # 2D++0
-    geometry.placeLine(0, 128, 32, 0, 143, 47, 'red_concrete')          # 2D0++
-    geometry.placeLine(0, 128, 32, 15, 128, 47, 'red_concrete')         # 2D+0+
-    geometry.placeLine(15, 143, 47, 0, 128, 47, 'red_concrete')         # 2D--0
-    geometry.placeLine(15, 143, 47, 15, 128, 32, 'red_concrete')        # 2D0--
-    geometry.placeLine(15, 143, 47, 0, 143, 32, 'red_concrete')         # 2D-0-
+    old_geometry.placeLine(0, 128, 32, 15, 143, 32, 'red_concrete')         # 2D++0
+    old_geometry.placeLine(0, 128, 32, 0, 143, 47, 'red_concrete')          # 2D0++
+    old_geometry.placeLine(0, 128, 32, 15, 128, 47, 'red_concrete')         # 2D+0+
+    old_geometry.placeLine(15, 143, 47, 0, 128, 47, 'red_concrete')         # 2D--0
+    old_geometry.placeLine(15, 143, 47, 15, 128, 32, 'red_concrete')        # 2D0--
+    old_geometry.placeLine(15, 143, 47, 0, 143, 32, 'red_concrete')         # 2D-0-
 
-    geometry.placeLine(0, 128, 48, 7, 135, 55, 'red_concrete')          # 3D+++
-    geometry.placeLine(15, 143, 63, 7, 135, 55, 'red_concrete')         # 3D---
-    interface.globalinterface.placeBlock(7, 135, 55, 'gold_block')
+    old_geometry.placeLine(0, 128, 48, 7, 135, 55, 'red_concrete')          # 3D+++
+    old_geometry.placeLine(15, 143, 63, 7, 135, 55, 'red_concrete')         # 3D---
+    old_interface.globalinterface.placeBlock(7, 135, 55, 'gold_block')
 
     # placeVolume
-    geometry.placeVolume(16, 128, 0, 16, 128, 0, 'orange_concrete')       # 0D
+    old_geometry.placeVolume(16, 128, 0, 16, 128, 0, 'orange_concrete')       # 0D
 
-    geometry.placeVolume(16, 128, 16, 31, 128, 16,
+    old_geometry.placeVolume(16, 128, 16, 31, 128, 16,
                          'orange_concrete')     # 1D x
-    geometry.placeVolume(16, 128, 16, 16, 143, 16,
+    old_geometry.placeVolume(16, 128, 16, 16, 143, 16,
                          'orange_concrete')     # 1D y
-    geometry.placeVolume(16, 128, 16, 16, 128, 31,
+    old_geometry.placeVolume(16, 128, 16, 16, 128, 31,
                          'orange_concrete')     # 1D z
 
-    geometry.placeVolume(16, 128, 32, 31, 143, 32,
+    old_geometry.placeVolume(16, 128, 32, 31, 143, 32,
                          'orange_concrete')     # 2D xy
-    geometry.placeVolume(16, 128, 32, 16, 143, 47,
+    old_geometry.placeVolume(16, 128, 32, 16, 143, 47,
                          'orange_concrete')     # 2D yz
-    geometry.placeVolume(16, 128, 32, 31, 128, 47,
+    old_geometry.placeVolume(16, 128, 32, 31, 128, 47,
                          'orange_concrete')     # 2D xz
 
-    geometry.placeVolume(16, 128, 48, 31, 143, 63, 'orange_concrete')     # 3D
+    old_geometry.placeVolume(16, 128, 48, 31, 143, 63, 'orange_concrete')     # 3D
 
     # placeCuboid
-    geometry.placeCuboid(32, 128, 0, 32, 128, 0, 'yellow_concrete')     # 0D
-    geometry.placeCuboid(32, 144, 0, 32, 144, 0, 'yellow_stained_glass',
+    old_geometry.placeCuboid(32, 128, 0, 32, 128, 0, 'yellow_concrete')     # 0D
+    old_geometry.placeCuboid(32, 144, 0, 32, 144, 0, 'yellow_stained_glass',
                          hollow=True)
 
-    geometry.placeCuboid(32, 128, 16, 47, 128, 16, 'yellow_concrete')   # 1D x
-    geometry.placeCuboid(32, 144, 16, 47, 144, 16, 'yellow_stained_glass',
+    old_geometry.placeCuboid(32, 128, 16, 47, 128, 16, 'yellow_concrete')   # 1D x
+    old_geometry.placeCuboid(32, 144, 16, 47, 144, 16, 'yellow_stained_glass',
                          hollow=True)
-    geometry.placeCuboid(32, 128, 16, 32, 143, 16, 'yellow_concrete')   # 1D y
-    geometry.placeCuboid(32, 144, 16, 32, 159, 16, 'yellow_stained_glass',
+    old_geometry.placeCuboid(32, 128, 16, 32, 143, 16, 'yellow_concrete')   # 1D y
+    old_geometry.placeCuboid(32, 144, 16, 32, 159, 16, 'yellow_stained_glass',
                          hollow=True)
-    geometry.placeCuboid(32, 128, 16, 32, 128, 31, 'yellow_concrete')   # 1D z
-    geometry.placeCuboid(32, 144, 16, 32, 144, 31, 'yellow_stained_glass',
-                         hollow=True)
-
-    geometry.placeCuboid(32, 128, 32, 47, 143, 32, 'yellow_concrete')   # 2D xy
-    geometry.placeCuboid(32, 144, 32, 47, 159, 32, 'yellow_stained_glass',
-                         hollow=True)
-    geometry.placeCuboid(32, 128, 32, 32, 143, 47, 'yellow_concrete')   # 2D yz
-    geometry.placeCuboid(32, 144, 32, 32, 159, 47, 'yellow_stained_glass',
-                         hollow=True)
-    geometry.placeCuboid(32, 128, 32, 47, 128, 47, 'yellow_concrete')   # 2D xz
-    geometry.placeCuboid(32, 144, 32, 47, 144, 47, 'yellow_stained_glass',
+    old_geometry.placeCuboid(32, 128, 16, 32, 128, 31, 'yellow_concrete')   # 1D z
+    old_geometry.placeCuboid(32, 144, 16, 32, 144, 31, 'yellow_stained_glass',
                          hollow=True)
 
-    geometry.placeCuboid(32, 128, 48, 47, 143, 63, 'yellow_concrete')   # 3D
-    geometry.placeCuboid(32, 144, 48, 47, 159, 63, 'yellow_stained_glass',
+    old_geometry.placeCuboid(32, 128, 32, 47, 143, 32, 'yellow_concrete')   # 2D xy
+    old_geometry.placeCuboid(32, 144, 32, 47, 159, 32, 'yellow_stained_glass',
+                         hollow=True)
+    old_geometry.placeCuboid(32, 128, 32, 32, 143, 47, 'yellow_concrete')   # 2D yz
+    old_geometry.placeCuboid(32, 144, 32, 32, 159, 47, 'yellow_stained_glass',
+                         hollow=True)
+    old_geometry.placeCuboid(32, 128, 32, 47, 128, 47, 'yellow_concrete')   # 2D xz
+    old_geometry.placeCuboid(32, 144, 32, 47, 144, 47, 'yellow_stained_glass',
+                         hollow=True)
+
+    old_geometry.placeCuboid(32, 128, 48, 47, 143, 63, 'yellow_concrete')   # 3D
+    old_geometry.placeCuboid(32, 144, 48, 47, 159, 63, 'yellow_stained_glass',
                          hollow=True)
 
     # placeCylinder axis = x
-    geometry.placeCylinder(48, 128, 0, 48, 128, 0, 'lime_concrete')     # 0D
-    geometry.placeCylinder(48, 144, 0, 48, 144, 0, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 0, 48, 128, 0, 'lime_concrete')     # 0D
+    old_geometry.placeCylinder(48, 144, 0, 48, 144, 0, 'lime_stained_glass',
                            hollow=True)
 
-    geometry.placeCylinder(48, 128, 16, 63, 128, 16, 'lime_concrete')   # 1D x
-    geometry.placeCylinder(48, 144, 16, 63, 144, 16, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 16, 63, 128, 16, 'lime_concrete')   # 1D x
+    old_geometry.placeCylinder(48, 144, 16, 63, 144, 16, 'lime_stained_glass',
                            hollow=True)
-    geometry.placeCylinder(48, 128, 16, 48, 143, 16, 'lime_concrete')   # 1D y
-    geometry.placeCylinder(48, 144, 16, 48, 159, 16, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 16, 48, 143, 16, 'lime_concrete')   # 1D y
+    old_geometry.placeCylinder(48, 144, 16, 48, 159, 16, 'lime_stained_glass',
                            hollow=True)
-    geometry.placeCylinder(48, 128, 16, 48, 128, 31, 'lime_concrete')   # 1D z
-    geometry.placeCylinder(48, 144, 16, 48, 144, 31, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 16, 48, 128, 31, 'lime_concrete')   # 1D z
+    old_geometry.placeCylinder(48, 144, 16, 48, 144, 31, 'lime_stained_glass',
                            hollow=True)
 
     # 2D xy (z axis)
-    geometry.placeCylinder(48, 128, 32, 63, 143, 32, 'lime_concrete', axis='z')
-    geometry.placeCylinder(48, 144, 32, 63, 159, 32, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 32, 63, 143, 32, 'lime_concrete', axis='z')
+    old_geometry.placeCylinder(48, 144, 32, 63, 159, 32, 'lime_stained_glass',
                            hollow=True, axis='z')
     # 2D yz (x axis)
-    geometry.placeCylinder(48, 128, 32, 48, 143, 47, 'lime_concrete', axis='x')
-    geometry.placeCylinder(48, 144, 32, 48, 159, 47, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 32, 48, 143, 47, 'lime_concrete', axis='x')
+    old_geometry.placeCylinder(48, 144, 32, 48, 159, 47, 'lime_stained_glass',
                            hollow=True, axis='x')
     # 2D xz (default axis)
-    geometry.placeCylinder(48, 128, 32, 63, 128, 47, 'lime_concrete')
-    geometry.placeCylinder(48, 144, 32, 63, 144, 47, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 32, 63, 128, 47, 'lime_concrete')
+    old_geometry.placeCylinder(48, 144, 32, 63, 144, 47, 'lime_stained_glass',
                            hollow=True)
 
     # 3D x axis
-    geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete', axis='x')
-    geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete', axis='x')
+    old_geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
                            hollow=True, axis='x')
     # 3D default axis
-    geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete')
-    geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete')
+    old_geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
                            hollow=True)
     # 3D z axis
-    geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete', axis='z')
-    geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
+    old_geometry.placeCylinder(48, 128, 48, 63, 143, 63, 'lime_concrete', axis='z')
+    old_geometry.placeCylinder(48, 144, 48, 63, 159, 63, 'lime_stained_glass',
                            hollow=True, axis='z')
 
     reply = input(f"\t{lookup.TCOLORS['blue']}\aHave all shapes generated "
@@ -243,7 +243,7 @@ def testShapes():
         raise TestException(f"Shapes were failed:\n"
                             f"\t{reply}")
     print(f"{lookup.TCOLORS['gray']}\tRemoving shapes...")
-    geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
+    old_geometry.placeVolume(63, 159, 63, 0, 128, 0, 'air')
     print(f"{lookup.TCOLORS['green']}Shape test complete!")
 
 
@@ -303,7 +303,7 @@ def testBooks():
             raise TestException(f"Book criteria #{no} was failed:\n"
                                 f"\t{prompt}: {reply}")
     print(f"{lookup.TCOLORS['green']}Book test complete!")
-    interface.globalinterface.placeBlock(0, 255, 0, "air")
+    old_interface.globalinterface.placeBlock(0, 255, 0, "air")
 
 
 def testCache():
@@ -316,7 +316,7 @@ def testCache():
     def clearTestbed():
         """Clean testbed for placement from memory."""
         print("\t\tWiping blocks...", end="\r")
-        geometry.placeVolume(0, 1, 0, SIZE - 1, 1, SIZE - 1,
+        old_geometry.placeVolume(0, 1, 0, SIZE - 1, 1, SIZE - 1,
                              "shroomlight", tester)
         tester.sendBlocks()
         print("\n\t\tWiping blocks done.")
@@ -374,9 +374,9 @@ def testCache():
 
     # ---- preparation
     print(f"\t{lookup.TCOLORS['gray']}Preparing...", end="\r")
-    tester = interface.Interface(buffering=True, bufferlimit=SIZE ** 2)
-    geometry.placeVolume(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock", tester)
-    geometry.placeVolume(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air", tester)
+    tester = old_interface.Interface(buffering=True, bufferlimit=SIZE ** 2)
+    old_geometry.placeVolume(0, 2, 0, SIZE - 1, 2, SIZE - 1, "bedrock", tester)
+    old_geometry.placeVolume(0, 0, 0, SIZE - 1, 1, SIZE - 1, "air", tester)
     tester.sendBlocks()
     tester.cache.maxsize = (SIZE ** 2)
     print("\tPerparing done.")
@@ -436,7 +436,7 @@ def testCache():
 
     print("\t\tGenerating global slice...", end="\r")
     d0 = time.perf_counter()
-    interface.makeGlobalSlice()
+    old_interface.makeGlobalSlice()
     dt = time.perf_counter()
     print(f"\t\tGenerated global slice in {(dt-d0):.2f} seconds.")
 
@@ -446,9 +446,9 @@ def testCache():
 
     # ---- cleanup
     print(f"{lookup.TCOLORS['green']}Cache test complete!")
-    geometry.placeVolume(0, 0, 0, SIZE, 1, SIZE, "bedrock", tester)
-    interface.globalWorldSlice = None
-    interface.globalDecay = None
+    old_geometry.placeVolume(0, 0, 0, SIZE, 1, SIZE, "bedrock", tester)
+    old_interface.globalWorldSlice = None
+    old_interface.globalDecay = None
 
 
 def testBlocks():
@@ -461,7 +461,7 @@ def testBlocks():
     missing_set = set()
 
     for x, y, z in toolbox.loop3d(*pos1, *pos2):
-        test_block = interface.getBlock(x, y, z)
+        test_block = old_interface.getBlock(x, y, z)
         if test_block in test_set:
             tested_set.add(test_block)
             test_set.remove(test_block)
@@ -507,7 +507,7 @@ if __name__ == '__main__':
           f"{lookup.TCOLORS['CLR']}on "
           f"{lookup.TCOLORS['blue']}Minecraft {VERSIONNAME}: "
           f"{len(tests)} tests{lookup.TCOLORS['CLR']}")
-    interface.setBuildArea(0, 0, 0, 255, 255, 255)
+    old_interface.setBuildArea(0, 0, 0, 255, 255, 255)
     failed = 0
     errors = ""
     for test in tests:

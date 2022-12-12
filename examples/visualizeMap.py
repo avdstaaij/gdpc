@@ -5,18 +5,20 @@
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from gdpc import interface, lookup
+from gdpc import lookup, interface
 from gdpc.toolbox import loop2d
 from gdpc.worldLoader import WorldSlice
 
 if __name__ == '__main__':
     # see if a different build area was defined ingame
-    x1, _, z1, x2, _, z2 = interface.requestBuildArea()
+    buildArea = interface.getBuildArea()
+    x1, z1 = buildArea.toRect().begin
+    x2, z2 = buildArea.toRect().end
 
     # load the world data and extract the heightmap(s)
-    slice = WorldSlice(x1, z1, x2, z2)
+    worldSlice = WorldSlice(x1, z1, x2, z2)
 
-    heightmap = np.array(slice.heightmaps["OCEAN_FLOOR"], dtype=int)
+    heightmap = np.array(worldSlice.heightmaps["OCEAN_FLOOR"], dtype=int)
 
     # calculate the gradient (steepness)
     decrementor = np.vectorize(lambda a: a - 1)
@@ -37,7 +39,7 @@ if __name__ == '__main__':
             # calculate absolute coordinates
             y = int(heightmap[(x - x1, z - z1)]) - dy
 
-            blockID = slice.getBlockAt(x, y, z)
+            blockID = worldSlice.getBlockAt(x, y, z)
             if blockID in lookup.MAPTRANSPARENT:
                 # transparent blocks are ignored
                 continue

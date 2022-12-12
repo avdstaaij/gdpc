@@ -25,8 +25,13 @@ EAST  = ivec3( 1, 0, 0)
 WEST  = ivec3(-1, 0, 0)
 NORTH = ivec3( 0, 0,-1)
 SOUTH = ivec3( 0, 0, 1)
-XYZ   = ivec3( 1, 1, 1)
+X     = ivec3( 1, 0, 0)
+Y     = ivec3( 0, 1, 0)
+Z     = ivec3( 0, 0, 1)
+XY    = ivec3( 1, 1, 0)
 XZ    = ivec3( 1, 0, 1)
+YZ    = ivec3( 0, 1, 1)
+XYZ   = ivec3( 1, 1, 1)
 
 
 def dropY(vec: ivec3) -> ivec2:

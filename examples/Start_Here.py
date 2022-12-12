@@ -37,11 +37,16 @@ This file is not meant to be imported.
 # We are giving these modules shorter, but distinct, names for convenience
 from random import randint
 
+from glm import ivec3
+
+from gdpc.block import Block
+from gdpc import vector_util as VU
 from gdpc import geometry as GEO
 from gdpc import interface as INTF
 from gdpc import toolbox as TB
 from gdpc import interface_toolbox as ITB
 from gdpc import worldLoader as WL
+
 
 # === STRUCTURE #2
 # These variables are global and can be read from anywhere in the code
@@ -50,7 +55,12 @@ from gdpc import worldLoader as WL
 #   you'll have to add a line of code. For an example search 'GLOBAL'
 
 # Here we read start and end coordinates of our build area
-STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = INTF.requestBuildArea()  # BUILDAREA
+BUILD_AREA = INTF.getBuildArea()  # BUILDAREA
+STARTX, STARTY, STARTZ = BUILD_AREA.begin
+ENDX, ENDY, ENDZ = BUILD_AREA.end
+
+# Here we construct an Interface object
+ITF = INTF.Interface()
 
 # WORLDSLICE
 # Using the start and end coordinates we are generating a world slice
@@ -60,8 +70,7 @@ STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = INTF.requestBuildArea()  # BUILDAREA
 #
 # IMPORTANT: Keep in mind that a wold slice is a 'snapshot' of the world,
 #   and any changes you make later on will not be reflected in the world slice
-WORLDSLICE = WL.WorldSlice(STARTX, STARTZ,
-                           ENDX + 1, ENDZ + 1)  # this takes a while
+WORLDSLICE = WL.WorldSlice(STARTX, STARTZ, ENDX, ENDZ)  # this takes a while
 
 ROADHEIGHT = 0
 
@@ -94,24 +103,24 @@ def buildPerimeter():
     for x in range(STARTX, ENDX + 1):
         # the northern wall
         y = heights[(x - STARTX, 0)]
-        GEO.placeCuboid(x, y - 2, STARTZ, x, y, STARTZ, "granite")
-        GEO.placeCuboid(x, y + 1, STARTZ, x, y + 4, STARTZ, "granite_wall")
+        GEO.placeCuboid(ITF, ivec3(x, y - 2, STARTZ), ivec3(x, y, STARTZ), Block("granite"))
+        GEO.placeCuboid(ITF, ivec3(x, y + 1, STARTZ), ivec3( x, y + 4, STARTZ), Block("granite_wall"))
         # the southern wall
         y = heights[(x - STARTX, ENDZ - STARTZ)]
-        GEO.placeCuboid(x, y - 2, ENDZ, x, y, ENDZ, "red_sandstone")
-        GEO.placeCuboid(x, y + 1, ENDZ, x, y + 4, ENDZ, "red_sandstone_wall")
+        GEO.placeCuboid(ITF, ivec3(x, y - 2, ENDZ), ivec3( x, y, ENDZ), Block("red_sandstone"))
+        GEO.placeCuboid(ITF, ivec3(x, y + 1, ENDZ), ivec3( x, y + 4, ENDZ), Block("red_sandstone_wall"))
 
     print("Building north-south walls...")
     # building the north-south walls
     for z in range(STARTZ, ENDZ + 1):
         # the western wall
         y = heights[(0, z - STARTZ)]
-        GEO.placeCuboid(STARTX, y - 2, z, STARTX, y, z, "sandstone")
-        GEO.placeCuboid(STARTX, y + 1, z, STARTX, y + 4, z, "sandstone_wall")
+        GEO.placeCuboid(ITF, ivec3(STARTX, y - 2, z), ivec3( STARTX, y, z), Block("sandstone"))
+        GEO.placeCuboid(ITF, ivec3(STARTX, y + 1, z), ivec3( STARTX, y + 4, z), Block("sandstone_wall"))
         # the eastern wall
         y = heights[(ENDX - STARTX, z - STARTZ)]
-        GEO.placeCuboid(ENDX, y - 2, z, ENDX, y, z, "prismarine")
-        GEO.placeCuboid(ENDX, y + 1, z, ENDX, y + 4, z, "prismarine_wall")
+        GEO.placeCuboid(ITF, ivec3(ENDX, y - 2, z), ivec3( ENDX, y, z), Block("prismarine"))
+        GEO.placeCuboid(ITF, ivec3(ENDX, y + 1, z), ivec3( ENDX, y + 4, z), Block("prismarine_wall"))
 
 
 def buildRoads():
@@ -138,25 +147,17 @@ def buildRoads():
 
     print("Building east-west road...")
     # building the east-west road
-    GEO.placeCuboid(xaxis - 2, y, STARTZ,
-                    xaxis - 2, y, ENDZ, "end_stone_bricks")
-    GEO.placeCuboid(xaxis - 1, y, STARTZ,
-                    xaxis + 1, y, ENDZ, "gold_block")
-    GEO.placeCuboid(xaxis + 2, y, STARTZ,
-                    xaxis + 2, y, ENDZ, "end_stone_bricks")
-    GEO.placeCuboid(xaxis - 1, y + 1, STARTZ,
-                    xaxis + 1, y + 3, ENDZ, "air")
+    GEO.placeCuboid(ITF, ivec3(xaxis - 2, y, STARTZ), ivec3(xaxis - 2, y, ENDZ), Block("end_stone_bricks"))
+    GEO.placeCuboid(ITF, ivec3(xaxis - 1, y, STARTZ), ivec3(xaxis + 1, y, ENDZ), Block("gold_block"))
+    GEO.placeCuboid(ITF, ivec3(xaxis + 2, y, STARTZ), ivec3(xaxis + 2, y, ENDZ), Block("end_stone_bricks"))
+    GEO.placeCuboid(ITF, ivec3(xaxis - 1, y + 1, STARTZ), ivec3(xaxis + 1, y + 3, ENDZ), Block("air"))
 
     print("Building north-south road...")
     # building the north-south road
-    GEO.placeCuboid(STARTX, y, zaxis - 2,
-                    ENDX, y, zaxis - 2, "end_stone_bricks")
-    GEO.placeCuboid(STARTX, y, zaxis - 1,
-                    ENDX, y, zaxis + 1, "gold_block")
-    GEO.placeCuboid(STARTX, y, zaxis + 2,
-                    ENDX, y, zaxis + 2, "end_stone_bricks")
-    GEO.placeCuboid(STARTX, y + 1, zaxis - 1,
-                    ENDX, y + 3, zaxis + 1, "air")
+    GEO.placeCuboid(ITF, ivec3(STARTX, y, zaxis - 2), ivec3(ENDX, y, zaxis - 2), Block("end_stone_bricks"))
+    GEO.placeCuboid(ITF, ivec3(STARTX, y, zaxis - 1), ivec3(ENDX, y, zaxis + 1), Block("gold_block"))
+    GEO.placeCuboid(ITF, ivec3(STARTX, y, zaxis + 2), ivec3(ENDX, y, zaxis + 2), Block("end_stone_bricks"))
+    GEO.placeCuboid(ITF, ivec3(STARTX, y + 1, zaxis - 1), ivec3(ENDX, y + 3, zaxis + 1), Block("air"))
 
 
 def buildCity():
@@ -166,16 +167,16 @@ def buildCity():
 
     print("Building city platform...")
     # Building a platform and clearing a dome for the city to sit in
-    GEO.placeCenteredCylinder(xaxis, y, zaxis, 1, 21, "end_stone_bricks")
-    GEO.placeCenteredCylinder(xaxis, y, zaxis, 1, 20, "gold_block")
-    GEO.placeCenteredCylinder(xaxis, y + 1, zaxis, 3, 20, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 4, zaxis, 2, 19, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 6, zaxis, 1, 18, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 7, zaxis, 1, 17, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 8, zaxis, 1, 15, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 9, zaxis, 1, 12, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 10, zaxis, 1, 8, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 11, zaxis, 1, 3, "air")
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y, zaxis), 1, 21, Block("end_stone_bricks"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y, zaxis), 1, 20, Block("gold_block"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 1, zaxis), 3, 20, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 4, zaxis), 2, 19, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 6, zaxis), 1, 18, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 7, zaxis), 1, 17, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 8, zaxis), 1, 15, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 9, zaxis), 1, 12, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 10, zaxis), 1, 8, Block("air"))
+    GEO.placeCenteredCylinder(ITF, ivec3(xaxis, y + 11, zaxis), 1, 3, Block("air"))
 
     for i in range(50):
         buildTower(randint(xaxis - 20, xaxis + 20),
@@ -183,9 +184,9 @@ def buildCity():
 
     # Place a book on a Lectern
     # See the wiki for book formatting codes
-    INTF.placeBlock(xaxis, y, zaxis, "emerald_block")
+    ITF.placeBlock(ivec3(xaxis, y, zaxis), Block("emerald_block"))
     bookData = TB.writeBook("This book has a page!")
-    ITB.placeLectern(xaxis, y + 1, zaxis, bookData)
+    ITB.placeLectern(ITF, xaxis, y + 1, zaxis, bookData)
 
 
 def buildTower(x, z):
@@ -194,65 +195,54 @@ def buildTower(x, z):
 
     print(f"Building tower at {x}, {z}...")
     # if the blocks to the north, south, east and west aren't all gold
-    if not (INTF.getBlock(x - radius, y, z) == "minecraft:gold_block"
-            and INTF.getBlock(x + radius, y, z) == "minecraft:gold_block"
-            and INTF.getBlock(x, y, z - radius) == "minecraft:gold_block"
-            and INTF.getBlock(x, y, z + radius) == "minecraft:gold_block"):
+    if not (
+            ITF.getBlock(ivec3(x - radius, y, z)) == "minecraft:gold_block"
+        and ITF.getBlock(ivec3(x + radius, y, z)) == "minecraft:gold_block"
+        and ITF.getBlock(ivec3(x, y, z - radius)) == "minecraft:gold_block"
+        and ITF.getBlock(ivec3(x, y, z + radius)) == "minecraft:gold_block"
+    ):
         return  # return without building anything
 
     # lay the foundation
-    GEO.placeCenteredCylinder(x, y, z, 1, radius, "emerald_block")
+    GEO.placeCenteredCylinder(ITF, ivec3(x, y, z), 1, radius, Block("emerald_block"))
 
     # build ground floor
-    GEO.placeCenteredCylinder(x, y + 1, z, 3, radius,
-                              "lime_concrete", tube=True)
+    GEO.placeCenteredCylinder(ITF, ivec3(x, y + 1, z), 3, radius, Block("lime_concrete"), tube=True)
 
     # extend height
     height = randint(5, 20)
-    GEO.placeCenteredCylinder(
-        x, y + 4, z, height, radius, "lime_concrete", tube=True)
+    GEO.placeCenteredCylinder(ITF, ivec3(x, y + 4, z), height, radius, Block("lime_concrete"), tube=True)
     height += 4
 
     # build roof
-    GEO.placeCenteredCylinder(x, y + height, z, 1, radius, "emerald_block")
-    GEO.placeCenteredCylinder(x, y + height + 1, z, 1,
-                              radius - 1, "emerald_block")
-    GEO.placeCenteredCylinder(x, y + height + 2, z, 1,
-                              radius - 2, "emerald_block")
-    GEO.placeCuboid(x, y + height, z, x, y + height
-                    + 2, z, "lime_stained_glass")
-    INTF.placeBlock(x, y + 1, z, "beacon")
+    GEO.placeCenteredCylinder(ITF, ivec3(x, y + height, z), 1, radius, Block("emerald_block"))
+    GEO.placeCenteredCylinder(ITF, ivec3(x, y + height + 1, z), 1, radius - 1, Block("emerald_block"))
+    GEO.placeCenteredCylinder(ITF, ivec3(x, y + height + 2, z), 1, radius - 2, Block("emerald_block"))
+    GEO.placeCuboid(ITF, ivec3(x, y + height, z), ivec3(x, y + height + 2, z), Block("lime_stained_glass"))
+    ITF.placeBlock(ivec3(x, y + 1, z), Block("beacon"))
 
     # trim sides and add windows and doors
-    # GEO.placeCuboid(x + radius, y + 1, z, x + radius, y + height + 2, z, "air")
-    GEO.placeCuboid(x + radius - 1, y + 1, z,
-                    x + radius - 1, y + height + 2, z, "lime_stained_glass")
+    # GEO.placeCuboid(ITF, ivec3(x + radius, y + 1, z), ivec3( x + radius, y + height + 2, z), Block("air"))
+    GEO.placeCuboid(ITF, ivec3(x + radius - 1, y + 1, z), ivec3(x + radius - 1, y + height + 2, z), Block("lime_stained_glass"))
     # NOTE: When placing doors you need to place two blocks,
     #   the upper block defines the direction
-    INTF.placeBlock(x + radius - 1, y + 1, z, "warped_door")
-    INTF.placeBlock(x + radius - 1, y + 2, z,
-                    "warped_door[facing=west, half=upper]")
+    ITF.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("warped_door"))
+    ITF.placeBlock(ivec3(x + radius - 1, y + 2, z), Block("warped_door", facing="west", otherState="half=upper"))
 
-    GEO.placeCuboid(x - radius, y + 1, z, x - radius, y + height + 2, z, "air")
-    GEO.placeCuboid(x - radius + 1, y + 1, z,
-                    x - radius + 1, y + height + 2, z, "lime_stained_glass")
-    INTF.placeBlock(x - radius + 1, y + 1, z, "warped_door")
-    INTF.placeBlock(x - radius + 1, y + 2, z,
-                    "warped_door[facing=east, half=upper]")
+    GEO.placeCuboid(ITF, ivec3(x - radius, y + 1, z), ivec3( x - radius, y + height + 2, z), Block("air"))
+    GEO.placeCuboid(ITF, ivec3(x - radius + 1, y + 1, z), ivec3(x - radius + 1, y + height + 2, z), Block("lime_stained_glass"))
+    ITF.placeBlock(ivec3(x - radius + 1, y + 1, z), Block("warped_door"))
+    ITF.placeBlock(ivec3(x - radius + 1, y + 2, z), Block("warped_door", facing="east", otherState="half=upper"))
 
-    GEO.placeCuboid(x, y + 1, z + radius, x, y + height + 2, z + radius, "air")
-    GEO.placeCuboid(x, y + 1, z + radius - 1,
-                    x, y + height + 2, z + radius - 1, "lime_stained_glass")
-    INTF.placeBlock(x, y + 1, z + radius - 1, "warped_door")
-    INTF.placeBlock(x, y + 2, z + radius - 1,
-                    "warped_door[facing=south, half=upper]")
+    GEO.placeCuboid(ITF, ivec3(x, y + 1, z + radius), ivec3( x, y + height + 2, z + radius), Block("air"))
+    GEO.placeCuboid(ITF, ivec3(x, y + 1, z + radius - 1), ivec3(x, y + height + 2, z + radius - 1), Block("lime_stained_glass"))
+    ITF.placeBlock(ivec3(x, y + 1, z + radius - 1), Block("warped_door"))
+    ITF.placeBlock(ivec3(x, y + 2, z + radius - 1), Block("warped_door", facing="south", otherState="half=upper"))
 
-    GEO.placeCuboid(x, y + 1, z - radius, x, y + height + 2, z - radius, "air")
-    GEO.placeCuboid(x, y + 1, z - radius + 1,
-                    x, y + height + 2, z - radius + 1, "lime_stained_glass")
-    INTF.placeBlock(x, y + 1, z - radius + 1, "warped_door")
-    INTF.placeBlock(x, y + 2, z - radius + 1,
-                    "warped_door[facing=north, half=upper]")
+    GEO.placeCuboid(ITF, ivec3(x, y + 1, z - radius), ivec3( x, y + height + 2, z - radius), Block("air"))
+    GEO.placeCuboid(ITF, ivec3(x, y + 1, z - radius + 1), ivec3(x, y + height + 2, z - radius + 1), Block("lime_stained_glass"))
+    ITF.placeBlock(ivec3(x, y + 1, z - radius + 1), Block("warped_door"))
+    ITF.placeBlock(ivec3(x, y + 2, z - radius + 1), Block("warped_door", facing="north", otherState="half=upper"))
 
 
 # === STRUCTURE #4
@@ -265,8 +255,8 @@ if __name__ == '__main__':
     try:
         # height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(STARTX, STARTY)]
         height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(0, 0)]
-        INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
-        print(f"/tp @a {STARTX} {height} {STARTZ}")
+        # INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
+        # print(f"/tp @a {STARTX} {height} {STARTZ}")
         buildPerimeter()
         buildRoads()
         buildCity()

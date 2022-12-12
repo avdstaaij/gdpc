@@ -8,7 +8,7 @@ from glm import ivec3
 
 from .vector_util import Box
 from .transform import Transform
-from .gdpce_interface import Interface
+from .interface import Interface
 from .block import Block
 
 

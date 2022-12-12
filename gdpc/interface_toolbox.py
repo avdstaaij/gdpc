@@ -1,16 +1,22 @@
 """Provides various small functions for the interface."""
 
 
+from typing import Optional
 from random import choice
 
+from glm import ivec3
+
+
+
+from .vector_util import EAST, NORTH, SOUTH, WEST, boxBetween
+from .block import Block
+from .nbt_util import signNBT
 from . import lookup
-from .interface import checkOutOfBounds, getBlock
-from .interface import globalinterface as gi
-from .interface import runCommand
+from .interface import Interface, runCommand
 from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
 
 
-def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
+def flood_search_3D(itf: Interface, x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
                     result=None, observed=None, diagonal=False,
                     vectors=None, depth=256):
     """Return a list of coordinates with blocks that fulfil the search.
@@ -26,13 +32,15 @@ def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
         if diagonal:
             vectors += lookup.DIAGONALVECTORS
 
+
     # prevent RecursionError by limiting recursion depth
     if depth > 0:
         for dx, dy, dz in vectors:
-            if ((x + dx, y + dy, z + dz) not in observed
-                and not checkOutOfBounds(x + dx, y + dy, z + dz, x1, y1, z1,
-                                         x2, y2, z2, warn=False)):
-                if getBlock(x + dx, y + dy, z + dz) in search_blocks:
+            if (
+                (x + dx, y + dy, z + dz) not in observed and
+                boxBetween(ivec3(x1, y1, z1), ivec3(x2, y2, z2)).contains(ivec3(x + dx, y + dy, z + dz))
+            ):
+                if itf.getBlock(ivec3(x+dx,y+dy,z+dz)) in search_blocks:
                     result, observed = flood_search_3D(x + dx, y + dy, z + dz,
                                                        x1, y1, z1, x2, y2, z2,
                                                        search_blocks,
@@ -44,24 +52,27 @@ def flood_search_3D(x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
     return result, observed
 
 
-def placeLectern(x, y, z, bookData, facing=None, interface=gi):
+def placeLectern(itf: Interface, x, y, z, bookData, facing: Optional[str] = None):
     """Place a lectern with a book in the world."""
     if facing is None:
-        facing = choice(getOptimalDirection(x, y, z))
-    interface.placeBlock(x, y, z, f"lectern[facing={facing}, has_book=true]")
-    command = (f'data merge block {x} {y} {z} '
-               f'{{Book: {{id: "minecraft:written_book", '
-               f'Count: 1b, tag: {bookData}'
-               '}, Page: 0}')
-    response = runCommand(command)
+        facing = choice(getOptimalDirection(itf, ivec3(x,y,z)))
+    response = itf.placeBlock(
+        ivec3(x,y,z),
+        Block(
+            "lectern",
+            facing=facing,
+            otherState="has_book=true",
+            nbt=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
+        )
+    )
     if not response.isnumeric():
         print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
               f"upon placing book in lectern:\n\t{lookup.TCOLORS['CLR']}"
               f"{response}")
 
 
-def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
-                        items=None, replace=True, interface=gi):
+def placeInventoryBlock(itf: Interface, x, y, z, block='minecraft:chest', facing=None,
+                        items=None, replace=True):
     """Place an inventorised block with any number of items in the world.
 
     Items is expected to be a sequence of (x, y, item[, amount])
@@ -74,10 +85,12 @@ def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
     dx, dy = lookup.INVENTORYLOOKUP[block]
     if replace:
         if facing is None:
-            facing = choice(getOptimalDirection(x, y, z))
-        interface.placeBlock(x, y, z, f"{block}[facing={facing}]")
+            facing = choice(getOptimalDirection(itf, ivec3(x,y,z)))
+        itf.placeBlock(ivec3(x,y,z), Block(block, facing=facing))
+        itf.sendBufferedBlocks()
+        itf.awaitBufferFlushes()
     else:
-        if block not in gi.getBlock(x, y, z):
+        if block not in itf.getBlock(ivec3(x,y,z)):
             print(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
                   f"is not of specified type {block}!\n"
                   f"\t{lookup.TCOLORS['CLR']}This may result in "
@@ -93,17 +106,17 @@ def placeInventoryBlock(x, y, z, block='minecraft:chest', facing=None,
         if len(item) == 3:
             item = list(item)
             item.append(1)
-        response = runCommand(f"replaceitem block {x} {y} {z} "
-                              f"container.{slot} {item[2]} {item[3]}")
+        globalPosition = itf.transform * ivec3(x,y,z)
+        response = runCommand(f"replaceitem block {' '.join(globalPosition)} container.{slot} {item[2]} {item[3]}")
 
     if not response.isnumeric():
         print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
               f"upon placing items:\n\t{lookup.TCOLORS['CLR']}{response}")
 
 
-def placeSign(x, y, z, facing=None, rotation=None,
+def placeSign(itf: Interface, x, y, z, facing=None, rotation=None,
               text1="", text2="", text3="", text4="",
-              wood='oak', wall=False, interface=gi):
+              wood='oak', wall=False):
     """Place a written sign in the world.
 
     Facing is for wall placement, rotation for ground placement
@@ -130,37 +143,32 @@ def placeSign(x, y, z, facing=None, rotation=None,
         rotation = None
 
     if facing is None and rotation is None:
-        facing = getOptimalDirection(x, y, z)
+        facing = getOptimalDirection(itf, ivec3(x,y,z))
+
+    nbt = signNBT(text1, text2, text3, text4)
 
     if wall:
         wall = False
         for direction in facing:
             inversion = lookup.INVERTDIRECTION[direction]
             dx, dz = lookup.DIRECTION2VECTOR[inversion]
-            if getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
+            if itf.getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
                 break
             wall = True
-            interface.placeBlock(
-                x, y, z, f"{wood}_wall_sign[facing={choice(facing)}]")
+            itf.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", facing=choice(facing)), nbt=nbt)
 
     if not wall:
         if rotation is None:
             rotation = direction2rotation(facing)
-        interface.placeBlock(x, y, z, f"{wood}_sign[rotation={rotation}]")
-
-    data = "{" + f'Text1:\'{{"text":"{text1}"}}\','
-    data += f'Text2:\'{{"text":"{text2}"}}\','
-    data += f'Text3:\'{{"text":"{text3}"}}\','
-    data += f'Text4:\'{{"text":"{text4}"}}\'' + "}"
-    runCommand(f"data merge block {x} {y} {z} {data}")
+        itf.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", otherState=f"rotation={rotation}"), nbt=nbt)
 
 
-def getOptimalDirection(x, y, z):
+def getOptimalDirection(itf: Interface, pos: ivec3):
     """Return the least obstructed direction to have something facing."""
-    north = (identifyObtrusiveness(getBlock(x, y, z - 1)), 'north')
-    east = (identifyObtrusiveness(getBlock(x + 1, y, z)), 'east')
-    south = (identifyObtrusiveness(getBlock(x, y, z + 1)), 'south')
-    west = (identifyObtrusiveness(getBlock(x - 1, y, z)), 'west')
+    north = (identifyObtrusiveness(itf.getBlock(pos + NORTH)), 'north')
+    east  = (identifyObtrusiveness(itf.getBlock(pos + EAST )), 'east')
+    south = (identifyObtrusiveness(itf.getBlock(pos + SOUTH)), 'south')
+    west  = (identifyObtrusiveness(itf.getBlock(pos + WEST )), 'west')
 
     min_obstruction = min(north[0], east[0], south[0], west[0])
     max_obstruction = max(north[0], east[0], south[0], west[0])

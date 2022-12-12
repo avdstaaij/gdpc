@@ -1,30 +1,102 @@
 """Provides tools for creating multidimensional shapes."""
 
 
+from typing import Optional, Union, List, Iterable
+
 import numpy as np
+from glm import ivec3
 
 from . import lookup, toolbox
-from .interface import globalinterface as gi
+from .vector_util import X, XY, XZ, Y, YZ, Z, addY, scaleToFlip3D, Rect, Box, boxBetween
+from .block import Block
+from .interface import Interface
 
 
-def placeLine(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
-    """Draw a line from point to point efficiently."""
-    settings = blocks, replace, interface
-    dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
+# ==================================================================================================
+# New geometry code; TODO: refactor more
+# ==================================================================================================
+
+
+def placeBox(itf: Interface, box: Box, block: Block, replace: Optional[Union[str, List[str]]] = None, hollow: bool = False):
+    """Places a box of [block] blocks.\n
+    If [hollow]=True, the box is hollow, but sides are always filled."""
+    if (box.size.x == 0 or box.size.y == 0 or box.size.z == 0): return
+    placeCuboid(itf, box.begin, box.end - 1, block, replace, hollow)
+
+
+def placeRect(itf: Interface, rect: Rect, y: int, block: Block, replace: Optional[Union[str, List[str]]] = None):
+    """Places a rectangle of blocks in the XY-plane, at height [y]"""
+    if (rect.size.x == 0 or rect.size.y == 0): return
+    placeBox(itf, rect.toBox(y, 1), block, replace)
+
+
+def placeRectOutline(itf: Interface, rect: Rect, y: int, block: Block, replace: Optional[Union[str, List[str]]] = None):
+    """Places the outline of a rectangle of blocks in the XY-plane, at height [y]"""
+    if (rect.size.x == 0 or rect.size.y == 0): return
+    with itf.pushTransform(addY(rect.offset, y)):
+        placeCuboid(itf, ivec3(            0, 0,             0), ivec3(rect.size.x-1, 0,             0), block, replace)
+        placeCuboid(itf, ivec3(rect.size.x-1, 0,             0), ivec3(rect.size.x-1, 0, rect.size.y-1), block, replace)
+        placeCuboid(itf, ivec3(rect.size.x-1, 0, rect.size.y-1), ivec3(            0, 0, rect.size.y-1), block, replace)
+        placeCuboid(itf, ivec3(            0, 0, rect.size.y-1), ivec3(            0, 0,             0), block, replace)
+
+
+def placeCornerPillars(itf: Interface, box: Box, block: Block, replace: Optional[Union[str, List[str]]] = None):
+    """Places pillars of [block] blocks at the corners of [box]"""
+    for corner in box.toRect().corners:
+        placeBox(itf, Box(addY(corner, box.offset.y), ivec3(1, box.size.y, 1)), block, replace)
+
+
+def placeCheckeredCuboid(itf: Interface, first: ivec3, last: ivec3, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
+    """Places a checker pattern of [block1] and [block2] in the box between [first] and [last]
+    (inclusive)"""
+    placeCheckeredBox(itf, boxBetween(first, last), block1, block2, replace)
+
+
+def placeCheckeredBox(itf: Interface, box: Box, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
+    """Places a checker pattern of [block1] and [block2] in [box]"""
+    # We loop through [box]-local positions so that the pattern start is independent of [box].offset
+    for pos in Box(size=box.size).inner:
+        itf.placeBlock(box.offset + pos, block1 if sum(pos) % 2 == 0 else block2, replace)
+
+
+def placeStripedCuboid(itf: Interface, first: ivec3, last: ivec3, stripeAxis: int, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
+    """Places a stripe pattern of [block1] and [block2] along [stripeAxis] (0, 1 or 2) in the box
+    between [first] and [last] (inclusive)"""
+    placeStripedBox(itf, boxBetween(first, last), stripeAxis, block1, block2, replace)
+
+
+def placeStripedBox(itf: Interface, box: Box, stripeAxis: int, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
+    """Places a stripe pattern of [block1] and [block2] along [stripeAxis] (0, 1 or 2) in [box]"""
+    # We loop through [box]-local positions so that the pattern start is independent of [box].offset
+    for pos in Box(size=box.size).inner:
+        itf.placeBlock(box.offset + pos, block1 if pos[stripeAxis] % 2 == 0 else block2, replace)
+
+
+
+# ==================================================================================================
+# Old geometry code; TODO: refactor more
+# ==================================================================================================
+
+
+def placeLine(itf: Interface, first: ivec3, last: ivec3, block: Block, replace=None):
+    """Places a line of [block] blocks from [first] to [last] (inclusive).\n
+    When placing axis-aligned lines, placeCuboid and placeBox are more efficient."""
+    settings = block, replace
+    dimension, _ = getDimension(*first, *last)
     if dimension == 0:
-        return interface.placeBlock(x1, y1, z1, blocks, replace)
+        return itf.placeBlock(first, block, replace)
     elif dimension == 1:
-        return placeVolume(x1, y1, z1, x2, y2, z2, *settings)
+        return placeVolume(first, last, *settings)
     else: # dimension == 2 or dimension == 3
-        return placeFromList(line3d(x1, y1, z1, x2, y2, z2), *settings)
+        return placeFromList(line3d(*first, *last), *settings)
 
 
-def placeJointedLine(points, blocks, replace=None, interface=gi):
+def placeJointedLine(itf: Interface, points: Iterable[ivec3], block: Block, replace=None):
     """Place a line that runs from point to point."""
-    return placeFromList(lineSequence(points), blocks, replace, interface)
+    return placeFromList(itf, (ivec3(point) for point in lineSequence(points)), block, replace)
 
 
-def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
+def placePolygon(itf: Interface, points: Iterable[ivec3], block: Block, replace=None, filled=False):
     """Place a polygon that runs from line to line and may be filled."""
     polygon = set()
     polygon.update(lineSequence(points))
@@ -34,60 +106,56 @@ def placePolygon(points, blocks, replace=None, filled=False, interface=gi):
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
         raise ValueError(f'{lookup.TCOLORS["red"]}Cannot fill 3D polygons!')
-    placeFromList(polygon, blocks, replace, interface)
+    placeFromList(itf, (ivec3(point) for point in polygon), block, replace)
 
 
-def placeVolume(x1, y1, z1, x2, y2, z2, blocks, replace=None, interface=gi):
-    """Fill volume with blocks.
+def placeVolume(itf: Interface, first: ivec3, last: ivec3, block: Block, replace=None):
+    """Fill volume with blocks."""
 
-    Args:
-        x1 (int): starting X
-        y1 (int): starting Y
-        z1 (int): starting Z
-        x2 (int): ending X
-        y2 (int): ending Y
-        z2 (int): ending Z
-        blocks (Union(list, str)): A block or list of blocks to be used.
-        replace (Union(list, str), optional): Only replace these blocks.
-                                                Defaults to None.
-        interface (Interface, optional): Interface to be used. Defaults to gi.
+    globalFirst = itf.transform * first
+    globalLast  = itf.transform * last
+    blockState = block.blockStateString(itf.transform.rotation, scaleToFlip3D(itf.transform.scale))
 
-    Returns:
-        Any: Result of block placement.
-    """
-    buffering = interface.isBuffering()
-    if not buffering:
-        interface.setBuffering(True, False)
-        result = placeFromList(toolbox.loop3d(x1, y1, z1, x2, y2, z2),
-                               blocks, replace, interface)
-        interface.setBuffering(False, False)
-        return result
-    return placeFromList(toolbox.loop3d(x1, y1, z1, x2, y2, z2),
-                         blocks, replace, interface)
+    result = 0
+    errors = ""
+
+    oldIsBuffering = itf.buffering
+    itf.buffering = True
+
+    for x,y,z in toolbox.loop3d(*globalFirst, *globalLast):
+        response = itf.placeStringGlobal(ivec3(x,y,z), itf.transform.scale, block.name, blockState, block.nbt, replace)
+        if response.isnumeric():
+            result += int(response)
+        else:
+            errors += response
+
+    itf.buffering = oldIsBuffering
+
+    if errors:
+        return str(result) + errors
+    return str(result)
 
 
-def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
-                hollow=False, interface=gi):
-    """Place a cubic shape that fills the entire region and may be hollow.
-
-    Adjusts function call based on dimensionality.
-    """
-    settings = blocks, replace, interface
-    dimension, _ = getDimension(x1, y1, z1, x2, y2, z2)
+# TODO: Add a "wireframe" option, perhaps with another boolean next to [hollow].
+def placeCuboid(itf: Interface, first: ivec3, last: ivec3, block: Block, replace=None, hollow=False):
+    """Places a box of [block] blocks from [first] to [last] (inclusive).\n
+    If [hollow]=True, the box is hollow, but sides are always filled."""
+    settings = block, replace
+    dimension, _ = getDimension(*first, *last)
 
     if dimension == 0:                       # single block
-        return interface.placeBlock(x1, y1, z1, blocks, replace)
+        return itf.placeBlock(*first, *settings)
 
     elif dimension in (1, 2) or not hollow:  # line, rectangle or solid cuboid
-        return placeVolume(x1, y1, z1, x2, y2, z2,  *settings)
+        return placeVolume(itf, first, last, *settings)
 
     elif dimension == 3 and hollow:          # hollow cuboid
-        bottom = placeVolume(x1, y1, z1, x2, y1, z2, *settings)      # bottom
-        top = placeVolume(x1, y2, z1, x2, y2, z2, *settings)         # top
-        north = placeVolume(x1, y1, z1, x1, y2, z2, *settings)       # north
-        south = placeVolume(x2, y1, z1, x2, y2, z2, *settings)       # south
-        west = placeVolume(x1, y1, z1, x2, y2, z1, *settings)        # west
-        east = placeVolume(x1, y1, z2, x2, y2, z2, *settings)        # east
+        bottom = placeVolume(itf, first, last, *settings)      # bottom
+        top    = placeVolume(itf, first, last, *settings)      # top
+        north  = placeVolume(itf, first, last, *settings)      # north
+        south  = placeVolume(itf, first, last, *settings)      # south
+        west   = placeVolume(itf, first, last, *settings)      # west
+        east   = placeVolume(itf, first, last, *settings)      # east
         try:
             return bottom + top + north + south + west + east
         except TypeError:
@@ -97,27 +165,27 @@ def placeCuboid(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                     f'West {west}\n\tEast {east}')
 
 
-def placeCenteredCylinder(x, y, z, h, r, blocks, replace=None,
-                          axis='y', tube=False, hollow=False, interface=gi):
+def placeCenteredCylinder(itf: Interface, center: ivec3, height: int, radius: int, block: Block,
+                          replace=None, axis='y', tube=False, hollow=False):
     """Place a cylindric shape centered on xyz with height and radius."""
     if axis == 'x':
-        placeCylinder(x, y - r, z - r, x + h - 1, y + r, z + r,
-                      blocks, replace, 'x', tube, hollow, interface)
+        placeCylinder(itf, center - YZ*radius, center + YZ*radius + X*height,
+                      block, replace, 'x', tube, hollow)
     elif axis == 'y':
-        placeCylinder(x - r, y, z - r, x + r, y + h - 1, z + r,
-                      blocks, replace, 'y', tube, hollow, interface)
+        placeCylinder(itf, center - XZ*radius, center + XZ*radius + Y*height,
+                      block, replace, 'y', tube, hollow)
     elif axis == 'z':
-        placeCylinder(x - r, y - r, z, x + r, y + r, z + h - 1,
-                      blocks, replace, 'z', tube, hollow, interface)
+        placeCylinder(itf, center - XY*radius, center + XY*radius + Z*height,
+                      block, replace, 'z', tube, hollow)
     else:
         raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
 
 
-def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
-                  axis='y', tube=False, hollow=False, interface=gi):
+def placeCylinder(itf: Interface, corner1: ivec3, corner2: ivec3, block: Block, replace=None,
+                  axis='y', tube=False, hollow=False):
     """Place a cylindric shape that fills the entire region."""
-    settings = blocks, replace, interface
-    dimension, flatSides = getDimension(x1, y1, z1, x2, y2, z2)
+    settings = block, replace
+    dimension, flatSides = getDimension(*corner1, *corner2)
 
     def placeCylinderBody(a1, b1, a2, b2, h0, hn):
         """Build a cylinder."""
@@ -129,14 +197,12 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
         elif not hollow:
             tubePoints = basePoints
 
-        bottom = placeFromList(basePoints,  *settings)
+        bottom = placeFromList(itf, [ivec3(x,y,z) for (x,y,z) in basePoints], *settings)
         top = 0
         body = 0
         if h0 != hn:
-            top = placeFromList(
-                translate(basePoints, hn - h0, axis),  *settings)
-            body = placeFromList(
-                repeat(tubePoints, hn - h0 - 2, axis), *settings)
+            top = placeFromList(itf, [ivec3(x,y,z) for (x,y,z) in translate(basePoints, hn - h0, axis)],  *settings)
+            body = placeFromList(itf, [ivec3(x,y,z) for (x,y,z) in repeat(tubePoints, hn - h0 - 2, axis)], *settings)
 
         try:
             return bottom + top + body
@@ -145,43 +211,44 @@ def placeCylinder(x1, y1, z1, x2, y2, z2, blocks, replace=None,
                     f'cylinder:\n\tBase {bottom}\n\tTop {top}\n\tBody {body}')
 
     if dimension == 0:
-        return interface.placeBlock(x1, y1, z1, blocks, replace)
-    elif (dimension == 1
-          or (len(flatSides) > 0 and flatSides[0] != axis)):
-        return placeVolume(x1, y1, z1, x2, y2, z2, *settings)
+        return itf.placeBlock(*corner1, block, replace)
+    elif (dimension == 1 or (len(flatSides) > 0 and flatSides[0] != axis)):
+        return placeVolume(itf, *corner1, *corner2, *settings)
     elif dimension == 2:
         if flatSides == ['x']:
-            return placeCylinderBody(y1, z1, y2, z2, x1, x2)
+            return placeCylinderBody(corner1.y, corner1.z, corner2.y, corner2.z, corner1.x, corner2.x)
         elif flatSides == ['y']:
-            return placeCylinderBody(x1, z1, x2, z2, y1, y2)
+            return placeCylinderBody(corner1.x, corner1.z, corner2.x, corner2.z, corner1.y, corner2.y)
         elif flatSides == ['z']:
-            return placeCylinderBody(x1, y1, x2, y2, z1, z2)
+            return placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
         raise ValueError(f'{lookup.TCOLORS["red"]}Unexpected shape!')
     elif dimension == 3:
         if axis == 'x':
-            return placeCylinderBody(y1, z1, y2, z2, x1, x2)
+            return placeCylinderBody(corner1.y, corner1.z, corner2.y, corner2.z, corner1.x, corner2.x)
         elif axis == 'y':
-            return placeCylinderBody(x1, z1, x2, z2, y1, y2)
+            return placeCylinderBody(corner1.x, corner1.z, corner2.x, corner2.z, corner1.y, corner2.y)
         elif axis == 'z':
-            return placeCylinderBody(x1, y1, x2, y2, z1, z2)
+            return placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
         raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
 
 
-def placeFromList(pos_list, blocks, replace=None, interface=gi):
+def placeFromList(itf: Interface, pos_list: Iterable[ivec3], block: Block, replace=None):
     """Replace all blocks at coordinates in list with blocks."""
     result = 0
-    ERRORMESSAGE = (f"\n{lookup.TCOLORS['orange']}"
-                    f"Fails:\n{lookup.TCOLORS['gray']}")
-    errors = ERRORMESSAGE
-    for x, y, z in pos_list:
-        response = interface.placeBlock(x, y, z, blocks, replace)
+    errors = ""
+
+    blockState = block.blockStateString(itf.transform.rotation, scaleToFlip3D(itf.transform.scale))
+    for pos in pos_list:
+        response = itf.placeStringGlobal(itf.transform * pos, itf.transform.scale, block.name, blockState, block.nbt, replace)
         if response.isnumeric():
             result += int(response)
         else:
             errors += response + '\n'
-    if errors is not ERRORMESSAGE:
-        result = str(result) + errors
-    return result
+
+    if errors:
+        return str(result) + errors
+    return str(result)
+
 
 # ========================================================= calculations
 
