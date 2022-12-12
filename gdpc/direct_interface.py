@@ -82,14 +82,14 @@ def sendBlocks(
 
 def runCommand(command, retries=5, timeout=None):
     """Run a Minecraft command in the world."""
-    url = '{HOST}/command'
+    url = f'{HOST}/command'
     return _post(url, bytes(command, "utf-8"), retries=retries, timeout=timeout).text
 
 
 def requestBuildArea(retries=5, timeout=None):
     """Return the building area."""
     area = 0, 0, 0, 128, 256, 128   # default area for beginners
-    response = _get('{HOST}/buildarea', retries=retries, timeout=timeout)
+    response = _get(f'{HOST}/buildarea', retries=retries, timeout=timeout)
     if response.ok:
         buildArea = response.json()
         if buildArea != -1:
