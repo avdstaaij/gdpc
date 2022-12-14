@@ -108,7 +108,7 @@ class OrderedByLookupDict(OrderedDict):
             del self[oldest]
 
 
-class Interface:
+class Editor:
     """Provides functions to place blocks in the world by interacting with the GDMC mod's HTTP
     interface.
 

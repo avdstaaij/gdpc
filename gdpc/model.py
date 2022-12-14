@@ -8,7 +8,7 @@ from glm import ivec3
 
 from .vector_util import Box
 from .transform import Transform
-from .interface import Interface
+from .interface import Editor
 from .block import Block
 
 
@@ -52,7 +52,7 @@ class Model:
 
     def build(
         self,
-        itf:            Interface,
+        editor:         Editor,
         transformOrVec: Optional[Union[Transform, ivec3]] = None,
         substitutions:  Optional[Dict[str, str]]          = None,
         replace:        Optional[Union[str, List[str]]]   = None
@@ -83,7 +83,7 @@ class Model:
 
         lateBlocks: List[LateBlockInfo] = []
 
-        with itf.pushTransform(transformOrVec):
+        with editor.pushTransform(transformOrVec):
 
             for vec in Box(size=self._size).inner:
                 block = self.block(vec)
@@ -93,16 +93,16 @@ class Model:
                     if blockToPlace.needsLatePlacement and replace is None:
                         lateBlocks.append(LateBlockInfo(blockToPlace, vec))
                     else:
-                        itf.placeBlock(vec, blockToPlace, replace)
+                        editor.placeBlock(vec, blockToPlace, replace)
 
             # Place the late blocks, thrice.
             # Yes, placing them three time is really necessary. Wall-type blocks require it.
             for info in lateBlocks:
-                itf.placeBlock(info.position, info.block)
+                editor.placeBlock(info.position, info.block)
             for info in lateBlocks[::-1]:
-                itf.placeBlock(info.position, info.block)
+                editor.placeBlock(info.position, info.block)
             for info in lateBlocks:
-                itf.placeBlock(info.position, info.block)
+                editor.placeBlock(info.position, info.block)
 
 
     def __repr__(self):

@@ -12,11 +12,11 @@ from .vector_util import EAST, NORTH, SOUTH, WEST, boxBetween
 from .block import Block
 from .nbt_util import signNBT
 from . import lookup
-from .interface import Interface, runCommand
+from .interface import Editor, runCommand
 from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
 
 
-def flood_search_3D(itf: Interface, x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
+def flood_search_3D(editor: Editor, x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
                     result=None, observed=None, diagonal=False,
                     vectors=None, depth=256):
     """Return a list of coordinates with blocks that fulfil the search.
@@ -40,7 +40,7 @@ def flood_search_3D(itf: Interface, x, y, z, x1, y1, z1, x2, y2, z2, search_bloc
                 (x + dx, y + dy, z + dz) not in observed and
                 boxBetween(ivec3(x1, y1, z1), ivec3(x2, y2, z2)).contains(ivec3(x + dx, y + dy, z + dz))
             ):
-                if itf.getBlock(ivec3(x+dx,y+dy,z+dz)) in search_blocks:
+                if editor.getBlock(ivec3(x+dx,y+dy,z+dz)) in search_blocks:
                     result, observed = flood_search_3D(x + dx, y + dy, z + dz,
                                                        x1, y1, z1, x2, y2, z2,
                                                        search_blocks,
@@ -52,11 +52,11 @@ def flood_search_3D(itf: Interface, x, y, z, x1, y1, z1, x2, y2, z2, search_bloc
     return result, observed
 
 
-def placeLectern(itf: Interface, x, y, z, bookData, facing: Optional[str] = None):
+def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None):
     """Place a lectern with a book in the world."""
     if facing is None:
-        facing = choice(getOptimalDirection(itf, ivec3(x,y,z)))
-    response = itf.placeBlock(
+        facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
+    response = editor.placeBlock(
         ivec3(x,y,z),
         Block(
             "lectern",
@@ -71,7 +71,7 @@ def placeLectern(itf: Interface, x, y, z, bookData, facing: Optional[str] = None
               f"{response}")
 
 
-def placeInventoryBlock(itf: Interface, x, y, z, block='minecraft:chest', facing=None,
+def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing=None,
                         items=None, replace=True):
     """Place an inventorised block with any number of items in the world.
 
@@ -85,12 +85,12 @@ def placeInventoryBlock(itf: Interface, x, y, z, block='minecraft:chest', facing
     dx, dy = lookup.INVENTORYLOOKUP[block]
     if replace:
         if facing is None:
-            facing = choice(getOptimalDirection(itf, ivec3(x,y,z)))
-        itf.placeBlock(ivec3(x,y,z), Block(block, facing=facing))
-        itf.sendBufferedBlocks()
-        itf.awaitBufferFlushes()
+            facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
+        editor.placeBlock(ivec3(x,y,z), Block(block, facing=facing))
+        editor.sendBufferedBlocks()
+        editor.awaitBufferFlushes()
     else:
-        if block not in itf.getBlock(ivec3(x,y,z)):
+        if block not in editor.getBlock(ivec3(x,y,z)):
             print(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
                   f"is not of specified type {block}!\n"
                   f"\t{lookup.TCOLORS['CLR']}This may result in "
@@ -106,7 +106,7 @@ def placeInventoryBlock(itf: Interface, x, y, z, block='minecraft:chest', facing
         if len(item) == 3:
             item = list(item)
             item.append(1)
-        globalPosition = itf.transform * ivec3(x,y,z)
+        globalPosition = editor.transform * ivec3(x,y,z)
         response = runCommand(f"replaceitem block {' '.join(globalPosition)} container.{slot} {item[2]} {item[3]}")
 
     if not response.isnumeric():
@@ -114,7 +114,7 @@ def placeInventoryBlock(itf: Interface, x, y, z, block='minecraft:chest', facing
               f"upon placing items:\n\t{lookup.TCOLORS['CLR']}{response}")
 
 
-def placeSign(itf: Interface, x, y, z, facing=None, rotation=None,
+def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
               text1="", text2="", text3="", text4="",
               wood='oak', wall=False):
     """Place a written sign in the world.
@@ -143,7 +143,7 @@ def placeSign(itf: Interface, x, y, z, facing=None, rotation=None,
         rotation = None
 
     if facing is None and rotation is None:
-        facing = getOptimalDirection(itf, ivec3(x,y,z))
+        facing = getOptimalDirection(editor, ivec3(x,y,z))
 
     nbt = signNBT(text1, text2, text3, text4)
 
@@ -152,23 +152,23 @@ def placeSign(itf: Interface, x, y, z, facing=None, rotation=None,
         for direction in facing:
             inversion = lookup.INVERTDIRECTION[direction]
             dx, dz = lookup.DIRECTION2VECTOR[inversion]
-            if itf.getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
+            if editor.getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
                 break
             wall = True
-            itf.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", facing=choice(facing)), nbt=nbt)
+            editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", facing=choice(facing)), nbt=nbt)
 
     if not wall:
         if rotation is None:
             rotation = direction2rotation(facing)
-        itf.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", otherState=f"rotation={rotation}"), nbt=nbt)
+        editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", otherState=f"rotation={rotation}"), nbt=nbt)
 
 
-def getOptimalDirection(itf: Interface, pos: ivec3):
+def getOptimalDirection(editor: Editor, pos: ivec3):
     """Return the least obstructed direction to have something facing."""
-    north = (identifyObtrusiveness(itf.getBlock(pos + NORTH)), 'north')
-    east  = (identifyObtrusiveness(itf.getBlock(pos + EAST )), 'east')
-    south = (identifyObtrusiveness(itf.getBlock(pos + SOUTH)), 'south')
-    west  = (identifyObtrusiveness(itf.getBlock(pos + WEST )), 'west')
+    north = (identifyObtrusiveness(editor.getBlock(pos + NORTH)), 'north')
+    east  = (identifyObtrusiveness(editor.getBlock(pos + EAST )), 'east')
+    south = (identifyObtrusiveness(editor.getBlock(pos + SOUTH)), 'south')
+    west  = (identifyObtrusiveness(editor.getBlock(pos + WEST )), 'west')
 
     min_obstruction = min(north[0], east[0], south[0], west[0])
     max_obstruction = max(north[0], east[0], south[0], west[0])
