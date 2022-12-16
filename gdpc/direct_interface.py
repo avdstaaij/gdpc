@@ -26,51 +26,79 @@ def post(*args):
         ) from e
 
 
-def getBlock(x, y, z):
-    """Return the block ID from the world."""
-    url = f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
+def getBlock(x, y, z, dx=None, dy=None, dz=None, includeState=None, includeData=None, dimension=None, asJsonResponse=True):
+    """Return block material, position and other attributes on one or multiple positions in the world."""
+    url = 'http://localhost:9000/blocks'
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'dx': dx,
+        'dy': dy,
+        'dz': dz,
+        'includeState': includeState,
+        'includeData': includeData,
+        'dimension': dimension,
+    }
     try:
-        response = requests.get(url).text
+        if asJsonResponse:
+            response = requests.get(url, params=parameters, headers={'Accept': 'application/json'}).json()
+            if len(response) == 1:
+                response = response[0]
+        else:
+            response = requests.get(url, params=parameters).text
     except RequestConnectionError:
-        return "minecraft:void_air"
+        if asJsonResponse:
+            return {
+                'id': 'minecraft:void_air',
+                'x': x,
+                'y': y,
+                'z': z,
+            }
+        return f'{x} {y} {z} minecraft:void_air'
     return response
 
 
-def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None):
+def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None, dimension=None, asJsonResponse=False):
     """Place one or multiple blocks in the world."""
-    if customFlags is not None:
-        blockUpdateQueryParam = f"customFlags={customFlags}"
-    else:
-        blockUpdateQueryParam = f"doBlockUpdates={doBlockUpdates}"
-
-    url = (f'http://localhost:9000/blocks?x={x}&y={y}&z={z}'
-           f'&{blockUpdateQueryParam}')
+    url = 'http://localhost:9000/blocks'
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'doBlockUpdates': doBlockUpdates,
+        'customFlags': customFlags,
+        'dimension': dimension,
+    }
+    headers = {'Accept': 'application/json'} if asJsonResponse else {}
     try:
-        response = requests.put(url, blockStr)
+        response = requests.put(url, data=blockStr, params=parameters, headers=headers)
     except RequestConnectionError:
         return "0"
+    if asJsonResponse:
+        return response.json()
     return response.text
 
 
 def sendBlocks(blockList, x=0, y=0, z=0, retries=5,
-               doBlockUpdates=True, customFlags=None):
+               doBlockUpdates=True, customFlags=None, dimension=None):
     """Take a list of blocks and place them into the world in one go."""
     body = str.join("\n", ['~{} ~{} ~{} {}'.format(*bp) for bp in blockList])
     try:
-        response = placeBlock(x, y, z, body, doBlockUpdates, customFlags)
+        response = placeBlock(x, y, z, body, doBlockUpdates, customFlags, dimension)
         return response
     except RequestConnectionError as e:
         print("Request failed: {} Retrying ({} left)".format(e, retries))
         if retries > 0:
-            return sendBlocks(blockList, x, y, z, retries - 1, doBlockUpdates, customFlags)
+            return sendBlocks(blockList, x, y, z, retries - 1, doBlockUpdates, customFlags, dimension)
     return False
 
 
-def runCommand(command):
+def runCommand(command, dimension=None):
     """Run a Minecraft command in the world."""
     url = 'http://localhost:9000/command'
     try:
-        response = requests.post(url, bytes(command, "utf-8"))
+        response = requests.post(url, bytes(command, "utf-8"), params={'dimension': dimension})
     except RequestConnectionError:
         return "connection error"
     return response.text
@@ -96,11 +124,18 @@ def requestBuildArea():
     return area
 
 
-def getChunks(x, z, dx, dz, rtype='text'):
+def getChunks(x, z, dx, dz, dimension=None, rtype='text'):
     """Get raw chunk data."""
-    url = f'http://localhost:9000/chunks?x={x}&z={z}&dx={dx}&dz={dz}'
+    url = 'http://localhost:9000/chunks'
+    parameters = {
+        'x': x,
+        'z': z,
+        'dx': dx,
+        'dz': dz,
+        'dimension': dimension,
+    }
     acceptType = 'application/octet-stream' if rtype == 'bytes' else 'text/raw'
-    response = requests.get(url, headers={"Accept": acceptType})
+    response = requests.get(url, params=parameters, headers={"Accept": acceptType})
     if response.status_code >= 400:
         print(f"Error: {response.text}")
 
