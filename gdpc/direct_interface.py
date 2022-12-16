@@ -72,7 +72,7 @@ def placeBlock(x, y, z, blockStr, doBlockUpdates=True, customFlags=None, dimensi
     }
     headers = {'Accept': 'application/json'} if asJsonResponse else {}
     try:
-        response = requests.put(url, data=blockStr, params=parameters, headers=headers)
+        response = requests.put(url, data=bytes(blockStr, "utf-8"), params=parameters, headers=headers)
     except RequestConnectionError:
         return "0"
     if asJsonResponse:
