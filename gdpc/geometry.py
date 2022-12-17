@@ -84,16 +84,16 @@ def placeLine(editor: Editor, first: ivec3, last: ivec3, block: Block, replace=N
     settings = block, replace
     dimension, _ = getDimension(*first, *last)
     if dimension == 0:
-        return editor.placeBlock(first, block, replace)
-    if dimension == 1:
-        return placeVolume(first, last, *settings)
-    # dimension == 2 or dimension == 3
-    return placeFromList(line3d(*first, *last), *settings)
+        editor.placeBlock(first, block, replace)
+    elif dimension == 1:
+         placeVolume(first, last, *settings)
+    else: # dimension == 2 or dimension == 3
+        placeFromList(line3d(*first, *last), *settings)
 
 
 def placeJointedLine(editor: Editor, points: Iterable[ivec3], block: Block, replace=None):
     """Place a line that runs from point to point."""
-    return placeFromList(editor, (ivec3(point) for point in lineSequence(points)), block, replace)
+    placeFromList(editor, (ivec3(point) for point in lineSequence(points)), block, replace)
 
 
 def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=None, filled=False):
@@ -106,7 +106,7 @@ def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
         raise ValueError(f'{lookup.TCOLORS["red"]}Cannot fill 3D polygons!')
-    return placeFromList(editor, (ivec3(point) for point in polygon), block, replace)
+    placeFromList(editor, (ivec3(point) for point in polygon), block, replace)
 
 
 def placeVolume(editor: Editor, first: ivec3, last: ivec3, block: Block, replace=None):
@@ -119,14 +119,10 @@ def placeVolume(editor: Editor, first: ivec3, last: ivec3, block: Block, replace
     oldIsBuffering = editor.buffering
     editor.buffering = True
 
-    success = all([ # pylint: disable=use-a-generator
+    for x,y,z in toolbox.loop3d(*globalFirst, *globalLast):
          editor.placeStringGlobal(ivec3(x,y,z), editor.transform.scale, block.name, blockState, block.nbt, replace)
-         for x,y,z in toolbox.loop3d(*globalFirst, *globalLast)
-    ])
 
     editor.buffering = oldIsBuffering
-
-    return success
 
 
 # TODO: Add a "wireframe" option, perhaps with another boolean next to [hollow].
@@ -137,37 +133,34 @@ def placeCuboid(editor: Editor, first: ivec3, last: ivec3, block: Block, replace
     dimension, _ = getDimension(*first, *last)
 
     if dimension == 0:                       # single block
-        return editor.placeBlock(*first, *settings)
+        editor.placeBlock(*first, *settings)
 
     elif dimension in (1, 2) or not hollow:  # line, rectangle or solid cuboid
-        return placeVolume(editor, first, last, *settings)
+        placeVolume(editor, first, last, *settings)
 
-    if dimension == 3 and hollow:          # hollow cuboid
-        bottom = placeVolume(editor, first, last, *settings)
-        top    = placeVolume(editor, first, last, *settings)
-        north  = placeVolume(editor, first, last, *settings)
-        south  = placeVolume(editor, first, last, *settings)
-        west   = placeVolume(editor, first, last, *settings)
-        east   = placeVolume(editor, first, last, *settings)
-        return bottom and top and north and south and west and east
-
-    return False
+    elif dimension == 3 and hollow:          # hollow cuboid
+        placeVolume(editor, first, last, *settings) # bottom
+        placeVolume(editor, first, last, *settings) # top
+        placeVolume(editor, first, last, *settings) # north
+        placeVolume(editor, first, last, *settings) # south
+        placeVolume(editor, first, last, *settings) # west
+        placeVolume(editor, first, last, *settings) # east
 
 
 def placeCenteredCylinder(editor: Editor, center: ivec3, height: int, radius: int, block: Block,
                           replace=None, axis='y', tube=False, hollow=False):
     """Place a cylindric shape centered on xyz with height and radius."""
     if axis == 'x':
-        return placeCylinder(editor, center - YZ*radius, center + YZ*radius + X*height,
+        placeCylinder(editor, center - YZ*radius, center + YZ*radius + X*height,
                       block, replace, 'x', tube, hollow)
-    if axis == 'y':
-        return placeCylinder(editor, center - XZ*radius, center + XZ*radius + Y*height,
+    elif axis == 'y':
+        placeCylinder(editor, center - XZ*radius, center + XZ*radius + Y*height,
                       block, replace, 'y', tube, hollow)
-    if axis == 'z':
-        return placeCylinder(editor, center - XY*radius, center + XY*radius + Z*height,
+    elif axis == 'z':
+        placeCylinder(editor, center - XY*radius, center + XY*radius + Z*height,
                       block, replace, 'z', tube, hollow)
-
-    raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
+    else:
+        raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
 
 
 def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, replace=None,
@@ -186,50 +179,46 @@ def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, 
         elif not hollow:
             tubePoints = basePoints
 
-        bottom = placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in basePoints], *settings)
-        top = True
-        body = True
+        placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in basePoints], *settings)
         if h0 != hn:
-            top = placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in translate(basePoints, hn - h0, axis)],  *settings)
-            body = placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in repeat(tubePoints, hn - h0 - 2, axis)], *settings)
-
-        return bottom and top and body
+            placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in translate(basePoints, hn - h0, axis)],  *settings)
+            placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in repeat(tubePoints, hn - h0 - 2, axis)], *settings)
 
     if dimension == 0:
-        return editor.placeBlock(*corner1, block, replace)
+        editor.placeBlock(*corner1, block, replace)
 
-    if (dimension == 1 or (len(flatSides) > 0 and flatSides[0] != axis)):
-        return placeVolume(editor, *corner1, *corner2, *settings)
+    elif (dimension == 1 or (len(flatSides) > 0 and flatSides[0] != axis)):
+        placeVolume(editor, *corner1, *corner2, *settings)
 
-    if dimension == 2:
+    elif dimension == 2:
         if flatSides == ['x']:
-            return placeCylinderBody(corner1.y, corner1.z, corner2.y, corner2.z, corner1.x, corner2.x)
-        if flatSides == ['y']:
-            return placeCylinderBody(corner1.x, corner1.z, corner2.x, corner2.z, corner1.y, corner2.y)
-        if flatSides == ['z']:
-            return placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
-        raise ValueError(f'{lookup.TCOLORS["red"]}Unexpected shape!')
+            placeCylinderBody(corner1.y, corner1.z, corner2.y, corner2.z, corner1.x, corner2.x)
+        elif flatSides == ['y']:
+            placeCylinderBody(corner1.x, corner1.z, corner2.x, corner2.z, corner1.y, corner2.y)
+        elif flatSides == ['z']:
+            placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
+        else:
+            raise ValueError(f'{lookup.TCOLORS["red"]}Unexpected shape!')
 
-    if dimension == 3:
+    elif dimension == 3:
         if axis == 'x':
-            return placeCylinderBody(corner1.y, corner1.z, corner2.y, corner2.z, corner1.x, corner2.x)
-        if axis == 'y':
-            return placeCylinderBody(corner1.x, corner1.z, corner2.x, corner2.z, corner1.y, corner2.y)
-        if axis == 'z':
-            return placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
-        raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
+            placeCylinderBody(corner1.y, corner1.z, corner2.y, corner2.z, corner1.x, corner2.x)
+        elif axis == 'y':
+            placeCylinderBody(corner1.x, corner1.z, corner2.x, corner2.z, corner1.y, corner2.y)
+        elif axis == 'z':
+            placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
+        else:
+            raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
 
-    raise ValueError(f'{lookup.TCOLORS["red"]}Invalid dimension! (this should never happen)')
+    else:
+        raise ValueError(f'{lookup.TCOLORS["red"]}Invalid dimension! (this should never happen)')
 
 
 def placeFromList(editor: Editor, pos_list: Iterable[ivec3], block: Block, replace=None):
     """Replace all blocks at coordinates in list with blocks."""
     blockState = block.blockStateString(editor.transform.rotation, scaleToFlip3D(editor.transform.scale))
-
-    return all([ # pylint: disable=use-a-generator
+    for pos in pos_list:
         editor.placeStringGlobal(editor.transform * pos, editor.transform.scale, block.name, blockState, block.nbt, replace)
-        for pos in pos_list
-    ])
 
 
 # ========================================================= calculations

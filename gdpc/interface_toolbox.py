@@ -56,7 +56,7 @@ def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None
     """Place a lectern with a book in the world."""
     if facing is None:
         facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
-    return editor.placeBlock(
+    editor.placeBlock(
         ivec3(x,y,z),
         Block(
             "lectern",
