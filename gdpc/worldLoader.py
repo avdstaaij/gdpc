@@ -61,7 +61,7 @@ class WorldSlice:
                           - (self.rect[1] >> 4) + 1)
         self.heightmapTypes = heightmapTypes
 
-        chunkBytes = di.getChunks(*self.chunkRect, rtype='bytes')
+        chunkBytes = di.getChunks(*self.chunkRect, asBytes=True)
         file_like = BytesIO(chunkBytes)
 
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)

@@ -8,7 +8,7 @@ This module contains functions to:
 """
 
 
-from typing import Union, Optional, List, Tuple
+from typing import Any, Union, Optional, List, Tuple
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from collections import OrderedDict
@@ -28,9 +28,13 @@ from . import direct_interface as di
 from . import worldLoader
 
 
-def getBuildArea():
-    """Returns the build area that was specified by /setbuildarea in-game."""
-    beginX, beginY, beginZ, endX, endY, endZ = di.requestBuildArea()
+def getBuildArea(default = Box(ivec3(0,0,0), ivec3(128,256,128))):
+    """Returns the build area that was specified by /setbuildarea in-game.\n
+    If no build area was specified, returns <default>."""
+    success, result = di.getBuildArea()
+    if not success:
+        return default
+    beginX, beginY, beginZ, endX, endY, endZ = result
     return boxBetween(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
 
 
@@ -69,7 +73,9 @@ def getWorldSlice(rect: Rect):
 
 def runCommand(command: str):
     """Executes one or multiple Minecraft commands (separated by newlines).\n
-    The leading "/" can be omitted."""
+    The leading "/" can be omitted.\n
+    Returns a string with one line for each command. If the command was successful, the return line
+    is its return value. Otherwise, it is the error message."""
     if command[0] == '/':
         command = command[1:]
     return di.runCommand(command)
@@ -232,16 +238,18 @@ class Editor:
 
 
     def runCommand(self, command: str):
-        """Executes one or multiple Minecraft commands (separated by newlines).
+        """Executes one or multiple Minecraft commands (separated by newlines).\n
+        The leading "/" can be omitted.\n
         If buffering is enabled, the command is deferred until after the next buffer flush."""
         if self.buffering:
             self._commandBuffer.append(command)
-            return "0"
-        return runCommand(command)
+        else:
+            runCommand(command)
 
 
     def getBlock(self, position: ivec3):
-        """Return the block ID at [position]"""
+        """Returns the namespaced ID of the block at [position].\n
+        If the given coordinates are invalid, returns "minecraft:void_air"."""
         return self.getBlockGlobal(self.transform * position)
 
 
@@ -269,6 +277,7 @@ class Editor:
         """Places [block] at [transformOrVec].\n
         [transformOrVec] is interpreted as local to the coordinate system defined by
         self.transform.\n
+        Returns whether the placement succeeded fully.\n
         If [block].name is a list, names are sampled randomly."""
         return self.placeBlockGlobal(self.transform @ toTransform(transformOrVec), block, replace, doBlockUpdates)
 
@@ -282,6 +291,7 @@ class Editor:
     ):
         """Places [block] at [transform], ignoring self.transform.\n
         If [block].name is a list, names are sampled randomly.\n
+        Returns whether the placement succeeded fully.\n
         This is an internal function that is made available for advanced usage."""
         return self.placeStringGlobal(
             transform.translation,
@@ -308,12 +318,12 @@ class Editor:
         [scale]), ignoring self.transform.\n
         Note that any flips caused by [scale] must already be applied to [blockState].\n
         If [block].name is a list, names are sampled randomly.\n
+        Returns whether the placement succeeded fully.\n
         This is an internal function that is made available for advanced usage. It can be used
         to avoid unnecessary repeated transform compositions and Block.stateString() calls when
         a geometrical region of blocks is placed."""
 
-        result = 0
-        errors = ""
+        totalSuccess = True
 
         for x in range(position.x, position.x + scale.x, non_zero_sign(scale.x)):
             for y in range(position.y, position.y + scale.y, non_zero_sign(scale.y)):
@@ -324,15 +334,11 @@ class Editor:
                     else:
                         chosen_block_string = random.choice(blockString)
                     # Place the block
-                    response = self._placeSingleStringGlobal(ivec3(x,y,z), chosen_block_string + blockState, nbt, replace, doBlockUpdates)
-                    if response.isnumeric():
-                        result += int(response)
-                    else:
-                        errors += response + "\n"
+                    success = self._placeSingleStringGlobal(ivec3(x,y,z), chosen_block_string + blockState, nbt, replace, doBlockUpdates)
+                    if not success:
+                        totalSuccess = False
 
-        if errors:
-            return str(result) + errors
-        return str(result)
+        return totalSuccess
 
 
     # TODO: rethink block placing functions. Do we really need this many?
@@ -345,56 +351,61 @@ class Editor:
         replace:        Optional[Union[str, List[str]]],
         doBlockUpdates: Optional[bool]
     ):
-
         if isinstance(replace, str):
             if self.getBlockGlobal(position) != replace:
-                return '0'
+                return True
         elif is_sequence(replace) and self.getBlockGlobal(position) not in replace:
-            return '0'
+            return True
         elif (self.caching and blockString in self.getBlockGlobal(position)):
-            return '0'
+            return True
 
         if self._buffering:
-            response = self._placeSingleStringGlobalBuffered(position, blockString, doBlockUpdates)
+            success = self._placeSingleStringGlobalBuffered(position, blockString, doBlockUpdates)
         else:
-            response = self._placeSingleStringGlobalDirect(position, blockString, doBlockUpdates)
+            success = self._placeSingleStringGlobalDirect(position, blockString, doBlockUpdates)
 
-        if not response.isnumeric():
-            return response
+        if not success:
+            return False
 
         self._cache[tuple(position)] = blockString
 
         if nbt is not None:
-            response = self.runCommand(blockNBTCommand(position, nbt))
+            self.runCommand(blockNBTCommand(position, nbt))
 
-        return response
+        return True
 
 
     # TODO: old gdpc code, refactor more?
     def _placeSingleStringGlobalDirect(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
-        """Place a single block in the world directly."""
+        """Place a single block in the world directly.\n
+        Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
         result = di.placeBlock(*position, blockString, doBlockUpdates, customFlags=None)
         if not result.isnumeric():
             eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing block:\n\t{TCOLORS['CLR']}{result}")
-        return result
+            return False
+        return True
 
 
     # TODO: old gdpc code, refactor more?
     def _placeSingleStringGlobalBuffered(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
-        """Place a block in the buffer and send once limit is exceeded."""
+        """Place a block in the buffer and send once limit is exceeded.\n
+        Returns whether placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
         if doBlockUpdates != self._bufferDoBlockUpdates:
             self.sendBufferedBlocks()
             self._bufferDoBlockUpdates = doBlockUpdates
 
-        self._buffer.append((position, blockString))
+        elif len(self._buffer) >= self.bufferLimit:
+            self.sendBufferedBlocks()
+
         if len(self._buffer) >= self.bufferLimit:
-            return self.sendBufferedBlocks()
-        else:
-            return '0'
+            return False # This can happen if the buffer flush failed
+
+        self._buffer.append((position, blockString))
+        return True
 
 
     def sendBufferedBlocks(self, retries = 5):
@@ -402,25 +413,37 @@ class Editor:
         If multithreaded buffer flushing is enabled, the threads can be awaited with
         awaitBufferFlushes()."""
 
-        if not self._buffer:
-            return
+
+        # TODO: communicate that re-buffering does not work if multithreading is enabled.
 
 
         def flush(blockBuffer: List[Tuple[ivec3, str]], commandBuffer: List[str]):
-            response = di.sendBlocks(((*t[0], t[1]) for t in blockBuffer), 0, 0, 0, self._bufferDoBlockUpdates, retries=retries).split('\n')
-            if any(not val.isnumeric() for val in response):
-                eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
-                return response
-            blockBuffer.clear()
+            # Flush block buffer
+            if blockBuffer:
+                blockStr = "\n".join((f"{t[0].x} {t[0].y} {t[0].z} {t[1]}" for t in blockBuffer))
+                response = di.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
 
-            for command in commandBuffer:
-                response = runCommand(command)
-                if not response.isnumeric():
-                    eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending command buffer:\n\t{TCOLORS['CLR']}{result}")
-                    return response
-            commandBuffer.clear()
+                newBlockBuffer: List[Tuple[ivec3, str]] = []
+                for i, line in enumerate(response.split("\n")):
+                    if not line.isnumeric():
+                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing block. It has been re-buffered. Error:\n\t{TCOLORS['CLR']}{line}")
+                        newBlockBuffer.append(blockBuffer[i])
+                blockBuffer[:] = newBlockBuffer
 
-            return "0"
+                if newBlockBuffer:
+                    eprint(f"{TCOLORS['orange']}Warning: There were block placement errors, so the command buffer has not been flushed.{TCOLORS['CLR']}")
+                    return
+
+            # Flush command buffer
+            if commandBuffer:
+                response = runCommand("\n".join(commandBuffer))
+
+                newCommandBuffer: List[str] = []
+                for i, line in enumerate(response.split("\n")):
+                    if not line.isnumeric():
+                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending command. It has been re-buffered. Error:\n\t{TCOLORS['CLR']}{line}")
+                        newCommandBuffer.append(commandBuffer[i])
+                commandBuffer[:] = newCommandBuffer
 
 
         if self._multithreading:
@@ -443,10 +466,8 @@ class Editor:
             self._buffer = []
             self._commandBuffer = []
 
-            return "0"
-
         else: # No multithreading
-            return flush(self._buffer, self._commandBuffer)
+            flush(self._buffer, self._commandBuffer)
 
 
     def awaitBufferFlushes(self, timeout: Optional[float] = None):

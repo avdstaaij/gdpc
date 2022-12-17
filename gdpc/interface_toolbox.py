@@ -7,7 +7,7 @@ from random import choice
 from glm import ivec3
 
 
-
+from .util import eprint
 from .vector_util import EAST, NORTH, SOUTH, WEST, boxBetween
 from .block import Block
 from .nbt_util import signNBT
@@ -56,7 +56,7 @@ def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None
     """Place a lectern with a book in the world."""
     if facing is None:
         facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
-    response = editor.placeBlock(
+    return editor.placeBlock(
         ivec3(x,y,z),
         Block(
             "lectern",
@@ -65,10 +65,6 @@ def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None
             nbt=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
         )
     )
-    if not response.isnumeric():
-        print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
-              f"upon placing book in lectern:\n\t{lookup.TCOLORS['CLR']}"
-              f"{response}")
 
 
 def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing=None,
@@ -91,7 +87,7 @@ def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing
         editor.awaitBufferFlushes()
     else:
         if block not in editor.getBlock(ivec3(x,y,z)):
-            print(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
+            eprint(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
                   f"is not of specified type {block}!\n"
                   f"\t{lookup.TCOLORS['CLR']}This may result in "
                   f"incorrectly placed items.")
@@ -100,18 +96,13 @@ def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing
     if 3 <= len(items) <= 4 and isinstance(items[0], int):
         items = [items, ]
 
-    response = '0'
     for item in items:
         slot = index2slot(item[0], item[1], dx, dy)
         if len(item) == 3:
             item = list(item)
             item.append(1)
         globalPosition = editor.transform * ivec3(x,y,z)
-        response = runCommand(f"replaceitem block {' '.join(globalPosition)} container.{slot} {item[2]} {item[3]}")
-
-    if not response.isnumeric():
-        print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
-              f"upon placing items:\n\t{lookup.TCOLORS['CLR']}{response}")
+        runCommand(f"replaceitem block {' '.join(globalPosition)} container.{slot} {item[2]} {item[3]}")
 
 
 def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
@@ -130,7 +121,7 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
         raise ValueError(f"{wood} is not a valid wood type!")
 
     if facing is not None and facing not in lookup.DIRECTIONS:
-        print(f"{facing} is not a valid direction.\n"
+        eprint(f"{facing} is not a valid direction.\n"
               "Working with default behaviour.")
         facing = None
     try:
@@ -138,7 +129,7 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
             raise TypeError
     except TypeError:
         if rotation is not None:
-            print(f"{rotation} is not a valid rotation.\n"
+            eprint(f"{rotation} is not a valid rotation.\n"
                   "Working with default behaviour.")
         rotation = None
 
