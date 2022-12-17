@@ -47,12 +47,10 @@ def placeLectern(x, y, z, bookData, facing=None, interface=gi):
     """Place a lectern with a book in the world."""
     if facing is None:
         facing = choice(getOptimalDirection(x, y, z))
-    interface.placeBlock(x, y, z, f"lectern[facing={facing}, has_book=true]")
-    command = (f'data merge block {x} {y} {z} '
+    response = interface.placeBlock(x, y, z, f"lectern[facing={facing}, has_book=true]" + \
                f'{{Book: {{id: "minecraft:written_book", '
                f'Count: 1b, tag: {bookData}'
                '}, Page: 0}')
-    response = runCommand(command)
     if not response.isnumeric():
         print(f"{lookup.TCOLORS['orange']}Warning: Server returned error "
               f"upon placing book in lectern:\n\t{lookup.TCOLORS['CLR']}"

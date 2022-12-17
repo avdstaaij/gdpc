@@ -93,11 +93,11 @@ class Interface():
             if not checkOutOfBounds(x, y, z) and not globalDecay[dx][dy][dz]:
                 block = globalWorldSlice.getBlockAt(x, y, z)
                 if block == 'minecraft:void_air':
-                    block = di.getBlock(x, y, z)
+                    block = di.getBlock(x, y, z).get('id')
                 self.cache[(x, y, z)] = block
                 return block
 
-        response = di.getBlock(x, y, z)
+        response = di.getBlock(x, y, z).get('id')
         if self.caching:
             self.cache[(x, y, z)] = response
 
