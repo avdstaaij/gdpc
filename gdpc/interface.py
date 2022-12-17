@@ -401,9 +401,6 @@ class Editor:
         elif len(self._buffer) >= self.bufferLimit:
             self.sendBufferedBlocks()
 
-        if len(self._buffer) >= self.bufferLimit:
-            return False # This can happen if the buffer flush failed
-
         self._buffer.append((position, blockString))
         return True
 
@@ -413,38 +410,26 @@ class Editor:
         If multithreaded buffer flushing is enabled, the threads can be awaited with
         awaitBufferFlushes()."""
 
-
-        # TODO: communicate that re-buffering does not work if multithreading is enabled.
-
-
         def flush(blockBuffer: List[Tuple[ivec3, str]], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
                 blockStr = "\n".join((f"{t[0].x} {t[0].y} {t[0].z} {t[1]}" for t in blockBuffer))
                 response = di.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
+                blockBuffer.clear()
 
-                newBlockBuffer: List[Tuple[ivec3, str]] = []
-                for i, line in enumerate(response.split("\n")):
+                for line in response.split("\n"):
                     if not line.isnumeric():
-                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing block. It has been re-buffered. Error:\n\t{TCOLORS['CLR']}{line}")
-                        newBlockBuffer.append(blockBuffer[i])
-                blockBuffer[:] = newBlockBuffer
+                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing buffered block:\n\t{TCOLORS['CLR']}{line}")
 
-                if newBlockBuffer:
-                    eprint(f"{TCOLORS['orange']}Warning: There were block placement errors, so the command buffer has not been flushed.{TCOLORS['CLR']}")
-                    return
 
             # Flush command buffer
             if commandBuffer:
                 response = runCommand("\n".join(commandBuffer))
+                commandBuffer.clear()
 
-                newCommandBuffer: List[str] = []
-                for i, line in enumerate(response.split("\n")):
+                for line in response.split("\n"):
                     if not line.isnumeric():
-                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending command. It has been re-buffered. Error:\n\t{TCOLORS['CLR']}{line}")
-                        newCommandBuffer.append(commandBuffer[i])
-                commandBuffer[:] = newCommandBuffer
-
+                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending buffered command:\n\t{TCOLORS['CLR']}{line}")
 
         if self._multithreading:
             # Clean up finished buffer flush futures
