@@ -188,7 +188,8 @@ class Editor:
     @bufferLimit.setter
     def bufferLimit(self, value: int):
         self._bufferLimit = value
-        # TODO: check if flush needed
+        if len(self._buffer) >= self.bufferLimit:
+            self.sendBufferedBlocks()
 
     @property
     def caching(self):
