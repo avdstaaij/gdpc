@@ -2,6 +2,7 @@
 
 
 from typing import Union
+from abc import ABC
 from dataclasses import dataclass, field
 
 from glm import ivec3, bvec3
@@ -117,20 +118,38 @@ class Transform:
 
 
 # ==================================================================================================
-# Transform utilities
+# TransformLike ABC
 # ==================================================================================================
 
 
-# A more accurate name would be [transformOrTranslation], but that makes lots of lines too long.
-def toTransform(transformOrVec: Union[Transform, ivec3]):
-    """Converts [transformOrVec] to a Transform, interpreting a vector as a translation.
+class TransformLike(ABC):
+    """An abstract base class. A class is a TransformLike if it is a Transform or if a Transform can
+    be constructed with it."""
+    @classmethod
+    def __subclasshook__(cls, c):
+        if isinstance(c, Transform):
+            return True
+        try:
+            _ = Transform(c)
+        except Exception: # pylint: disable=broad-except
+            return False
+        return True
+
+
+def toTransform(transformLike: TransformLike) -> Transform:
+    """Converts <transformLike> to a Transform, interpreting a vector as a translation.
 
     Functions that take a Transform parameter are very often called with just a translation.
-    By taking a transformOrVec pararameter instead and using this converter, calling such a
+    By taking a transformLike pararameter instead and using this converter, calling such a
     function with just a translation becomes slightly easier. This does however cost a bit
-    of performance (for the isinstance call), and may appear somewhat magic-y.
+    of performance (for an isinstance call).
     """
-    return Transform(transformOrVec) if isinstance(transformOrVec, ivec3) else transformOrVec
+    return transformLike if isinstance(transformLike, Transform) else Transform(transformLike)
+
+
+# ==================================================================================================
+# Transform utilities
+# ==================================================================================================
 
 
 def rotatedBoxTransform(box: Box, rotation: int):

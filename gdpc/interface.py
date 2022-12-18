@@ -22,7 +22,7 @@ from .util import non_zero_sign, eprint
 from .lookup import TCOLORS
 from .toolbox import is_sequence
 from .vector_util import scaleToFlip3D, Rect, Box, boxBetween
-from .transform import Transform, toTransform
+from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import direct_interface as di
 from . import worldLoader
@@ -126,7 +126,7 @@ class Editor:
 
     def __init__(
         self,
-        transformOrVec: Optional[Union[Transform, ivec3]] = None,
+        transformLike: Optional[TransformLike] = None,
         buffering             = True,
         bufferLimit           = 1024,
         caching               = False,
@@ -135,7 +135,7 @@ class Editor:
         multithreadingWorkers = 8,
     ):
         """Constructs an Interface instance with the specified transform and settings"""
-        self._transform = Transform() if transformOrVec is None else toTransform(transformOrVec)
+        self._transform = Transform() if transformLike is None else toTransform(transformLike)
 
         self._buffering = buffering
         self._bufferLimit = bufferLimit
@@ -269,7 +269,7 @@ class Editor:
 
     def placeBlock(
         self,
-        transformOrVec: Union[Transform, ivec3],
+        transformLike:  TransformLike,
         block:          Block,
         replace:        Optional[Union[str, List[str]]] = None,
         doBlockUpdates: Optional[bool] = None
@@ -279,7 +279,7 @@ class Editor:
         self.transform.\n
         Returns whether the placement succeeded fully.\n
         If [block].name is a list, names are sampled randomly."""
-        return self.placeBlockGlobal(self.transform @ toTransform(transformOrVec), block, replace, doBlockUpdates)
+        return self.placeBlockGlobal(self.transform @ toTransform(transformLike), block, replace, doBlockUpdates)
 
 
     def placeBlockGlobal(
@@ -464,9 +464,9 @@ class Editor:
 
 
     @contextmanager
-    def pushTransform(self, transformOrVec: Optional[Union[Transform, ivec3]] = None):
+    def pushTransform(self, transformLike: Optional[TransformLike] = None):
         """Creates a context that reverts all changes to self.transform on exit.
-        If [transformOrVec] is not None, it is pushed to self.transform on enter.
+        If <transformOrVec> is not None, it is pushed to self.transform on enter.
 
         Can be used to create a local coordinate system on top of the current local coordinate
         system.
@@ -474,8 +474,8 @@ class Editor:
         Not to be confused with Transform.push()!"""
 
         originalTransform = deepcopy(self.transform)
-        if transformOrVec is not None:
-            self.transform @= toTransform(transformOrVec)
+        if transformLike is not None:
+            self.transform @= toTransform(transformLike)
         try:
             yield
         finally:
