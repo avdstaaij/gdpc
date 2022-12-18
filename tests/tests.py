@@ -110,7 +110,7 @@ def testSynchronisation():
         for _z in range(z - 1, z + 2):
             for i in range(0, 128):
                 bws = ws.getBlockAt(_x, i, _z)
-                bdi = direct_interface.getBlock(_x, i, _z)
+                bdi = direct_interface.getBlock(_x, i, _z).get('id')
                 if (bws != bdi and bws != 'minecraft:void_air'):
                     print("{}: ws: {}, di: {}".format((_x, i, _z), bws, bdi))
                     error = True

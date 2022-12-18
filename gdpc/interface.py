@@ -74,7 +74,7 @@ def getWorldSlice(rect: Rect):
 def runCommand(command: str):
     """Executes one or multiple Minecraft commands (separated by newlines).\n
     The leading "/" can be omitted.\n
-    Returns a string with one line for each command. If the command was successful, the return line
+    Returns a list with one string for each command. If the command was successful, the string
     is its return value. Otherwise, it is the error message."""
     if command[0] == '/':
         command = command[1:]
@@ -260,11 +260,11 @@ class Editor:
         if self.caching and positionTuple in self._cache.keys():
             return self._cache[positionTuple]
 
-        response = di.getBlock(*position)
+        blockId: str = di.getBlock(*position)[0]["id"]
         if self.caching:
-            self._cache[positionTuple] = response
+            self._cache[positionTuple] = blockId
 
-        return response
+        return blockId
 
 
     def placeBlock(
@@ -417,7 +417,7 @@ class Editor:
                 response = di.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
                 blockBuffer.clear()
 
-                for line in response.split("\n"):
+                for line in response:
                     if not line.isnumeric():
                         eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing buffered block:\n\t{TCOLORS['CLR']}{line}")
 
@@ -427,7 +427,7 @@ class Editor:
                 response = runCommand("\n".join(commandBuffer))
                 commandBuffer.clear()
 
-                for line in response.split("\n"):
+                for line in response:
                     if not line.isnumeric():
                         eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending buffered command:\n\t{TCOLORS['CLR']}{line}")
 
