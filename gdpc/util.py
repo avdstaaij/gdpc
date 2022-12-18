@@ -37,15 +37,3 @@ def normalized(a, order=2, axis=-1):
     norm = np.atleast_1d(np.linalg.norm(a, order, axis))
     norm[norm==0] = 1
     return a / np.expand_dims(norm, axis)
-
-
-# Based on https://stackoverflow.com/q/2125702
-@contextmanager
-def stdoutToStderr():
-    """ Redirects stdout to stderr within its scope """
-    old_stdout = sys.stdout
-    sys.stdout = sys.stderr
-    try:
-        yield
-    finally:
-        sys.stdout = old_stdout
