@@ -7,9 +7,10 @@ from itertools import product
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+from termcolor import colored
 
 from . import lookup
-from .lookup import SUPPORTS, TCOLORS, VERSIONS
+from .lookup import SUPPORTS, VERSIONS
 from .worldLoader import WorldSlice
 
 
@@ -43,24 +44,24 @@ def check_version():
         closestname = VERSIONS[closest]
         closestname += " snapshot" if current > closest else ""
         if closest > SUPPORTS:
-            print(
-                f"{TCOLORS['orange']}WARNING: You are using a newer "
+            print(colored(color="orange", text=\
+                f"WARNING: You are using a newer "
                 "version of Minecraft then GDPC supports!\n"
                 f"\tSupports: {VERSIONS[SUPPORTS]} "
-                f"Detected: {closestname}{TCOLORS['CLR']}"
-            )
+                f"Detected: {closestname}"
+            ))
         elif closest < SUPPORTS:
-            print(
-                f"{TCOLORS['orange']}WARNING: You are using an older "
+            print(colored(color="orange", text=\
+                f"WARNING: You are using an older "
                 "version of Minecraft then GDPC supports!\n"
                 f"\tSupports: {VERSIONS[SUPPORTS]} "
-                f"Detected: {closestname}{TCOLORS['CLR']}"
-            )
+                f"Detected: {closestname}"
+            ))
         else:
-            raise ValueError(
-                f"{TCOLORS['red']}Invalid supported version: "
-                f"SUPPORTS = {current}!{TCOLORS['CLR']}"
-            )
+            raise ValueError(colored(color="red", text=\
+                f"Invalid supported version: "
+                f"SUPPORTS = {current}!"
+            ))
     else:
         closestname = VERSIONS[current]
 

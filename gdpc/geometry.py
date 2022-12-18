@@ -5,6 +5,7 @@ from typing import Optional, Union, List, Iterable
 
 import numpy as np
 from glm import ivec3
+from termcolor import colored
 
 from . import lookup, toolbox
 from .vector_util import X, XY, XZ, Y, YZ, Z, addY, scaleToFlip3D, Rect, Box, boxBetween
@@ -105,7 +106,7 @@ def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=
     if filled and dimension == 2:
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
-        raise ValueError(f'{lookup.TCOLORS["red"]}Cannot fill 3D polygons!')
+        raise ValueError(colored(color="red", text="Cannot fill 3D polygons!"))
     placeFromList(editor, (ivec3(point) for point in polygon), block, replace)
 
 
@@ -160,7 +161,7 @@ def placeCenteredCylinder(editor: Editor, center: ivec3, height: int, radius: in
         placeCylinder(editor, center - XY*radius, center + XY*radius + Z*height,
                       block, replace, 'z', tube, hollow)
     else:
-        raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
+        raise ValueError(colored(color="red", text=f"{axis} is not a valid axis!"))
 
 
 def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, replace=None,
@@ -198,7 +199,7 @@ def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, 
         elif flatSides == ['z']:
             placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
         else:
-            raise ValueError(f'{lookup.TCOLORS["red"]}Unexpected shape!')
+            raise ValueError(colored(color="red", text="Unexpected shape!"))
 
     elif dimension == 3:
         if axis == 'x':
@@ -208,10 +209,10 @@ def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, 
         elif axis == 'z':
             placeCylinderBody(corner1.x, corner1.y, corner2.x, corner2.y, corner1.z, corner2.z)
         else:
-            raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis!')
+            raise ValueError(colored(color="red", text=f"{axis} is not a valid axis!"))
 
     else:
-        raise ValueError(f'{lookup.TCOLORS["red"]}Invalid dimension! (this should never happen)')
+        raise ValueError(colored(color="red", text="Invalid dimension! (this should never happen)"))
 
 
 def placeFromList(editor: Editor, pos_list: Iterable[ivec3], block: Block, replace=None):
@@ -236,8 +237,7 @@ def getShapeBoundaries(points):
         minx, miny, minz = points.min(axis=0)
         maxx, maxy, maxz = points.max(axis=0)
         return minx, miny, minz, maxx, maxy, maxz
-    raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
-                     'shapes are not supported!')
+    raise ValueError(colored(color="red", text=f"{dimension}D Shapes are not supported!"))
 
 
 def getDimension(x1, y1, z1, x2, y2, z2):
@@ -264,8 +264,7 @@ def padDimension(points, value=0, axis='z'):
         return [(i[0], value, i[-1]) for i in points]
     elif axis == 'z':
         return [(i[0], i[1], value) for i in points]
-    raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis '
-                     'to pad with!')
+    raise ValueError(colored(color="red", text=f"{axis} is not a valid axis to pad with!"))
 
 
 def cutDimension(points, axis='z'):
@@ -283,8 +282,7 @@ def cutDimension(points, axis='z'):
             return [(i[:-1]) for i in points]
     except IndexError:
         pass
-    raise ValueError(f'{lookup.TCOLORS["red"]}{axis} is not a valid axis '
-                     f'to cut from this set!\n{points}')
+    raise ValueError(colored(color="red", text=f"{axis} is not a valid axis to cut from this set!"))
 
 
 def translate(points, amount, axis='y'):
@@ -316,8 +314,7 @@ def fill2d(points):
         if (x, y) in points:
             return
         elif not (minx <= x <= maxx and miny <= y <= maxy):
-            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
-                             'open-sided shape!')
+            raise ValueError(colored(color="red", text="Aborted filling open-sided shape!"))
         points.append((x, y))
         filling.append((x, y))
         fill(x + 1, y)
@@ -345,8 +342,7 @@ def fill3d(points):
         elif not (minx <= x <= maxx
                   and miny <= y <= maxy
                   and minz <= z <= maxz):
-            raise ValueError(f'{lookup.TCOLORS["red"]}Aborted filling '
-                             'open-sided 3D shape!')
+            raise ValueError(colored(color="red", text="Aborted filling open-sided 3D shape!"))
         points.append((x, y, z))
         filling.append((x, y, z))
         fill(x + 1, y, z)
@@ -476,8 +472,7 @@ def lineSequence(points):
         elif dimension == 3:
             toPlace.update(line3d(*last, *point))
         else:
-            raise ValueError(f'{lookup.TCOLORS["red"]}{dimension}D '
-                             'lineSequence not supported!')
+            raise ValueError(colored(color="red", text=f"{dimension}D lineSequence not supported!"))
         last = point
     return toPlace
 

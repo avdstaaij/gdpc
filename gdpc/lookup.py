@@ -2303,55 +2303,6 @@ ASCIIPIXELS = {
 }
 
 
-# terminal colour codes
-
-
-def supports_color():
-    """Return True if the running system's terminal supports color."""
-    plat = sys.platform
-    supported_platform = plat != "Pocket PC" and (
-            plat != "win32" or "ANSICON" in os.environ
-    )
-    # isatty is not always implemented, #6223.
-    is_a_tty = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
-    return supported_platform and is_a_tty
-
-
-if supports_color():
-    TCOLORS = {
-        "black":     "\033[38;2;000;000;000m",
-        "gray":      "\033[38;2;128;128;128m",
-        "white":     "\033[38;2;255;255;255m",
-        "pink":      "\033[38;2;255;192;203m",
-        "red":       "\033[38;2;255;000;000m",
-        "orange":    "\033[38;2;255;165;000m",
-        "yellow":    "\033[38;2;255;255;000m",
-        "darkgreen": "\033[38;2;000;128;000m",
-        "green":     "\033[38;2;000;255;000m",
-        "blue":      "\033[38;2;135;206;235m",
-        "darkblue":  "\033[38;2;000;000;255m",
-        "magenta":   "\033[38;2;255;000;255m",
-        "brown":     "\033[38;2;139;069;019m",
-        "CLR":       "\033[0m",
-    }  # 38 is replaced by 48 for background
-else:
-    TCOLORS = {
-        "black":     "",
-        "gray":      "",
-        "white":     "",
-        "pink":      "",
-        "red":       "",
-        "orange":    "",
-        "yellow":    "",
-        "darkgreen": "",
-        "green":     "",
-        "blue":      "",
-        "darkblue":  "",
-        "magenta":   "",
-        "brown":     "",
-        "CLR":       "",
-    }  # colour codes not printed
-
 INVENTORYDIMENSIONS = {
     (9, 3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
     (3, 3): {"minecraft:dispenser", "minecraft:dropper", },

@@ -5,7 +5,7 @@ from typing import Optional
 from random import choice
 
 from glm import ivec3
-
+from termcolor import colored
 
 from .util import eprint
 from .vector_util import EAST, NORTH, SOUTH, WEST, boxBetween
@@ -87,10 +87,12 @@ def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing
         editor.awaitBufferFlushes()
     else:
         if block not in editor.getBlock(ivec3(x,y,z)):
-            eprint(f"{lookup.TCOLORS['orange']}Warning: Block at {x} {y} {z} "
-                  f"is not of specified type {block}!\n"
-                  f"\t{lookup.TCOLORS['CLR']}This may result in "
-                  f"incorrectly placed items.")
+            eprint(colored(color="orange", text=\
+                f"Warning: Block at {x} {y} {z} "
+                f"is not of specified type {block}!\n"
+                f"This may result in "
+                f"incorrectly placed items."
+            ))
 
     # we received a single item
     if 3 <= len(items) <= 4 and isinstance(items[0], int):

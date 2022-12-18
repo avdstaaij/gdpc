@@ -8,18 +8,17 @@ This module contains functions to:
 """
 
 
-from typing import Any, Union, Optional, List, Tuple
+from typing import Union, Optional, List, Tuple
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from collections import OrderedDict
 import random
-import time
 from concurrent import futures
 
 from glm import ivec3
+from termcolor import colored
 
 from .util import non_zero_sign, eprint
-from .lookup import TCOLORS
 from .toolbox import is_sequence
 from .vector_util import scaleToFlip3D, Rect, Box, boxBetween
 from .transform import Transform, TransformLike, toTransform
@@ -372,7 +371,7 @@ class Editor:
 
         result = di.placeBlock(*position, blockString, doBlockUpdates, customFlags=None)
         if not result.isnumeric():
-            eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing block:\n\t{TCOLORS['CLR']}{result}")
+            eprint(colored(color="orange", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
         return True
 
@@ -408,7 +407,7 @@ class Editor:
 
                 for line in response:
                     if not line.isnumeric():
-                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon placing buffered block:\n\t{TCOLORS['CLR']}{line}")
+                        eprint(colored(color="orange", text=f"Warning: Server returned error upon placing buffered block:\n\t{line}"))
 
 
             # Flush command buffer
@@ -418,7 +417,7 @@ class Editor:
 
                 for line in response:
                     if not line.isnumeric():
-                        eprint(f"{TCOLORS['orange']}Warning: Server returned error upon sending buffered command:\n\t{TCOLORS['CLR']}{line}")
+                        eprint(colored(color="orange", text=f"Warning: Server returned error upon sending buffered command:\n\t{line}"))
 
         if self._multithreading:
             # Clean up finished buffer flush futures

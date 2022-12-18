@@ -7,3 +7,4 @@ PyGLM==2.6.0
 pyglm-typing==0.2.1
 requests==2.22.0
 scipy==1.9.3
+termcolor==2.1.1

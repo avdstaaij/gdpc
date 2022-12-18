@@ -46,6 +46,7 @@ setup(
         "pyglm-typing",
         "requests",
         "scipy",
+        "termcolor"
     ],
     python_requires=">=3.7, <4",
     classifiers=[
