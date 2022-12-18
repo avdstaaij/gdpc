@@ -7,53 +7,36 @@ It is recommended to use the higher-level `interface.py` instead.
 
 
 from typing import Union, Tuple, Optional, List, Dict, Any
-import json
+from functools import partial
+import time
 
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
-from .util import eprint
+from .util import eprint, withRetries
 
 
 HOST = "http://localhost:9000"
 
 
-# TODO: deduplicate retrying logic
+# TODO: terminal colors
+def _onRequestRetry(e: Exception, retriesLeft: int):
+    eprint(
+        "HTTP request failed! Is Minecraft running? If so, try reducing your render distance.\n"
+        f"Error: {e}"
+        f"I'll retry in a bit ({retriesLeft} retries left).\n"
+    )
+    time.sleep(2)
+
 
 def _get(*args, retries: int, **kwargs):
-    retriesLeft = retries
-    while True:
-        try:
-            return requests.get(*args, **kwargs) # pylint: disable=missing-timeout
-        except RequestConnectionError as e:
-            if retriesLeft == 0:
-                raise e
-            eprint(f"HTTP request failed! Retrying {retriesLeft} more times.")
-            retriesLeft -= 1
-
+    return withRetries(partial(requests.get, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
 
 def _put(*args, retries: int, **kwargs):
-    retriesLeft = retries
-    while True:
-        try:
-            return requests.put(*args, **kwargs) # pylint: disable=missing-timeout
-        except RequestConnectionError as e:
-            if retriesLeft == 0:
-                raise e
-            eprint(f"HTTP request failed! Retrying {retriesLeft} more times.")
-            retriesLeft -= 1
-
+    return withRetries(partial(requests.put, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
 
 def _post(*args, retries: int, **kwargs):
-    retriesLeft = retries
-    while True:
-        try:
-            return requests.post(*args, **kwargs) # pylint: disable=missing-timeout
-        except RequestConnectionError as e:
-            if retriesLeft == 0:
-                raise e
-            eprint(f"HTTP request failed! Retrying {retriesLeft} more times.")
-            retriesLeft -= 1
+    return withRetries(partial(requests.post, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
 
 
 def getBlock(x: int, y: int, z: int, dx: Optional[int] = None, dy: Optional[int] = None, dz: Optional[int] = None, dimension: Optional[str] = None, includeState=False, includeData=False, retries=5, timeout=None):

@@ -53,22 +53,10 @@ def centerBuildAreaOnPlayer(size: ivec3):
     return getBuildArea()
 
 
-# TODO: move retrying to worldSlice constructor, or to general retrying function
 def getWorldSlice(rect: Rect):
     """Returns a WorldSlice of the region specified by [rect]."""
     assert isinstance(rect, Rect) # To protect from calling this with a Box
-    attempts = 0
-    while True:
-        try:
-            attempts += 1
-            return worldLoader.WorldSlice(rect.begin[0], rect.begin[1], rect.end[0], rect.end[1])
-        except Exception as e: # pylint: disable=broad-except
-            if attempts < 10:
-                eprint("Could not get the world slice. Try reducing your render distance. I'll retry in a bit.")
-                time.sleep(2)
-            else:
-                eprint("OK, that's enough retries. You deal with the exception.")
-                raise
+    return worldLoader.WorldSlice(rect.begin[0], rect.begin[1], rect.end[0], rect.end[1])
 
 
 def runCommand(command: str):

@@ -1,8 +1,8 @@
 """Generic utilities"""
 
 
-from typing import TypeVar
-from contextlib import contextmanager
+from typing import TypeVar, Callable
+import time
 import sys
 import numpy as np
 
@@ -37,3 +37,24 @@ def normalized(a, order=2, axis=-1):
     norm = np.atleast_1d(np.linalg.norm(a, order, axis))
     norm[norm==0] = 1
     return a / np.expand_dims(norm, axis)
+
+
+def withRetries(
+    function: Callable[[], T],
+    retries:  int                              = 1,
+    onRetry:  Callable[[Exception, int], None] = lambda *_: time.sleep(1)
+):
+    """Retries <function> up to <retries> times if an exception occurs.\n
+    Before retrying, calls <onRetry>(last exception, remaining retries).
+    The default callback sleeps for one second.\n
+    If the retries have ran out, re-raises the last exception."""
+    retriesLeft = retries
+    while True:
+        try:
+            return function()
+        # TODO: is it possible to take the type of the exception to catch here as a parameter?
+        except Exception as e: # pylint: disable=broad-except
+            if retriesLeft == 0:
+                raise e
+            onRetry(e, retriesLeft)
+            retriesLeft -= 1
