@@ -9,18 +9,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from termcolor import colored
 
+from .util import isSequence
 from . import lookup
 from .lookup import SUPPORTS, VERSIONS
 from .worldLoader import WorldSlice
-
-
-def is_sequence(sequence):
-    """Determine whether sequence is a sequence."""
-    try:
-        _ = sequence[0:-1]
-        return True
-    except TypeError:
-        return False
 
 
 def closest_version(version):
@@ -343,7 +335,7 @@ def visualizeHeightmap(*arrays, title=None, autonormalize=True):
 
 def invertDirection(direction):
     """Return the inverted direction of direcion."""
-    if is_sequence(direction):
+    if isSequence(direction):
         return [lookup.INVERTDIRECTION[n] for n in direction]
     return lookup.INVERTDIRECTION[direction]
 

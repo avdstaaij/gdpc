@@ -18,8 +18,7 @@ from concurrent import futures
 from glm import ivec3
 from termcolor import colored
 
-from .util import non_zero_sign, eprint
-from .toolbox import is_sequence
+from .util import non_zero_sign, eprint, isSequence
 from .vector_util import scaleToFlip3D, Rect, Box, boxBetween
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
@@ -342,7 +341,7 @@ class Editor:
         if isinstance(replace, str):
             if self.getBlockGlobal(position) != replace:
                 return True
-        elif is_sequence(replace) and self.getBlockGlobal(position) not in replace:
+        elif isSequence(replace) and self.getBlockGlobal(position) not in replace:
             return True
         elif (self.caching and blockString in self.getBlockGlobal(position)):
             return True

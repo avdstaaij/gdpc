@@ -58,3 +58,12 @@ def withRetries(
                 raise e
             onRetry(e, retriesLeft)
             retriesLeft -= 1
+
+
+def isSequence(sequence):
+    """Determine whether sequence is a sequence."""
+    try:
+        _ = sequence[0:-1]
+        return True
+    except TypeError:
+        return False
