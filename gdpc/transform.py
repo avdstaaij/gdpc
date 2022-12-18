@@ -6,6 +6,7 @@ from abc import ABC
 from dataclasses import dataclass, field
 
 from glm import ivec3, bvec3
+import glm
 
 from .vector_util import rotateXZ, rotateXZScale, scaleToFlip3D, Box
 
@@ -31,6 +32,16 @@ class Transform:
     translation: ivec3 = field(default_factory=ivec3)
     rotation:    int   = 0
     scale:       ivec3 = field(default_factory=lambda: ivec3(1,1,1))
+
+    @property
+    def flip(self):
+        """Get or set the flip property (derived from self.scale).\n
+        Note that setting actually *sets* the flip property: it does not toggle."""
+        return scaleToFlip3D(self.scale)
+
+    @flip.setter
+    def flip(self, value: bvec3):
+        self.scale = glm.abs(self.scale) * (1 - 2 * ivec3(value))
 
     def apply(self, vec: ivec3):
         """Applies this transform to [vec].\n
