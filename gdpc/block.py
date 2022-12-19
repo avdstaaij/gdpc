@@ -1,10 +1,14 @@
 """Provides the Block class"""
 
 
-from typing import Any, Union, Optional, List
+from typing import Any, Union, Optional, List, Sequence
 from dataclasses import dataclass
+from copy import copy
+import random
+
 from glm import bvec3
 
+from .util import isSequence
 from .block_state_util import transformAxisString, transformFacingString
 
 
@@ -30,12 +34,19 @@ class Block:
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
     # - rotation=[0,16]     (e.g. signs)  (should probably be named "granularRotation" here to avoid confusion)
 
-    name:       Union[str, List[str]] = "minecraft:stone"
-    axis:       Optional[str]         = None
-    facing:     Optional[str]         = None
-    otherState: Optional[str]         = None
-    nbt:        Optional[str]         = None
-    needsLatePlacement: bool          = False # Whether the block needs to be placed after its neighbors
+    id:         Union[str, Sequence[str]] = "minecraft:stone"
+    axis:       Optional[str] = None
+    facing:     Optional[str] = None
+    otherState: Optional[str] = None
+    nbt:        Optional[str] = None
+    needsLatePlacement: bool  = False # Whether the block needs to be placed after its neighbors
+
+
+    def chooseId(self):
+        result = copy(self)
+        if isSequence(self.id):
+            self.id = random.choice(self.id)
+        return result
 
 
     def transform(self, rotation: int = 0, flip: bvec3 = bvec3()):
@@ -49,7 +60,7 @@ class Block:
         """Returns a transformed copy of this block.\n
         Flips first, rotates second."""
         return Block(
-            name       = self.name,
+            id         = self.id,
             axis       = None if self.axis   is None else transformAxisString  (self.axis,   rotation),
             facing     = None if self.facing is None else transformFacingString(self.facing, rotation, flip),
             otherState = self.otherState,
@@ -73,9 +84,9 @@ class Block:
 
     def __str__(self):
         data_string = self.blockStateString() + (self.nbt if self.nbt else "")
-        if isinstance(self.name, str):
-            return "" if self.name == "" else self.name + data_string
-        return ",".join([(name if name == "" else name + data_string) for name in self.name])
+        if isinstance(self.id, str):
+            return "" if self.id == "" else self.id + data_string
+        return ",".join([(name if name == "" else name + data_string) for name in self.id])
 
 
     def __repr__(self):
@@ -85,7 +96,7 @@ class Block:
         def optFieldStr(name: str, value: Any):
             return ("" if value is None else f",{name}={repr(value)}")
         return (
-            f'Block("{self.name}"'
+            f'Block("{self.id}"'
             + optFieldStr("axis",       self.axis)
             + optFieldStr("facing",     self.facing)
             + optFieldStr("otherState", self.otherState)

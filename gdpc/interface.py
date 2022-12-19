@@ -19,7 +19,7 @@ from glm import ivec3
 from termcolor import colored
 
 from .util import non_zero_sign, eprint, isSequence
-from .vector_util import scaleToFlip3D, Rect, Box, boxBetween
+from .vector_util import Rect, Box, boxBetween
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import direct_interface as di
@@ -256,127 +256,87 @@ class Editor:
 
     def placeBlock(
         self,
-        transformLike:  TransformLike,
+        position:       ivec3,
         block:          Block,
         replace:        Optional[Union[str, List[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
-        """Places [block] at [transformOrVec].\n
-        [transformOrVec] is interpreted as local to the coordinate system defined by
-        self.transform.\n
-        Returns whether the placement succeeded fully.\n
-        If [block].name is a list, names are sampled randomly."""
-        return self.placeBlockGlobal(self.transform @ toTransform(transformLike), block, replace, doBlockUpdates)
+        """Places <block> at <position>.\n
+        <position> is interpreted as local to the coordinate system defined by self.transform.\n
+        If <block>.name is a list, names are sampled randomly.\n
+        Returns whether the placement succeeded fully."""
+        transformedBlock = block.transformed(self.transform.rotation, self.transform.flip)
+        totalSuccess = True
+        for x in range(position.x, position.x + self.transform.scale.x, non_zero_sign(self.transform.scale.x)):
+            for y in range(position.y, position.y + self.transform.scale.y, non_zero_sign(self.transform.scale.y)):
+                for z in range(position.z, position.z + self.transform.scale.z, non_zero_sign(self.transform.scale.z)):
+                    success = self.placeBlockGlobal(
+                        self.transform * ivec3(x,y,z),
+                        transformedBlock,
+                        replace,
+                        doBlockUpdates
+                    )
+                    if not success:
+                        totalSuccess = False
+        return totalSuccess
 
 
     def placeBlockGlobal(
         self,
-        transform:      Transform,
+        position:       ivec3,
         block:          Block,
         replace:        Optional[Union[str, List[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
-        """Places [block] at [transform], ignoring self.transform.\n
-        If [block].name is a list, names are sampled randomly.\n
-        Returns whether the placement succeeded fully.\n
-        This is an internal function that is made available for advanced usage."""
-        return self.placeStringGlobal(
-            transform.translation,
-            transform.scale,
-            block.name,
-            block.blockStateString(transform.rotation, scaleToFlip3D(transform.scale)),
-            block.nbt,
-            replace,
-            doBlockUpdates,
-        )
+        """Places <block> at <position>, ignoring self.transform.\n
+        If <block>.name is a list, names are sampled randomly.\n
+        Returns whether the placement succeeded fully."""
 
-
-    def placeStringGlobal(
-        self,
-        position:       ivec3,
-        scale:          ivec3,
-        blockString:    Union[str, List[str]],
-        blockState:     str = "",
-        nbt:            Optional[str] = None,
-        replace:        Optional[Union[str, List[str]]] = None,
-        doBlockUpdates: Optional[bool] = None
-    ):
-        """Places blocks defined by [blockString], [blockState] and [nbt] in the box ([position],
-        [scale]), ignoring self.transform.\n
-        Note that any flips caused by [scale] must already be applied to [blockState].\n
-        If [block].name is a list, names are sampled randomly.\n
-        Returns whether the placement succeeded fully.\n
-        This is an internal function that is made available for advanced usage. It can be used
-        to avoid unnecessary repeated transform compositions and Block.stateString() calls when
-        a geometrical region of blocks is placed."""
-
-        totalSuccess = True
-
-        for x in range(position.x, position.x + scale.x, non_zero_sign(scale.x)):
-            for y in range(position.y, position.y + scale.y, non_zero_sign(scale.y)):
-                for z in range(position.z, position.z + scale.z, non_zero_sign(scale.z)):
-                    # Select block from palette
-                    if isinstance(blockString, str):
-                        chosen_block_string = blockString
-                    else:
-                        chosen_block_string = random.choice(blockString)
-                    # Place the block
-                    success = self._placeSingleStringGlobal(ivec3(x,y,z), chosen_block_string + blockState, nbt, replace, doBlockUpdates)
-                    if not success:
-                        totalSuccess = False
-
-        return totalSuccess
-
-
-    # TODO: rethink block placing functions. Do we really need this many?
-    # TODO: merged with gdpc code; refactor more?
-    def _placeSingleStringGlobal(
-        self,
-        position:       ivec3,
-        blockString:    str,
-        nbt:            Optional[str],
-        replace:        Optional[Union[str, List[str]]],
-        doBlockUpdates: Optional[bool]
-    ):
+        # Check replace condition
         if isinstance(replace, str):
             if self.getBlockGlobal(position) != replace:
                 return True
         elif isSequence(replace) and self.getBlockGlobal(position) not in replace:
             return True
-        elif (self.caching and blockString in self.getBlockGlobal(position)):
+
+        # Select block from palette
+        block = block.chooseId()
+
+        if (self.caching and block.id in self.getBlockGlobal(position)): # TODO: this is very error-prone! "stone" is in "stone_stairs". Also, we may want to change only block state or nbt data.
             return True
 
+        blockStr = block.id + block.blockStateString()
+
         if self._buffering:
-            success = self._placeSingleStringGlobalBuffered(position, blockString, doBlockUpdates)
+            success = self._placeBlockStringGlobalBuffered(position, blockStr, doBlockUpdates)
         else:
-            success = self._placeSingleStringGlobalDirect(position, blockString, doBlockUpdates)
+            success = self._placeBlockStringGlobalDirect(position, blockStr, doBlockUpdates)
 
         if not success:
             return False
 
-        self._cache[tuple(position)] = blockString
+        if self.caching:
+            self._cache[tuple(position)] = block.id
 
-        if nbt is not None:
-            self.runCommand(blockNBTCommand(position, nbt))
+        if block.nbt is not None:
+            self.runCommand(blockNBTCommand(position, block.nbt))
 
         return True
 
 
-    # TODO: old gdpc code, refactor more?
-    def _placeSingleStringGlobalDirect(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
+    def _placeBlockStringGlobalDirect(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
-        result = di.placeBlock(*position, blockString, doBlockUpdates, customFlags=None)
+        result = di.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates, customFlags=None)
         if not result.isnumeric():
             eprint(colored(color="orange", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
         return True
 
 
-    # TODO: old gdpc code, refactor more?
-    def _placeSingleStringGlobalBuffered(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
+    def _placeBlockStringGlobalBuffered(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates

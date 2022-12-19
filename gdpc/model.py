@@ -89,7 +89,7 @@ class Model:
                 block = self.block(vec)
                 if block is not None:
                     blockToPlace = copy(block)
-                    blockToPlace.name = substitutions.get(block.name, block.name)
+                    blockToPlace.id = substitutions.get(block.id, block.id)
                     if blockToPlace.needsLatePlacement and replace is None:
                         lateBlocks.append(LateBlockInfo(blockToPlace, vec))
                     else:

@@ -113,15 +113,11 @@ def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=
 def placeVolume(editor: Editor, first: ivec3, last: ivec3, block: Block, replace=None):
     """Fill volume with blocks."""
 
-    globalFirst = editor.transform * first
-    globalLast  = editor.transform * last
-    blockState  = block.blockStateString(editor.transform.rotation, scaleToFlip3D(editor.transform.scale))
-
     oldIsBuffering = editor.buffering
     editor.buffering = True
 
-    for x,y,z in toolbox.loop3d(*globalFirst, *globalLast):
-         editor.placeStringGlobal(ivec3(x,y,z), editor.transform.scale, block.name, blockState, block.nbt, replace)
+    for x,y,z in toolbox.loop3d(*first, *last):
+         editor.placeBlock(ivec3(x,y,z), block, replace)
 
     editor.buffering = oldIsBuffering
 
@@ -217,9 +213,8 @@ def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, 
 
 def placeFromList(editor: Editor, pos_list: Iterable[ivec3], block: Block, replace=None):
     """Replace all blocks at coordinates in list with blocks."""
-    blockState = block.blockStateString(editor.transform.rotation, scaleToFlip3D(editor.transform.scale))
     for pos in pos_list:
-        editor.placeStringGlobal(editor.transform * pos, editor.transform.scale, block.name, blockState, block.nbt, replace)
+        editor.placeBlock(pos, block, replace)
 
 
 # ========================================================= calculations
