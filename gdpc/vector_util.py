@@ -34,28 +34,48 @@ YZ    = ivec3( 0, 1, 1)
 XYZ   = ivec3( 1, 1, 1)
 
 
-def dropY(vec: ivec3) -> ivec2:
+@overload
+def dropY(vec: vec3) -> vec2: ...
+@overload
+def dropY(vec: ivec3) -> ivec2: ...
+@overload
+def dropY(vec: bvec3) -> bvec2: ...
+
+def dropY(vec):
     """Returns [vec] without its y-component"""
     return vec.xz
 
 
-def addY(vec: ivec2, y: int = 0):
+@overload
+def addY(vec: vec2, y: float) -> vec3: ...
+@overload
+def addY(vec: ivec2, y: int) -> ivec3: ...
+@overload
+def addY(vec: bvec2, y: bool) -> bvec3: ...
+
+def addY(vec, y=0):
     """Returns [vec] with an added y-component of [y]"""
     return ivec3(vec.x, y, vec.y)
 
 
-def setY(vec: ivec3, y: int = 0):
+@overload
+def setY(vec: vec3, y: float) -> vec3: ...
+@overload
+def setY(vec: ivec3, y: int) -> ivec3: ...
+@overload
+def setY(vec: bvec3, y: bool) -> bvec3: ...
+
+def setY(vec, y=0):
     """Returns [vec] with its y-component set to [y]"""
     return ivec3(vec.x, y, vec.z)
 
 
 @overload
-def perpendicular(vec: vec2) -> vec2:
-    ...
+def perpendicular(vec: vec2) -> vec2: ...
 @overload
-def perpendicular(vec: ivec2) -> ivec2:
-    ...
-def perpendicular(vec: Union[vec2, ivec2]):
+def perpendicular(vec: ivec2) -> ivec2: ...
+
+def perpendicular(vec):
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
     if isinstance(vec,  vec2): return  vec2(vec.y, -vec.x)
