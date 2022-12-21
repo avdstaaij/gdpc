@@ -1,7 +1,7 @@
 """Generic utilities"""
 
 
-from typing import TypeVar, Callable
+from typing import TypeVar, Callable, Iterable
 import time
 import sys
 import numpy as np
@@ -28,6 +28,17 @@ def clamp(x: T, minimum: T, maximum: T) -> T:
 def eprint(*args, **kwargs):
     """print(), but to stderr"""
     print(*args, file=sys.stderr, **kwargs)
+
+
+def eagerAll(iterable: Iterable):
+    """Like all(), but always evaluates every element"""
+    results = [result for result in iterable]
+    return all(results)
+
+def eagerAny(iterable: Iterable):
+    """Like any(), but always evaluates every element"""
+    results = [result for result in iterable]
+    return any(results)
 
 
 # Based on https://stackoverflow.com/a/21032099
@@ -60,10 +71,19 @@ def withRetries(
             retriesLeft -= 1
 
 
-def isSequence(sequence):
-    """Determine whether sequence is a sequence."""
+def isIterable(value):
+    """Determine whether <value> is iterable."""
     try:
-        _ = sequence[0:-1]
+        _ = iter(value)
+        return True
+    except TypeError:
+        return False
+
+
+def isSequence(value):
+    """Determine whether <value> is a sequence."""
+    try:
+        _ = value[0:-1]
         return True
     except TypeError:
         return False

@@ -89,12 +89,12 @@ def placeLine(editor: Editor, first: ivec3, last: ivec3, block: Block, replace=N
     elif dimension == 1:
          placeVolume(first, last, *settings)
     else: # dimension == 2 or dimension == 3
-        placeFromList(line3d(*first, *last), *settings)
+        editor.placeBlock(line3d(*first, *last), *settings)
 
 
 def placeJointedLine(editor: Editor, points: Iterable[ivec3], block: Block, replace=None):
     """Place a line that runs from point to point."""
-    placeFromList(editor, (ivec3(point) for point in lineSequence(points)), block, replace)
+    editor.placeBlock((ivec3(point) for point in lineSequence(points)), block, replace)
 
 
 def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=None, filled=False):
@@ -107,19 +107,12 @@ def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=
         polygon.update(fill2d(polygon))
     elif filled and dimension == 3:
         raise ValueError(colored(color="red", text="Cannot fill 3D polygons!"))
-    placeFromList(editor, (ivec3(point) for point in polygon), block, replace)
+    editor.placeBlock((ivec3(point) for point in polygon), block, replace)
 
 
 def placeVolume(editor: Editor, first: ivec3, last: ivec3, block: Block, replace=None):
     """Fill volume with blocks."""
-
-    oldIsBuffering = editor.buffering
-    editor.buffering = True
-
-    for x,y,z in toolbox.loop3d(*first, *last):
-         editor.placeBlock(ivec3(x,y,z), block, replace)
-
-    editor.buffering = oldIsBuffering
+    editor.placeBlock((ivec3(x,y,z) for x,y,z in toolbox.loop3d(*first, *last)), block, replace)
 
 
 # TODO: Add a "wireframe" option, perhaps with another boolean next to [hollow].
@@ -176,10 +169,10 @@ def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, 
         elif not hollow:
             tubePoints = basePoints
 
-        placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in basePoints], *settings)
+        editor.placeBlock([ivec3(x,y,z) for (x,y,z) in basePoints], *settings)
         if h0 != hn:
-            placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in translate(basePoints, hn - h0, axis)],  *settings)
-            placeFromList(editor, [ivec3(x,y,z) for (x,y,z) in repeat(tubePoints, hn - h0 - 2, axis)], *settings)
+            editor.placeBlock([ivec3(x,y,z) for (x,y,z) in translate(basePoints, hn - h0, axis)],  *settings)
+            editor.placeBlock([ivec3(x,y,z) for (x,y,z) in repeat(tubePoints, hn - h0 - 2, axis)], *settings)
 
     if dimension == 0:
         editor.placeBlock(*corner1, block, replace)
@@ -211,12 +204,6 @@ def placeCylinder(editor: Editor, corner1: ivec3, corner2: ivec3, block: Block, 
         raise ValueError(colored(color="red", text="Invalid dimension! (this should never happen)"))
 
 
-def placeFromList(editor: Editor, pos_list: Iterable[ivec3], block: Block, replace=None):
-    """Replace all blocks at coordinates in list with blocks."""
-    for pos in pos_list:
-        editor.placeBlock(pos, block, replace)
-
-
 # ========================================================= calculations
 
 
@@ -228,7 +215,7 @@ def getShapeBoundaries(points):
         minx, miny = points.min(axis=0)
         maxx, maxy = points.max(axis=0)
         return minx, miny, maxx, maxy
-    elif dimension == 3:
+    if dimension == 3:
         minx, miny, minz = points.min(axis=0)
         maxx, maxy, maxz = points.max(axis=0)
         return minx, miny, minz, maxx, maxy, maxz

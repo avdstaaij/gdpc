@@ -8,17 +8,16 @@ This module contains functions to:
 """
 
 
-from typing import Union, Optional, List, Tuple
+from typing import Union, Optional, List, Tuple, Iterable
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from collections import OrderedDict
-import random
 from concurrent import futures
 
 from glm import ivec3
 from termcolor import colored
 
-from .util import non_zero_sign, eprint, isSequence
+from .util import eprint, eagerAll, isIterable
 from .vector_util import Rect, Box, boxBetween
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
@@ -256,17 +255,22 @@ class Editor:
 
     def placeBlock(
         self,
-        position:       ivec3,
+        position:       Union[ivec3, Iterable[ivec3]],
         block:          Block,
         replace:        Optional[Union[str, List[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
         """Places <block> at <position>.\n
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
+        If <position> is iterable (e.g. a list), <block> is placed at all positions.
+        This is slightly more efficient than calling this method in a loop.\n
         If <block>.name is a list, names are sampled randomly.\n
         Returns whether the placement succeeded fully."""
+        if isinstance(position, ivec3):
+            position = [position]
+
         return self.placeBlockGlobal(
-            self.transform * position,
+            (self.transform * pos for pos in position),
             block.transformed(self.transform.rotation, self.transform.flip),
             replace,
             doBlockUpdates
@@ -275,9 +279,39 @@ class Editor:
 
     def placeBlockGlobal(
         self,
+        position:       Union[ivec3, Iterable[ivec3]],
+        block:          Block,
+        replace:        Optional[Union[str, Iterable[str]]] = None,
+        doBlockUpdates: Optional[bool] = None
+    ):
+        """Places <block> at <position>, ignoring self.transform.\n
+        If <position> is iterable (e.g. a list), <block> is placed at all positions.
+        In this case, buffering is temporarily enabled for better performance.\n
+        If <block>.name is a list, names are sampled randomly.\n
+        Returns whether the placement succeeded fully."""
+
+        if isinstance(position, ivec3):
+            position = [position]
+        else:
+            position = list(position)
+
+        if len(position) == 1:
+            return self._placeSingleBlockGlobal(position[0], block, replace, doBlockUpdates)
+
+        oldBuffering = self.buffering
+        self.buffering = True
+        success = eagerAll(
+            self._placeSingleBlockGlobal(pos, block, replace, doBlockUpdates) for pos in position
+        )
+        self.buffering = oldBuffering
+        return success
+
+
+    def _placeSingleBlockGlobal(
+        self,
         position:       ivec3,
         block:          Block,
-        replace:        Optional[Union[str, List[str]]] = None,
+        replace:        Optional[Union[str, Iterable[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
@@ -288,7 +322,7 @@ class Editor:
         if isinstance(replace, str):
             if self.getBlockGlobal(position) != replace:
                 return True
-        elif isSequence(replace) and self.getBlockGlobal(position) not in replace:
+        elif isIterable(replace) and self.getBlockGlobal(position) not in replace:
             return True
 
         # Select block from palette
@@ -300,9 +334,9 @@ class Editor:
         blockStr = block.id + block.blockStateString()
 
         if self._buffering:
-            success = self._placeBlockStringGlobalBuffered(position, blockStr, doBlockUpdates)
+            success = self._placeSingleBlockStringGlobalBuffered(position, blockStr, doBlockUpdates)
         else:
-            success = self._placeBlockStringGlobalDirect(position, blockStr, doBlockUpdates)
+            success = self._placeSingleBlockStringGlobalDirect(position, blockStr, doBlockUpdates)
 
         if not success:
             return False
@@ -316,7 +350,7 @@ class Editor:
         return True
 
 
-    def _placeBlockStringGlobalDirect(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
+    def _placeSingleBlockStringGlobalDirect(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
@@ -328,7 +362,7 @@ class Editor:
         return True
 
 
-    def _placeBlockStringGlobalBuffered(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
+    def _placeSingleBlockStringGlobalBuffered(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
