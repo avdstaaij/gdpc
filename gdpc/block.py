@@ -8,7 +8,6 @@ import random
 
 from glm import bvec3
 
-from .util import isSequence
 from .block_state_util import transformAxisString, transformFacingString
 
 
@@ -44,7 +43,7 @@ class Block:
 
     def chooseId(self):
         result = copy(self)
-        if isSequence(self.id):
+        if not isinstance(self.id, str):
             self.id = random.choice(self.id)
         return result
 
