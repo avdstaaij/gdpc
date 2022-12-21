@@ -1,14 +1,12 @@
 """Provides the Transform class and related functions"""
 
 
-from typing import Union
 from abc import ABC
 from dataclasses import dataclass, field
 
 from glm import ivec3, bvec3
-import glm
 
-from .vector_util import rotateXZ, rotateXZScale, scaleToFlip3D, Box
+from .vector_util import rotateXZ, flipRotationXZ, flipToScale3D, rotateSizeXZ, Box
 
 
 # ==================================================================================================
@@ -20,99 +18,84 @@ from .vector_util import rotateXZ, rotateXZScale, scaleToFlip3D, Box
 class Transform:
     """Represents a transformation of space.
 
-    When applied to a vector, [scaling] is applied first, [rotation] second, and [translation]
-    third. Negative scales can be used to flip.
+    When applied to a vector, [flip] is applied first, [rotation] second, and [translation] third.
 
     Note that only 90-degree rotations in the XZ-plane are supported. Hence, [rotation] should
     be 0, 1, 2 or 3.
-
-    Also note that only integer scaling is supported. This may cause some unexpected effects,
-    such as t1.compose(t2.inverted()) not always being equivalent to t1.composeInv(t2)."""
+    """
 
     translation: ivec3 = field(default_factory=ivec3)
     rotation:    int   = 0
-    scale:       ivec3 = field(default_factory=lambda: ivec3(1,1,1))
-
-    @property
-    def flip(self):
-        """Get or set the flip property (derived from self.scale).\n
-        Note that setting actually *sets* the flip property: it does not toggle."""
-        return scaleToFlip3D(self.scale)
-
-    @flip.setter
-    def flip(self, value: bvec3):
-        self.scale = glm.abs(self.scale) * (1 - 2 * ivec3(value))
+    flip:        bvec3 = field(default_factory=bvec3)
 
     def apply(self, vec: ivec3):
         """Applies this transform to [vec].\n
         Equivalent to [self] * [vec]. """
-        return rotateXZ(vec * self.scale, self.rotation) + self.translation
+        return rotateXZ(vec * flipToScale3D(self.flip), self.rotation) + self.translation
 
     def invApply(self, vec: ivec3):
         """Applies the inverse of this transform to [vec].\n
-        Faster version of ~[self] * [vec] that is safer when using non-unit scalings."""
-        return rotateXZ(vec - self.translation, (-self.rotation + 4) % 4) / self.scale
+        Faster version of ~[self] * [vec]."""
+        return rotateXZ(vec - self.translation, (-self.rotation + 4) % 4) * flipToScale3D(self.flip)
 
     def compose(self, other: 'Transform'):
         """Returns a transform that applies [self] after [other].\n
         Equivalent to [self] @ [other]. """
         return Transform(
             translation = self.apply(other.translation),
-            rotation    = (self.rotation + other.rotation) % 4,
-            scale       = rotateXZScale(self.scale * other.scale, other.rotation)
+            rotation    = (self.rotation + flipRotationXZ(other.rotation, self.flip)) % 4,
+            flip        = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
         )
 
     def invCompose(self, other: 'Transform'):
         """Returns a transform that applies [self]^-1 after [other].\n
-        Faster version of ~[self] @ [other] that is safer when using non-unit scalings."""
+        Faster version of ~[self] @ [other]."""
         return Transform(
             translation = self.invApply(other.translation),
-            rotation    = (other.rotation - self.rotation + 4) % 4,
-            scale       = rotateXZScale(other.scale / self.scale, other.rotation)
+            rotation    = flipRotationXZ((other.rotation - self.rotation + 4) % 4, self.flip),
+            flip        = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
         )
 
     def composeInv(self, other: 'Transform'):
         """Returns a transform that applies [self] after [other]^-1.\n
-        Faster version of [self] @ ~[other] that is safer when using non-unit scalings."""
-        scale    = rotateXZScale(self.scale / other.scale, other.rotation)
-        rotation = (self.rotation - other.rotation + 4) % 4
+        Faster version of [self] @ ~[other]."""
+        flip = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+        rotation = (self.rotation - flipRotationXZ(other.rotation, flip) + 4) % 4
         return Transform(
-            translation = self.translation - rotateXZ(other.translation * scale, rotation),
+            translation = self.translation - rotateXZ(other.translation * flipToScale3D(flip), rotation),
             rotation    = rotation,
-            scale       = scale
+            flip        = flip
         )
 
     def push(self, other: 'Transform'):
         """Adds the effect of [other] to this transform.\n
         Equivalent to [self] @= [other]."""
-        self.translation += rotateXZ(other.translation * self.scale, self.rotation)
-        self.rotation     = (self.rotation + other.rotation) % 4
-        self.scale        = rotateXZScale(self.scale * other.scale, other.rotation)
+        self.translation += rotateXZ(other.translation * flipToScale3D(self.flip), self.rotation)
+        self.rotation     = (self.rotation + flipRotationXZ(other.rotation, self.flip)) % 4
+        self.flip         = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
 
     def pop(self, other: 'Transform'):
         """The inverse of push. Removes the effect of [other] from this transform.\n
-        Faster version of [self] @= ~[other] that is safer when using non-unit scalings."""
-        self.scale        = rotateXZScale(self.scale, other.rotation) / other.scale
-        self.rotation     = (self.rotation - other.rotation + 4) % 4
-        self.translation -= rotateXZ(other.translation * self.scale, self.rotation)
+        Faster version of [self] @= ~[other]."""
+        self.flip         = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+        self.rotation     = (self.rotation - flipRotationXZ(other.rotation, self.flip) + 4) % 4
+        self.translation -= rotateXZ(other.translation * flipToScale3D(self.flip), self.rotation)
 
     def inverted(self):
-        """Equivalent to ~[self].\n
-        Note that non-unit scalings cannot be inverted: any fractional part is dropped."""
-        scale    = rotateXZScale(1 / self.scale, self.rotation)
-        rotation = (-self.rotation + 4) % 4
+        """Equivalent to ~[self]."""
+        flip = self.flip # Flip stays unchanged
+        rotation = flipRotationXZ((-self.rotation + 4) % 4, flip)
         return Transform(
-            translation = rotateXZ(self.translation, rotation) * scale,
+            translation = - rotateXZ(self.translation * flipToScale3D(self.flip), self.rotation),
             rotation    = rotation,
-            scale       = scale
+            flip        = flip
         )
 
     def invert(self):
-        """Faster equivalent of [self] = ~[self].\n
-        Note that non-unit scalings cannot be inverted: any fractional part is dropped."""
-        self.scale       = rotateXZScale(1 / self.scale, self.rotation)
-        self.rotation    = (-self.rotation + 4) % 4
-        self.translation = rotateXZ(self.translation, self.rotation) * self.scale
+        """Faster version of [self] = ~[self]."""
+        # Flip stays unchanged
+        self.rotation    = flipRotationXZ((-self.rotation + 4) % 4, self.flip)
+        self.translation = - rotateXZ(self.translation * flipToScale3D(self.flip), self.rotation)
 
     def __matmul__(self, other: 'Transform') -> 'Transform':
         return self.compose(other)
@@ -179,21 +162,12 @@ def rotatedBoxTransform(box: Box, rotation: int):
 def rotatedBoxTransformAndSize(box: Box, rotation: int):
     """Returns (transform, size) such that [transform] maps the box ((0,0,0), [size]) to [box],
     under [rotation]."""
-    return rotatedBoxTransform(box, rotation), rotateXZScale(box.size, rotation)
-
-
-def scaledBoxTransform(box: Box, scale: ivec3):
-    """Returns a transform that maps the box ((0,0,0), [box].size) to [box] under [scale]."""
-    return Transform(
-        translation = box.offset + (box.size - 1) * ivec3(scaleToFlip3D(scale)),
-        scale = scale
-    )
+    return rotatedBoxTransform(box, rotation), rotateSizeXZ(box.size, rotation)
 
 
 def flippedBoxTransform(box: Box, flip: bvec3):
     """Returns a transform that maps the box ((0,0,0), [box].size) to [box] under [flip]."""
-    iflip = ivec3(flip)
     return Transform(
-        translation = box.offset + (box.size - 1) * iflip,
-        scale = 1 - iflip * 2
+        translation = box.offset + (box.size - 1) * ivec3(flip),
+        flip = flip
     )

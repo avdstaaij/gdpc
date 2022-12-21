@@ -265,20 +265,12 @@ class Editor:
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
         If <block>.name is a list, names are sampled randomly.\n
         Returns whether the placement succeeded fully."""
-        transformedBlock = block.transformed(self.transform.rotation, self.transform.flip)
-        totalSuccess = True
-        for x in range(position.x, position.x + self.transform.scale.x, non_zero_sign(self.transform.scale.x)):
-            for y in range(position.y, position.y + self.transform.scale.y, non_zero_sign(self.transform.scale.y)):
-                for z in range(position.z, position.z + self.transform.scale.z, non_zero_sign(self.transform.scale.z)):
-                    success = self.placeBlockGlobal(
-                        self.transform * ivec3(x,y,z),
-                        transformedBlock,
-                        replace,
-                        doBlockUpdates
-                    )
-                    if not success:
-                        totalSuccess = False
-        return totalSuccess
+        return self.placeBlockGlobal(
+            self.transform * position,
+            block.transformed(self.transform.rotation, self.transform.flip),
+            replace,
+            doBlockUpdates
+        )
 
 
     def placeBlockGlobal(

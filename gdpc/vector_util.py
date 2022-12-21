@@ -97,20 +97,35 @@ def rotateXZ(vec: ivec3, rotation: int):
     return addY(rotate(dropY(vec), rotation), vec.y)
 
 
-def rotateScale(scale: ivec2, rotation: int):
-    """Returns scale such that applying scale after [rotation] is equivalent to applying [rotation]
-    after [scale].\n
-    Concrete example: returns the effective size of a rectangle of size [scale] that has been
-    rotated by [rotation]. """
-    return ivec2(scale.y, scale.x) if rotation in [1, 3] else scale
+def flipRotation(rotation: int, flip: bvec2):
+    """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
+    after <rotation>."""
+    scale = flipToScale2D(flip)
+    return (rotation * scale.x * scale.y + 4) % 4
+
+def flipRotationXZ(rotation: int, flip: bvec3):
+    """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
+    after <rotation>"""
+    return flipRotation(rotation, dropY(flip))
 
 
-def rotateXZScale(scale: ivec3, rotation: int):
-    """Returns scale such that applying scale after [rotation] is equivalent to applying [rotation]
-    after [scale].\n
-    Concrete example: returns the effective size of a box of size [scale] that has been
-    rotated by [rotation]."""
-    return addY(rotateScale(dropY(scale), rotation), scale.y)
+def rotateSize(size: ivec2, rotation: int):
+    """Returns the effective size of a rect of size [size] that has been rotated by [rotation]."""
+    return ivec2(size.y, size.x) if rotation in [1, 3] else size
+
+
+def rotateSizeXZ(size: ivec3, rotation: int):
+    """Returns the effective size of a box of size [size] that has been rotated by [rotation]."""
+    return addY(rotateSize(dropY(size), rotation), size.y)
+
+
+def flipToScale2D(flip: bvec2):
+    """Returns a vector with a 1 where <flip> is false, and -1 where <flip> is true"""
+    return 1 - 2*ivec2(flip)
+
+def flipToScale3D(flip: bvec3):
+    """Returns a vector with a 1 where <flip> is false, and -1 where <flip> is true"""
+    return 1 - 2*ivec3(flip)
 
 
 def scaleToFlip2D(scale: ivec2):
