@@ -36,14 +36,14 @@ def check_version():
         closestname = VERSIONS[closest]
         closestname += " snapshot" if current > closest else ""
         if closest > SUPPORTS:
-            print(colored(color="orange", text=\
+            print(colored(color="yellow", text=\
                 f"WARNING: You are using a newer "
                 "version of Minecraft then GDPC supports!\n"
                 f"\tSupports: {VERSIONS[SUPPORTS]} "
                 f"Detected: {closestname}"
             ))
         elif closest < SUPPORTS:
-            print(colored(color="orange", text=\
+            print(colored(color="yellow", text=\
                 f"WARNING: You are using an older "
                 "version of Minecraft then GDPC supports!\n"
                 f"\tSupports: {VERSIONS[SUPPORTS]} "

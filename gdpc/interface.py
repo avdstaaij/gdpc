@@ -323,7 +323,7 @@ class Editor:
 
         result = di.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates, customFlags=None)
         if not result.isnumeric():
-            eprint(colored(color="orange", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
+            eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
         return True
 
@@ -358,7 +358,7 @@ class Editor:
 
                 for line in response:
                     if not line.isnumeric():
-                        eprint(colored(color="orange", text=f"Warning: Server returned error upon placing buffered block:\n\t{line}"))
+                        eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing buffered block:\n\t{line}"))
 
 
             # Flush command buffer
@@ -368,7 +368,7 @@ class Editor:
 
                 for line in response:
                     if not line.isnumeric():
-                        eprint(colored(color="orange", text=f"Warning: Server returned error upon sending buffered command:\n\t{line}"))
+                        eprint(colored(color="yellow", text=f"Warning: Server returned error upon sending buffered command:\n\t{line}"))
 
         if self._multithreading:
             # Clean up finished buffer flush futures
