@@ -10,7 +10,7 @@ This module contains functions to:
 
 from typing import Union, Optional, List, Tuple, Iterable
 from contextlib import contextmanager
-from copy import copy, deepcopy
+from copy import deepcopy
 from collections import OrderedDict
 from concurrent import futures
 
@@ -117,7 +117,7 @@ class Editor:
         caching               = False,
         cacheLimit            = 8192,
         multithreading        = False,
-        multithreadingWorkers = 8,
+        multithreadingWorkers = 1,
     ):
         """Constructs an Interface instance with the specified transform and settings"""
         self._transform = Transform() if transformLike is None else toTransform(transformLike)
@@ -125,15 +125,15 @@ class Editor:
         self._buffering = buffering
         self._bufferLimit = bufferLimit
         self._buffer: List[Tuple[ivec3, str]] = []
+        self._commandBuffer: List[str] = []
 
         self._caching = caching
         self._cache = OrderedByLookupDict(cacheLimit)
 
+        self._multithreading = False
         self._multithreadingWorkers = multithreadingWorkers
-        self._bufferFlushExecutor   = None
-        self.multithreading = multithreading # Creates the buffer flush executor if True
+        self.multithreading = multithreading # The property setter initializes the multithreading system.
         self._bufferFlushFutures: List[futures.Future] = []
-        self._commandBuffer:      List[str]            = []
 
         self._doBlockUpdates = True
         self._bufferDoBlockUpdates = True
@@ -141,8 +141,14 @@ class Editor:
 
     def __del__(self):
         """Cleans up this Interface instance"""
+        # awaits any pending buffer flush futures and shuts down the buffer flush executor
+        self.multithreading = False # awaits any pending buffer flush futures and shuts down the buffer flush executor
+        # Flush any remaining blocks in the buffer.
+        # This is purposefully done *after* disabling multithreading! This __del__ may be called at
+        # interpreter shutdown, and it appears that scheduling a new future at that point fails with
+        # "RuntimeError: cannot schedule new futures after shutdown" even if the executor has not
+        # actually shut down yet. For safety, the last buffer flush must be done on the main thread.
         self.sendBufferedBlocks()
-        self.awaitBufferFlushes()
 
 
     @property
@@ -202,15 +208,37 @@ class Editor:
 
     @multithreading.setter
     def multithreading(self, value: bool):
-        self._multithreading = value
-        if value and self._bufferFlushExecutor is None:
+        if not self._multithreading and value:
             self._bufferFlushExecutor = futures.ThreadPoolExecutor(self._multithreadingWorkers)
+            if self._multithreadingWorkers > 1:
+                eprint(colored(color="yellow", text=\
+                    "WARNING: An editor has been set to use multithreaded buffer flushing with more\n"
+                    "than one worker thread.\n"
+                    "The editor can no longer guarantee that blocks will be placed in the same order\n"
+                    "as they were sent. If caching is used, this can also cause the cache to become\n"
+                    "inconsistent with the actual world.\n"
+                    "Multithreading with more than one worker thread can speed up block placement on\n"
+                    "some machines, which can be nice during development, but it is NOT RECOMMENDED\n"
+                    "for production code."
+                ))
+        elif self._multithreading and not value:
+            self._bufferFlushExecutor.shutdown(wait=True)
+            del self._bufferFlushExecutor
+        self._multithreading = value
 
     @property
     def multithreadingWorkers(self):
-        """The amount of buffer flush worker threads.\n
-        Modifying the amount of workers after class construction is not supported."""
+        """The amount of buffer flush worker threads."""
         return self._multithreadingWorkers
+
+    @multithreadingWorkers.setter
+    def multithreadingWorkers(self, value: int):
+        restartExecutor = self.multithreading and self._multithreadingWorkers != value
+        self._multithreadingWorkers = value
+        if restartExecutor:
+            self.multithreading = False
+            self.multithreading = True
+
 
     # TODO: Add support for the other block placement flags?
     # https://github.com/nilsgawlik/gdmc_http_interface/wiki/Interface-Endpoints
@@ -400,10 +428,10 @@ class Editor:
             ]
 
             # Shallow copies are good enough here
-            block_buffer_copy   = copy(self._buffer)
-            command_buffer_copy = copy(self._commandBuffer)
+            blockBufferCopy   = self._buffer
+            commandBufferCopy = self._commandBuffer
             def task():
-                flush(block_buffer_copy, command_buffer_copy)
+                flush(blockBufferCopy, commandBufferCopy)
 
             # Submit the task
             future = self._bufferFlushExecutor.submit(task)
