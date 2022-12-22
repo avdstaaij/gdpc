@@ -112,7 +112,11 @@ def placePolygon(editor: Editor, points: Iterable[ivec3], block: Block, replace=
 
 def placeVolume(editor: Editor, first: ivec3, last: ivec3, block: Block, replace=None):
     """Fill volume with blocks."""
-    editor.placeBlock((ivec3(x,y,z) for x,y,z in toolbox.loop3d(*first, *last)), block, replace)
+    # Transform only the key points instead of all points
+    first = editor.transform * first
+    last  = editor.transform * last
+    block = block.transformed(editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal((ivec3(x,y,z) for x,y,z in toolbox.loop3d(*first, *last)), block, replace)
 
 
 # TODO: Add a "wireframe" option, perhaps with another boolean next to [hollow].
