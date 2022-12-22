@@ -266,11 +266,8 @@ class Editor:
         This is slightly more efficient than calling this method in a loop.\n
         If <block>.name is a list, names are sampled randomly.\n
         Returns whether the placement succeeded fully."""
-        if isinstance(position, ivec3):
-            position = [position]
-
         return self.placeBlockGlobal(
-            (self.transform * pos for pos in position),
+            self.transform * position if isinstance(position, ivec3) else (self.transform * pos for pos in position),
             block.transformed(self.transform.rotation, self.transform.flip),
             replace,
             doBlockUpdates
@@ -291,18 +288,11 @@ class Editor:
         Returns whether the placement succeeded fully."""
 
         if isinstance(position, ivec3):
-            position = [position]
-        else:
-            position = list(position)
-
-        if len(position) == 1:
-            return self._placeSingleBlockGlobal(position[0], block, replace, doBlockUpdates)
+            return self._placeSingleBlockGlobal(position, block, replace, doBlockUpdates)
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(
-            self._placeSingleBlockGlobal(pos, block, replace, doBlockUpdates) for pos in position
-        )
+        success = eagerAll(self._placeSingleBlockGlobal(pos, block, replace, doBlockUpdates) for pos in position)
         self.buffering = oldBuffering
         return success
 
@@ -394,7 +384,6 @@ class Editor:
                     if not line.isnumeric():
                         eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing buffered block:\n\t{line}"))
 
-
             # Flush command buffer
             if commandBuffer:
                 response = runCommand("\n".join(commandBuffer))
@@ -439,7 +428,7 @@ class Editor:
     @contextmanager
     def pushTransform(self, transformLike: Optional[TransformLike] = None):
         """Creates a context that reverts all changes to self.transform on exit.
-        If <transformOrVec> is not None, it is pushed to self.transform on enter.
+        If <transformLine> is not None, it is pushed to self.transform on enter.
 
         Can be used to create a local coordinate system on top of the current local coordinate
         system.
