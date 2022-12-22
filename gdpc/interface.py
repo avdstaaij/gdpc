@@ -66,12 +66,6 @@ def runCommand(command: str):
     return di.runCommand(command)
 
 
-def blockNBTCommand(position: ivec3, nbt: str):
-    """Returns the command required to merge the nbt data of the block at the global position
-    [position] with [nbt]."""
-    return f"data merge block {position.x} {position.y} {position.z} {{{nbt}}}"
-
-
 class OrderedByLookupDict(OrderedDict):
     """Limit size, evicting the least recently looked-up key when full.
 
@@ -349,7 +343,7 @@ class Editor:
         if (self.caching and block.id in self.getBlockGlobal(position)): # TODO: this is very error-prone! "stone" is in "stone_stairs". Also, we may want to change only block state or nbt data.
             return True
 
-        blockStr = block.id + block.blockStateString()
+        blockStr = block.id + block.blockStateString() + (f"{{{block.nbt}}}" if block.nbt else "")
 
         if self._buffering:
             success = self._placeSingleBlockStringGlobalBuffered(position, blockStr, doBlockUpdates)
@@ -361,9 +355,6 @@ class Editor:
 
         if self.caching:
             self._cache[tuple(position)] = block.id
-
-        if block.nbt is not None:
-            self.runCommand(blockNBTCommand(position, block.nbt))
 
         return True
 

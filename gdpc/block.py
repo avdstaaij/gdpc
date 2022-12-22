@@ -82,10 +82,10 @@ class Block:
 
 
     def __str__(self):
-        data_string = self.blockStateString() + (self.nbt if self.nbt else "")
+        dataStr = self.blockStateString() + (f"{{{self.nbt}}}" if self.nbt else "")
         if isinstance(self.id, str):
-            return "" if self.id == "" else self.id + data_string
-        return ",".join([(name if name == "" else name + data_string) for name in self.id])
+            return "" if self.id == "" else self.id + dataStr
+        return ",".join([(name if name == "" else name + dataStr) for name in self.id])
 
 
     def __repr__(self):
