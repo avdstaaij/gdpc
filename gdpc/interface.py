@@ -106,7 +106,7 @@ class Editor:
     def __init__(
         self,
         transformLike: Optional[TransformLike] = None,
-        buffering             = True,
+        buffering             = False,
         bufferLimit           = 1024,
         caching               = False,
         cacheLimit            = 8192,
