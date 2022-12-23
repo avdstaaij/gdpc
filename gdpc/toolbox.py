@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 from termcolor import colored
 
 from .util import isSequence
+from .block import Block
 from . import lookup
 from .lookup import SUPPORTS, VERSIONS
 from .worldLoader import WorldSlice
@@ -289,18 +290,19 @@ def writeBook(text, title="Chronicle", author="Anonymous",
     return bookData
 
 
-def identifyObtrusiveness(blockStr):
+def identifyObtrusiveness(block: Block):
     """Return the percieved obtrusiveness of a given block.
 
     Returns a numeric weight from 0 (invisible) to 4 (opaque)
     """
-    if blockStr in lookup.INVISIBLE:
+    blockId = block.id if isinstance(block.id, str) else block.id[0] # TODO: mean?
+    if blockId in lookup.INVISIBLE:
         return 0
-    if blockStr in lookup.FILTERING:
+    if blockId in lookup.FILTERING:
         return 1
-    if blockStr in lookup.UNOBTRUSIVE:
+    if blockId in lookup.UNOBTRUSIVE:
         return 2
-    if blockStr in lookup.OBTRUSIVE:
+    if blockId in lookup.OBTRUSIVE:
         return 3
     return 4
 

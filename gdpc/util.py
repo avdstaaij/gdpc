@@ -1,7 +1,7 @@
 """Generic utilities"""
 
 
-from typing import TypeVar, Callable, Iterable
+from typing import TypeVar, Generic, Callable, Iterable, OrderedDict
 import time
 import sys
 import numpy as np
@@ -87,3 +87,47 @@ def isSequence(value):
         return True
     except TypeError:
         return False
+
+
+KT = TypeVar("KT")
+VT = TypeVar("VT")
+
+class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
+    """Dict ordered from least to most recently looked-up key\n
+
+    Unless maxSize is 0, the dict size is limited to maxSize by evicting the least recently
+    looked-up key when full.
+    """
+    # Based on
+    # https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
+
+    def __init__(self, maxSize: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._maxSize = maxSize
+
+    # inherited __repr__ from OrderedDict is sufficient
+
+    @property
+    def maxSize(self):
+        return self._maxSize
+
+    @maxSize.setter
+    def maxSize(self, value: int):
+        self._maxSize = value
+        if self._maxSize > 0:
+            while len(self) > self.maxSize:
+                oldest = next(iter(self))
+                del self[oldest]
+
+    def __getitem__(self, key: KT):
+        value = super().__getitem__(key)
+        self.move_to_end(key)
+        return value
+
+    def __setitem__(self, key: KT, value: VT):
+        if key in self:
+            self.move_to_end(key)
+        super().__setitem__(key, value)
+        if self._maxSize > 0 and len(self) > self._maxSize:
+            oldest = next(iter(self))
+            del self[oldest]

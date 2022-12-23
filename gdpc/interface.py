@@ -10,14 +10,13 @@ This module contains functions to:
 
 from typing import Union, Optional, List, Tuple, Iterable
 from contextlib import contextmanager
-from copy import deepcopy
-from collections import OrderedDict
+from copy import copy, deepcopy
 from concurrent import futures
 
 from glm import ivec3
 from termcolor import colored
 
-from .util import eprint, eagerAll, isIterable
+from .util import eprint, eagerAll, isIterable, OrderedByLookupDict
 from .vector_util import Rect, Box, boxBetween
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
@@ -66,33 +65,6 @@ def runCommand(command: str):
     return di.runCommand(command)
 
 
-class OrderedByLookupDict(OrderedDict):
-    """Limit size, evicting the least recently looked-up key when full.
-
-    Taken from
-    https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
-    """
-
-    def __init__(self, maxsize, *args, **kwds):
-        self.maxsize = maxsize
-        super().__init__(*args, **kwds)
-
-    # inherited __repr__ from OrderedDict is sufficient
-
-    def __getitem__(self, key):
-        value = super().__getitem__(key)
-        self.move_to_end(key)
-        return value
-
-    def __setitem__(self, key, value):
-        if key in self:
-            self.move_to_end(key)
-        super().__setitem__(key, value)
-        if self.maxsize > 0 and len(self) > self.maxsize:
-            oldest = next(iter(self))
-            del self[oldest]
-
-
 class Editor:
     """Provides functions to place blocks in the world by interacting with the GDMC mod's HTTP
     interface.
@@ -122,7 +94,7 @@ class Editor:
         self._commandBuffer: List[str] = []
 
         self._caching = caching
-        self._cache = OrderedByLookupDict(cacheLimit)
+        self._cache = OrderedByLookupDict[ivec3,Block](cacheLimit)
 
         self._multithreading = False
         self._multithreadingWorkers = multithreadingWorkers
@@ -189,11 +161,11 @@ class Editor:
     @property
     def cacheLimit(self):
         """Size of the block cache"""
-        return self._cache.maxsize
+        return self._cache.maxSize
 
     @cacheLimit.setter
     def cacheLimit(self, value: int):
-        self._cache.maxsize = value
+        self._cache.maxSize = value
 
     @property
     def multithreading(self):
@@ -255,24 +227,32 @@ class Editor:
             runCommand(command)
 
 
-    def getBlock(self, position: ivec3):
-        """Returns the namespaced ID of the block at [position].\n
-        If the given coordinates are invalid, returns "minecraft:void_air"."""
-        return self.getBlockGlobal(self.transform * position)
+    # TODO: getBlockNbt option (waiting for HTTP backend update)
+    def getBlock(self, position: ivec3, getBlockStates: bool = True):
+        """Returns the block at [position].\n
+        <position> is interpreted as local to the coordinate system defined by self.transform.
+        The returned block's orientation is also from the perspective of self.transform.\n
+        If the given coordinates are invalid, returns Block("minecraft:void_air")."""
+        block = self.getBlockGlobal(self.transform * position, getBlockStates)
+        invTransform = ~self.transform
+        block.transform(invTransform.rotation, invTransform.flip)
+        return block
 
 
-    # TODO: old gdpc code; refactor?
-    def getBlockGlobal(self, position: ivec3):
-        positionTuple = tuple(position)
+    # TODO: getBlockNbt option (waiting for HTTP backend update)
+    def getBlockGlobal(self, position: ivec3, getBlockStates: bool = True, getBlockNbt: bool = True):
+        """Returns the block at [position], ignoring self.transform.\n
+        If the given coordinates are invalid, returns Block("minecraft:void_air")."""
+        if self.caching and position in self._cache.keys():
+            return self._cache[position]
 
-        if self.caching and positionTuple in self._cache.keys():
-            return self._cache[positionTuple]
+        blockDict = di.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
+        block = Block(blockDict["id"], blockDict["state"])
 
-        blockId: str = di.getBlock(*position)[0]["id"]
         if self.caching:
-            self._cache[positionTuple] = blockId
+            self._cache[position] = copy(block)
 
-        return blockId
+        return block
 
 
     def placeBlock(
@@ -354,7 +334,7 @@ class Editor:
             return False
 
         if self.caching:
-            self._cache[tuple(position)] = block.id
+            self._cache[position] = block
 
         return True
 

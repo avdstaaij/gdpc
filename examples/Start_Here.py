@@ -196,10 +196,10 @@ def buildTower(x, z):
     print(f"Building tower at {x}, {z}...")
     # if the blocks to the north, south, east and west aren't all gold
     if not (
-            ED.getBlock(ivec3(x - radius, y, z)) == "minecraft:gold_block"
-        and ED.getBlock(ivec3(x + radius, y, z)) == "minecraft:gold_block"
-        and ED.getBlock(ivec3(x, y, z - radius)) == "minecraft:gold_block"
-        and ED.getBlock(ivec3(x, y, z + radius)) == "minecraft:gold_block"
+            ED.getBlock(ivec3(x - radius, y, z)).id == "minecraft:gold_block"
+        and ED.getBlock(ivec3(x + radius, y, z)).id == "minecraft:gold_block"
+        and ED.getBlock(ivec3(x, y, z - radius)).id == "minecraft:gold_block"
+        and ED.getBlock(ivec3(x, y, z + radius)).id == "minecraft:gold_block"
     ):
         return  # return without building anything
 
