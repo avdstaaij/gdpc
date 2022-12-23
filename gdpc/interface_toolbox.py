@@ -59,9 +59,7 @@ def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None
     editor.placeBlock(
         ivec3(x,y,z),
         Block(
-            "lectern",
-            facing=facing,
-            otherState="has_book=true",
+            "lectern", {"facing": facing, "has_book": "true"},
             nbt=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
         )
     )
@@ -82,7 +80,7 @@ def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing
     if replace:
         if facing is None:
             facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
-        editor.placeBlock(ivec3(x,y,z), Block(block, facing=facing))
+        editor.placeBlock(ivec3(x,y,z), Block(block, {"facing": facing}))
         editor.sendBufferedBlocks()
         editor.awaitBufferFlushes()
     else:
@@ -148,12 +146,12 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
             if editor.getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
                 break
             wall = True
-            editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", facing=choice(facing)), nbt=nbt)
+            editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", {"facing": choice(facing)}, nbt=nbt))
 
     if not wall:
         if rotation is None:
             rotation = direction2rotation(facing)
-        editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", otherState=f"rotation={rotation}"), nbt=nbt)
+        editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", {"rotation": str(rotation)}, nbt=nbt))
 
 
 def getOptimalDirection(editor: Editor, pos: ivec3):

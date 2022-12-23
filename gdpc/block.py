@@ -1,9 +1,9 @@
 """Provides the Block class"""
 
 
-from typing import Any, Union, Optional, List, Sequence
-from dataclasses import dataclass
-from copy import copy
+from typing import Any, Union, Optional, List, Dict, Sequence
+from dataclasses import dataclass, field
+from copy import copy, deepcopy
 import random
 
 from glm import bvec3
@@ -15,29 +15,28 @@ from .block_state_util import transformAxisString, transformFacingString
 class Block:
     """A Minecraft block.
 
-    If self.name is a list, the instance represents a block palette.
-
-    Block state can be stored in [otherState], and NBT data can be stored in [nbt] (excluding
+    Block states can be stored in .states, and NBT data can be stored in .nbt (excluding
     the outer braces).
 
-    Some orientation-related block states need to be stored in explicitly named fields to ensure
-    that the Block transforms correctly. These are:
+    If .id is a sequence, the instance represents a palette of blocks that share the same
+    block states and NBT data.
+
+    The transform methods modify a number of orientation-related block states. These are:
     - axis
     - facing
 
     Other orientation-related block states are currently not supported by the transformation
-    system."""
+    system, but support may be added in a future version.
+    """
 
     # TODO: Known orientation-related block states that are currently not supported:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
-    # - rotation=[0,16]     (e.g. signs)  (should probably be named "granularRotation" here to avoid confusion)
+    # - rotation=[0,16]     (e.g. signs)
 
-    id:         Union[str, Sequence[str]] = "minecraft:stone"
-    axis:       Optional[str] = None
-    facing:     Optional[str] = None
-    otherState: Optional[str] = None
-    nbt:        Optional[str] = None
+    id:     Union[str, Sequence[str]] = "minecraft:stone"
+    states: Dict[str, str]            = field(default_factory=dict)
+    nbt:    Optional[str]             = None
     needsLatePlacement: bool  = False # Whether the block needs to be placed after its neighbors
 
 
@@ -51,34 +50,24 @@ class Block:
     def transform(self, rotation: int = 0, flip: bvec3 = bvec3()):
         """Transforms this block.\n
         Flips first, rotates second."""
-        if not self.axis   is None: self.axis   = transformAxisString  (self.axis,   rotation)
-        if not self.facing is None: self.facing = transformFacingString(self.facing, rotation, flip)
+        axisState   = self.states.get("axis")
+        facingState = self.states.get("facing")
+        if axisState   is not None: self.states["axis"]   = transformAxisString  (axisState,   rotation)
+        if facingState is not None: self.states["facing"] = transformFacingString(facingState, rotation, flip)
 
 
     def transformed(self, rotation: int = 0, flip: bvec3 = bvec3()):
         """Returns a transformed copy of this block.\n
         Flips first, rotates second."""
-        return Block(
-            id         = self.id,
-            axis       = None if self.axis   is None else transformAxisString  (self.axis,   rotation),
-            facing     = None if self.facing is None else transformFacingString(self.facing, rotation, flip),
-            otherState = self.otherState,
-            nbt        = self.nbt,
-            needsLatePlacement = self.needsLatePlacement
-        )
+        block = deepcopy(self)
+        block.transform(rotation, flip)
+        return block
 
 
     def blockStateString(self, rotation: int = 0, flip: bvec3 = bvec3()):
-        """Returns a string containing the block state of this block"""
-
-        if self.axis is None and self.facing is None and self.otherState is None:
-            return ""
-
-        stateItems = []
-        if not self.axis       is None: stateItems.append("axis="   + transformAxisString  (self.axis,   rotation))
-        if not self.facing     is None: stateItems.append("facing=" + transformFacingString(self.facing, rotation, flip))
-        if not self.otherState is None: stateItems.append(self.otherState)
-        return "[" + ",".join(stateItems) + "]"
+        """Returns a string containing the block states of this block, including the outer brackets."""
+        stateString = ",".join([f"{key}={value}" for key, value in self.states.items()])
+        return "" if stateString == "" else f"[{stateString}]"
 
 
     def __str__(self):
@@ -92,14 +81,10 @@ class Block:
         # This is used for model dumping; it needs to return a string that eval()'s to this Block.
         # The default repr includes unnecessary default values, which make model dumps way larger
         # than they need to be.
-        def optFieldStr(name: str, value: Any):
-            return ("" if value is None else f",{name}={repr(value)}")
         return (
-            f'Block("{self.id}"'
-            + optFieldStr("axis",       self.axis)
-            + optFieldStr("facing",     self.facing)
-            + optFieldStr("otherState", self.otherState)
-            + optFieldStr("nbt",        self.nbt)
+            f"Block({repr(self.id)}"
+            + (f",states={repr(self.states)}" if self.states else "")
+            + (f",nbt={repr(self.nbt)}" if self.nbt else "")
             + (",needsLatePlacement=True" if self.needsLatePlacement else "")
             + ")"
         )
@@ -118,14 +103,8 @@ class Block:
                 if key in ["shape", "north", "east", "south", "west"]:
                     # This is a late property. We drop it, but set needs_late_placement to True
                     block.needsLatePlacement = True
-                elif key == "axis":
-                    block.axis = value
-                elif key == "facing":
-                    block.facing = value
                 else:
-                    stateItems.append(str(key) + "=" + value)
-            if stateItems:
-                block.otherState = ",".join(stateItems)
+                    block.states[str(key)] = value
 
         block.transform(rotation, flip)
 

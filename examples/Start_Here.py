@@ -227,22 +227,22 @@ def buildTower(x, z):
     # NOTE: When placing doors you need to place two blocks,
     #   the upper block defines the direction
     ED.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("warped_door"))
-    ED.placeBlock(ivec3(x + radius - 1, y + 2, z), Block("warped_door", facing="west", otherState="half=upper"))
+    ED.placeBlock(ivec3(x + radius - 1, y + 2, z), Block("warped_door", {"facing": "west", "half": "upper"}))
 
     GEO.placeCuboid(ED, ivec3(x - radius, y + 1, z), ivec3( x - radius, y + height + 2, z), Block("air"))
     GEO.placeCuboid(ED, ivec3(x - radius + 1, y + 1, z), ivec3(x - radius + 1, y + height + 2, z), Block("lime_stained_glass"))
     ED.placeBlock(ivec3(x - radius + 1, y + 1, z), Block("warped_door"))
-    ED.placeBlock(ivec3(x - radius + 1, y + 2, z), Block("warped_door", facing="east", otherState="half=upper"))
+    ED.placeBlock(ivec3(x - radius + 1, y + 2, z), Block("warped_door", {"facing": "east", "half": "upper"}))
 
     GEO.placeCuboid(ED, ivec3(x, y + 1, z + radius), ivec3( x, y + height + 2, z + radius), Block("air"))
     GEO.placeCuboid(ED, ivec3(x, y + 1, z + radius - 1), ivec3(x, y + height + 2, z + radius - 1), Block("lime_stained_glass"))
     ED.placeBlock(ivec3(x, y + 1, z + radius - 1), Block("warped_door"))
-    ED.placeBlock(ivec3(x, y + 2, z + radius - 1), Block("warped_door", facing="south", otherState="half=upper"))
+    ED.placeBlock(ivec3(x, y + 2, z + radius - 1), Block("warped_door", {"facing": "south", "half": "upper"}))
 
     GEO.placeCuboid(ED, ivec3(x, y + 1, z - radius), ivec3( x, y + height + 2, z - radius), Block("air"))
     GEO.placeCuboid(ED, ivec3(x, y + 1, z - radius + 1), ivec3(x, y + height + 2, z - radius + 1), Block("lime_stained_glass"))
     ED.placeBlock(ivec3(x, y + 1, z - radius + 1), Block("warped_door"))
-    ED.placeBlock(ivec3(x, y + 2, z - radius + 1), Block("warped_door", facing="north", otherState="half=upper"))
+    ED.placeBlock(ivec3(x, y + 2, z - radius + 1), Block("warped_door", {"facing": "north", "half": "upper"}))
 
 
 # === STRUCTURE #4
