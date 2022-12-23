@@ -10,7 +10,7 @@ from termcolor import colored
 from .util import eprint
 from .vector_util import EAST, NORTH, SOUTH, WEST, boxBetween
 from .block import Block
-from .nbt_util import signNBT
+from .block_data_util import signData
 from . import lookup
 from .interface import Editor, runCommand
 from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
@@ -60,7 +60,7 @@ def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None
         ivec3(x,y,z),
         Block(
             "lectern", {"facing": facing, "has_book": "true"},
-            nbt=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
+            data=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
         )
     )
 
@@ -136,7 +136,7 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
     if facing is None and rotation is None:
         facing = getOptimalDirection(editor, ivec3(x,y,z))
 
-    nbt = signNBT(text1, text2, text3, text4)
+    data = signData(text1, text2, text3, text4)
 
     if wall:
         wall = False
@@ -146,12 +146,12 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
             if editor.getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
                 break
             wall = True
-            editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", {"facing": choice(facing)}, nbt=nbt))
+            editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", {"facing": choice(facing)}, data=data))
 
     if not wall:
         if rotation is None:
             rotation = direction2rotation(facing)
-        editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", {"rotation": str(rotation)}, nbt=nbt))
+        editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", {"rotation": str(rotation)}, data=data))
 
 
 def getOptimalDirection(editor: Editor, pos: ivec3):

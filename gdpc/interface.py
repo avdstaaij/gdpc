@@ -227,7 +227,7 @@ class Editor:
             runCommand(command)
 
 
-    # TODO: getBlockNbt option (waiting for HTTP backend update)
+    # TODO: getBlockData option (waiting for HTTP backend update)
     def getBlock(self, position: ivec3, getBlockStates: bool = True):
         """Returns the block at [position].\n
         <position> is interpreted as local to the coordinate system defined by self.transform.
@@ -239,7 +239,7 @@ class Editor:
         return block
 
 
-    # TODO: getBlockNbt option (waiting for HTTP backend update)
+    # TODO: getBlockData option (waiting for HTTP backend update)
     def getBlockGlobal(self, position: ivec3, getBlockStates: bool = True, getBlockNbt: bool = True):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
@@ -323,7 +323,7 @@ class Editor:
         if (self.caching and block.id in self.getBlockGlobal(position)): # TODO: this is very error-prone! "stone" is in "stone_stairs". Also, we may want to change only block state or nbt data.
             return True
 
-        blockStr = block.id + block.blockStateString() + (f"{{{block.nbt}}}" if block.nbt else "")
+        blockStr = block.id + block.blockStateString() + (f"{{{block.data}}}" if block.data else "")
 
         if self._buffering:
             success = self._placeSingleBlockStringGlobalBuffered(position, blockStr, doBlockUpdates)

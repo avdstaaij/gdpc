@@ -15,8 +15,8 @@ from .block_state_util import transformAxisString, transformFacingString
 class Block:
     """A Minecraft block.
 
-    Block states can be stored in .states, and NBT data can be stored in .nbt (excluding
-    the outer braces).
+    Block states can be stored in .states, and block entity NBT data can be stored in .data
+    (excluding the outer braces).
 
     If .id is a sequence, the instance represents a palette of blocks that share the same
     block states and NBT data.
@@ -36,7 +36,7 @@ class Block:
 
     id:     Union[str, Sequence[str]] = "minecraft:stone"
     states: Dict[str, str]            = field(default_factory=dict)
-    nbt:    Optional[str]             = None
+    data:   Optional[str]             = None
     needsLatePlacement: bool  = False # Whether the block needs to be placed after its neighbors
 
 
@@ -71,7 +71,7 @@ class Block:
 
 
     def __str__(self):
-        dataStr = self.blockStateString() + (f"{{{self.nbt}}}" if self.nbt else "")
+        dataStr = self.blockStateString() + (f"{{{self.data}}}" if self.data else "")
         if isinstance(self.id, str):
             return "" if self.id == "" else self.id + dataStr
         return ",".join([(name if name == "" else name + dataStr) for name in self.id])
@@ -84,7 +84,7 @@ class Block:
         return (
             f"Block({repr(self.id)}"
             + (f",states={repr(self.states)}" if self.states else "")
-            + (f",nbt={repr(self.nbt)}" if self.nbt else "")
+            + (f",data={repr(self.data)}" if self.data else "")
             + (",needsLatePlacement=True" if self.needsLatePlacement else "")
             + ")"
         )
@@ -93,7 +93,7 @@ class Block:
     @staticmethod
     def fromBlockCompound(blockCompound, rotation: int = 0, flip: bvec3 = bvec3()):
         """Parses a block compound into a Block."""
-        # TODO: parse NBT data
+        # TODO: parse block entity NBT data
         block = Block(str(blockCompound["Name"]))
         if "Properties" in blockCompound:
             properties = blockCompound["Properties"]

@@ -1,17 +1,17 @@
-"""NBT-generating utility functions"""
+"""Block data-generating utility functions"""
 
 
 from typing import List, Optional
 
 
-def signNBT(
+def signData(
     line1:   Optional[str] = None,
     line2:   Optional[str] = None,
     line3:   Optional[str] = None,
     line4:   Optional[str] = None,
     color:   Optional[str] = None,
 ):
-    """Returns an nbt string with sign contents"""
+    """Returns an SNBT string with sign contents"""
     nbtFields: List[str] = []
 
     for i, line in enumerate([line1, line2, line3, line4]):
