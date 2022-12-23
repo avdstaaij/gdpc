@@ -99,7 +99,8 @@ def placeBlock(x: int, y: int, z: int, blockStr: str, dimension: Optional[str] =
     else:
         blockUpdateParams = {"doBlockUpdates": doBlockUpdates, "spawnDrops": spawnDrops}
 
-    parameters = {'x': x, 'y': y, 'z': z}.update(blockUpdateParams)
+    parameters = {'x': x, 'y': y, 'z': z}
+    parameters.update(blockUpdateParams)
 
     return _put(url, data=bytes(blockStr, "utf-8"), params=parameters, retries=retries, timeout=timeout).text.split("\n")
 

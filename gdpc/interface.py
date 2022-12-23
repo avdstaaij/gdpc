@@ -364,7 +364,7 @@ class Editor:
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
-        result = di.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates, customFlags=None)
+        result = di.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates)
         if not result[0].isnumeric():
             eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
