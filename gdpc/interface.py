@@ -320,6 +320,10 @@ class Editor:
         # Select block from palette
         block = block.chooseId()
 
+        # Support for "no placement" in block palettes
+        if not block.id:
+            return True
+
         if (self.caching and block.id in self.getBlockGlobal(position)): # TODO: this is very error-prone! "stone" is in "stone_stairs". Also, we may want to change only block state or nbt data.
             return True
 

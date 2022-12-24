@@ -41,6 +41,8 @@ class Block:
 
 
     def chooseId(self):
+        """Returns a copy of this block with a single ID.\n
+        If .id is a sequence, one ID is chosen at random."""
         result = copy(self)
         if not isinstance(self.id, str):
             self.id = random.choice(self.id)
