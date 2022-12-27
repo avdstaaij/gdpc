@@ -57,9 +57,9 @@ from gdpc import worldLoader as WL
 # Here we read start and end coordinates of our build area
 BUILD_AREA = ITF.getBuildArea()  # BUILDAREA
 STARTX, STARTY, STARTZ = BUILD_AREA.begin
-ENDX, ENDY, ENDZ = BUILD_AREA.end
+LASTX, LASTY, LASTZ = BUILD_AREA.end - 1
 
-# Here we construct an Interface object
+# Here we construct an Editor object
 ED = ITF.Editor()
 
 # WORLDSLICE
@@ -70,7 +70,7 @@ ED = ITF.Editor()
 #
 # IMPORTANT: Keep in mind that a wold slice is a 'snapshot' of the world,
 #   and any changes you make later on will not be reflected in the world slice
-WORLDSLICE = WL.WorldSlice(STARTX, STARTZ, ENDX, ENDZ)  # this takes a while
+WORLDSLICE = ED.loadWorldSlice(BUILD_AREA.toRect())  # this takes a while
 
 ROADHEIGHT = 0
 
@@ -100,42 +100,42 @@ def buildPerimeter():
     print("Building east-west walls...")
     # building the east-west walls
 
-    for x in range(STARTX, ENDX + 1):
+    for x in range(STARTX, LASTX + 1):
         # the northern wall
         y = heights[(x - STARTX, 0)]
         GEO.placeCuboid(ED, ivec3(x, y - 2, STARTZ), ivec3(x, y, STARTZ), Block("granite"))
         GEO.placeCuboid(ED, ivec3(x, y + 1, STARTZ), ivec3( x, y + 4, STARTZ), Block("granite_wall"))
         # the southern wall
-        y = heights[(x - STARTX, ENDZ - STARTZ)]
-        GEO.placeCuboid(ED, ivec3(x, y - 2, ENDZ), ivec3( x, y, ENDZ), Block("red_sandstone"))
-        GEO.placeCuboid(ED, ivec3(x, y + 1, ENDZ), ivec3( x, y + 4, ENDZ), Block("red_sandstone_wall"))
+        y = heights[(x - STARTX, LASTZ - STARTZ)]
+        GEO.placeCuboid(ED, ivec3(x, y - 2, LASTZ), ivec3( x, y, LASTZ), Block("red_sandstone"))
+        GEO.placeCuboid(ED, ivec3(x, y + 1, LASTZ), ivec3( x, y + 4, LASTZ), Block("red_sandstone_wall"))
 
     print("Building north-south walls...")
     # building the north-south walls
-    for z in range(STARTZ, ENDZ + 1):
+    for z in range(STARTZ, LASTZ + 1):
         # the western wall
         y = heights[(0, z - STARTZ)]
         GEO.placeCuboid(ED, ivec3(STARTX, y - 2, z), ivec3( STARTX, y, z), Block("sandstone"))
         GEO.placeCuboid(ED, ivec3(STARTX, y + 1, z), ivec3( STARTX, y + 4, z), Block("sandstone_wall"))
         # the eastern wall
-        y = heights[(ENDX - STARTX, z - STARTZ)]
-        GEO.placeCuboid(ED, ivec3(ENDX, y - 2, z), ivec3( ENDX, y, z), Block("prismarine"))
-        GEO.placeCuboid(ED, ivec3(ENDX, y + 1, z), ivec3( ENDX, y + 4, z), Block("prismarine_wall"))
+        y = heights[(LASTX - STARTX, z - STARTZ)]
+        GEO.placeCuboid(ED, ivec3(LASTX, y - 2, z), ivec3( LASTX, y, z), Block("prismarine"))
+        GEO.placeCuboid(ED, ivec3(LASTX, y + 1, z), ivec3( LASTX, y + 4, z), Block("prismarine_wall"))
 
 
 def buildRoads():
     """Build a road from north to south and east to west."""
-    xaxis = STARTX + (ENDX - STARTX) // 2  # getting start + half the length
-    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    xaxis = STARTX + (LASTX - STARTX) // 2  # getting start + half the length
+    zaxis = STARTZ + (LASTZ - STARTZ) // 2
     heights = WORLDSLICE.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 
     print("Calculating road height...")
     # caclulating the average height along where we want to build our road
     y = heights[(xaxis - STARTX, zaxis - STARTZ)]
-    for x in range(STARTX, ENDX + 1):
+    for x in range(STARTX, LASTX + 1):
         newy = heights[(x - STARTX, zaxis - STARTZ)]
         y = (y + newy) // 2
-    for z in range(STARTZ, ENDZ + 1):
+    for z in range(STARTZ, LASTZ + 1):
         newy = heights[(xaxis - STARTX, z - STARTZ)]
         y = (y + newy) // 2
 
@@ -147,22 +147,22 @@ def buildRoads():
 
     print("Building east-west road...")
     # building the east-west road
-    GEO.placeCuboid(ED, ivec3(xaxis - 2, y, STARTZ), ivec3(xaxis - 2, y, ENDZ), Block("end_stone_bricks"))
-    GEO.placeCuboid(ED, ivec3(xaxis - 1, y, STARTZ), ivec3(xaxis + 1, y, ENDZ), Block("gold_block"))
-    GEO.placeCuboid(ED, ivec3(xaxis + 2, y, STARTZ), ivec3(xaxis + 2, y, ENDZ), Block("end_stone_bricks"))
-    GEO.placeCuboid(ED, ivec3(xaxis - 1, y + 1, STARTZ), ivec3(xaxis + 1, y + 3, ENDZ), Block("air"))
+    GEO.placeCuboid(ED, ivec3(xaxis - 2, y, STARTZ), ivec3(xaxis - 2, y, LASTZ), Block("end_stone_bricks"))
+    GEO.placeCuboid(ED, ivec3(xaxis - 1, y, STARTZ), ivec3(xaxis + 1, y, LASTZ), Block("gold_block"))
+    GEO.placeCuboid(ED, ivec3(xaxis + 2, y, STARTZ), ivec3(xaxis + 2, y, LASTZ), Block("end_stone_bricks"))
+    GEO.placeCuboid(ED, ivec3(xaxis - 1, y + 1, STARTZ), ivec3(xaxis + 1, y + 3, LASTZ), Block("air"))
 
     print("Building north-south road...")
     # building the north-south road
-    GEO.placeCuboid(ED, ivec3(STARTX, y, zaxis - 2), ivec3(ENDX, y, zaxis - 2), Block("end_stone_bricks"))
-    GEO.placeCuboid(ED, ivec3(STARTX, y, zaxis - 1), ivec3(ENDX, y, zaxis + 1), Block("gold_block"))
-    GEO.placeCuboid(ED, ivec3(STARTX, y, zaxis + 2), ivec3(ENDX, y, zaxis + 2), Block("end_stone_bricks"))
-    GEO.placeCuboid(ED, ivec3(STARTX, y + 1, zaxis - 1), ivec3(ENDX, y + 3, zaxis + 1), Block("air"))
+    GEO.placeCuboid(ED, ivec3(STARTX, y, zaxis - 2), ivec3(LASTX, y, zaxis - 2), Block("end_stone_bricks"))
+    GEO.placeCuboid(ED, ivec3(STARTX, y, zaxis - 1), ivec3(LASTX, y, zaxis + 1), Block("gold_block"))
+    GEO.placeCuboid(ED, ivec3(STARTX, y, zaxis + 2), ivec3(LASTX, y, zaxis + 2), Block("end_stone_bricks"))
+    GEO.placeCuboid(ED, ivec3(STARTX, y + 1, zaxis - 1), ivec3(LASTX, y + 3, zaxis + 1), Block("air"))
 
 
 def buildCity():
-    xaxis = STARTX + (ENDX - STARTX) // 2  # getting center
-    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    xaxis = STARTX + (LASTX - STARTX) // 2  # getting center
+    zaxis = STARTZ + (LASTZ - STARTZ) // 2
     y = ROADHEIGHT
 
     print("Building city platform...")

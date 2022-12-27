@@ -64,7 +64,13 @@ VERSIONS = {
 }
 VERSIONIDS = dict([(value, key) for key, value in VERSIONS.items()])
 
+
 # ========================================================= custom values
+
+
+BUILD_Y_MIN = -64
+BUILD_Y_MAX = 320 # Exclusive
+BUILD_HEIGHT = BUILD_Y_MAX - BUILD_Y_MIN
 
 
 AXES = ("x", "y", "z")

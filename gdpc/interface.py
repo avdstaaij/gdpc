@@ -13,15 +13,17 @@ from contextlib import contextmanager
 from copy import copy, deepcopy
 from concurrent import futures
 
+import numpy as np
 from glm import ivec3
 from termcolor import colored
 
-from .util import eprint, eagerAll, isIterable, OrderedByLookupDict
-from .vector_util import Rect, Box, boxBetween
+from .util import eprint, eagerAll, OrderedByLookupDict
+from .vector_util import Rect, Box, addY, boxBetween, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
+from . import lookup
 from . import direct_interface as di
-from . import worldLoader
+from .worldLoader import WorldSlice
 
 
 def getBuildArea(default = Box(ivec3(0,0,0), ivec3(128,256,128))):
@@ -29,7 +31,7 @@ def getBuildArea(default = Box(ivec3(0,0,0), ivec3(128,256,128))):
     If no build area was specified, returns <default>."""
     success, result = di.getBuildArea()
     if not success:
-        return default
+        return deepcopy(default)
     beginX, beginY, beginZ, endX, endY, endZ = result
     return boxBetween(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
 
@@ -47,12 +49,6 @@ def centerBuildAreaOnPlayer(size: ivec3):
     runCommand("execute at @p run setbuildarea "
                f"~{-radius.x} ~{-radius.y} ~{-radius.z} ~{radius.x} ~{radius.y} ~{radius.z}")
     return getBuildArea()
-
-
-def getWorldSlice(rect: Rect):
-    """Returns a WorldSlice of the region specified by [rect]."""
-    assert isinstance(rect, Rect) # To protect from calling this with a Box
-    return worldLoader.WorldSlice(rect.begin[0], rect.begin[1], rect.end[0], rect.end[1])
 
 
 def runCommand(command: str):
@@ -104,9 +100,12 @@ class Editor:
         self._doBlockUpdates = True
         self._bufferDoBlockUpdates = True
 
+        self._worldSlice: Optional[WorldSlice] = None
+        self._worldSliceDecay: Optional[np.ndarray] = None
+
 
     def __del__(self):
-        """Cleans up this Interface instance"""
+        """Cleans up this Editor instance"""
         # awaits any pending buffer flush futures and shuts down the buffer flush executor
         self.multithreading = False # awaits any pending buffer flush futures and shuts down the buffer flush executor
         # Flush any remaining blocks in the buffer.
@@ -119,7 +118,7 @@ class Editor:
 
     @property
     def transform(self):
-        """This interface's local coordinate transform"""
+        """This editor's local coordinate transform"""
         return self._transform
 
     @transform.setter
@@ -150,13 +149,12 @@ class Editor:
 
     @property
     def caching(self):
-        """Whether caching retrieved blocks is enabled"""
+        """Whether caching placed and retrieved blocks is enabled"""
         return self._caching
 
     @caching.setter
     def caching(self, value: bool):
         self._caching = value
-        # TODO: do something with an internal/global WorldSlice?
 
     @property
     def cacheLimit(self):
@@ -205,7 +203,6 @@ class Editor:
             self.multithreading = False
             self.multithreading = True
 
-
     # TODO: Add support for the other block placement flags?
     # https://github.com/nilsgawlik/gdmc_http_interface/wiki/Interface-Endpoints
     @property
@@ -215,6 +212,19 @@ class Editor:
     @doBlockUpdates.setter
     def doBlockUpdates(self, value: bool):
         self._doBlockUpdates = value
+
+    @property
+    def worldSlice(self):
+        """The cached WorldSlice"""
+        return self._worldSlice
+
+    @property
+    def worldSliceDecay(self):
+        """3D boolean array indicating whether the block at the specified position in the cached
+        worldSlice is still valid.\n
+        Do not edit the returned array.\n
+        Note that the lowest Y-layer is at [:,0,:], despite Minecraft's negative Y coordinates."""
+        return self._worldSliceDecay
 
 
     def runCommand(self, command: str):
@@ -240,14 +250,21 @@ class Editor:
 
 
     # TODO: getBlockData option (waiting for HTTP backend update)
-    def getBlockGlobal(self, position: ivec3, getBlockStates: bool = True, getBlockNbt: bool = True):
+    def getBlockGlobal(self, position: ivec3, getBlockStates: bool = True):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
         if self.caching and position in self._cache.keys():
             return self._cache[position]
 
-        blockDict = di.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
-        block = Block(blockDict["id"], blockDict["state"])
+        if (
+            self._worldSlice is not None and
+            self._worldSlice.rect.contains(dropY(position)) and
+            not self._worldSliceDecay[tuple(position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
+        ):
+            block = Block.fromBlockCompound(self._worldSlice.getBlockCompoundAt(*position))
+        else:
+            blockDict = di.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
+            block = Block(blockDict["id"], blockDict["state"])
 
         if self.caching:
             self._cache[position] = copy(block)
@@ -311,11 +328,11 @@ class Editor:
         Returns whether the placement succeeded fully."""
 
         # Check replace condition
-        if isinstance(replace, str):
-            if self.getBlockGlobal(position) != replace:
+        if replace is not None:
+            if isinstance(replace, str):
+                replace = [replace]
+            if self.getBlockGlobal(position) not in replace:
                 return True
-        elif isIterable(replace) and self.getBlockGlobal(position) not in replace:
-            return True
 
         # Select block from palette
         block = block.chooseId()
@@ -339,6 +356,9 @@ class Editor:
 
         if self.caching:
             self._cache[position] = block
+
+        if self._worldSlice is not None and self._worldSlice.rect.contains(dropY(position)):
+            self._worldSliceDecay[tuple(position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))] = True
 
         return True
 
@@ -426,6 +446,27 @@ class Editor:
         Does nothing if no buffer flushes have occured while multithreaded buffer flushing was
         enabled."""
         self._bufferFlushFutures = futures.wait(self._bufferFlushFutures, timeout).not_done
+
+
+    def loadWorldSlice(self, rect: Rect):
+        """Loads and caches the world slice for the given XZ-rectangle.\n
+        If a world slice was already cached, it is replaced.\n
+        The cached world slice is used for faster block retrieval. Note that the editor assumes
+        that nothing besides itself changes the given area of the world. If the given world area is
+        changed other than through this editor, call .updateWorldSlice() to update the cached world
+        slice.\n
+        There is no local coordinate version of this method. The rectangle must be given in global
+        coordinates."""
+        self._worldSlice      = WorldSlice(rect)
+        self._worldSliceDecay = np.zeros(addY(self._worldSlice.rect.size, lookup.BUILD_HEIGHT), dtype=np.bool)
+        return self._worldSlice
+
+
+    def updateWorldSlice(self):
+        """Updates the cached world slice."""
+        if (self._worldSlice is None):
+            raise RuntimeError("No world slice is cached. Call .loadWorldSliceGlobal() first.")
+        return self.loadWorldSlice(self._worldSlice.rect)
 
 
     @contextmanager

@@ -12,11 +12,12 @@ from gdpc.worldLoader import WorldSlice
 if __name__ == '__main__':
     # see if a different build area was defined ingame
     buildArea = interface.getBuildArea()
-    x1, z1 = buildArea.toRect().begin
-    x2, z2 = buildArea.toRect().end
+    buildRect = buildArea.toRect()
+    x1, z1 = buildRect.begin
+    x2, z2 = buildRect.end
 
     # load the world data and extract the heightmap(s)
-    worldSlice = WorldSlice(x1, z1, x2, z2)
+    worldSlice = WorldSlice(buildRect)
 
     heightmap = np.array(worldSlice.heightmaps["OCEAN_FLOOR"], dtype=int)
 
@@ -30,10 +31,10 @@ if __name__ == '__main__':
     palette = lookup.PALETTELOOKUP
 
     # create a 2d map containing the surface block colors
-    topcolor = np.zeros((x2 - x1 + 1, z2 - z1 + 1), dtype='int')
+    topcolor = np.zeros((x2 - x1, z2 - z1), dtype='int')
     unknownBlocks = set()
 
-    for x, z in loop2d(x1, z1, x2, z2):
+    for x, z in loop2d(x1, z1, x2-1, z2-1):
         # check up to 5 blocks below the heightmap
         for dy in range(5):
             # calculate absolute coordinates

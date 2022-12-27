@@ -71,6 +71,25 @@ def setY(vec, y=0):
 
 
 @overload
+def trueMod(vec: vec2, modulus: float) -> vec2: ...
+@overload
+def trueMod(vec: ivec2, modulus: int) -> ivec2: ...
+@overload
+def trueMod(vec: vec3, modulus: float) -> vec3: ...
+@overload
+def trueMod(vec: ivec3, modulus: int) -> ivec3: ...
+
+def trueMod(vec, modulus):
+    """Returns the true value of <v> modulo <modulus>, as opposed to <v> % <modulus> which may yield
+    negative numbers."""
+    result = vec % modulus
+    for i in range(len(result)):
+        if result[i] < 0:
+            result[i] += modulus
+    return result
+
+
+@overload
 def perpendicular(vec: vec2) -> vec2: ...
 @overload
 def perpendicular(vec: ivec2) -> ivec2: ...

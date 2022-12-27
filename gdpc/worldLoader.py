@@ -12,6 +12,8 @@ from math import ceil, log2
 import nbt
 import numpy as np
 
+from .vector_util import trueMod, Rect
+from . import lookup
 from . import direct_interface as di
 from .bitarray import BitArray
 
@@ -43,44 +45,41 @@ class CachedSection:
 class WorldSlice:
     """Contains information on a slice of the world."""
 
-    def __init__(self, x1, z1, x2, z2,
-                 heightmapTypes=None):
-        """Initialise WorldSlice with region and heightmap.
-        x2 and z2 are exclusive
-        """
+    def __init__(self, rect: Rect, heightmapTypes=None):
+        """Initialise WorldSlice with region and heightmap."""
         if heightmapTypes is None:
             heightmapTypes = ["MOTION_BLOCKING",
                               "MOTION_BLOCKING_NO_LEAVES",
                               "OCEAN_FLOOR",
                               "WORLD_SURFACE"]
-        self.rect = x1, z1, x2 - x1, z2 - z1
-        self.chunkRect = (self.rect[0] >> 4, self.rect[1] >> 4,
-                          ((self.rect[0] + self.rect[2] - 1) >> 4)
-                          - (self.rect[0] >> 4) + 1,
-                          ((self.rect[1] + self.rect[3] - 1) >> 4)
-                          - (self.rect[1] >> 4) + 1)
+        self.rect = rect
+        self.chunkRect = Rect(
+            self.rect.offset >> 4,
+            ((self.rect.offset + self.rect.size - 1) >> 4) - (self.rect.offset >> 4) + 1
+        )
+
         self.heightmapTypes = heightmapTypes
 
-        chunkBytes = di.getChunks(*self.chunkRect, asBytes=True)
+        chunkBytes = di.getChunks(*self.chunkRect.offset, *self.chunkRect.size, asBytes=True)
         file_like = BytesIO(chunkBytes)
 
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)
 
-        rectOffset = [self.rect[0] % 16, self.rect[1] % 16]
+        rectOffset = trueMod(self.rect.offset, 16)
 
         # For each type of heightmap, create a 2D array of zeros in the shape
         # of the build area.
         self.heightmaps = {}
         for hmName in self.heightmapTypes:
             self.heightmaps[hmName] = np.zeros(
-                (self.rect[2] + 1, self.rect[3] + 1), dtype=int)
+                self.rect.size, dtype=int)
 
         # For each x-z position in the build area, get the height from the
         # heightmap data from the corresponding chunk for all types of
         # heightmap data.
-        for x in range(self.chunkRect[2]):
-            for z in range(self.chunkRect[3]):
-                chunkID = x + z * self.chunkRect[2]
+        for x in range(self.chunkRect.size[0]):
+            for z in range(self.chunkRect.size[1]):
+                chunkID = x + z * self.chunkRect.size[0]
 
                 hms = self.nbtfile['Chunks'][chunkID]['Heightmaps']
                 for hmName in self.heightmapTypes:
@@ -97,16 +96,16 @@ class WorldSlice:
                                 # compensate for this difference.
                                 heightmap[-rectOffset[0] + x * 16 + cx,
                                           -rectOffset[1] + z * 16 + cz] \
-                                    = heightmapBitArray.getAt(cz * 16 + cx) - 64
+                                    = heightmapBitArray.getAt(cz * 16 + cx) + lookup.BUILD_Y_MIN
                             except IndexError:
                                 pass
 
         # sections
         # Flat dict of all chunk sections in this world slice
         self.sections = dict()
-        for x in range(self.chunkRect[2]):
-            for z in range(self.chunkRect[3]):
-                chunkID = x + z * self.chunkRect[2]
+        for x in range(self.chunkRect.size[0]):
+            for z in range(self.chunkRect.size[1]):
+                chunkID = x + z * self.chunkRect.size[0]
                 chunk = self.nbtfile['Chunks'][chunkID]
                 chunkSections = chunk['sections']
 
@@ -138,14 +137,12 @@ class WorldSlice:
     # __repr__ displays the class well enough so __str__ is omitted
     def __repr__(self):
         """Represent the WorldSlice as a constructor."""
-        x1, z1 = self.rect[:2]
-        x2, z2 = self.rect[0] + self.rect[2], self.rect[1] + self.rect[3]
-        return f"WorldSlice{(x1, z1, x2, z2)}"
+        return f"WorldSlice{repr(self.rect)}"
 
     def getChunkSectionPos(self, x, y, z):
         """Get chunk section x,y,z index from global x, y, z position."""
-        chunkX = (x >> 4) - self.chunkRect[0]
-        chunkZ = (z >> 4) - self.chunkRect[1]
+        chunkX = (x >> 4) - self.chunkRect.offset[0]
+        chunkZ = (z >> 4) - self.chunkRect.offset[1]
         chunkY = y >> 4
         return chunkX, chunkY, chunkZ
 
