@@ -368,9 +368,6 @@ class Rect:
         """Returns a corresponding Box"""
         return Box(addY(self.offset, offsetY), addY(self.size, sizeY))
 
-    def __repr__(self):
-        return f"Rect(offset={vecString(self.begin)}, size={vecString(self.end)})"
-
 
 @dataclass()
 class Box:
@@ -479,9 +476,6 @@ class Box:
     def toRect(self):
         """Returns this Box's XZ-plane as a Rect"""
         return Rect(dropY(self.offset), dropY(self.size))
-
-    def __repr__(self):
-        return f"Box(offset={vecString(self.begin)}, size={vecString(self.end)})"
 
 
 def rectBetween(cornerA: ivec2, cornerB: ivec2):
