@@ -15,11 +15,11 @@ from .block_state_util import transformAxisString, transformFacingString
 class Block:
     """A Minecraft block.
 
-    Block states can be stored in .states, and block entity NBT data can be stored in .data
+    Block states can be stored in .states, and block entity SNBT data can be stored in .data
     (excluding the outer braces).
 
     If .id is a sequence, the instance represents a palette of blocks that share the same
-    block states and NBT data.
+    block states and SNBT data.
 
     The transform methods modify a number of orientation-related block states. These are:
     - axis
