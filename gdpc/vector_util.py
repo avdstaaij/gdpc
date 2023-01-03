@@ -591,26 +591,71 @@ def isRectVerticalToPoints(rect: Rect, pointArray: np.ndarray):
     return not isRectHorizontalToPoints(rect, pointArray)
 
 
-def neighbors(point: ivec2, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
+def neighbors2D(point: ivec2, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
     """Yields the neighbors of [point] within [bounding_rect].\n
-        Useful for pathfinding."""
+    Useful for pathfinding."""
 
     end = boundingRect.end
 
-    left   = point.x - stride >= boundingRect.offset.x
-    bottom = point.y - stride >= boundingRect.offset.y
-    right  = point.x + stride <  end.x
-    top    = point.y + stride <  end.y
+    left  = point.x - stride >= boundingRect.offset.x
+    down  = point.y - stride >= boundingRect.offset.y
+    right = point.x + stride <  end.x
+    up    = point.y + stride <  end.y
 
     if left:   yield ivec2(point.x - stride, point.y         )
-    if bottom: yield ivec2(point.x         , point.y - stride)
+    if down:   yield ivec2(point.x         , point.y - stride)
     if right:  yield ivec2(point.x + stride, point.y         )
-    if top:    yield ivec2(point.x         , point.y + stride)
+    if up:     yield ivec2(point.x         , point.y + stride)
 
     if not diagonal:
         return
 
-    if left  and bottom: yield ivec2(point.x - stride, point.y - stride)
-    if left  and top:    yield ivec2(point.x - stride, point.y + stride)
-    if right and bottom: yield ivec2(point.x + stride, point.y - stride)
-    if right and top:    yield ivec2(point.x + stride, point.y + stride)
+    if left  and down: yield ivec2(point.x - stride, point.y - stride)
+    if left  and up:   yield ivec2(point.x - stride, point.y + stride)
+    if right and down: yield ivec2(point.x + stride, point.y - stride)
+    if right and up:   yield ivec2(point.x + stride, point.y + stride)
+
+
+def neighbors3D(point: ivec3, boundingBox: Box, diagonal: bool = False, stride: int = 1):
+    """Yields the neighbors of [point] within [bounding_box].\n
+    Useful for pathfinding."""
+
+    end = boundingBox.end
+
+    left  = point.x - stride >= boundingBox.offset.x
+    down  = point.y - stride >= boundingBox.offset.y
+    back  = point.z - stride >= boundingBox.offset.z
+    right = point.x + stride <  end.x
+    up    = point.y + stride <  end.y
+    front = point.z + stride <  end.z
+
+    if left:  yield ivec3(point.x - stride, point.y         , point.z         )
+    if down:  yield ivec3(point.x         , point.y - stride, point.z         )
+    if back:  yield ivec3(point.x         , point.y         , point.z - stride)
+    if right: yield ivec3(point.x + stride, point.y         , point.z         )
+    if up:    yield ivec3(point.x         , point.y + stride, point.z         )
+    if front: yield ivec3(point.x         , point.y         , point.z + stride)
+
+    if not diagonal:
+        return
+
+    if left  and down:           yield ivec3(point.x - stride, point.y - stride, point.z         )
+    if left  and back:           yield ivec3(point.x - stride, point.y         , point.z - stride)
+    if left  and up:             yield ivec3(point.x - stride, point.y + stride, point.z         )
+    if left  and front:          yield ivec3(point.x - stride, point.y         , point.z + stride)
+    if right and down:           yield ivec3(point.x + stride, point.y - stride, point.z         )
+    if right and back:           yield ivec3(point.x + stride, point.y         , point.z - stride)
+    if right and up:             yield ivec3(point.x + stride, point.y + stride, point.z         )
+    if right and front:          yield ivec3(point.x + stride, point.y         , point.z + stride)
+    if down  and back:           yield ivec3(point.x         , point.y - stride, point.z - stride)
+    if down  and front:          yield ivec3(point.x         , point.y - stride, point.z + stride)
+    if up    and back:           yield ivec3(point.x         , point.y + stride, point.z - stride)
+    if up    and front:          yield ivec3(point.x         , point.y + stride, point.z + stride)
+    if left  and down and back:  yield ivec3(point.x - stride, point.y - stride, point.z - stride)
+    if left  and down and front: yield ivec3(point.x - stride, point.y - stride, point.z + stride)
+    if left  and up   and back:  yield ivec3(point.x - stride, point.y + stride, point.z - stride)
+    if left  and up   and front: yield ivec3(point.x - stride, point.y + stride, point.z + stride)
+    if right and down and back:  yield ivec3(point.x + stride, point.y - stride, point.z - stride)
+    if right and down and front: yield ivec3(point.x + stride, point.y - stride, point.z + stride)
+    if right and up   and back:  yield ivec3(point.x + stride, point.y + stride, point.z - stride)
+    if right and up   and front: yield ivec3(point.x + stride, point.y + stride, point.z + stride)
