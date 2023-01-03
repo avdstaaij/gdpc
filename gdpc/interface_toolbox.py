@@ -1,14 +1,14 @@
 """Provides various small functions for the interface."""
 
 
-from typing import Optional
+from typing import Optional, Iterable, Set
 from random import choice
 
 from glm import ivec3
 from termcolor import colored
 
 from .util import eprint
-from .vector_util import EAST, NORTH, SOUTH, WEST, boxBetween
+from .vector_util import EAST, NORTH, SOUTH, WEST, Box, boxBetween, neighbors3D
 from .block import Block
 from .block_data_util import signData
 from . import lookup
@@ -16,48 +16,44 @@ from .interface import Editor, runCommand
 from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
 
 
-def flood_search_3D(editor: Editor, x, y, z, x1, y1, z1, x2, y2, z2, search_blocks,
-                    result=None, observed=None, diagonal=False,
-                    vectors=None, depth=256):
-    """Return a list of coordinates with blocks that fulfil the search.
+def flood_search_3D(
+    editor: Editor,
+    origin: ivec3,
+    boundingBox: Box,
+    search_block_ids: Iterable[str],
+    diagonal=False,
+    depth=256
+):
+    """Return a list of coordinates with blocks that fulfill the search.
 
     Activating caching is *highly* recommended.
     """
-    result = set() if result is None else result
-    observed = set() if observed is None else observed
-    result.add((x, y, z))
-    observed.add((x, y, z))
-    if vectors is None:
-        vectors = lookup.VECTORS
-        if diagonal:
-            vectors += lookup.DIAGONALVECTORS
+    def flood_search_3D_recursive(point: ivec3, result: Set[ivec3], visited: Set[ivec3], depth_: int):
+        if point in visited:
+            return
+
+        visited.add(point)
+
+        if editor.getBlock(point) not in search_block_ids:
+            return
+
+        result.add(point)
+
+        for point in neighbors3D(point, boundingBox, diagonal):
+            flood_search_3D_recursive(point, result, visited, depth_ - 1)
+
+    result:  Set[ivec3] = set()
+    visited: Set[ivec3] = set()
+    flood_search_3D_recursive(origin, result, visited, depth)
+    return result
 
 
-    # prevent RecursionError by limiting recursion depth
-    if depth > 0:
-        for dx, dy, dz in vectors:
-            if (
-                (x + dx, y + dy, z + dz) not in observed and
-                boxBetween(ivec3(x1, y1, z1), ivec3(x2, y2, z2)).contains(ivec3(x + dx, y + dy, z + dz))
-            ):
-                if editor.getBlock(ivec3(x+dx,y+dy,z+dz)) in search_blocks:
-                    result, observed = flood_search_3D(x + dx, y + dy, z + dz,
-                                                       x1, y1, z1, x2, y2, z2,
-                                                       search_blocks,
-                                                       result, observed,
-                                                       diagonal, vectors,
-                                                       depth - 1)
-                else:
-                    observed.add((x + dx, y + dy, z + dz))
-    return result, observed
-
-
-def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None):
+def placeLectern(editor: Editor, position: ivec3, bookData: str, facing: Optional[str] = None):
     """Place a lectern with a book in the world."""
     if facing is None:
-        facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
+        facing = choice(getOptimalDirection(editor, position))
     editor.placeBlock(
-        ivec3(x,y,z),
+        position,
         Block(
             "lectern", {"facing": facing, "has_book": "true"},
             data=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
@@ -65,8 +61,14 @@ def placeLectern(editor: Editor, x, y, z, bookData, facing: Optional[str] = None
     )
 
 
-def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing=None,
-                        items=None, replace=True):
+def placeInventoryBlock(
+    editor: Editor,
+    position: ivec3,
+    block='minecraft:chest',
+    facing=None,
+    items=None,
+    replace=True
+):
     """Place an inventorised block with any number of items in the world.
 
     Items is expected to be a sequence of (x, y, item[, amount])
@@ -79,14 +81,14 @@ def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing
     dx, dy = lookup.INVENTORYLOOKUP[block]
     if replace:
         if facing is None:
-            facing = choice(getOptimalDirection(editor, ivec3(x,y,z)))
-        editor.placeBlock(ivec3(x,y,z), Block(block, {"facing": facing}))
+            facing = choice(getOptimalDirection(editor, position))
+        editor.placeBlock(position, Block(block, {"facing": facing}))
         editor.sendBufferedBlocks()
         editor.awaitBufferFlushes()
     else:
-        if block not in editor.getBlock(ivec3(x,y,z)):
+        if block not in editor.getBlock(position):
             eprint(colored(color="orange", text=\
-                f"Warning: Block at {x} {y} {z} "
+                f"Warning: Block at {position.x} {position.y} {position.z} "
                 f"is not of specified type {block}!\n"
                 f"This may result in "
                 f"incorrectly placed items."
@@ -105,9 +107,15 @@ def placeInventoryBlock(editor: Editor, x, y, z, block='minecraft:chest', facing
         runCommand(f"replaceitem block {' '.join(globalPosition)} container.{slot} {item[2]} {item[3]}")
 
 
-def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
-              text1="", text2="", text3="", text4="",
-              wood='oak', wall=False):
+def placeSign(
+    editor: Editor,
+    position: ivec3,
+    facing: Optional[str] = None,
+    rotation: Optional[str] = None,
+    text1="", text2="", text3="", text4="",
+    wood='oak',
+    wall=False
+):
     """Place a written sign in the world.
 
     Facing is for wall placement, rotation for ground placement
@@ -134,7 +142,7 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
         rotation = None
 
     if facing is None and rotation is None:
-        facing = getOptimalDirection(editor, ivec3(x,y,z))
+        facing = getOptimalDirection(editor, position)
 
     data = signData(text1, text2, text3, text4)
 
@@ -142,11 +150,11 @@ def placeSign(editor: Editor, x, y, z, facing=None, rotation=None,
         wall = False
         for direction in facing:
             inversion = lookup.INVERTDIRECTION[direction]
-            dx, dz = lookup.DIRECTION2VECTOR[inversion]
-            if editor.getBlock(x + dx, y, z + dz) in lookup.TRANSPARENT:
+            dx, _, dz = lookup.DIRECTION2VECTOR[inversion]
+            if editor.getBlock(position + ivec3(dx, 0, dz)) in lookup.TRANSPARENT:
                 break
             wall = True
-            editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_wall_sign", {"facing": choice(facing)}, data=data))
+            editor.placeBlock(position, Block(f"{wood}_wall_sign", {"facing": choice(facing)}, data=data))
 
     if not wall:
         if rotation is None:
