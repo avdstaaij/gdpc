@@ -13,8 +13,11 @@ import sys
 import time
 from copy import deepcopy
 
+from glm import ivec3
+
 from gdpc import (direct_interface, interface_toolbox,
                   lookup, old_geometry, old_interface, toolbox)
+from gdpc.vector_util import loop2D, loop3D
 
 __all__ = []
 __version__ = "v5.1"
@@ -325,7 +328,7 @@ def testCache():
         """Replace all removed blocks from memory."""
         print("\t\tReplacing blocks from memory...", end="\r")
         tester.caching = True
-        for x, z in toolbox.loop2d(SIZE, SIZE):
+        for x, z in loop2D(SIZE, SIZE+1):
             tester.placeBlock(x, 1, z, tester.getBlock(x, 1, z))
         tester.sendBlocks()
         tester.caching = False
@@ -333,7 +336,7 @@ def testCache():
 
     def checkDiscrepancies():
         """Check test bed and comparison layer for discrepancies."""
-        for x, z in toolbox.loop2d(SIZE, SIZE):
+        for x, z in loop2D(SIZE, SIZE+1):
             print("\t\tTesting...▕" + (10 * x // SIZE) * "█"
                   + (10 - 10 * x // SIZE) * "▕", end="\r")
 
@@ -383,7 +386,7 @@ def testCache():
 
     # ---- test block scatter
     print("\tScattering test blocks...", end="\r")
-    for x, z in toolbox.loop2d(SIZE, SIZE):
+    for x, z in loop2D(SIZE, SIZE+1):
         print("\tPlacing pattern...▕" + (10 * x // SIZE) * "█"
               + (10 - 10 * x // SIZE) * "▕", end="\r")
         type = random.choice(PALETTES)
@@ -407,7 +410,7 @@ def testCache():
 
     tester.cache.clear
     tester.caching = True
-    for x, z in toolbox.loop2d(SIZE, SIZE):
+    for x, z in loop2D(SIZE, SIZE+1):
         print("\t\tReading...▕" + (10 * x // SIZE) * "█"
               + (10 - 10 * x // SIZE) * "▕", end="\r")
         tester.getBlock(x, 1, z)
@@ -460,7 +463,7 @@ def testBlocks():
     tested_set = set()
     missing_set = set()
 
-    for x, y, z in toolbox.loop3d(*pos1, *pos2):
+    for x, y, z in loop3D(ivec3(pos1), ivec3(pos2)+1):
         test_block = old_interface.getBlock(x, y, z)
         if test_block in test_set:
             tested_set.add(test_block)

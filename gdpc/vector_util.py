@@ -1,7 +1,7 @@
 """Various Minecraft-related vector math functions"""
 
 
-from typing import Any, List, Union, overload
+from typing import Any, List, Optional, Tuple, Union, overload
 from dataclasses import dataclass, field
 import math
 
@@ -247,6 +247,43 @@ def vecString(vec: Union[ivec2, ivec3]):
     if isinstance(vec, ivec2): return f"({vec.x}, {vec.y})"
     if isinstance(vec, ivec3): return f"({vec.x}, {vec.y}, {vec.z})"
     return ""
+
+
+@overload
+def orderedCorners(corner1: ivec2, corner2: ivec2) -> Tuple[ivec2, ivec2]: ...
+@overload
+def orderedCorners(corner1: ivec3, corner2: ivec3) -> Tuple[ivec3, ivec3]: ...
+
+def orderedCorners(corner1, corner2):
+    """Returns two corners of the rectangle defined by <corner1> and <corner2>, such that the first
+    corner is smaller than the second corner in each axis"""
+    for axis in range(len(corner1)):
+        if corner1[axis] > corner2[axis]:
+            corner1[axis], corner2[axis] = corner2[axis], corner1[axis]
+    return corner1, corner2
+
+
+def loop2D(begin: ivec2, end: Optional[ivec2] = None):
+    """Yields all points between <begin> and <end> (end-exclusive).\n
+    If <end> is not given, yields all points between (0,0) and <begin>."""
+    if end is None:
+        begin, end = ivec2(0,0), begin
+
+    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
+        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
+            yield ivec2(x, y)
+
+
+def loop3D(begin: ivec3, end: Optional[ivec3] = None):
+    """Yields all points between <begin> and <end> (end-exclusive).\n
+    If <end> is not given, yields all points between (0,0,0) and <begin>."""
+    if end is None:
+        begin, end = ivec3(0,0,0), begin
+
+    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
+        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
+            for z in range(begin.z, end.z, non_zero_sign(end.z - begin.z)):
+                yield ivec3(x, y, z)
 
 
 def lineToPixelArray(begin: ivec2, end: ivec2, width: int = 1):

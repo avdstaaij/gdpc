@@ -6,7 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from gdpc import lookup, interface
-from gdpc.toolbox import loop2d
+from gdpc.vector_util import loop2D
 from gdpc.worldLoader import WorldSlice
 
 if __name__ == '__main__':
@@ -31,10 +31,10 @@ if __name__ == '__main__':
     palette = lookup.PALETTELOOKUP
 
     # create a 2d map containing the surface block colors
-    topcolor = np.zeros((x2 - x1, z2 - z1), dtype='int')
+    topcolor = np.zeros(buildRect.size, dtype='int')
     unknownBlocks = set()
 
-    for x, z in loop2d(x1, z1, x2-1, z2-1):
+    for x, z in buildRect.inner:
         # check up to 5 blocks below the heightmap
         for dy in range(5):
             # calculate absolute coordinates

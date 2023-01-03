@@ -4,12 +4,11 @@
 from typing import Optional, Union, List, Iterable
 
 import numpy as np
-from glm import ivec3
+from glm import ivec2, ivec3
 from termcolor import colored
 
-from . import toolbox
 from . import block_state_util
-from .vector_util import X, XY, XZ, Y, YZ, Z, addY, scaleToFlip3D, Rect, Box, boxBetween
+from .vector_util import X, XY, XZ, Y, YZ, Z, addY, Rect, Box, boxBetween, loop3D, orderedCorners
 from .block import Block
 from .interface import Editor
 
@@ -117,7 +116,7 @@ def placeVolume(editor: Editor, first: ivec3, last: ivec3, block: Block, replace
     first = editor.transform * first
     last  = editor.transform * last
     block = block.transformed(editor.transform.rotation, editor.transform.flip)
-    editor.placeBlockGlobal((ivec3(x,y,z) for x,y,z in toolbox.loop3d(*first, *last)), block, replace)
+    editor.placeBlockGlobal(loop3D(first, last+1), block, replace)
 
 
 # TODO: Add a "wireframe" option, perhaps with another boolean next to [hollow].
@@ -470,7 +469,7 @@ def circle(x1, y1, x2, y2, filled=False):
     With 'inspiration' from:
     https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
     """
-    toolbox.normalizeCoordinates(x1, y1, x2, y2)
+    (x1, y1), (x2, y2) = orderedCorners(ivec2(x1, y1), ivec2(x2, y2))
 
     diameter = min(x2 - x1, y2 - y1)
     e = diameter % 2    # for even centers
@@ -518,7 +517,7 @@ def ellipse(x1, y1, x2, y2, filled=False):
     Modified version 'inspired' by chandan_jnu from
     https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
     """
-    toolbox.normalizeCoordinates(x1, y1, x2, y2)
+    (x1, y1), (x2, y2) = orderedCorners(ivec2(x1, y1), ivec2(x2, y2))
 
     dx, dy = x2 - x1, y2 - y1
     ex, ey = dx % 2, dy % 2
