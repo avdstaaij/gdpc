@@ -8,12 +8,13 @@ from glm import ivec3
 from termcolor import colored
 
 from .util import eprint
-from .vector_util import EAST, NORTH, SOUTH, WEST, Box, boxBetween, neighbors3D
+from .vector_util import EAST, NORTH, SOUTH, WEST, Box, neighbors3D
 from .block import Block
+from gdpc.block_state_util import FACING_VALUES, facingToRotation, facingToVector, invertFacing
 from .block_data_util import signData
 from . import lookup
 from .interface import Editor, runCommand
-from .toolbox import direction2rotation, identifyObtrusiveness, index2slot
+from .toolbox import identifyObtrusiveness, index2slot
 
 
 def flood_search_3D(
@@ -128,7 +129,7 @@ def placeSign(
     if wood not in lookup.WOODS:
         raise ValueError(f"{wood} is not a valid wood type!")
 
-    if facing is not None and facing not in lookup.DIRECTIONS:
+    if facing is not None and facing not in FACING_VALUES:
         eprint(f"{facing} is not a valid direction.\n"
               "Working with default behaviour.")
         facing = None
@@ -149,8 +150,8 @@ def placeSign(
     if wall:
         wall = False
         for direction in facing:
-            inversion = lookup.INVERTDIRECTION[direction]
-            dx, _, dz = lookup.DIRECTION2VECTOR[inversion]
+            inversion = invertFacing(direction)
+            dx, _, dz = facingToVector(inversion)
             if editor.getBlock(position + ivec3(dx, 0, dz)) in lookup.TRANSPARENT:
                 break
             wall = True
@@ -158,8 +159,8 @@ def placeSign(
 
     if not wall:
         if rotation is None:
-            rotation = direction2rotation(facing)
-        editor.placeBlock(ivec3(x,y,z), Block(f"{wood}_sign", {"rotation": str(rotation)}, data=data))
+            rotation = facingToRotation(facing if isinstance(facing, str) else choice(facing))
+        editor.placeBlock(position, Block(f"{wood}_sign", {"rotation": str(rotation)}, data=data))
 
 
 def getOptimalDirection(editor: Editor, pos: ivec3):
@@ -180,7 +181,7 @@ def getOptimalDirection(editor: Editor, pos: ivec3):
     directions = []
     while len(directions) == 0:
         if min_obstruction == max_obstruction:
-            return lookup.DIRECTIONS[2:]
+            return ["north", "east", "south", "west"]
 
         if surrounding[2][0] == min_obstruction:
             directions.append(surrounding[2][1])

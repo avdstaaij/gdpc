@@ -8,7 +8,7 @@ import random
 
 from glm import bvec3
 
-from .block_state_util import transformAxisString, transformFacingString
+from .block_state_util import transformAxis, transformFacing
 
 
 @dataclass
@@ -54,8 +54,8 @@ class Block:
         Flips first, rotates second."""
         axisState   = self.states.get("axis")
         facingState = self.states.get("facing")
-        if axisState   is not None: self.states["axis"]   = transformAxisString  (axisState,   rotation)
-        if facingState is not None: self.states["facing"] = transformFacingString(facingState, rotation, flip)
+        if axisState   is not None: self.states["axis"]   = transformAxis  (axisState,   rotation)
+        if facingState is not None: self.states["facing"] = transformFacing(facingState, rotation, flip)
 
 
     def transformed(self, rotation: int = 0, flip: bvec3 = bvec3()):
@@ -99,7 +99,6 @@ class Block:
         block = Block(str(blockCompound["Name"]))
         if "Properties" in blockCompound:
             properties = blockCompound["Properties"]
-            stateItems = []
             for key in properties:
                 value = str(properties[key])
                 if key in ["shape", "north", "east", "south", "west"]:

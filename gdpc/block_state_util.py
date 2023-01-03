@@ -5,19 +5,69 @@ from glm import ivec3, bvec3
 
 
 # ==================================================================================================
+# Listings
+# ==================================================================================================
+
+
+AXIS_VALUES     = ("x", "y", "z")
+FACING_VALUES   = ("up", "down", "north", "east", "south", "west")
+ROTATION_VALUES = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
+
+
+# ==================================================================================================
+# Conversions between different block states
+# ==================================================================================================
+
+
+__FACING_TO_ROTATION = {
+    "south": "0",
+    "west":  "4",
+    "north": "8",
+    "east":  "12",
+}
+def facingToRotation(facing: str):
+    """Converts <facing> to the corresponding "rotation" block state string"""
+    return __FACING_TO_ROTATION[facing]
+
+
+__ROTATION_TO_FACING = {
+    "0":  "south",
+    "1":  "south",
+    "2":  "south",
+    "3":  "west",
+    "4":  "west",
+    "5":  "west",
+    "6":  "west",
+    "7":  "north",
+    "8":  "north",
+    "9":  "north",
+    "10": "north",
+    "11": "east",
+    "12": "east",
+    "13": "east",
+    "14": "east",
+    "15": "south",
+}
+def rotationToFacing(rotation: str):
+    """Converts <rotation> to the nearest corresponding "facing" block state string"""
+    return __ROTATION_TO_FACING[rotation]
+
+
+# ==================================================================================================
 # String <-> vector conversion functions
 # ==================================================================================================
 
 
-### Axis
+# --------------------------------------------------------------------------------------------------
+# Axis
 
 
-__AXIS_VECTOR_TO_STRING = {
+__VECTOR_TO_AXIS = {
     (1,0,0): "x",
     (0,1,0): "y",
     (0,0,1): "z",
 }
-def axisVectorToString(vec: ivec3):
+def vectorToAxis(vec: ivec3):
     """Returns the "axis" block state string corresponding to the direction vector [vec]"""
     v = (
         vec.x != 0,
@@ -25,25 +75,26 @@ def axisVectorToString(vec: ivec3):
         vec.z != 0,
     )
     try:
-        return __AXIS_VECTOR_TO_STRING[v]
+        return __VECTOR_TO_AXIS[v]
     except KeyError as e:
         raise ValueError("axisVectorToString: exactly one vector component must be non-zero") from e
 
 
-__AXIS_STRING_TO_VECTOR = {
+__AXIS_TO_VECTOR = {
     "x": ivec3(1,0,0),
     "y": ivec3(0,1,0),
     "z": ivec3(0,0,1),
 }
-def axisStringToVector(axis: str):
+def axisToVector(axis: str):
     """Returns the direction vector corresponding to the "axis" block state string [axis]"""
-    return __AXIS_STRING_TO_VECTOR[axis]
+    return __AXIS_TO_VECTOR[axis]
 
 
-### Facing
+# --------------------------------------------------------------------------------------------------
+# Facing
 
 
-__FACING_VECTOR_TO_STRING = {
+__VECTOR_TO_FACING = {
     ( 0, 0,-1): "north",
     ( 0, 0, 1): "south",
     ( 0,-1, 0): "down",
@@ -51,7 +102,7 @@ __FACING_VECTOR_TO_STRING = {
     (-1, 0, 0): "west",
     ( 1, 0, 0): "east",
 }
-def facingVectorToString(vec: ivec3):
+def vectorToFacing(vec: ivec3):
     """Returns the "facing" block state string corresponding to the direction vector [vec]"""
     v = (
         -1 if vec[0] < 0 else 1 if vec[0] > 0 else 0,
@@ -59,12 +110,12 @@ def facingVectorToString(vec: ivec3):
         -1 if vec[2] < 0 else 1 if vec[2] > 0 else 0,
     )
     try:
-        return __FACING_VECTOR_TO_STRING[v]
+        return __VECTOR_TO_FACING[v]
     except KeyError as e:
         raise ValueError("facingVectorToString: exactly one vector component must be non-zero") from e
 
 
-__FACING_STRING_TO_VECTOR = {
+__FACING_TO_VECTOR = {
     "north": ivec3( 0, 0,-1),
     "south": ivec3( 0, 0, 1),
     "down":  ivec3( 0,-1, 0),
@@ -72,9 +123,21 @@ __FACING_STRING_TO_VECTOR = {
     "west":  ivec3(-1, 0, 0),
     "east":  ivec3( 1, 0, 0),
 }
-def facingStringToVector(facing: str):
+def facingToVector(facing: str):
     """Returns the direction vector corresponding to the "facing" block state string [facing]"""
-    return __FACING_STRING_TO_VECTOR[facing]
+    return __FACING_TO_VECTOR[facing]
+
+
+# --------------------------------------------------------------------------------------------------
+# Rotation
+
+
+# TODO: vectorToRotation
+
+
+def rotationToVector(rotation: str):
+    """Returns the axis-aligned direction vector corresponding to <rotation>"""
+    return facingToVector(rotationToFacing(rotation))
 
 
 # ==================================================================================================
@@ -82,10 +145,11 @@ def facingStringToVector(facing: str):
 # ==================================================================================================
 
 
-### Axis
+# --------------------------------------------------------------------------------------------------
+# Axis
 
 
-def rotateXZaxisString(axis: str, rotation: int):
+def rotateXZaxis(axis: str, rotation: int):
     """Returns the rotated "axis" block state string"""
     strings = ["x", "z"]
     try:
@@ -94,16 +158,17 @@ def rotateXZaxisString(axis: str, rotation: int):
         return axis
 
 
-def transformAxisString(axis: str, rotation: int = 0):
+def transformAxis(axis: str, rotation: int = 0):
     """Returns the transformed "axis" block state string"""
     # Flipping is a no-op for axis strings
-    return rotateXZaxisString(axis, rotation)
+    return rotateXZaxis(axis, rotation)
 
 
-### Facing
+# --------------------------------------------------------------------------------------------------
+# Facing
 
 
-def rotateXZfacingString(facing: str, rotation: int):
+def rotateXZfacing(facing: str, rotation: int):
     """Returns the rotated "facing" block state string"""
     strings = ["north", "east", "south", "west"]
     try:
@@ -112,7 +177,7 @@ def rotateXZfacingString(facing: str, rotation: int):
         return facing # up, down
 
 
-def flipFacingString(facing: str, flip: bvec3):
+def flipFacing(facing: str, flip: bvec3):
     """Returns the flipped "facing" block state string"""
     if flip.x:
         if facing == "east":  return "west"
@@ -126,7 +191,26 @@ def flipFacingString(facing: str, flip: bvec3):
     return facing
 
 
-def transformFacingString(facing: str, rotation: int = 0, flip: bvec3 = bvec3()):
+def transformFacing(facing: str, rotation: int = 0, flip: bvec3 = bvec3()):
     """Returns the transformed "facing" block state string.\n
     Flips first, rotates second."""
-    return rotateXZfacingString(flipFacingString(facing, flip), rotation)
+    return rotateXZfacing(flipFacing(facing, flip), rotation)
+
+
+__INVERT_FACING = {
+    "north": "south",
+    "south": "north",
+    "down":  "up",
+    "up":    "down",
+    "west":  "east",
+    "east":  "west",
+}
+def invertFacing(facing: str):
+    """Returns the inverted "facing" block state string"""
+    return __INVERT_FACING[facing]
+
+
+# --------------------------------------------------------------------------------------------------
+# Rotation
+
+# TODO

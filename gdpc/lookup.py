@@ -1,8 +1,6 @@
 """Store lists of various information on blocks, biomes and more."""
 
 
-import os
-import sys
 from typing import Set
 
 
@@ -71,52 +69,6 @@ VERSIONIDS = dict([(value, key) for key, value in VERSIONS.items()])
 BUILD_Y_MIN = -64
 BUILD_Y_MAX = 320 # Exclusive
 BUILD_HEIGHT = BUILD_Y_MAX - BUILD_Y_MIN
-
-
-AXES = ("x", "y", "z")
-DIRECTIONS = ("top", "bottom", "north", "east", "south", "west")
-VECTORS = ((0, 1, 0), (0, -1, 0), (0, 0, -1), (1, 0, 0), (0, 0, 1), (-1, 0, 0))
-DIAGONALVECTORS = (
-    (1, 1, 0),
-    (1, 0, 1),
-    (0, 1, 1),
-    (1, -1, 0),
-    (1, 0, -1),
-    (0, 1, -1),
-    (-1, 1, 0),
-    (-1, 0, 1),
-    (0, -1, 1),
-    (-1, -1, 0),
-    (-1, 0, -1),
-    (0, -1, -1),
-    (1, 1, 1),
-    (1, 1, -1),
-    (1, -1, 1),
-    (-1, 1, 1),
-    (1, -1, -1),
-    (-1, -1, 1),
-    (-1, 1, -1),
-    (-1, -1, -1),
-)
-INVERTDIRECTION = {
-    "top":    "bottom",
-    "bottom": "top",
-    "north":  "south",
-    "east":   "west",
-    "south":  "north",
-    "west":   "east",
-}
-DIRECTION2VECTOR = {
-    "top":    (0, 1, 0),
-    "bottom": (0, -1, 0),
-    "north":  (0, 0, -1),
-    "east":   (1, 0, 0),
-    "south":  (0, 0, 1),
-    "west":   (-1, 0, 0),
-}
-VECTOR2DIRECTION = dict([(val, key) for key, val in DIRECTION2VECTOR.items()])
-AXIS2VECTOR = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}
-VECTOR2AXIS = dict([(val, key) for key, val in AXIS2VECTOR.items()])
 
 
 # ========================================================= materials
@@ -2319,5 +2271,3 @@ INVENTORYLOOKUP = {}
 for dimensions, blocks in INVENTORYDIMENSIONS.items():
     for block in blocks:
         INVENTORYLOOKUP[block] = dimensions
-
-# version checking

@@ -7,7 +7,8 @@ import numpy as np
 from glm import ivec3
 from termcolor import colored
 
-from . import lookup, toolbox
+from . import toolbox
+from . import block_state_util
 from .vector_util import X, XY, XZ, Y, YZ, Z, addY, scaleToFlip3D, Rect, Box, boxBetween
 from .block import Block
 from .interface import Editor
@@ -229,7 +230,7 @@ def getShapeBoundaries(points):
 def getDimension(x1, y1, z1, x2, y2, z2):
     """Determine the number of dimensions the input uses."""
     if (x1, y1, z1) == (x2, y2, z2):
-        return 0, list(lookup.AXES)
+        return 0, ["x", "y", "z"]
     # NOTE: if dimension needs to be known, return isdifferent
     isflat = np.subtract((x1, y1, z1), (x2, y2, z2)) == 0
     flatSides = []
@@ -274,7 +275,7 @@ def cutDimension(points, axis='z'):
 def translate(points, amount, axis='y'):
     """Return a clone of the points translateed by amount in axis."""
     points = set(points)
-    vx, vy, vz = lookup.AXIS2VECTOR[axis]
+    vx, vy, vz = block_state_util.axisToVector(axis)
     clone = [(x + amount * vx, y + amount * vy, z + amount * vz)
              for x, y, z in points]
     return clone

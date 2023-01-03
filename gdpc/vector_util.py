@@ -33,6 +33,36 @@ XZ    = ivec3( 1, 0, 1)
 YZ    = ivec3( 0, 1, 1)
 XYZ   = ivec3( 1, 1, 1)
 
+DIAGONALS_2D = (
+    ivec2( 1,  1),
+    ivec2( 1, -1),
+    ivec2(-1,  1),
+    ivec2(-1, -1),
+)
+
+DIAGONALS_3D = (
+    ivec3( 1,  1,  0),
+    ivec3( 1,  0,  1),
+    ivec3( 0,  1,  1),
+    ivec3( 1, -1,  0),
+    ivec3( 1,  0, -1),
+    ivec3( 0,  1, -1),
+    ivec3(-1,  1,  0),
+    ivec3(-1,  0,  1),
+    ivec3( 0, -1,  1),
+    ivec3(-1, -1,  0),
+    ivec3(-1,  0, -1),
+    ivec3( 0, -1, -1),
+    ivec3( 1,  1,  1),
+    ivec3( 1,  1, -1),
+    ivec3( 1, -1,  1),
+    ivec3(-1,  1,  1),
+    ivec3( 1, -1, -1),
+    ivec3(-1, -1,  1),
+    ivec3(-1,  1, -1),
+    ivec3(-1, -1, -1),
+)
+
 
 @overload
 def dropY(vec: vec3) -> vec2: ...
