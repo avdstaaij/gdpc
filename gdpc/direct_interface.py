@@ -163,7 +163,7 @@ def getChunks(x: int, z: int, dx: int = 1, dz: int = 1, dimension: Optional[str]
         "dz": dz,
         "dimension": dimension,
     }
-    acceptType = "application/octet-stream" if asBytes else "text/raw"
+    acceptType = "application/octet-stream" if asBytes else "text/plain"
     response = _get(url, params=parameters, headers={"Accept": acceptType}, retries=retries, timeout=timeout)
     if response.status_code >= 400:
         eprint(f"Error: {response.text}")

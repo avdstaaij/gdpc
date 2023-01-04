@@ -1,6 +1,6 @@
 # GDPC 5.0 (Manicule)
 
-GDPC (Generative Design Python Client) is a framework for use in conjunction with the [Minecraft HTTP Interface Mod](https://github.com/Niels-NTG/gdmc_http_interface) (version 0.6.X), built for the [GDMC competition](https://gendesignmc.engineering.nyu.edu).
+GDPC (Generative Design Python Client) is a framework for use in conjunction with the [Minecraft HTTP Interface Mod](https://github.com/Niels-NTG/gdmc_http_interface) (version >= 0.7.1, < 0.8.0), built for the [GDMC competition](https://gendesignmc.engineering.nyu.edu).
 
 You need to be playing in a Minecraft world with the mod installed to use the framework.
 
