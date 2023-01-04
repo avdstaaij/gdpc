@@ -5,14 +5,15 @@ This module contains functions to:
 * Visualise numpy arrays
 """
 
-
+from typing import Dict
 from io import BytesIO
 from math import ceil, log2
 
+from glm import ivec3
 import nbt
 import numpy as np
 
-from .vector_util import trueMod, Rect
+from .vector_util import addY, trueMod, Rect
 from . import lookup
 from . import direct_interface as di
 from .bitarray import BitArray
@@ -21,14 +22,12 @@ from .bitarray import BitArray
 class CachedSection:
     """Represents a cached chunk section (16x16x16)."""
 
-    def __init__(self, x, y, z, blockPalette, blockStatesBitArray, biomesPalette, biomesBitArray):
+    def __init__(self, position: ivec3, blockPalette, blockStatesBitArray, biomesPalette, biomesBitArray):
         self.blockPalette = blockPalette
         self.blockStatesBitArray = blockStatesBitArray
         self.biomesPalette = biomesPalette
         self.biomesBitArray = biomesBitArray
-        self.x = x
-        self.y = y
-        self.z = z
+        self.position = position
 
     def getBlockCompoundAtIndex(self, index):
         return self.blockPalette[self.blockStatesBitArray.getAt(index)]
@@ -102,7 +101,7 @@ class WorldSlice:
 
         # sections
         # Flat dict of all chunk sections in this world slice
-        self.sections = dict()
+        self.sections: Dict[ivec3, CachedSection] = dict()
         for x in range(self.chunkRect.size[0]):
             for z in range(self.chunkRect.size[1]):
                 chunkID = x + z * self.chunkRect.size[0]
@@ -130,8 +129,8 @@ class WorldSlice:
                     biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette))))
                     biomesDataBitArray = BitArray(biomesBitsPerEntry, 64, biomesData)
 
-                    self.sections[(x, y, z)] = CachedSection(
-                        x, y, z, blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
+                    self.sections[ivec3(x,y,z)] = CachedSection(
+                        ivec3(x,y,z), blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
                     )
 
     # __repr__ displays the class well enough so __str__ is omitted
@@ -139,48 +138,46 @@ class WorldSlice:
         """Represent the WorldSlice as a constructor."""
         return f"WorldSlice{repr(self.rect)}"
 
-    def getChunkSectionPos(self, x, y, z):
-        """Get chunk section x,y,z index from global x, y, z position."""
-        chunkX = (x >> 4) - self.chunkRect.offset[0]
-        chunkZ = (z >> 4) - self.chunkRect.offset[1]
-        chunkY = y >> 4
-        return chunkX, chunkY, chunkZ
+    def getChunkSectionPos(self, position: ivec3):
+        """Get chunk section position from global <position>."""
+        return (position >> 4) - addY(self.chunkRect.offset)
 
-    def getBlockCompoundAt(self, x, y, z):
-        """Return block data at global x, y, z position."""
-        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
+    def getBlockCompoundAt(self, position: ivec3):
+        """Return block data at global <position>."""
+        cachedSection = self.sections.get(self.getChunkSectionPos(position))
         if cachedSection is None:
             return None
 
-        blockIndex = (y % 16) * 16 * 16 + \
-                     (z % 16) * 16 + x % 16
+        blockIndex = (
+            (position.y % 16) * 16 * 16 +
+            (position.z % 16) * 16 +
+            (position.x % 16)
+        )
         return cachedSection.getBlockCompoundAtIndex(blockIndex)
 
-    def getBlockAt(self, x, y, z):
-        """Return the block's namespaced id at global x, y, z position."""
-        blockCompound = self.getBlockCompoundAt(x, y, z)
+    def getBlockAt(self, position: ivec3):
+        """Return the block's namespaced id at global <position>."""
+        blockCompound = self.getBlockCompoundAt(position)
         if blockCompound is None:
             return "minecraft:void_air"
         else:
             return blockCompound["Name"].value
 
-    def getBiomeAt(self, x, y, z):
-        """Return biome at global x, y, z position."""
-        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
+    def getBiomeAt(self, position: ivec3):
+        """Return biome at global <position>."""
+        cachedSection = self.sections.get(self.getChunkSectionPos(position))
         if cachedSection is None:
             return None
 
         # Constrain pos to inside this chunk, then shift 2 bits since biome data is encoded
         # in groups of 4x4x4 per chunk.
-        biomeX = (x % 16) >> 2
-        biomeY = (y % 16) >> 2
-        biomeZ = (z % 16) >> 2
-        biomeIndex = (biomeY << 4) | (biomeZ << 2) | biomeX
+        biomePos = position % 16 >> 2
+        biomeIndex = (biomePos.y << 4) | (biomePos.z << 2) | biomePos.x
         return cachedSection.getBiomeAtIndex(biomeIndex)
 
-    def getBiomesNear(self, x, y, z):
+    def getBiomesNear(self, position: ivec3):
         """Return a dict of biomes in the same chunk."""
-        cachedSection = self.sections.get(self.getChunkSectionPos(x, y, z))
+        cachedSection = self.sections.get(self.getChunkSectionPos(position))
         if cachedSection is None:
             return None
 
@@ -197,8 +194,8 @@ class WorldSlice:
                         foundBiomes[foundBiome] = foundBiomes.get(foundBiome) + 1
         return foundBiomes
 
-    def getPrimaryBiomeNear(self, x, y, z):
+    def getPrimaryBiomeNear(self, position: ivec3):
         """Return the most prevelant biome in the same chunk."""
-        foundBiomes = self.getBiomesNear(x, y, z)
+        foundBiomes = self.getBiomesNear(position)
         # Return the biome that was found the most.
         return max(foundBiomes, key=foundBiomes.get)

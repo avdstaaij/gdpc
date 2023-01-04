@@ -3,6 +3,8 @@
 
 from typing import Set
 
+from glm import ivec2
+
 
 # to translate a string of regular names
 # into the appropriate list of minecraft block IDs
@@ -2068,9 +2070,9 @@ PALETTE = {
     0x14B485: ("minecraft:warped_wart_block",),
 }
 PALETTELOOKUP = {}
-for hexval, blocks in PALETTE.items():
-    for block in blocks:
-        PALETTELOOKUP[block] = hexval
+for hexval, ids in PALETTE.items():
+    for id in ids:
+        PALETTELOOKUP[id] = hexval
 
 # ========================================================= biome-related
 
@@ -2261,13 +2263,13 @@ ASCIIPIXELS = {
 }
 
 
-INVENTORYDIMENSIONS = {
-    (9, 3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
-    (3, 3): {"minecraft:dispenser", "minecraft:dropper", },
-    (5, 1): {"minecraft:hopper", "minecraft:brewing_stand", },
-    (3, 1): FURNACES,
+INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
+    ivec2(9,3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
+    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper", },
+    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand", },
+    ivec2(3,1): FURNACES,
 }
-INVENTORYLOOKUP = {}
-for dimensions, blocks in INVENTORYDIMENSIONS.items():
-    for block in blocks:
-        INVENTORYLOOKUP[block] = dimensions
+CONTAINER_BLOCK_TO_INVENTORY_SIZE = {}
+for size, ids in INVENTORY_SIZE_TO_CONTAINER_BLOCKS.items():
+    for id in ids:
+        CONTAINER_BLOCK_TO_INVENTORY_SIZE[id] = size

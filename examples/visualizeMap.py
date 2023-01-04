@@ -2,12 +2,14 @@
 
 """### Displays a map of the build area."""
 
+from glm import ivec3
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+
 from gdpc import lookup, interface
-from gdpc.vector_util import loop2D
 from gdpc.worldLoader import WorldSlice
+
 
 if __name__ == '__main__':
     # see if a different build area was defined ingame
@@ -40,7 +42,7 @@ if __name__ == '__main__':
             # calculate absolute coordinates
             y = int(heightmap[(x - x1, z - z1)]) - dy
 
-            blockID = worldSlice.getBlockAt(x, y, z)
+            blockID = worldSlice.getBlockAt(ivec3(x,y,z))
             if blockID in lookup.MAPTRANSPARENT:
                 # transparent blocks are ignored
                 continue

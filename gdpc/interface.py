@@ -261,7 +261,7 @@ class Editor:
             self._worldSlice.rect.contains(dropY(position)) and
             not self._worldSliceDecay[tuple(position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
         ):
-            block = Block.fromBlockCompound(self._worldSlice.getBlockCompoundAt(*position))
+            block = Block.fromBlockCompound(self._worldSlice.getBlockCompoundAt(position))
         else:
             blockDict = di.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
             block = Block(blockDict["id"], blockDict["state"])

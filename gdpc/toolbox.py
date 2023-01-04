@@ -3,11 +3,13 @@
 
 from functools import lru_cache
 
+from glm import ivec2
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 from termcolor import colored
 
+from .vector_util import Rect
 from .block import Block
 from . import lookup
 from .lookup import SUPPORTS, VERSIONS
@@ -26,7 +28,7 @@ def closest_version(version):
 
 def check_version():
     """Retrieve Minecraft version and check compatibility."""
-    wslice = WorldSlice(0, 0, 1, 1)  # single-chunk slice
+    wslice = WorldSlice(Rect(size=ivec2(1,1))) # single-chunk slice
     current = int(wslice.nbtfile["Chunks"][0]["DataVersion"].value)
     closestname = "Unknown"
     # check compatibility
@@ -59,11 +61,11 @@ def check_version():
     return (current, closestname)
 
 
-def index2slot(sx, sy, ox, oy):
-    """Return slot number of an inventory correlating to a 2d index."""
-    if not (0 <= sx < ox and 0 <= sy < oy):
-        raise ValueError(f"{sx, sy} is not within (0, 0) and {ox, oy}!")
-    return sx + sy * ox
+def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
+    """Returns the flat index of the slot at <position> in an inventory of size <inventorySize>."""
+    if not Rect(size=inventorySize).contains(position):
+        raise ValueError(f"{position} is not between (0, 0) and {inventorySize}!")
+    return position.x + position.y * inventorySize.x
 
 
 def writeBook(text, title="Chronicle", author="Anonymous",

@@ -1,10 +1,10 @@
 """Provides various small functions for the interface."""
 
 
-from typing import Optional, Iterable, Set
+from typing import Optional, Iterable, Set, Tuple, Union
 from random import choice
 
-from glm import ivec3
+from glm import ivec2, ivec3
 from termcolor import colored
 
 from .util import eprint
@@ -14,7 +14,7 @@ from gdpc.block_state_util import FACING_VALUES, facingToRotation, facingToVecto
 from .block_data_util import signData
 from . import lookup
 from .interface import Editor, runCommand
-from .toolbox import identifyObtrusiveness, index2slot
+from .toolbox import identifyObtrusiveness, positionToInventoryIndex
 
 
 def flood_search_3D(
@@ -25,10 +25,8 @@ def flood_search_3D(
     diagonal=False,
     depth=256
 ):
-    """Return a list of coordinates with blocks that fulfill the search.
-
-    Activating caching is *highly* recommended.
-    """
+    """Return a list of coordinates with blocks that fulfill the search.\n
+    Activating caching is *highly* recommended."""
     def flood_search_3D_recursive(point: ivec3, result: Set[ivec3], visited: Set[ivec3], depth_: int):
         if point in visited:
             return
@@ -40,8 +38,8 @@ def flood_search_3D(
 
         result.add(point)
 
-        for point in neighbors3D(point, boundingBox, diagonal):
-            flood_search_3D_recursive(point, result, visited, depth_ - 1)
+        for neighbor in neighbors3D(point, boundingBox, diagonal):
+            flood_search_3D_recursive(neighbor, result, visited, depth_ - 1)
 
     result:  Set[ivec3] = set()
     visited: Set[ivec3] = set()
@@ -65,47 +63,31 @@ def placeLectern(editor: Editor, position: ivec3, bookData: str, facing: Optiona
 def placeInventoryBlock(
     editor: Editor,
     position: ivec3,
-    block='minecraft:chest',
-    facing=None,
-    items=None,
+    block: Block = Block("minecraft:chest"),
+    items: Optional[Iterable[Union[Tuple[ivec2, str], Tuple[ivec2, str, int]]]] = None,
     replace=True
 ):
-    """Place an inventorised block with any number of items in the world.
+    """Place a container block with the specified items in the world.\n
+    Items should be a sequence of (position, item, [amount,])-tuples."""
+    if block.id not in lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE:
+        raise ValueError(f"The inventory size for {block} is not available. Make sure you are using its namespaced ID.")
+    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE[block]
 
-    Items is expected to be a sequence of (x, y, item[, amount])
-    or a sequence of such sequences e.g. ((x, y, item), (x, y, item), ...)
-    """
-    items = [] if items is None else items
-    if block not in lookup.INVENTORYLOOKUP:
-        raise ValueError(f"The inventory for {block} is not available.\n"
-                         "Make sure you are using the namespaced ID.")
-    dx, dy = lookup.INVENTORYLOOKUP[block]
-    if replace:
-        if facing is None:
-            facing = choice(getOptimalDirection(editor, position))
-        editor.placeBlock(position, Block(block, {"facing": facing}))
-        editor.sendBufferedBlocks()
-        editor.awaitBufferFlushes()
-    else:
-        if block not in editor.getBlock(position):
-            eprint(colored(color="orange", text=\
-                f"Warning: Block at {position.x} {position.y} {position.z} "
-                f"is not of specified type {block}!\n"
-                f"This may result in "
-                f"incorrectly placed items."
-            ))
+    if not replace and editor.getBlock(position).id != block.id:
+        return
 
-    # we received a single item
-    if 3 <= len(items) <= 4 and isinstance(items[0], int):
-        items = [items, ]
+    editor.placeBlock(position, block)
+
+    if items is None:
+        return
 
     for item in items:
-        slot = index2slot(item[0], item[1], dx, dy)
+        index = positionToInventoryIndex(item[0], inventorySize)
         if len(item) == 3:
             item = list(item)
             item.append(1)
-        globalPosition = editor.transform * ivec3(x,y,z)
-        runCommand(f"replaceitem block {' '.join(globalPosition)} container.{slot} {item[2]} {item[3]}")
+        globalPosition = editor.transform * position
+        editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item[2]} {item[3]}")
 
 
 def placeSign(
