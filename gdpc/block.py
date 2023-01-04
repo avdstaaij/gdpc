@@ -8,7 +8,7 @@ import random
 
 from glm import bvec3
 
-from .block_state_util import transformAxis, transformFacing
+from .block_state_util import transformAxis, transformFacing, transformRotation
 
 
 @dataclass
@@ -24,6 +24,7 @@ class Block:
     The transform methods modify a number of orientation-related block states. These are:
     - axis
     - facing
+    - rotation
 
     Other orientation-related block states are currently not supported by the transformation
     system, but support may be added in a future version.
@@ -32,7 +33,6 @@ class Block:
     # TODO: Known orientation-related block states that are currently not supported:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
-    # - rotation=[0,16]     (e.g. signs)
 
     id:     Union[str, Sequence[str]] = "minecraft:stone"
     states: Dict[str, str]            = field(default_factory=dict)
@@ -52,10 +52,12 @@ class Block:
     def transform(self, rotation: int = 0, flip: bvec3 = bvec3()):
         """Transforms this block.\n
         Flips first, rotates second."""
-        axisState   = self.states.get("axis")
-        facingState = self.states.get("facing")
-        if axisState   is not None: self.states["axis"]   = transformAxis  (axisState,   rotation)
-        if facingState is not None: self.states["facing"] = transformFacing(facingState, rotation, flip)
+        axisState     = self.states.get("axis")
+        facingState   = self.states.get("facing")
+        rotationState = self.states.get("rotation")
+        if axisState     is not None: self.states["axis"]     = transformAxis  (axisState,   rotation)
+        if facingState   is not None: self.states["facing"]   = transformFacing(facingState, rotation, flip)
+        if rotationState is not None: self.states["rotation"] = transformRotation(rotationState, rotation, flip)
 
 
     def transformed(self, rotation: int = 0, flip: bvec3 = bvec3()):

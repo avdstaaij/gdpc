@@ -213,4 +213,26 @@ def invertFacing(facing: str):
 # --------------------------------------------------------------------------------------------------
 # Rotation
 
-# TODO
+
+def rotateXZrotation(blockStateRotation: str, rotation: int):
+    """Returns the rotated "rotation" block state string.\n
+    Yes, this is confusing. <blockStateRotation> denotes a value of the "rotation" block state, as
+    used by e.g. signs. <rotation> denotes a rotation as used by the transformation system, so one
+    of {0,1,2,3}. This function name is consistent with the other block state rotation functions."""
+    return str((int(blockStateRotation) + 4*rotation) % 16)
+
+
+def flipRotation(rotation: str, flip: bvec3):
+    """Returns the flipped "rotation" block state string"""
+    rotationInt = int(rotation)
+    if flip.x:
+        rotationInt = (16 - rotationInt) % 16
+    if flip.z:
+        rotationInt = (8 - rotationInt) % 16
+    return str(rotationInt)
+
+
+def transformRotation(blockStateRotation: str, rotation: int = 0, flip: bvec3 = bvec3()):
+    """Returns the transformed "rotation" block state string.\n
+    Flips first, rotates second."""
+    return rotateXZrotation(flipRotation(blockStateRotation, flip), rotation)
