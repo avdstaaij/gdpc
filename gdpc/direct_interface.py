@@ -13,7 +13,7 @@ import time
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
-from .util import eprint, withRetries
+from .utility import eprint, withRetries
 
 
 HOST = "http://localhost:9000"

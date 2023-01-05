@@ -5,15 +5,14 @@ from typing import Optional, Iterable, Set, Tuple, Union
 from random import choice
 
 from glm import ivec2, ivec3
-from termcolor import colored
 
-from .util import eprint
-from .vector_util import EAST, NORTH, SOUTH, WEST, Box, neighbors3D
+from .utility import eprint
+from .vector_tools import EAST, NORTH, SOUTH, WEST, Box, neighbors3D
 from .block import Block
-from gdpc.block_state_util import FACING_VALUES, facingToRotation, facingToVector, invertFacing
-from .block_data_util import signData
+from .block_state_tools import FACING_VALUES, facingToRotation, facingToVector, invertFacing
+from .block_data_tools import signData
 from . import lookup
-from .interface import Editor, runCommand
+from .interface import Editor
 from .toolbox import identifyObtrusiveness, positionToInventoryIndex
 
 

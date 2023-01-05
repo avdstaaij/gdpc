@@ -6,7 +6,7 @@ from typing import Union, Optional, List, Dict
 from copy import copy
 from glm import ivec3
 
-from .vector_util import Box
+from .vector_tools import Box
 from .transform import Transform
 from .interface import Editor
 from .block import Block

@@ -40,12 +40,10 @@ from random import randint
 from glm import ivec3
 
 from gdpc.block import Block
-from gdpc import vector_util as VU
 from gdpc import geometry as GEO
 from gdpc import interface as ITF
 from gdpc import toolbox as TB
 from gdpc import interface_toolbox as ITB
-from gdpc import worldLoader as WL
 
 
 # === STRUCTURE #2

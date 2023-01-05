@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from gdpc import lookup, interface
-from gdpc.worldLoader import WorldSlice
+from gdpc.worldSlice import WorldSlice
 
 
 if __name__ == '__main__':

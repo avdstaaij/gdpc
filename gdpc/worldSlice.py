@@ -1,9 +1,4 @@
-"""Provides tools for reading chunk data.
-
-This module contains functions to:
-* Calculate a heightmap ideal for building
-* Visualise numpy arrays
-"""
+"""Provides the WorldSlice class"""
 
 from typing import Dict
 from io import BytesIO
@@ -13,7 +8,7 @@ from glm import ivec3
 import nbt
 import numpy as np
 
-from .vector_util import addY, trueMod, Rect
+from .vector_tools import addY, trueMod, Rect
 from . import lookup
 from . import direct_interface as di
 from .bitarray import BitArray

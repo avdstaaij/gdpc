@@ -1,14 +1,14 @@
 """Provides the Block class"""
 
 
-from typing import Any, Union, Optional, List, Dict, Sequence
+from typing import Union, Optional, Dict, Sequence
 from dataclasses import dataclass, field
 from copy import copy, deepcopy
 import random
 
 from glm import bvec3
 
-from .block_state_util import transformAxis, transformFacing, transformRotation
+from .block_state_tools import transformAxis, transformFacing, transformRotation
 
 
 @dataclass

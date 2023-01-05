@@ -17,13 +17,13 @@ import numpy as np
 from glm import ivec3
 from termcolor import colored
 
-from .util import eprint, eagerAll, OrderedByLookupDict
-from .vector_util import Rect, Box, addY, boxBetween, dropY
+from .utility import eprint, eagerAll, OrderedByLookupDict
+from .vector_tools import Rect, Box, addY, boxBetween, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
 from . import direct_interface as di
-from .worldLoader import WorldSlice
+from .worldSlice import WorldSlice
 
 
 def getBuildArea(default = Box(ivec3(0,0,0), ivec3(128,256,128))):

@@ -9,11 +9,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 from termcolor import colored
 
-from .vector_util import Rect
+from .vector_tools import Rect
 from .block import Block
 from . import lookup
 from .lookup import SUPPORTS, VERSIONS
-from .worldLoader import WorldSlice
+from .worldSlice import WorldSlice
 
 
 def closest_version(version):

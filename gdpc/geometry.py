@@ -7,8 +7,8 @@ import numpy as np
 from glm import ivec2, ivec3
 from termcolor import colored
 
-from . import block_state_util
-from .vector_util import X, XY, XZ, Y, YZ, Z, addY, Rect, Box, boxBetween, loop3D, orderedCorners
+from . import block_state_tools
+from .vector_tools import X, XY, XZ, Y, YZ, Z, addY, Rect, Box, boxBetween, loop3D, orderedCorners
 from .block import Block
 from .interface import Editor
 
@@ -274,7 +274,7 @@ def cutDimension(points, axis='z'):
 def translate(points, amount, axis='y'):
     """Return a clone of the points translateed by amount in axis."""
     points = set(points)
-    vx, vy, vz = block_state_util.axisToVector(axis)
+    vx, vy, vz = block_state_tools.axisToVector(axis)
     clone = [(x + amount * vx, y + amount * vy, z + amount * vz)
              for x, y, z in points]
     return clone

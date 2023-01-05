@@ -17,7 +17,7 @@ from glm import ivec3
 
 from gdpc import (direct_interface, interface_toolbox,
                   lookup, old_geometry, old_interface, toolbox)
-from gdpc.vector_util import loop2D, loop3D
+from gdpc.vector_tools import loop2D, loop3D
 
 __all__ = []
 __version__ = "v5.1"

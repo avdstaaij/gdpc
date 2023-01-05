@@ -1,4 +1,4 @@
-"""Utilities for working with orientation-related block state properties"""
+"""Utilities for working with orientation-related block states"""
 
 
 from glm import ivec3, bvec3

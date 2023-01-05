@@ -1,4 +1,4 @@
-"""Generic utilities"""
+"""Various utilities that are not specific to GDPC"""
 
 
 from typing import TypeVar, Generic, Callable, Iterable, OrderedDict

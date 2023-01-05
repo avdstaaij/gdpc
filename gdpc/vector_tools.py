@@ -1,4 +1,4 @@
-"""Various Minecraft-related vector math functions"""
+"""Various vector utilities"""
 
 
 from typing import Any, List, Optional, Tuple, Union, overload
@@ -11,7 +11,7 @@ from scipy import ndimage
 import glm
 from glm import ivec2, ivec3, vec2, vec3, bvec2, bvec3
 
-from .util import non_zero_sign
+from .utility import non_zero_sign
 
 
 # ==================================================================================================

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 from glm import ivec3, bvec3
 
-from .vector_util import rotateXZ, flipRotationXZ, flipToScale3D, rotateSizeXZ, Box
+from .vector_tools import rotateXZ, flipRotationXZ, flipToScale3D, rotateSizeXZ, Box
 
 
 # ==================================================================================================
