@@ -18,7 +18,7 @@ from glm import ivec3
 from termcolor import colored
 
 from .utility import eprint, eagerAll, OrderedByLookupDict
-from .vector_tools import Rect, Box, addY, boxBetween, dropY
+from .vector_tools import Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
@@ -33,7 +33,7 @@ def getBuildArea(default = Box(ivec3(0,0,0), ivec3(128,256,128))):
     if not success:
         return deepcopy(default)
     beginX, beginY, beginZ, endX, endY, endZ = result
-    return boxBetween(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
+    return Box.between(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
 
 
 def setBuildArea(buildArea: Box):

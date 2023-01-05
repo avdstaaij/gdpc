@@ -8,7 +8,7 @@ from glm import ivec2, ivec3
 from termcolor import colored
 
 from . import block_state_tools
-from .vector_tools import X, XY, XZ, Y, YZ, Z, addY, Rect, Box, boxBetween, loop3D, orderedCorners
+from .vector_tools import X, XY, XZ, Y, YZ, Z, addY, Rect, Box, loop3D, orderedCorners
 from .block import Block
 from .interface import Editor
 
@@ -50,7 +50,7 @@ def placeCornerPillars(editor: Editor, box: Box, block: Block, replace: Optional
 def placeCheckeredCuboid(editor: Editor, first: ivec3, last: ivec3, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
     """Places a checker pattern of [block1] and [block2] in the box between [first] and [last]
     (inclusive)"""
-    placeCheckeredBox(editor, boxBetween(first, last), block1, block2, replace)
+    placeCheckeredBox(editor, Box.between(first, last), block1, block2, replace)
 
 
 def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
@@ -63,7 +63,7 @@ def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = B
 def placeStripedCuboid(editor: Editor, first: ivec3, last: ivec3, stripeAxis: int, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):
     """Places a stripe pattern of [block1] and [block2] along [stripeAxis] (0, 1 or 2) in the box
     between [first] and [last] (inclusive)"""
-    placeStripedBox(editor, boxBetween(first, last), stripeAxis, block1, block2, replace)
+    placeStripedBox(editor, Box.between(first, last), stripeAxis, block1, block2, replace)
 
 
 def placeStripedBox(editor: Editor, box: Box, stripeAxis: int, block1: Block, block2: Block = Block("minecraft:air"), replace: Optional[Union[str, List[str]]] = None):

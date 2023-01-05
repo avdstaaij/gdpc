@@ -351,6 +351,9 @@ def lineToVoxelList(begin: ivec2, end: ivec2, width: int = 1) -> List[ivec3]:
 # ==================================================================================================
 
 
+# TODO: If someone knows how to fix the duplication in Rect and Box, please do tell.
+
+
 @dataclass
 class Rect:
     """A rectangle, defined by an offset and a size"""
@@ -450,9 +453,32 @@ class Rect:
         """Returns a copy of this Rect, morphologically eroded by [erosion]"""
         return self.dilated(-erosion)
 
+    def centeredSubRectOffset(self, size: ivec2):
+        """Returns an offset such that Rect(offset, [size]).middle == self.middle"""
+        difference = self.size - size
+        return self.offset + difference/2
+
+    def centeredSubRect(self, size: ivec2):
+        """Returns a rect of size [size] with the same middle as this rect"""
+        return Rect(self.centeredSubRectOffset(size), size)
+
     def toBox(self, offsetY = 0, sizeY = 0):
         """Returns a corresponding Box"""
         return Box(addY(self.offset, offsetY), addY(self.size, sizeY))
+
+    @staticmethod
+    def between(cornerA: ivec2, cornerB: ivec2):
+        """Returns the Rect between [cornerA] and [cornerB] (both inclusive),
+        which may be any opposing corners"""
+        first = ivec2(
+            cornerA.x if cornerA.x <= cornerB.x else cornerB.x,
+            cornerA.y if cornerA.y <= cornerB.y else cornerB.y,
+        )
+        last = ivec2(
+            cornerA.x if cornerA.x > cornerB.x else cornerB.x,
+            cornerA.y if cornerA.y > cornerB.y else cornerB.y,
+        )
+        return Rect(first, last - first + 1)
 
 
 @dataclass()
@@ -559,59 +585,34 @@ class Box:
         """Returns a copy of this Box, morphologically eroded by [erosion]"""
         return self.dilated(-erosion)
 
+    def centeredSubBoxOffset(self, size: ivec2):
+        """Returns an offset such that Box(offset, [size]).middle == self.middle"""
+        difference = self.size - size
+        return self.offset + difference/2
+
+    def centeredSubBox(self, size: ivec2):
+        """Returns an box of size [size] with the same middle as this box"""
+        return Box(self.centeredSubBoxOffset(size), size)
+
     def toRect(self):
         """Returns this Box's XZ-plane as a Rect"""
         return Rect(dropY(self.offset), dropY(self.size))
 
-
-def rectBetween(cornerA: ivec2, cornerB: ivec2):
-    """Returns the Rect between [cornerA] and [cornerB], which may be any opposing corners"""
-    first = ivec2(
-        cornerA.x if cornerA.x <= cornerB.x else cornerB.x,
-        cornerA.y if cornerA.y <= cornerB.y else cornerB.y,
-    )
-    last = ivec2(
-        cornerA.x if cornerA.x > cornerB.x else cornerB.x,
-        cornerA.y if cornerA.y > cornerB.y else cornerB.y,
-    )
-    return Rect(first, last - first + 1)
-
-
-def boxBetween(cornerA: ivec3, cornerB: ivec3):
-    """Returns the Box between [cornerA] and [cornerB], which may be any opposing corners"""
-    first = ivec3(
-        cornerA.x if cornerA.x <= cornerB.x else cornerB.x,
-        cornerA.y if cornerA.y <= cornerB.y else cornerB.y,
-        cornerA.z if cornerA.z <= cornerB.z else cornerB.z,
-    )
-    last = ivec3(
-        cornerA.x if cornerA.x > cornerB.x else cornerB.x,
-        cornerA.y if cornerA.y > cornerB.y else cornerB.y,
-        cornerA.z if cornerA.z > cornerB.z else cornerB.z,
-    )
-    return Box(first, last - first + 1)
-
-
-def centeredSubRectOffset(rect: Rect, size: ivec2):
-    """Returns an offset such that Rect(offset, [size]).middle == [rect].middle"""
-    difference = rect.size - size
-    return rect.offset + difference/2
-
-
-def centeredSubBoxOffset(box: Box, size: ivec2):
-    """Returns an offset such that Box(offset, [size]).middle == [box].middle"""
-    difference = box.size - size
-    return box.offset + difference/2
-
-
-def centeredSubRect(rect: Rect, size: ivec2):
-    """Returns a rect of size [size] with the same middle as [rect]"""
-    return Rect(centeredSubRectOffset(rect, size), size)
-
-
-def centeredSubBox(box: Box, size: ivec2):
-    """Returns an box of size [size] with the same middle as [box]"""
-    return Box(centeredSubBoxOffset(box, size), size)
+    @staticmethod
+    def between(cornerA: ivec3, cornerB: ivec3):
+        """Returns the Box between [cornerA] and [cornerB] (both inclusive),
+        which may be any opposing corners"""
+        first = ivec3(
+            cornerA.x if cornerA.x <= cornerB.x else cornerB.x,
+            cornerA.y if cornerA.y <= cornerB.y else cornerB.y,
+            cornerA.z if cornerA.z <= cornerB.z else cornerB.z,
+        )
+        last = ivec3(
+            cornerA.x if cornerA.x > cornerB.x else cornerB.x,
+            cornerA.y if cornerA.y > cornerB.y else cornerB.y,
+            cornerA.z if cornerA.z > cornerB.z else cornerB.z,
+        )
+        return Box(first, last - first + 1)
 
 
 def rectSlice(array: np.ndarray, rect: Rect):
@@ -624,38 +625,14 @@ def setRectSlice(array: np.ndarray, rect: Rect, value: Any):
     array[rect.begin.x:rect.end.x, rect.begin.y:rect.end.y] = value
 
 
-def findPointClosestToRect(rect: Rect, pointArray: np.ndarray):
-    """Returns the point from [point_array] closest to [rect] and the point of [rect] it is
-        closest to, according to the L1 distance"""
-    assert pointArray.shape[1] == 2, "point_array should be a list of 2-dimensional points"
-    # This can surely be simplified
-    d1 = np.array([rect.begin.x, rect.begin.y]) - pointArray
-    d2 = pointArray - np.array([rect.end.x - 1, rect.end.y - 1])
-    d = np.maximum(0, np.maximum(d1, d2))
-    distances = np.sum(d, axis=1)
-    index = np.argmin(distances)
-    closestRoadPoint = pointArray[index]
-    sideSign = 2 * (closestRoadPoint >= [rect.end.x, rect.end.y]) - 1
-    rectPoint = closestRoadPoint - sideSign * d[index]
-    return ivec2(closestRoadPoint[0], closestRoadPoint[1]), ivec2(rectPoint[0], rectPoint[1])
+def boxSlice(array: np.ndarray, box: Box):
+    """Returns the slice from [array] defined by [box]"""
+    return array[box.begin.x:box.end.x, box.begin.y:box.end.y, box.begin.z:box.end.z]
 
 
-def isRectHorizontalToPoints(rect: Rect, pointArray: np.ndarray):
-    """Returns whether [rect] is oriented horizontally with respect to the point from [point_array]
-        that is closest to it.\n
-        Always returns True for square rects."""
-    if rect.size.x == rect.size.y: return True
-    closestPoint, rectPoint = findPointClosestToRect(rect, pointArray)
-    direction = toAxisVector(closestPoint - rectPoint)
-    return bool(direction[0]) ^ bool(rect.size.x > rect.size.y)
-
-
-def isRectVerticalToPoints(rect: Rect, pointArray: np.ndarray):
-    """Returns whether [rect] is oriented vertically with respect to the point from [point_array]
-        that is closest to it.\n
-        Always returns True for square rects."""
-    if rect.size.x == rect.size.y: return True
-    return not isRectHorizontalToPoints(rect, pointArray)
+def setBoxSlice(array: np.ndarray, box: Box, value: Any):
+    """Sets the slice from [array] defined by [box] to [value]"""
+    array[box.begin.x:box.end.x, box.begin.y:box.end.y, box.begin.z:box.end.z] = value
 
 
 def neighbors2D(point: ivec2, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
