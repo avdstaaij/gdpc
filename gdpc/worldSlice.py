@@ -2,7 +2,7 @@
 
 from typing import Dict
 from io import BytesIO
-from math import ceil, log2
+from math import floor, ceil, log2
 
 from glm import ivec3
 import nbt
@@ -11,10 +11,69 @@ import numpy as np
 from .vector_tools import addY, trueMod, Rect
 from . import lookup
 from . import direct_interface as di
-from .bitarray import BitArray
 
 
-class CachedSection:
+def _inclusiveBetween(start, end, value):
+    """Raise an exception when the value is out of bounds."""
+    if not (start <= value <= end):
+        raise ValueError(
+            f"The value {value} is not in the inclusive range "
+            f"of {start} to {end}")
+
+
+class _BitArray:
+    """Store an array of binary values and its metrics.
+
+    Minecraft stores block and heightmap data in compacted arrays of longs (bitarrays).
+    This class performs index mapping and bit shifting to access the data.
+    """
+
+    def __init__(self, bitsPerEntryIn, arraySizeIn, data):
+        """Initialise a BitArray."""
+        _inclusiveBetween(1, 32, bitsPerEntryIn)
+        self.arraySize = arraySizeIn
+        self.bitsPerEntry = bitsPerEntryIn
+        self.maxEntryValue = (1 << bitsPerEntryIn) - 1
+        self.entriesPerLong = floor(64 / bitsPerEntryIn)
+        j = floor((arraySizeIn + self.entriesPerLong - 1)
+                  / self.entriesPerLong)
+        if data is not None:
+            if len(data) != j:
+                raise Exception(
+                    "Invalid length given for storage, "
+                    f"got: {len(data)} but expected: {j}")
+
+            self.longArray = data
+        else:
+            self.longArray = []  # length j
+
+    # __repr__ displays the class well enough so __str__ is omitted
+    def __repr__(self):
+        """Represent the BitArray as a constructor."""
+        return f"BitArray{(self.bitsPerEntry, self.arraySize, self.longArray)}"
+
+    def getPosOfLong(self, index):
+        """Return the position of the long that contains index."""
+        return index // self.entriesPerLong
+
+    def getAt(self, index):
+        """Return the binary value stored at index."""
+        # If longArray size is 0, this is because the corresponding palette
+        # only contains a single value.
+        if len(self.longArray) == 0:
+            return 0
+        _inclusiveBetween(0, (self.arraySize - 1), index)
+        i = self.getPosOfLong(index)
+        j = self.longArray[i]
+        k = (index - i * self.entriesPerLong) * self.bitsPerEntry
+        return j >> k & self.maxEntryValue
+
+    def size(self):
+        """Return self.arraySize."""
+        return self.arraySize
+
+
+class _CachedSection:
     """Represents a cached chunk section (16x16x16)."""
 
     def __init__(self, position: ivec3, blockPalette, blockStatesBitArray, biomesPalette, biomesBitArray):
@@ -78,7 +137,7 @@ class WorldSlice:
                 hms = self.nbtfile['Chunks'][chunkID]['Heightmaps']
                 for hmName in self.heightmapTypes:
                     hmRaw = hms[hmName]
-                    heightmapBitArray = BitArray(9, 16 * 16, hmRaw)
+                    heightmapBitArray = _BitArray(9, 16 * 16, hmRaw)
                     heightmap = self.heightmaps[hmName]
                     for cz in range(16):
                         for cx in range(16):
@@ -96,7 +155,7 @@ class WorldSlice:
 
         # sections
         # Flat dict of all chunk sections in this world slice
-        self.sections: Dict[ivec3, CachedSection] = dict()
+        self.sections: Dict[ivec3, _CachedSection] = dict()
         for x in range(self.chunkRect.size[0]):
             for z in range(self.chunkRect.size[1]):
                 chunkID = x + z * self.chunkRect.size[0]
@@ -115,16 +174,16 @@ class WorldSlice:
                     if 'data' in section['block_states']:
                         blockData = section['block_states']['data']
                     blockPaletteBitsPerEntry = max(4, ceil(log2(len(blockPalette))))
-                    blockDataBitArray = BitArray(blockPaletteBitsPerEntry, 16 * 16 * 16, blockData)
+                    blockDataBitArray = _BitArray(blockPaletteBitsPerEntry, 16 * 16 * 16, blockData)
 
                     biomesPalette = section['biomes']['palette']
                     biomesData = None
                     if 'data' in section['biomes']:
                         biomesData = section['biomes']['data']
                     biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette))))
-                    biomesDataBitArray = BitArray(biomesBitsPerEntry, 64, biomesData)
+                    biomesDataBitArray = _BitArray(biomesBitsPerEntry, 64, biomesData)
 
-                    self.sections[ivec3(x,y,z)] = CachedSection(
+                    self.sections[ivec3(x,y,z)] = _CachedSection(
                         ivec3(x,y,z), blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
                     )
 
