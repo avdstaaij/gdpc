@@ -42,8 +42,8 @@ from glm import ivec3
 from gdpc.block import Block
 from gdpc import geometry as GEO
 from gdpc import interface as ITF
-from gdpc import toolbox as TB
-from gdpc import interface_toolbox as ITB
+from gdpc import minecraft_tools as MT
+from gdpc import editor_tools as ET
 
 
 # === STRUCTURE #2
@@ -183,8 +183,8 @@ def buildCity():
     # Place a book on a Lectern
     # See the wiki for book formatting codes
     ED.placeBlock(ivec3(xaxis, y, zaxis), Block("emerald_block"))
-    bookData = TB.writeBook("This book has a page!")
-    ITB.placeLectern(ED, ivec3(xaxis, y + 1, zaxis), bookData)
+    bookData = MT.writeBook("This book has a page!")
+    ET.placeLectern(ED, ivec3(xaxis, y + 1, zaxis), bookData)
 
 
 def buildTower(x, z):
@@ -224,7 +224,7 @@ def buildTower(x, z):
     # the upper block defines the direction
     GEO.placeCuboid(ED, ivec3(x + radius, y + 1, z), ivec3( x + radius, y + height + 2, z), Block("air"))
     GEO.placeCuboid(ED, ivec3(x + radius - 1, y + 1, z), ivec3(x + radius - 1, y + height + 2, z), Block("lime_stained_glass"))
-    ED.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("red_concrete"))
+    ED.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("warped_door"))
     ED.placeBlock(ivec3(x + radius - 1, y + 2, z), Block("warped_door", {"facing": "west", "half": "upper"}))
 
     GEO.placeCuboid(ED, ivec3(x - radius, y + 1, z), ivec3( x - radius, y + height + 2, z), Block("air"))

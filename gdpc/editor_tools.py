@@ -1,4 +1,4 @@
-"""Provides various small functions for the interface."""
+"""Provides various utilities that require an Editor."""
 
 
 from typing import Optional, Iterable, Set, Tuple, Union
@@ -13,7 +13,7 @@ from .block_state_tools import FACING_VALUES, facingToRotation, facingToVector, 
 from .block_data_tools import signData
 from . import lookup
 from .interface import Editor
-from .toolbox import identifyObtrusiveness, positionToInventoryIndex
+from .minecraft_tools import identifyObtrusiveness, positionToInventoryIndex
 
 
 def flood_search_3D(

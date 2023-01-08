@@ -15,14 +15,13 @@ from copy import deepcopy
 
 from glm import ivec3
 
-from gdpc import (direct_interface, interface_toolbox,
-                  lookup, old_geometry, old_interface, toolbox)
+from gdpc import (direct_interface, editor_tools, lookup, minecraft_tools, old_geometry, old_interface)
 from gdpc.vector_tools import loop2D, loop3D
 
 __all__ = []
 __version__ = "v5.1"
 
-VERSIONNAME = toolbox.check_version()[1]
+VERSIONNAME = minecraft_tools.check_version()[1]
 
 # import timeit
 
@@ -290,12 +289,12 @@ def testBooks():
             '╚══════════╝')
 
     print(f"\t{lookup.TCOLORS['gray']}Writing book...", end="\r")
-    book = toolbox.writeBook(text, TITLE, AUTHOR,
+    book = minecraft_tools.writeBook(text, TITLE, AUTHOR,
                              DESCRIPTION, DESCRIPTIONCOLOR)
     print("\tWriting book done.")
 
     print("\tPlacing lectern...", end="\r")
-    interface_toolbox.placeLectern(0, 255, 0, book, 'east')
+    editor_tools.placeLectern(0, 255, 0, book, 'east')
     print("\tPlacing lectern done.")
 
     print("\tPrompting user...", end="\r")

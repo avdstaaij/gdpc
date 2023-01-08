@@ -1,4 +1,4 @@
-"""Provides various small functions for the average workflow."""
+"""Provides miscellaneous Minecraft-related utility functions."""
 
 
 from functools import lru_cache
