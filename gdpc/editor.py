@@ -216,12 +216,11 @@ class Editor:
         The build area is always in **global coordinates**; self.transform is ignored."""
         success, result = self.interface.getBuildArea()
         if not success:
-            eprint(colored(color="orange", text=\
+            raise RuntimeError(colored(color="red", text=\
                 "ERROR: Failed to get build area!\n"
-                "Make sure to set the build area with \setbuildarea in-game.\n"
+                "Make sure to set the build area with /setbuildarea in-game.\n"
                 "For example: /setbuildarea ~0 0 ~0 ~128 255 ~128"
             ))
-            return Rect()
         beginX, beginY, beginZ, endX, endY, endZ = result
         return Box.between(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
 
@@ -469,6 +468,11 @@ class Editor:
         if (self._worldSlice is None):
             raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
         return self.loadWorldSlice(self._worldSlice.rect)
+
+
+    def getMinecraftVersion(self):
+        """Returns the Minecraft version as a string."""
+        return self.interface.getVersion()
 
 
     @contextmanager

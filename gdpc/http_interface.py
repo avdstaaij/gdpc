@@ -10,10 +10,11 @@ from functools import partial
 import time
 
 import requests
-#from requests.exceptions import ConnectionError as RequestConnectionError
+from requests.exceptions import ConnectionError as RequestConnectionError
 from termcolor import colored
 
 from .utility import eprint, withRetries
+from .lookup import SUPPORTED_MINECRAFT_VERSIONS
 
 
 def _onRequestRetry(e: Exception, retriesLeft: int):
@@ -22,7 +23,7 @@ def _onRequestRetry(e: Exception, retriesLeft: int):
         f"Error: {e}"
         f"I'll retry in a bit ({retriesLeft} retries left).\n"
     ))
-    time.sleep(2)
+    time.sleep(3)
 
 
 def _get(*args, retries: int, **kwargs):
@@ -173,3 +174,22 @@ class HTTPInterface:
             eprint(f"Error: {response.text}")
 
         return response.content if asBytes else response.text
+
+
+    def getVersion(self, retries=5, timeout=None):
+        """Returns the Minecraft version as a string."""
+        return _get(f"{self.host}/version", retries=retries, timeout=timeout).text
+
+
+    def checkConnection(self) -> Tuple[bool, Optional[bool]]:
+        """Returns booleans (<connected>, <versionSupported>).\n
+        <connected> is True if a HTTP request is succesfully received.\\
+        <versionSupported> is True if the detected Minecraft version is guaranteed to be supported.\n
+        If <connected> is False, <versionSupported> is None.
+        """
+        try:
+            minecraftVersion = self.getVersion(retries=0)
+        except RequestConnectionError:
+            return False, None
+
+        return True, minecraftVersion in SUPPORTED_MINECRAFT_VERSIONS

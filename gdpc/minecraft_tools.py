@@ -7,59 +7,10 @@ from glm import ivec2
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-from termcolor import colored
 
 from .vector_tools import Rect
 from .block import Block
 from . import lookup
-from .lookup import SUPPORTS, VERSIONS
-from .world_slice import WorldSlice
-
-
-def closest_version(version):
-    """Retrieve next-best version code to given version code."""
-    if version in VERSIONS:
-        return version
-    for val in sorted(VERSIONS.keys(), reverse=True):
-        if version - val >= 0:
-            return val
-    return 0
-
-
-# TODO: re-implement using version endpoint
-# def check_version():
-#     """Retrieve Minecraft version and check compatibility."""
-#     wslice = WorldSlice(Rect(size=ivec2(1,1))) # single-chunk slice
-#     current = int(wslice.nbtfile["Chunks"][0]["DataVersion"].value)
-#     closestname = "Unknown"
-#     # check compatibility
-#     if current not in VERSIONS or VERSIONS[SUPPORTS] not in VERSIONS[current]:
-#         closest = closest_version(current)
-#         closestname = VERSIONS[closest]
-#         closestname += " snapshot" if current > closest else ""
-#         if closest > SUPPORTS:
-#             print(colored(color="yellow", text=\
-#                 f"WARNING: You are using a newer "
-#                 "version of Minecraft then GDPC supports!\n"
-#                 f"\tSupports: {VERSIONS[SUPPORTS]} "
-#                 f"Detected: {closestname}"
-#             ))
-#         elif closest < SUPPORTS:
-#             print(colored(color="yellow", text=\
-#                 f"WARNING: You are using an older "
-#                 "version of Minecraft then GDPC supports!\n"
-#                 f"\tSupports: {VERSIONS[SUPPORTS]} "
-#                 f"Detected: {closestname}"
-#             ))
-#         else:
-#             raise ValueError(colored(color="red", text=\
-#                 f"Invalid supported version: "
-#                 f"SUPPORTS = {current}!"
-#             ))
-#     else:
-#         closestname = VERSIONS[current]
-
-#     return (current, closestname)
 
 
 def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):

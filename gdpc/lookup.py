@@ -6,66 +6,12 @@ from typing import Set
 from glm import ivec2
 
 
-# to translate a string of regular names
-# into the appropriate list of minecraft block IDs
-# >>> def f(string):
-# >>>     return ["minecraft:" + i.strip().lower().replace(" ", "_")
-# >>>         for i in string.split(", ")]
-
-# to translate a 255 RGB to hex RGB value
-# >>> def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
-
-# See https://minecraft.fandom.com/wiki/Data_version#List_of_data_versions
-SUPPORTS = 3120  # Supported Minecraft version code
-
-# all major Minecraft version codes
-VERSIONS = {
-    3105: "1.19",
-    3117: "1.19.1",
-    3120: "1.19.2",
-    3218: "1.19.3",
-    2860: "1.18",
-    2865: "1.18.1",
-    2975: "1.18.2",
-    2724: "1.17",
-    2730: "1.17.1",
-    2566: "1.16",
-    2567: "1.16.1",
-    2578: "1.16.2",
-    2580: "1.16.3",
-    2584: "1.16.4",
-    2586: "1.16.5",
-    2225: "1.15",
-    2227: "1.15.1",
-    2230: "1.15.2",
-    1952: "1.14",
-    1957: "1.14.1",
-    1963: "1.14.2",
-    1968: "1.14.3",
-    1976: "1.14.4",
-    1519: "1.13",
-    1628: "1.13.1",
-    1631: "1.13.2",
-    1139: "1.12",
-    1241: "1.12.1",
-    1343: "1.12.2",
-    819:  "1.11",
-    921:  "1.11.1",
-    922:  "1.11.2",
-    510:  "1.10",
-    511:  "1.10.1",
-    512:  "1.10.2",
-    169:  "1.9",
-    175:  "1.9.1",
-    176:  "1.9.2",
-    183:  "1.9.3",
-    184:  "1.9.4",
-    0:    "Pre-1.9",
-}
-VERSIONIDS = dict([(value, key) for key, value in VERSIONS.items()])
+# ========================================================= general constants
 
 
-# ========================================================= custom values
+SUPPORTED_MINECRAFT_VERSIONS = [
+    "1.19.2",
+]
 
 
 BUILD_Y_MIN = -64
