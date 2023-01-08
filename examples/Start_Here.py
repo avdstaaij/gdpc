@@ -40,8 +40,8 @@ from random import randint
 from glm import ivec3
 
 from gdpc.block import Block
+from gdpc.editor import Editor
 from gdpc import geometry as GEO
-from gdpc import interface as ITF
 from gdpc import minecraft_tools as MT
 from gdpc import editor_tools as ET
 
@@ -52,13 +52,13 @@ from gdpc import editor_tools as ET
 # NOTE: if you want to change this value inside one of your functions,
 #   you'll have to add a line of code. For an example search 'GLOBAL'
 
+# Here we construct an Editor object
+ED = Editor()
+
 # Here we read start and end coordinates of our build area
-BUILD_AREA = ITF.getBuildArea()  # BUILDAREA
+BUILD_AREA = ED.getBuildArea()  # BUILDAREA
 STARTX, STARTY, STARTZ = BUILD_AREA.begin
 LASTX, LASTY, LASTZ = BUILD_AREA.end - 1
-
-# Here we construct an Editor object
-ED = ITF.Editor()
 
 # WORLDSLICE
 # Using the start and end coordinates we are generating a world slice
@@ -68,7 +68,7 @@ ED = ITF.Editor()
 #
 # IMPORTANT: Keep in mind that a wold slice is a 'snapshot' of the world,
 #   and any changes you make later on will not be reflected in the world slice
-WORLDSLICE = ED.loadWorldSlice(BUILD_AREA.toRect())  # this takes a while
+WORLDSLICE = ED.loadWorldSlice(BUILD_AREA.toRect(), cache=True)  # this takes a while
 
 ROADHEIGHT = 0
 

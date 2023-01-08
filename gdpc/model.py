@@ -8,7 +8,7 @@ from glm import ivec3
 
 from .vector_tools import Box
 from .transform import Transform
-from .interface import Editor
+from .editor import Editor
 from .block import Block
 
 

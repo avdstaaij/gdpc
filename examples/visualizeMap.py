@@ -7,19 +7,21 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gdpc import lookup, interface
-from gdpc.worldSlice import WorldSlice
+from gdpc.editor import Editor
+from gdpc import lookup
 
 
 if __name__ == '__main__':
+    editor = Editor()
+
     # see if a different build area was defined ingame
-    buildArea = interface.getBuildArea()
+    buildArea = editor.getBuildArea()
     buildRect = buildArea.toRect()
     x1, z1 = buildRect.begin
     x2, z2 = buildRect.end
 
     # load the world data and extract the heightmap(s)
-    worldSlice = WorldSlice(buildRect)
+    worldSlice = editor.loadWorldSlice(buildRect)
 
     heightmap = np.array(worldSlice.heightmaps["OCEAN_FLOOR"], dtype=int)
 

@@ -1,11 +1,5 @@
-"""Provide tools for placing and getting blocks and more.
-
-This module contains functions to:
-- Request the build area as defined in-world
-- Run Minecraft commands
-- Get the block ID at a particular coordinate
-- Place blocks in the world
-"""
+"""Provides the `Editor` class, which provides high-level functions to interact with the Minecraft
+world through the GDMC HTTP interface"""
 
 
 from typing import Union, Optional, List, Tuple, Iterable
@@ -22,54 +16,17 @@ from .vector_tools import Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
-from . import direct_interface as di
-from .worldSlice import WorldSlice
-
-
-def getBuildArea(default = Box(ivec3(0,0,0), ivec3(128,256,128))):
-    """Returns the build area that was specified by /setbuildarea in-game.\n
-    If no build area was specified, returns <default>."""
-    success, result = di.getBuildArea()
-    if not success:
-        return deepcopy(default)
-    beginX, beginY, beginZ, endX, endY, endZ = result
-    return Box.between(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
-
-
-def setBuildArea(buildArea: Box):
-    """Sets the build area to [box], and returns it."""
-    runCommand(f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}")
-    return getBuildArea()
-
-
-def centerBuildAreaOnPlayer(size: ivec3):
-    """Sets the build area to a box of [size] centered on the player, and returns it."""
-    # -1 to correcting for offset from player position
-    radius = (size - 1) // 2
-    runCommand("execute at @p run setbuildarea "
-               f"~{-radius.x} ~{-radius.y} ~{-radius.z} ~{radius.x} ~{radius.y} ~{radius.z}")
-    return getBuildArea()
-
-
-def runCommand(command: str):
-    """Executes one or multiple Minecraft commands (separated by newlines).\n
-    The leading "/" can be omitted.\n
-    Returns a list with one string for each command. If the command was successful, the string
-    is its return value. Otherwise, it is the error message."""
-    if command[0] == '/':
-        command = command[1:]
-    return di.runCommand(command)
+from .http_interface import HTTPInterface
+from .world_slice import WorldSlice
 
 
 class Editor:
-    """Provides functions to place blocks in the world by interacting with the GDMC mod's HTTP
+    """Provides high-level functions to interact with the Minecraft world through the GDMC HTTP
     interface.
 
     Stores various settings, resources, buffers and caches related to block placement, and a
     transform that defines a local coordinate system.
-
-    Wraps gdpc v5.0's Interface class to work with vectors and transforms, and extends it, but
-    also removes some features. The wrapped gdpc Interface is available as .gdpcInterface."""
+    """
 
     def __init__(
         self,
@@ -80,8 +37,11 @@ class Editor:
         cacheLimit            = 8192,
         multithreading        = False,
         multithreadingWorkers = 1,
+        interface: Optional[HTTPInterface] = None
     ):
-        """Constructs an Interface instance with the specified transform and settings"""
+        """Constructs an Editor instance with the specified transform and settings"""
+        self._interface = HTTPInterface() if interface is None else interface
+
         self._transform = Transform() if transformLike is None else toTransform(transformLike)
 
         self._buffering = buffering
@@ -117,8 +77,19 @@ class Editor:
 
 
     @property
+    def interface(self):
+        """This editor's underlying interface"""
+        return self._interface
+
+    @interface.setter
+    def interface(self, value: HTTPInterface):
+        self.sendBufferedBlocks()
+        self.awaitBufferFlushes()
+        self._interface = value
+
+    @property
     def transform(self):
-        """This editor's local coordinate transform"""
+        """This editor's local coordinate transform (used for block placement and retrieval)"""
         return self._transform
 
     @transform.setter
@@ -227,14 +198,39 @@ class Editor:
         return self._worldSliceDecay
 
 
-    def runCommand(self, command: str):
+    def runCommand(self, command: str, syncWithBuffer=False):
         """Executes one or multiple Minecraft commands (separated by newlines).\n
         The leading "/" can be omitted.\n
-        If buffering is enabled, the command is deferred until after the next buffer flush."""
-        if self.buffering:
+        If buffering is enabled and <syncWithBuffer>=True, the command is deferred until after the
+        next buffer flush."""
+        if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
-        else:
-            runCommand(command)
+            return
+        if command[0] == '/':
+            command = command[1:]
+        self._interface.runCommand(command)
+
+
+    def getBuildArea(self):
+        """Returns the build area that was specified by /setbuildarea in-game.\n
+        The build area is always in **global coordinates**; self.transform is ignored."""
+        success, result = self.interface.getBuildArea()
+        if not success:
+            eprint(colored(color="orange", text=\
+                "ERROR: Failed to get build area!\n"
+                "Make sure to set the build area with \setbuildarea in-game.\n"
+                "For example: /setbuildarea ~0 0 ~0 ~128 255 ~128"
+            ))
+            return Rect()
+        beginX, beginY, beginZ, endX, endY, endZ = result
+        return Box.between(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
+
+
+    def setBuildArea(self, buildArea: Box):
+        """Sets the build area to [box], and returns it.\n
+        The build area must be given in **global coordinates**; self.transform is ignored."""
+        self.runCommand(f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}")
+        return self.getBuildArea()
 
 
     # TODO: getBlockData option (waiting for HTTP backend update)
@@ -263,7 +259,7 @@ class Editor:
         ):
             block = Block.fromBlockCompound(self._worldSlice.getBlockCompoundAt(position))
         else:
-            blockDict = di.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
+            blockDict = self.interface.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
             block = Block(blockDict["id"], blockDict["state"])
 
         if self.caching:
@@ -368,7 +364,7 @@ class Editor:
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
-        result = di.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates)
+        result = self.interface.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates)
         if not result[0].isnumeric():
             eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
@@ -400,7 +396,7 @@ class Editor:
             # Flush block buffer
             if blockBuffer:
                 blockStr = "\n".join((f"{t[0].x} {t[0].y} {t[0].z} {t[1]}" for t in blockBuffer))
-                response = di.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
+                response = self.interface.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
                 blockBuffer.clear()
 
                 for line in response:
@@ -448,24 +444,30 @@ class Editor:
         self._bufferFlushFutures = futures.wait(self._bufferFlushFutures, timeout).not_done
 
 
-    def loadWorldSlice(self, rect: Rect):
-        """Loads and caches the world slice for the given XZ-rectangle.\n
-        If a world slice was already cached, it is replaced.\n
+    def loadWorldSlice(self, rect: Optional[Rect]=None, cache=False):
+        """Loads the world slice for the given XZ-rectangle.\n
+        The rectangle must be given in **global coordinates**; self.transform is ignored.\n
+        If <rect> is None, the world slice of the current build area is loaded.\n
+        If <cache>=True, the loaded worldSlice is cached in this interface. It can then be accessed
+        through .worldSlice.
+        If a world slice was already cached, it is replaced.
         The cached world slice is used for faster block retrieval. Note that the editor assumes
         that nothing besides itself changes the given area of the world. If the given world area is
         changed other than through this editor, call .updateWorldSlice() to update the cached world
-        slice.\n
-        There is no local coordinate version of this method. The rectangle must be given in global
-        coordinates."""
-        self._worldSlice      = WorldSlice(rect)
-        self._worldSliceDecay = np.zeros(addY(self._worldSlice.rect.size, lookup.BUILD_HEIGHT), dtype=np.bool)
-        return self._worldSlice
+        slice."""
+        if rect is None:
+            rect = self.getBuildArea()
+        worldSlice = WorldSlice(self.interface, rect)
+        if cache:
+            self._worldSlice      = worldSlice
+            self._worldSliceDecay = np.zeros(addY(self._worldSlice.rect.size, lookup.BUILD_HEIGHT), dtype=np.bool)
+        return worldSlice
 
 
     def updateWorldSlice(self):
         """Updates the cached world slice."""
         if (self._worldSlice is None):
-            raise RuntimeError("No world slice is cached. Call .loadWorldSliceGlobal() first.")
+            raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
         return self.loadWorldSlice(self._worldSlice.rect)
 
 

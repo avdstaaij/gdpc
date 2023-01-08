@@ -12,8 +12,19 @@ from .block import Block
 from .block_state_tools import FACING_VALUES, facingToRotation, facingToVector, invertFacing
 from .block_data_tools import signData
 from . import lookup
-from .interface import Editor
+from .editor import Editor
 from .minecraft_tools import identifyObtrusiveness, positionToInventoryIndex
+
+
+def centerBuildAreaOnPlayer(editor: Editor, size: ivec3):
+    """Sets <editor>'s build area to a box of <size> centered on the player, and returns it.\n
+    The build area is always in **global coordinates**; <editor>.transform is ignored."""
+    # -1 to correct for offset from player position
+    radius = (size - 1) // 2
+    editor.runCommand(
+        "execute at @p run setbuildarea "
+        f"~{-radius.x} ~{-radius.y} ~{-radius.z} ~{radius.x} ~{radius.y} ~{radius.z}")
+    return editor.getBuildArea()
 
 
 def flood_search_3D(

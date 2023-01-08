@@ -7,7 +7,7 @@ from glm import ivec2, ivec3
 
 from .vector_tools import Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D, rotateSizeXZ
 from .block import Block
-from .interface import Editor
+from .editor import Editor
 
 
 def placeCuboid(editor: Editor, first: ivec3, last: ivec3, block: Block, replace: Optional[Union[str, List[str]]] = None):
