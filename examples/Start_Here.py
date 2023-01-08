@@ -165,18 +165,18 @@ def buildCity():
 
     print("Building city platform...")
     # Building a platform and clearing a dome for the city to sit in
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y, zaxis), 1, 21, Block("end_stone_bricks"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y, zaxis), 1, 20, Block("gold_block"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 1, zaxis), 3, 20, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 4, zaxis), 2, 19, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 6, zaxis), 1, 18, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 7, zaxis), 1, 17, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 8, zaxis), 1, 15, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 9, zaxis), 1, 12, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 10, zaxis), 1, 8, Block("air"))
-    GEO.placeCenteredCylinder(ED, ivec3(xaxis, y + 11, zaxis), 1, 3, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y,      zaxis), 39, 1, Block("end_stone_bricks"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y,      zaxis), 37, 1, Block("gold_block"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y +  1, zaxis), 37, 3, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y +  4, zaxis), 35, 2, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y +  6, zaxis), 33, 1, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y +  7, zaxis), 32, 1, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y +  8, zaxis), 27, 1, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y +  9, zaxis), 21, 1, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y + 10, zaxis), 13, 1, Block("air"))
+    GEO.placeCylinder(ED, ivec3(xaxis, y + 11, zaxis),  3, 1, Block("air"))
 
-    for i in range(50):
+    for _ in range(50):
         buildTower(randint(xaxis - 20, xaxis + 20),
                    randint(zaxis - 20, zaxis + 20))
 
@@ -189,6 +189,7 @@ def buildCity():
 
 def buildTower(x, z):
     radius = 3
+    diameter = 2*radius + 1
     y = ROADHEIGHT
 
     print(f"Building tower at {x}, {z}...")
@@ -202,29 +203,28 @@ def buildTower(x, z):
         return  # return without building anything
 
     # lay the foundation
-    GEO.placeCenteredCylinder(ED, ivec3(x, y, z), 1, radius, Block("emerald_block"))
+    GEO.placeCylinder(ED, ivec3(x, y, z), diameter, 1, Block("emerald_block"))
 
     # build ground floor
-    GEO.placeCenteredCylinder(ED, ivec3(x, y + 1, z), 3, radius, Block("lime_concrete"), tube=True)
+    GEO.placeCylinder(ED, ivec3(x, y + 1, z), diameter, 3, Block("lime_concrete"), tube=True)
 
     # extend height
     height = randint(5, 20)
-    GEO.placeCenteredCylinder(ED, ivec3(x, y + 4, z), height, radius, Block("lime_concrete"), tube=True)
+    GEO.placeCylinder(ED, ivec3(x, y + 4, z), diameter, height, Block("lime_concrete"), tube=True)
     height += 4
 
     # build roof
-    GEO.placeCenteredCylinder(ED, ivec3(x, y + height, z), 1, radius, Block("emerald_block"))
-    GEO.placeCenteredCylinder(ED, ivec3(x, y + height + 1, z), 1, radius - 1, Block("emerald_block"))
-    GEO.placeCenteredCylinder(ED, ivec3(x, y + height + 2, z), 1, radius - 2, Block("emerald_block"))
+    GEO.placeCylinder(ED, ivec3(x, y + height, z), diameter, 1, Block("emerald_block"))
+    GEO.placeCylinder(ED, ivec3(x, y + height + 1, z), diameter-2, 2, Block("emerald_block"))
     GEO.placeCuboid(ED, ivec3(x, y + height, z), ivec3(x, y + height + 2, z), Block("lime_stained_glass"))
     ED.placeBlock(ivec3(x, y + 1, z), Block("beacon"))
 
     # trim sides and add windows and doors
-    # GEO.placeCuboid(ED, ivec3(x + radius, y + 1, z), ivec3( x + radius, y + height + 2, z), Block("air"))
-    GEO.placeCuboid(ED, ivec3(x + radius - 1, y + 1, z), ivec3(x + radius - 1, y + height + 2, z), Block("lime_stained_glass"))
     # NOTE: When placing doors you need to place two blocks,
-    #   the upper block defines the direction
-    ED.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("warped_door"))
+    # the upper block defines the direction
+    GEO.placeCuboid(ED, ivec3(x + radius, y + 1, z), ivec3( x + radius, y + height + 2, z), Block("air"))
+    GEO.placeCuboid(ED, ivec3(x + radius - 1, y + 1, z), ivec3(x + radius - 1, y + height + 2, z), Block("lime_stained_glass"))
+    ED.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("red_concrete"))
     ED.placeBlock(ivec3(x + radius - 1, y + 2, z), Block("warped_door", {"facing": "west", "half": "upper"}))
 
     GEO.placeCuboid(ED, ivec3(x - radius, y + 1, z), ivec3( x - radius, y + height + 2, z), Block("air"))

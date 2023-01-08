@@ -45,6 +45,7 @@ setup(
         "PyGLM",
         "pyglm-typing",
         "requests",
+        "scikit-image",
         "scipy",
         "termcolor"
     ],

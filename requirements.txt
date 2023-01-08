@@ -6,5 +6,6 @@ opencv_python==4.5.1.48
 PyGLM==2.6.0
 pyglm-typing==0.2.1
 requests==2.22.0
+scikit-image==0.19.3
 scipy==1.9.3
 termcolor==2.1.1

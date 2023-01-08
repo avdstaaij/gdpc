@@ -1,13 +1,14 @@
 """Various vector utilities"""
 
 
-from typing import Any, List, Optional, Tuple, Union, overload
+from typing import Any, Iterable, List, Optional, Set, Tuple, Union, overload
 from dataclasses import dataclass, field
 import math
 
 from more_itertools import powerset
 import numpy as np
 from scipy import ndimage
+import skimage.segmentation
 import glm
 from glm import ivec2, ivec3, vec2, vec3, bvec2, bvec3
 
@@ -65,6 +66,37 @@ DIAGONALS_3D = (
 
 
 @overload
+def dropDimension(vec: vec3, dimension: int) -> vec2: ...
+@overload
+def dropDimension(vec: ivec3, dimension: int) -> ivec2: ...
+@overload
+def dropDimension(vec: bvec3, dimension: int) -> bvec2: ...
+
+def dropDimension(vec, dimension):
+    """Returns <vec> without its <dimension>-th component"""
+    if dimension == 0: return vec.yz
+    if dimension == 1: return vec.xz
+    if dimension == 2: return vec.xy
+    raise ValueError(f'Invalid dimension "{dimension}"')
+
+
+@overload
+def addDimension(vec: vec2, dimension: int, value: float=0) -> vec3: ...
+@overload
+def addDimension(vec: ivec2, dimension: int, value: int=0) -> ivec3: ...
+@overload
+def addDimension(vec: bvec2, dimension: int, value: bool=0) -> bvec3: ...
+
+def addDimension(vec, dimension, value=0):
+    """Inserts <value> into <vec> at <dimension> and returns the resulting 3D vector"""
+    l = list(vec)
+    if isinstance(l[1], float): return  vec3(*l[:dimension], value, *l[dimension:])
+    if isinstance(l[0], int):   return ivec3(*l[:dimension], value, *l[dimension:])
+    if isinstance(l[0], bool):  return bvec3(*l[:dimension], value, *l[dimension:])
+    raise TypeError("<vec> has in invalid type.")
+
+
+@overload
 def dropY(vec: vec3) -> vec2: ...
 @overload
 def dropY(vec: ivec3) -> ivec2: ...
@@ -72,7 +104,7 @@ def dropY(vec: ivec3) -> ivec2: ...
 def dropY(vec: bvec3) -> bvec2: ...
 
 def dropY(vec):
-    """Returns [vec] without its y-component"""
+    """Returns [vec] without its y-component (i.e., projected on the XZ-plane)"""
     return vec.xz
 
 
@@ -84,7 +116,7 @@ def addY(vec: ivec2, y: int) -> ivec3: ...
 def addY(vec: bvec2, y: bool) -> bvec3: ...
 
 def addY(vec, y=0):
-    """Returns [vec] with an added y-component of [y]"""
+    """Returns a 3D vector (vec.x, y, vec.y)"""
     return ivec3(vec.x, y, vec.y)
 
 
@@ -101,6 +133,20 @@ def setY(vec, y=0):
 
 
 @overload
+def floorDiv(vec: ivec2, divisor: int) -> ivec2: ...
+@overload
+def floorDiv(vec: ivec3, divisor: int) -> ivec3: ...
+
+def floorDiv(vec, divisor):
+    """Returns the floor division of <vec> by <divisor>\n
+    vec / divisor truncates towards zero, wheras this function always floors.\n
+    This function will be deprecated if pyGLM adds a // operator for integer vectors."""
+    # TODO: deprecate this if pyGLM adds a // operator for integer vectors.
+    if len(vec) == 2: return ivec2(vec.x // divisor, vec.y // divisor)
+    if len(vec) == 3: return ivec3(vec.x // divisor, vec.y // divisor, vec.z // divisor)
+
+
+@overload
 def trueMod(vec: vec2, modulus: float) -> vec2: ...
 @overload
 def trueMod(vec: ivec2, modulus: int) -> ivec2: ...
@@ -113,7 +159,7 @@ def trueMod(vec, modulus):
     """Returns the true value of <v> modulo <modulus>, as opposed to <v> % <modulus> which may yield
     negative numbers."""
     result = vec % modulus
-    for i in range(len(result)):
+    for i in range(len(result)): # pylint: disable=consider-using-enumerate
         if result[i] < 0:
             result[i] += modulus
     return result
@@ -219,7 +265,7 @@ def length2(vec: Union[ivec2, ivec3]):
     if isinstance(vec, ivec3): return int(glm.length2(vec3(vec)))
     raise ValueError()
 
-def distance(vecA: Union[ivec2, ivec3], vecB: Union[ivec2, ivec3]):
+def distance(vecA: Union[ivec2, ivec3], vecB: Union[ivec2, ivec3]) -> float:
     """Returns the distance between [vecA] and [vecB]"""
     if isinstance(vecA, ivec2) and isinstance(vecB, ivec2): return glm.distance(vec2(vecA), vec2(vecB))
     if isinstance(vecA, ivec3) and isinstance(vecB, ivec2): return glm.distance(vec3(vecA), vec3(vecB))
@@ -242,108 +288,46 @@ def l1Distance(vecA: Union[ivec2, ivec3], vecB: Union[ivec2, ivec3]):
     return l1Norm(vecA - vecB)
 
 
-def vecString(vec: Union[ivec2, ivec3]):
-    """Alternative to [vec].__str__ that is nicer to read"""
-    if isinstance(vec, ivec2): return f"({vec.x}, {vec.y})"
-    if isinstance(vec, ivec3): return f"({vec.x}, {vec.y}, {vec.z})"
-    return ""
-
-
-@overload
-def orderedCorners(corner1: ivec2, corner2: ivec2) -> Tuple[ivec2, ivec2]: ...
-@overload
-def orderedCorners(corner1: ivec3, corner2: ivec3) -> Tuple[ivec3, ivec3]: ...
-
-def orderedCorners(corner1, corner2):
+def orderedCorners2D(corner1: ivec2, corner2: ivec2):
     """Returns two corners of the rectangle defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
-    for axis in range(len(corner1)):
-        if corner1[axis] > corner2[axis]:
-            corner1[axis], corner2[axis] = corner2[axis], corner1[axis]
-    return corner1, corner2
+    return (
+        ivec2(
+            corner1.x if corner1.x <= corner2.x else corner2.x,
+            corner1.y if corner1.y <= corner2.y else corner2.y,
+        ),
+        ivec2(
+            corner1.x if corner1.x > corner2.x else corner2.x,
+            corner1.y if corner1.y > corner2.y else corner2.y,
+        )
+    )
 
 
-def loop2D(begin: ivec2, end: Optional[ivec2] = None):
-    """Yields all points between <begin> and <end> (end-exclusive).\n
-    If <end> is not given, yields all points between (0,0) and <begin>."""
-    if end is None:
-        begin, end = ivec2(0,0), begin
-
-    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
-        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
-            yield ivec2(x, y)
-
-
-def loop3D(begin: ivec3, end: Optional[ivec3] = None):
-    """Yields all points between <begin> and <end> (end-exclusive).\n
-    If <end> is not given, yields all points between (0,0,0) and <begin>."""
-    if end is None:
-        begin, end = ivec3(0,0,0), begin
-
-    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
-        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
-            for z in range(begin.z, end.z, non_zero_sign(end.z - begin.z)):
-                yield ivec3(x, y, z)
+def orderedCorners3D(corner1: ivec3, corner2: ivec3):
+    """Returns two corners of the box defined by <corner1> and <corner2>, such that the first
+    corner is smaller than the second corner in each axis"""
+    return (
+        ivec3(
+            corner1.x if corner1.x <= corner2.x else corner2.x,
+            corner1.y if corner1.y <= corner2.y else corner2.y,
+            corner1.z if corner1.z <= corner2.z else corner2.z,
+        ),
+        ivec3(
+            corner1.x if corner1.x > corner2.x else corner2.x,
+            corner1.y if corner1.y > corner2.y else corner2.y,
+            corner1.z if corner1.z > corner2.z else corner2.z,
+        )
+    )
 
 
-def lineToPixelArray(begin: ivec2, end: ivec2, width: int = 1):
-    delta = np.array(end - begin)
-    maxDelta = int(max(abs(delta)))
-    if maxDelta == 0:
-        return np.array([])
-    pixels = delta[np.newaxis,:] * np.arange(maxDelta + 1)[:,np.newaxis] / maxDelta + np.array(begin)
-    pixels = np.rint(pixels).astype(np.signedinteger)
-
-    if width > 1:
-        minPixel = np.array([min(end.x, begin.x), min(end.y, begin.y)])
-
-        # convert pixel list to np array
-        array = np.zeros((maxDelta + width*2, maxDelta + width*2), dtype=int)
-        array[tuple(np.transpose(pixels - minPixel + width))] = 1
-
-        # dilate pixel array (make it THICC)
-        if width > 1:
-            array = ndimage.binary_dilation(array, iterations = width - 1)
-
-        # rebuild pixel list from array
-        pixels = np.argwhere(array) + minPixel - width
-
-    return pixels
-
-def lineToVoxelArray(begin: ivec3, end: ivec3, width: int = 1):
-    delta = np.array(end - begin)
-    maxDelta = int(max(abs(delta)))
-    if maxDelta == 0:
-        return np.array([])
-    voxels = delta[np.newaxis,:] * np.arange(maxDelta + 1)[:,np.newaxis] / maxDelta + np.array(begin)
-    voxels = np.rint(voxels).astype(np.signedinteger)
-
-    if width > 1:
-        min_voxel = np.array([min(end.x, begin.x), min(end.y, begin.y), min(end.z, begin.z)])
-
-        # convert pixel list to np array
-        array_width = maxDelta + width*2
-        array = np.zeros((array_width, array_width, array_width), dtype=int)
-        array[tuple(np.transpose(voxels - min_voxel + width))] = 1
-
-        # dilate pixel array (make it THICC)
-        if width > 1:
-            array = ndimage.binary_dilation(array, iterations = width - 1)
-
-        # rebuild pixel list from array
-        voxels = np.argwhere(array) + min_voxel - width
-
-    return voxels
-
-
-def lineToPixelList(begin: ivec2, end: ivec2, width: int = 1):
-    pixelArray = lineToPixelArray(begin, end, width)
-    return [ivec2(pixel[0], pixel[1]) for pixel in pixelArray]
-
-
-def lineToVoxelList(begin: ivec2, end: ivec2, width: int = 1) -> List[ivec3]:
-    voxelArray = lineToVoxelArray(begin, end, width)
-    return [ivec3(pixel[0], pixel[1], pixel[2]) for pixel in voxelArray]
+def getDimensionality(corner1: Union[ivec2, ivec3], corner2: Union[ivec2, ivec3]) -> Tuple[int, List[str]]:
+    """Determines the number of dimensions for which <corner1> and <corner2> are in general
+    position, i.e. the number of dimensions for which the volume they define is not flat.\n
+    Returns (dimensionality, list of indices of dimensions for which the volume is flat).
+    For example: (2, [0,2]) means that the volume is flat in the x and z axes."""
+    difference = np.array(corner1) - np.array(corner2)
+    flatSides = np.argwhere(difference == 0).flatten()
+    return len(corner1) - np.sum(flatSides), list(flatSides)
 
 
 # ==================================================================================================
@@ -382,11 +366,11 @@ class Rect:
     @property
     def middle(self):
         """This Rect's middle point, rounded down"""
-        return self.begin + self.size / 2
+        return floorDiv(self.begin + self.size, 2)
 
     @property
     def inner(self):
-        """Generator that yields all points contained in this Rect"""
+        """Yields all points contained in this Rect"""
         return (
             ivec2(x, y)
             for x in range(self.begin.x, self.end.x)
@@ -400,7 +384,7 @@ class Rect:
 
     @property
     def corners(self):
-        """Generator that yields this Rect's corner points"""
+        """Yields this Rect's corner points"""
         return (
             self.offset + sum(subset)
             for subset in powerset([ivec2(self.size.x, 0), ivec2(0, self.size.y)])
@@ -462,23 +446,35 @@ class Rect:
         """Returns a rect of size [size] with the same middle as this rect"""
         return Rect(self.centeredSubRectOffset(size), size)
 
+    @staticmethod
+    def between(cornerA: ivec2, cornerB: ivec2):
+        """Returns the Rect between [cornerA] and [cornerB] (inclusive),
+        which may be any opposing corners."""
+        first, last = orderedCorners2D(cornerA, cornerB)
+        return Rect(first, (last - first) + 1)
+
+    @staticmethod
+    def bounding(points: Iterable[ivec2]):
+        """Returns the smallest Rect containing all [points]"""
+        pointArray = np.array(points)
+        minPoint = np.min(pointArray, axis=0)
+        maxPoint = np.max(pointArray, axis=0)
+        return Rect(minPoint, maxPoint - minPoint + 1)
+
     def toBox(self, offsetY = 0, sizeY = 0):
         """Returns a corresponding Box"""
         return Box(addY(self.offset, offsetY), addY(self.size, sizeY))
 
-    @staticmethod
-    def between(cornerA: ivec2, cornerB: ivec2):
-        """Returns the Rect between [cornerA] and [cornerB] (both inclusive),
-        which may be any opposing corners"""
-        first = ivec2(
-            cornerA.x if cornerA.x <= cornerB.x else cornerB.x,
-            cornerA.y if cornerA.y <= cornerB.y else cornerB.y,
-        )
-        last = ivec2(
-            cornerA.x if cornerA.x > cornerB.x else cornerB.x,
-            cornerA.y if cornerA.y > cornerB.y else cornerB.y,
-        )
-        return Rect(first, last - first + 1)
+    @property
+    def outline(self):
+        """Yields this Rect's outline points"""
+        # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
+        first = self.begin
+        last  = self.end - 1
+        yield from loop2D(ivec2(first.x, first.y), ivec2(last.x  -1, first.y   ) + 1)
+        yield from loop2D(ivec2(last.x,  first.y), ivec2(last.x,     last.y  -1) + 1)
+        yield from loop2D(ivec2(last.x,  last.y),  ivec2(first.x +1, last.y    ) - 1)
+        yield from loop2D(ivec2(first.x, last.y),  ivec2(first.x,    first.y +1) - 1)
 
 
 @dataclass()
@@ -509,11 +505,11 @@ class Box:
     @property
     def middle(self):
         """This Box's middle point, rounded down"""
-        return self.begin + self.size / 2
+        return floorDiv(self.begin + self.size, 2)
 
     @property
     def inner(self):
-        """Generator that yields all points contained in this Box"""
+        """Yields all points contained in this Box"""
         return (
             ivec3(x, y, z)
             for x in range(self.begin.x, self.end.x)
@@ -528,7 +524,7 @@ class Box:
 
     @property
     def corners(self):
-        """Generator that yields this Box's corner points"""
+        """Yields this Box's corner points"""
         return [
             self.offset + sum(subset)
             for subset in powerset([ivec3(self.size.x, 0, 0), ivec3(0, self.size.y, 0), ivec3(0, 0, self.size.z)])
@@ -594,25 +590,62 @@ class Box:
         """Returns an box of size [size] with the same middle as this box"""
         return Box(self.centeredSubBoxOffset(size), size)
 
-    def toRect(self):
-        """Returns this Box's XZ-plane as a Rect"""
-        return Rect(dropY(self.offset), dropY(self.size))
-
     @staticmethod
     def between(cornerA: ivec3, cornerB: ivec3):
         """Returns the Box between [cornerA] and [cornerB] (both inclusive),
         which may be any opposing corners"""
-        first = ivec3(
-            cornerA.x if cornerA.x <= cornerB.x else cornerB.x,
-            cornerA.y if cornerA.y <= cornerB.y else cornerB.y,
-            cornerA.z if cornerA.z <= cornerB.z else cornerB.z,
-        )
-        last = ivec3(
-            cornerA.x if cornerA.x > cornerB.x else cornerB.x,
-            cornerA.y if cornerA.y > cornerB.y else cornerB.y,
-            cornerA.z if cornerA.z > cornerB.z else cornerB.z,
-        )
+        first, last = orderedCorners3D(cornerA, cornerB)
         return Box(first, last - first + 1)
+
+    @staticmethod
+    def bounding(points: Iterable[ivec3]):
+        """Returns the smallest Box containing all [points]"""
+        pointArray = np.array(points)
+        minPoint = np.min(pointArray, axis=0)
+        maxPoint = np.max(pointArray, axis=0)
+        return Rect(minPoint, maxPoint - minPoint + 1)
+
+    def toRect(self):
+        """Returns this Box's XZ-plane as a Rect"""
+        return Rect(dropY(self.offset), dropY(self.size))
+
+    @property
+    def shell(self):
+        """Yields all points on this Box's surface"""
+        # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
+        first = self.begin
+        last  = self.end - 1
+        # Bottom face
+        yield from loop3D(ivec3(first.x, first.y, first.z), ivec3(last.x, first.y, last.z) + 1)
+        # Top face
+        yield from loop3D(ivec3(first.x, last.y, first.z), ivec3(last.x, last.y, last.z) + 1)
+        # Sides
+        yield from loop3D(ivec3(first.x, first.y+1, first.z), ivec3(last.x -1,  last.y-1, first.z   ) + 1)
+        yield from loop3D(ivec3(last.x,  first.y+1, first.z), ivec3(last.x,     last.y-1, last.z  -1) + 1)
+        yield from loop3D(ivec3(last.x,  first.y+1, last.z ), ivec3(first.x +1, last.y+1, last.z    ) - 1)
+        yield from loop3D(ivec3(first.x, first.y+1, last.z ), ivec3(first.x,    last.y+1, first.z +1) - 1)
+
+    @property
+    def wireframe(self):
+        """Yields all points on this Box's edges"""
+        # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
+        first = self.begin
+        last  = self.end - 1
+        # Bottom face
+        yield from loop3D(ivec3(first.x, first.y, first.z), ivec3(last.x -1,  first.y, first.z   ) + 1)
+        yield from loop3D(ivec3(last.x,  first.y, first.z), ivec3(last.x,     first.y, last.z  -1) + 1)
+        yield from loop3D(ivec3(last.x,  first.y, last.z ), ivec3(first.x +1, first.y, last.z    ) - 1)
+        yield from loop3D(ivec3(first.x, first.y, last.z ), ivec3(first.x,    first.y, first.z +1) - 1)
+        # top face
+        yield from loop3D(ivec3(first.x, last.y,  first.z), ivec3(last.x -1,  last.y,  first.z   ) + 1)
+        yield from loop3D(ivec3(last.x,  last.y,  first.z), ivec3(last.x,     last.y,  last.z  -1) + 1)
+        yield from loop3D(ivec3(last.x,  last.y,  last.z ), ivec3(first.x +1, last.y,  last.z    ) - 1)
+        yield from loop3D(ivec3(first.x, last.y,  last.z ), ivec3(first.x,    last.y,  first.z +1) - 1)
+        # sides
+        yield from loop3D(ivec3(first.x, first.y+1, first.z), ivec3(first.x, last.y-1, first.z) + 1)
+        yield from loop3D(ivec3(last.x,  first.y+1, first.z), ivec3(last.x,  last.y-1, first.z) + 1)
+        yield from loop3D(ivec3(last.x,  first.y+1, last.z ), ivec3(last.x,  last.y-1, last.z ) + 1)
+        yield from loop3D(ivec3(first.x, first.y+1, last.z ), ivec3(first.x, last.y-1, last.z ) + 1)
 
 
 def rectSlice(array: np.ndarray, rect: Rect):
@@ -633,6 +666,342 @@ def boxSlice(array: np.ndarray, box: Box):
 def setBoxSlice(array: np.ndarray, box: Box, value: Any):
     """Sets the slice from [array] defined by [box] to [value]"""
     array[box.begin.x:box.end.x, box.begin.y:box.end.y, box.begin.z:box.end.z] = value
+
+
+# ==================================================================================================
+# Point generation
+# ==================================================================================================
+
+
+def loop2D(begin: ivec2, end: Optional[ivec2] = None):
+    """Yields all points between <begin> and <end> (end-exclusive).\n
+    If <end> is not given, yields all points between (0,0) and <begin>."""
+    if end is None:
+        begin, end = ivec2(0, 0), begin
+
+    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
+        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
+            yield ivec2(x, y)
+
+
+def loop3D(begin: ivec3, end: Optional[ivec3] = None):
+    """Yields all points between <begin> and <end> (end-exclusive).\n
+    If <end> is not given, yields all points between (0,0,0) and <begin>."""
+    if end is None:
+        begin, end = ivec3(0, 0, 0), begin
+
+    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
+        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
+            for z in range(begin.z, end.z, non_zero_sign(end.z - begin.z)):
+                yield ivec3(x, y, z)
+
+
+def cuboid2D(corner1: ivec2, corner2: ivec2):
+    """Yields all points in the rectangle between <corner1> and <corner2> (inclusive)."""
+    return Rect.between(corner1, corner2).inner
+
+
+def cuboid3D(corner1: ivec3, corner2: ivec3):
+    """Yields all points in the box between <corner1> and <corner2> (inclusive)."""
+    return Box.between(corner1, corner2).inner
+
+
+def filled2DArray(points: Iterable[ivec2], seedPoint: ivec2, boundingRect: Optional[Rect] = None, includeInputPoints=True) -> np.ndarray:
+    """Fills the shape defined by <points>, starting at <seedPoint> and returns a (n,2) numpy array
+    containing the resulting points.\n
+    <boundingRect> should contain all <points>. If not provided, it is calculated."""
+    if boundingRect is None:
+        boundingRect = Rect.bounding(points)
+
+    pointMap = np.zeros(boundingRect.size, dtype=int)
+    pointMap[tuple(np.transpose(np.array(points) - np.array(boundingRect.offset)))] = 1
+    filled = skimage.segmentation.flood_fill(pointMap, tuple(seedPoint - boundingRect.offset), 1, footprint=np.array([[0,1,0],[1,1,1],[0,1,0]]))
+    if not includeInputPoints:
+        filled -= pointMap
+    return np.argwhere(filled) + np.array(boundingRect.offset)
+
+
+def filled2D(points: Iterable[ivec2], seedPoint: ivec2, boundingRect: Optional[Rect] = None, includeInputPoints=True):
+    """Fills the shape defined by <points>, starting at <seedPoint> and yields the resulting points.\n
+    <boundingRect> should contain all <points>. If not provided, it is calculated."""
+    return (ivec2(*point) for point in filled2DArray(points, seedPoint, boundingRect, includeInputPoints))
+
+
+def filled3DArray(points: Iterable[ivec3], seedPoint: ivec3, boundingBox: Optional[Box] = None, includeInputPoints=True) -> np.ndarray:
+    """Fills the shape defined by <points>, starting at <seedPoint> and returns a (n,3) numpy array
+    containing the resulting points.\n
+    <boundingBox> should contain all <points>. If not provided, it is calculated."""
+    if boundingBox is None:
+        boundingBox = Rect.bounding(points)
+
+    pointMap = np.zeros(boundingBox.size, dtype=int)
+    pointMap[tuple(np.transpose(np.array(points) - np.array(boundingBox.offset)))] = 1
+    filled = skimage.segmentation.flood_fill(pointMap, tuple(seedPoint - boundingBox.offset), 1, connectivity=1)
+    if not includeInputPoints:
+        filled -= pointMap
+    return np.argwhere(filled) + np.array(boundingBox.offset)
+
+
+def filled3D(points: Iterable[ivec3], seedPoint: ivec3, boundingBox: Optional[Box] = None, includeInputPoints=True):
+    """Fills the shape defined by <points>, starting at <seedPoint> and yields the resulting points.\n
+    <boundingBox> should contain all <points>. If not provided, it is calculated."""
+    return (ivec3(*point) for point in filled3DArray(points, seedPoint, boundingBox, includeInputPoints))
+
+
+# TODO: separate out thickening code?
+def _lineArray(begin: Union[ivec2, ivec3], end: Union[ivec2, ivec3], width: int = 1) -> np.ndarray:
+    delta = np.array(end - begin)
+    maxDelta = int(max(abs(delta)))
+    if maxDelta == 0:
+        return np.array([])
+    points = delta[np.newaxis,:] * np.arange(maxDelta + 1)[:,np.newaxis] / maxDelta + np.array(begin)
+    points = np.rint(points).astype(np.signedinteger)
+
+    if width > 1:
+        minPoint = np.array(glm.min(begin, end))
+
+        # convert point array to a map
+        array_width = maxDelta + width*2
+        array = np.zeros([array_width]*len(begin), dtype=int)
+        array[tuple(np.transpose(points - minPoint + width))] = 1
+
+        # dilate map (make it thick)
+        if width > 1:
+            array = ndimage.binary_dilation(array, iterations = width - 1)
+
+        # rebuild point array from map
+        points = np.argwhere(array) + minPoint - width
+
+    return points
+
+
+def line2DArray(begin: ivec2, end: ivec2, width: int = 1):
+    """Returns (n,2) numpy array of points on the line between [begin] and [end] (inclusive)"""
+    return _lineArray(begin, end, width)
+
+
+def line2D(begin: ivec2, end: ivec2, width: int = 1):
+    """Yields the points on the line between [begin] and [end] (inclusive)"""
+    return (ivec2(*point) for point in _lineArray(begin, end, width))
+
+
+def line3Darray(begin: ivec3, end: ivec3, width: int = 1):
+    """Returns (n,3) numpy array of points on the line between [begin] and [end] (inclusive)"""
+    return _lineArray(begin, end, width)
+
+
+def line3D(begin: ivec3, end: ivec3, width: int = 1):
+    """Yields the points on the line between [begin] and [end] (inclusive)"""
+    return (ivec3(*point) for point in _lineArray(begin, end, width))
+
+
+def lineSequence2D(points: Iterable[ivec2], closed=False):
+    """Yields all points on the lines that connect <points>"""
+    for i in range((-1 if closed else 0), len(points)-1):
+        yield from line2D(points[i], points[i+1])
+
+
+def lineSequence3D(points: Iterable[ivec3], closed=False):
+    """Yields all points on the lines that connect <points>"""
+    for i in range((-1 if closed else 0), len(points)-1):
+        yield from line3D(points[i], points[i+1])
+
+
+def circle(center: ivec2, diameter: int, filled=False):
+    """Yields the points of the specified circle.\n
+    If <diameter> is even, <center> will be the bottom left center point."""
+
+    # With 'inspiration' from:
+    # https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
+
+    if diameter == 0:
+        empty: List[ivec2] = []
+        return (point for point in empty)
+
+    e = 1 - (diameter % 2) # for even centers
+    points: Set[ivec2] = set()
+
+    def eightPoints(x: int, y: int):
+        points.add(center + ivec2(e + x, e + y))
+        points.add(center + ivec2(0 - x, e + y))
+        points.add(center + ivec2(e + x, 0 - y))
+        points.add(center + ivec2(0 - x, 0 - y))
+        points.add(center + ivec2(e + y, e + x))
+        points.add(center + ivec2(0 - y, e + x))
+        points.add(center + ivec2(e + y, 0 - x))
+        points.add(center + ivec2(0 - y, 0 - x))
+
+    radius = (diameter-1) // 2
+    x, y = 0, radius
+    d = 3 - 2 * radius
+    eightPoints(x, y)
+    while y >= x:
+        # for each pixel we will
+        # draw all eight pixels
+
+        x += 1
+
+        # check for decision parameter
+        # and correspondingly
+        # update d, x, y
+        if d > 0:
+            y -= 1
+            d = d + 4 * (x - y) + 10
+        else:
+            d = d + 4 * x + 6
+        eightPoints(x, y)
+
+    if filled:
+        return filled2D(points, center, Rect(center - radius, ivec2(diameter, diameter)))
+    return (point for point in points)
+
+
+def fittingCircle(corner1: ivec2, corner2: ivec2, filled=False):
+    """Yields the points of the largest circle that fits between <corner1> and <corner2>.\n
+    The circle is centered in the larger axis."""
+    corner1, corner2 = orderedCorners2D(corner1, corner2)
+    diameter = min(corner2.x - corner1.x, corner2.y - corner1.y) + 1
+    return circle(floorDiv(corner1 + corner2, 2), diameter, filled)
+
+
+def ellipse(center: ivec2, diameters: ivec2, filled=False):
+    """Yields the points of the specified ellipse.\n
+    If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis."""
+
+    # Modified version 'inspired' by chandan_jnu from
+    # https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
+
+    if diameters.x == 0 or diameters.y == 0:
+        empty: List[ivec2] = []
+        return (point for point in empty)
+
+    if diameters.x == diameters.y:
+        return circle(center, diameters.x, filled)
+
+    e = 1 - (diameters % 2)
+
+    points: Set[ivec2] = set()
+
+    def fourpoints(x, y):
+        points.add(center + ivec2(e.x + x, e.y + y))
+        points.add(center + ivec2(0   - x, e.y + y))
+        points.add(center + ivec2(e.x + x, 0   - y))
+        points.add(center + ivec2(0   - x, 0   - y))
+
+        if filled:
+            points.update(line2D(center + ivec2(0 - x, e.y + y), center + ivec2(e.x + x, e.y + y)))
+            points.update(line2D(center + ivec2(0 - x, 0   - y), center + ivec2(e.x + x, 0   - y)))
+
+    rx, ry = floorDiv(diameters-1, 2)
+
+    x, y = 0, ry
+
+    # Initial decision parameter of region 1
+    d1 = ((ry * ry) - (rx * rx * ry) + (0.25 * rx * rx))
+    dx = 2 * ry * ry * x
+    dy = 2 * rx * rx * y
+
+    # For region 1
+    while dx < dy:
+        fourpoints(x, y)
+
+        # Checking and updating value of
+        # decision parameter based on algorithm
+        if d1 < 0:
+            x += 1
+            dx = dx + (2 * ry * ry)
+            d1 = d1 + dx + (ry * ry)
+        else:
+            x += 1
+            y -= 1
+            dx = dx + (2 * ry * ry)
+            dy = dy - (2 * rx * rx)
+            d1 = d1 + dx - dy + (ry * ry)
+
+    # Decision parameter of region 2
+    d2 = (((ry * ry) * ((x + 0.5) * (x + 0.5)))
+          + ((rx * rx) * ((y - 1) * (y - 1))) - (rx * rx * ry * ry))
+
+    # Plotting points of region 2
+    while y >= 0:
+        fourpoints(x, y)
+
+        # Checking and updating parameter
+        # value based on algorithm
+        if d2 > 0:
+            y -= 1
+            dy = dy - (2 * rx * rx)
+            d2 = d2 + (rx * rx) - dy
+        else:
+            y -= 1
+            x += 1
+            dx = dx + (2 * ry * ry)
+            dy = dy - (2 * rx * rx)
+            d2 = d2 + dx - dy + (rx * rx)
+
+    return (point for point in points)
+
+
+def fittingEllipse(corner1: ivec2, corner2: ivec2, filled=False):
+    """Yields the points of the largest ellipse that fits between <corner1> and <corner2>."""
+    corner1, corner2 = orderedCorners2D(corner1, corner2)
+    diameters = (corner2 - corner1) + 1
+    return ellipse(floorDiv(corner1 + corner2, 2), diameters, filled)
+
+
+def cylinder(baseCenter: ivec3, diameters: Union[ivec2, int], length: int, axis=1, tube=False, hollow=False):
+    """Yields the points from the specified cylinder.\n
+    If <diameter> is even, <center> will be the bottom left center point.\n
+    <tube> has precedence over <hollow>."""
+
+    if isinstance(diameters, int):
+        diameters = ivec2(diameters, diameters)
+
+    if diameters.x == 0 or diameters.y == 0 or length == 0:
+        empty: List[ivec3] = []
+        return (point for point in empty)
+
+    corner1 = baseCenter - addDimension((diameters-1)/2, axis, 0)
+    corner2 = corner1 + addDimension(diameters-1, axis, length-1)
+    return fittingCylinder(corner1, corner2, axis, tube, hollow)
+
+
+def fittingCylinder(corner1: ivec3, corner2: ivec3, axis=1, tube=False, hollow=False):
+    """Yields the points of the largest cylinder that fits between <corner1> and <corner2>.\n
+    <tube> has precedence over <hollow>."""
+
+    corner1, corner2 = orderedCorners3D(corner1, corner2)
+    dimensionality, flatSides = getDimensionality(corner1, corner2)
+
+    if dimensionality == 0:
+        yield corner1
+        return
+
+    if (dimensionality == 1 or (dimensionality == 2 and flatSides[0] != axis)):
+        yield from cuboid3D(corner1, corner2)
+        return
+
+    baseCorner1 = dropDimension(corner1, axis)
+    baseCorner2 = dropDimension(corner2, axis)
+    h0 = corner1[axis]
+    hn = corner2[axis]
+
+    ellipsePoints2D = list(fittingEllipse(baseCorner1, baseCorner2, filled=False))
+    ellipsePoints3D = [addDimension(point, axis, h0) for point in ellipsePoints2D]
+
+    if tube:
+        basePoints = ellipsePoints3D
+        bodyPoints = ellipsePoints3D
+    else:
+        basePoints = [addDimension(point, axis, h0) for point in filled2D(ellipsePoints2D, floorDiv(baseCorner1 + baseCorner2, 2), Rect.between(baseCorner1, baseCorner2))]
+        bodyPoints = ellipsePoints3D if hollow else basePoints
+
+    yield from basePoints
+    if hn != h0:
+        direction = ivec3(0,0,0)
+        direction[axis] = 1
+        yield from (point + (hn - h0)*direction for point in basePoints)
+        yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
 
 
 def neighbors2D(point: ivec2, boundingRect: Rect, diagonal: bool = False, stride: int = 1):

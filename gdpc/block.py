@@ -21,6 +21,9 @@ class Block:
     If .id is a sequence, the instance represents a palette of blocks that share the same
     block states and SNBT data.
 
+    If (an element of) .id is an empty string or None, that element represents "no placement":
+    placing such a block has no effect.
+
     The transform methods modify a number of orientation-related block states. These are:
     - axis
     - facing
