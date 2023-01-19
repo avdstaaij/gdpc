@@ -2,7 +2,7 @@
 world through the GDMC HTTP interface"""
 
 
-from typing import Union, Optional, List, Tuple, Iterable
+from typing import Dict, Union, Optional, List, Tuple, Iterable
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from concurrent import futures
@@ -46,7 +46,7 @@ class Editor:
 
         self._buffering = buffering
         self._bufferLimit = bufferLimit
-        self._buffer: List[Tuple[ivec3, str]] = []
+        self._buffer: Dict[ivec3,Block] = {}
         self._commandBuffer: List[str] = []
 
         self._caching = caching
@@ -150,8 +150,8 @@ class Editor:
                     "WARNING: An editor has been set to use multithreaded buffer flushing with more\n"
                     "than one worker thread.\n"
                     "The editor can no longer guarantee that blocks will be placed in the same order\n"
-                    "as they were sent. If caching is used, this can also cause the cache to become\n"
-                    "inconsistent with the actual world.\n"
+                    "as they were sent. If buffering or caching is used, this can also cause the\n"
+                    "caches to become inconsistent with the actual world.\n"
                     "Multithreading with more than one worker thread can speed up block placement on\n"
                     "some machines, which can be nice during development, but it is NOT RECOMMENDED\n"
                     "for production code."
@@ -248,8 +248,16 @@ class Editor:
     def getBlockGlobal(self, position: ivec3, getBlockStates: bool = True):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
-        if self.caching and position in self._cache.keys():
-            return self._cache[position]
+        if self.caching:
+            try:
+                return copy(self._cache[position])
+            except TypeError:
+                pass
+
+        if self.buffering:
+            block = self._buffer.get(position, None)
+            if block is not None:
+                return block
 
         if (
             self._worldSlice is not None and
@@ -339,12 +347,10 @@ class Editor:
         if (self.caching and block.id in self.getBlockGlobal(position)): # TODO: this is very error-prone! "stone" is in "stone_stairs". Also, we may want to change only block state or nbt data.
             return True
 
-        blockStr = block.id + block.blockStateString() + (f"{{{block.data}}}" if block.data else "")
-
         if self._buffering:
-            success = self._placeSingleBlockStringGlobalBuffered(position, blockStr, doBlockUpdates)
+            success = self._placeSingleBlockGlobalBuffered(position, block, doBlockUpdates)
         else:
-            success = self._placeSingleBlockStringGlobalDirect(position, blockStr, doBlockUpdates)
+            success = self._placeSingleBlockGlobalDirect(position, block, doBlockUpdates)
 
         if not success:
             return False
@@ -358,19 +364,21 @@ class Editor:
         return True
 
 
-    def _placeSingleBlockStringGlobalDirect(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
+    def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block, doBlockUpdates: Optional[bool]):
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
-        result = self.interface.placeBlock(*position, blockString, doBlockUpdates=doBlockUpdates)
+        blockStr = block.id + block.blockStateString() + (f"{{{block.data}}}" if block.data else "")
+
+        result = self.interface.placeBlock(*position, blockStr, doBlockUpdates=doBlockUpdates)
         if not result[0].isnumeric():
             eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
         return True
 
 
-    def _placeSingleBlockStringGlobalBuffered(self, position: ivec3, blockString: str, doBlockUpdates: Optional[bool]):
+    def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block, doBlockUpdates: Optional[bool]):
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
@@ -382,7 +390,7 @@ class Editor:
         elif len(self._buffer) >= self.bufferLimit:
             self.sendBufferedBlocks()
 
-        self._buffer.append((position, blockString))
+        self._buffer[position] = block
         return True
 
 
@@ -391,10 +399,13 @@ class Editor:
         If multithreaded buffer flushing is enabled, the threads can be awaited with
         awaitBufferFlushes()."""
 
-        def flush(blockBuffer: List[Tuple[ivec3, str]], commandBuffer: List[str]):
+        def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
-                blockStr = "\n".join((f"{t[0].x} {t[0].y} {t[0].z} {t[1]}" for t in blockBuffer))
+                blockStr = "\n".join(
+                    f"{pos.x} {pos.y} {pos.z} "
+                    f"{block.id + block.blockStateString() + (f'{{{block.data}}}' if block.data else '')}" for pos, block in blockBuffer.items()
+                )
                 response = self.interface.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
                 blockBuffer.clear()
 
@@ -428,7 +439,7 @@ class Editor:
             self._bufferFlushFutures.append(future)
 
             # Empty the buffers (the thread has copies of the references)
-            self._buffer = []
+            self._buffer = {}
             self._commandBuffer = []
 
         else: # No multithreading
@@ -465,7 +476,7 @@ class Editor:
 
     def updateWorldSlice(self):
         """Updates the cached world slice."""
-        if (self._worldSlice is None):
+        if self._worldSlice is None:
             raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
         return self.loadWorldSlice(self._worldSlice.rect)
 
