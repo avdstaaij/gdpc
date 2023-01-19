@@ -5,9 +5,6 @@ from typing import Optional, Union
 from functools import lru_cache
 
 from glm import ivec2
-import cv2
-import numpy as np
-from matplotlib import pyplot as plt
 
 from .vector_tools import Rect
 from . import lookup
@@ -201,21 +198,3 @@ def getObtrusiveness(block: Block):
     if blockId in lookup.OBTRUSIVE:
         return 3
     return 4
-
-
-def visualizeHeightmap(*arrays, title=None, autonormalize=True):
-    """Visualizes one or multiple numpy arrays."""
-    def normalize(array):
-        """Normalize the array to contain values from 0 to 1."""
-        return (array - array.min()) / (array.max() - array.min())
-
-    for array in arrays:
-        if autonormalize:
-            array = (normalize(array) * 255).astype(np.uint8)
-
-        plt.figure()
-        if title:
-            plt.title(title)
-        plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
-        plt.imshow(plt_image)
-    plt.show()

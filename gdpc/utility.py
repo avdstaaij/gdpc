@@ -4,7 +4,10 @@
 from typing import TypeVar, Generic, Callable, Iterable, OrderedDict
 import time
 import sys
+
 import numpy as np
+import cv2
+from matplotlib import pyplot as plt
 
 
 T = TypeVar("T")
@@ -131,3 +134,17 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
         if self._maxSize > 0 and len(self) > self._maxSize:
             oldest = next(iter(self))
             del self[oldest]
+
+
+def visualizeMaps(*arrays, title="", normalize=True):
+    """Visualizes one or multiple 2D numpy arrays."""
+    for array in arrays:
+        if normalize:
+            array = ((array - array.min()) / (array.max() - array.min()) * 255).astype(np.uint8)
+
+        plt.figure()
+        if title:
+            plt.title(title)
+        plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
+        plt.imshow(plt_image)
+    plt.show()
