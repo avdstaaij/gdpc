@@ -3,7 +3,7 @@ more-itertools==9.0.0
 NBT==1.5.1
 numpy==1.19.3
 opencv_python==4.5.1.48
-PyGLM==2.6.0
+PyGLM==2.7.0
 pyglm-typing==0.2.1
 requests==2.22.0
 scikit-image==0.19.3

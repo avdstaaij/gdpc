@@ -44,7 +44,7 @@ class Transform:
         return Transform(
             translation = self.apply(other.translation),
             rotation    = (self.rotation + flipRotationXZ(other.rotation, self.flip)) % 4,
-            flip        = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+            flip        = self.flip ^ other.flip
         )
 
     def invCompose(self, other: 'Transform'):
@@ -53,13 +53,13 @@ class Transform:
         return Transform(
             translation = self.invApply(other.translation),
             rotation    = flipRotationXZ((other.rotation - self.rotation + 4) % 4, self.flip),
-            flip        = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+            flip        = self.flip ^ other.flip
         )
 
     def composeInv(self, other: 'Transform'):
         """Returns a transform that applies [self] after [other]^-1.\n
         Faster version of [self] @ ~[other]."""
-        flip = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+        flip = self.flip ^ other.flip
         rotation = (self.rotation - flipRotationXZ(other.rotation, flip) + 4) % 4
         return Transform(
             translation = self.translation - rotateXZ(other.translation * flipToScale3D(flip), rotation),
@@ -72,12 +72,12 @@ class Transform:
         Equivalent to [self] @= [other]."""
         self.translation += rotateXZ(other.translation * flipToScale3D(self.flip), self.rotation)
         self.rotation     = (self.rotation + flipRotationXZ(other.rotation, self.flip)) % 4
-        self.flip         = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+        self.flip         = self.flip ^ other.flip
 
     def pop(self, other: 'Transform'):
         """The inverse of push. Removes the effect of [other] from this transform.\n
         Faster version of [self] @= ~[other]."""
-        self.flip         = bvec3(ivec3(self.flip) ^ ivec3(other.flip))
+        self.flip         = self.flip ^ other.flip
         self.rotation     = (self.rotation - flipRotationXZ(other.rotation, self.flip) + 4) % 4
         self.translation -= rotateXZ(other.translation * flipToScale3D(self.flip), self.rotation)
 

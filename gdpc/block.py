@@ -58,8 +58,8 @@ class Block:
         axisState     = self.states.get("axis")
         facingState   = self.states.get("facing")
         rotationState = self.states.get("rotation")
-        if axisState     is not None: self.states["axis"]     = transformAxis  (axisState,   rotation)
-        if facingState   is not None: self.states["facing"]   = transformFacing(facingState, rotation, flip)
+        if axisState     is not None: self.states["axis"]     = transformAxis    (axisState,     rotation)
+        if facingState   is not None: self.states["facing"]   = transformFacing  (facingState,   rotation, flip)
         if rotationState is not None: self.states["rotation"] = transformRotation(rotationState, rotation, flip)
 
 

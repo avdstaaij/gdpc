@@ -133,20 +133,6 @@ def setY(vec, y=0):
 
 
 @overload
-def floorDiv(vec: ivec2, divisor: int) -> ivec2: ...
-@overload
-def floorDiv(vec: ivec3, divisor: int) -> ivec3: ...
-
-def floorDiv(vec, divisor):
-    """Returns the floor division of <vec> by <divisor>\n
-    vec / divisor truncates towards zero, wheras this function always floors.\n
-    This function will be deprecated if pyGLM adds a // operator for integer vectors."""
-    # TODO: deprecate this if pyGLM adds a // operator for integer vectors.
-    if len(vec) == 2: return ivec2(vec.x // divisor, vec.y // divisor)
-    if len(vec) == 3: return ivec3(vec.x // divisor, vec.y // divisor, vec.z // divisor)
-
-
-@overload
 def trueMod(vec: vec2, modulus: float) -> vec2: ...
 @overload
 def trueMod(vec: ivec2, modulus: int) -> ivec2: ...
@@ -366,7 +352,7 @@ class Rect:
     @property
     def middle(self):
         """This Rect's middle point, rounded down"""
-        return floorDiv(self.begin + self.size, 2)
+        return (self.begin + self.size) // 2
 
     @property
     def inner(self):
@@ -505,7 +491,7 @@ class Box:
     @property
     def middle(self):
         """This Box's middle point, rounded down"""
-        return floorDiv(self.begin + self.size, 2)
+        return (self.begin + self.size) // 2
 
     @property
     def inner(self):
@@ -861,7 +847,7 @@ def fittingCircle(corner1: ivec2, corner2: ivec2, filled=False):
     The circle is centered in the larger axis."""
     corner1, corner2 = orderedCorners2D(corner1, corner2)
     diameter = min(corner2.x - corner1.x, corner2.y - corner1.y) + 1
-    return circle(floorDiv(corner1 + corner2, 2), diameter, filled)
+    return circle((corner1 + corner2) // 2, diameter, filled)
 
 
 def ellipse(center: ivec2, diameters: ivec2, filled=False):
@@ -892,7 +878,7 @@ def ellipse(center: ivec2, diameters: ivec2, filled=False):
             points.update(line2D(center + ivec2(0 - x, e.y + y), center + ivec2(e.x + x, e.y + y)))
             points.update(line2D(center + ivec2(0 - x, 0   - y), center + ivec2(e.x + x, 0   - y)))
 
-    rx, ry = floorDiv(diameters-1, 2)
+    rx, ry = (diameters-1) // 2
 
     x, y = 0, ry
 
@@ -946,7 +932,7 @@ def fittingEllipse(corner1: ivec2, corner2: ivec2, filled=False):
     """Yields the points of the largest ellipse that fits between <corner1> and <corner2>."""
     corner1, corner2 = orderedCorners2D(corner1, corner2)
     diameters = (corner2 - corner1) + 1
-    return ellipse(floorDiv(corner1 + corner2, 2), diameters, filled)
+    return ellipse((corner1 + corner2) // 2, diameters, filled)
 
 
 def cylinder(baseCenter: ivec3, diameters: Union[ivec2, int], length: int, axis=1, tube=False, hollow=False):
@@ -993,7 +979,7 @@ def fittingCylinder(corner1: ivec3, corner2: ivec3, axis=1, tube=False, hollow=F
         basePoints = ellipsePoints3D
         bodyPoints = ellipsePoints3D
     else:
-        basePoints = [addDimension(point, axis, h0) for point in filled2D(ellipsePoints2D, floorDiv(baseCorner1 + baseCorner2, 2), Rect.between(baseCorner1, baseCorner2))]
+        basePoints = [addDimension(point, axis, h0) for point in filled2D(ellipsePoints2D, (baseCorner1 + baseCorner2) // 2, Rect.between(baseCorner1, baseCorner2))]
         bodyPoints = ellipsePoints3D if hollow else basePoints
 
     yield from basePoints

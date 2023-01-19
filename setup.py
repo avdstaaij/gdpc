@@ -42,7 +42,7 @@ setup(
         "NBT",
         "numpy",
         "opencv_python",
-        "PyGLM",
+        "PyGLM >= 2.7.0",
         "pyglm-typing",
         "requests",
         "scikit-image",
