@@ -9,8 +9,8 @@ from glm import ivec2, ivec3
 
 from .vector_tools import Box, neighbors3D
 from .block import Block
-from .block_state_tools import facingToVector
-from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex
+from .block_state_tools import facingToRotation, facingToVector
+from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
 from . import lookup
 from .editor import Editor
 
@@ -54,6 +54,23 @@ def flood_search_3D(
     visited: Set[ivec3] = set()
     flood_search_3D_recursive(origin, result, visited, depth)
     return result
+
+
+def placeSign(
+    editor: Editor,
+    position: ivec3,
+    wood="oak", wall=False,
+    facing: Optional[str] = None, rotation: Optional[Union[str, int]] = None,
+    text1="", text2="", text3="", text4="", color=""
+):
+    """Places a sign with the specified properties.\n
+    If <wall> is True, <facing> is used. Otherwise, <rotation> is used.
+    If the used property is None, a least obstructed direction will be used."""
+    if wall and facing is None:
+        facing = random.choice(getOptimalFacingDirection(editor, position))
+    elif not wall and rotation is None:
+        rotation = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
+    editor.placeBlock(position, signBlock(wood, wall, facing, rotation, text1, text2, text3, text4, color))
 
 
 def placeLectern(editor: Editor, position: ivec3, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):

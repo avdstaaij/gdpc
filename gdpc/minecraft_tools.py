@@ -1,7 +1,7 @@
 """Provides miscellaneous Minecraft-related utility functions."""
 
 
-from typing import Optional
+from typing import Optional, Union
 from functools import lru_cache
 
 from glm import ivec2
@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 from .vector_tools import Rect
 from . import lookup
 from .block import Block
-from .block_data_tools import lecternData
+from .block_data_tools import lecternData, signData
 
 
 def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
@@ -166,6 +166,17 @@ def writeBook(
         newpage()               # finish page
     bookData = bookData[:-len(',\'{"text":"')] + ']}' # end last page (book is complete)
     return bookData
+
+
+def signBlock(
+    wood="oak", wall=False,
+    facing: str = "north", rotation: Union[str,int] = "0",
+    text1="", text2="", text3="", text4="", color=""
+):
+    """Returns a sign Block with the specified properties."""
+    blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
+    states = {"facing": facing} if wall else {"rotation": str(rotation)}
+    return Block(blockId, states, data=signData(text1, text2, text3, text4, color))
 
 
 def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0):
