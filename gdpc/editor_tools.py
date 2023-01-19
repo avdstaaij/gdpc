@@ -2,18 +2,17 @@
 
 
 from typing import Optional, Iterable, Set, Tuple, Union
-from random import choice
+import random
 
+import numpy as np
 from glm import ivec2, ivec3
 
-from .utility import eprint
-from .vector_tools import EAST, NORTH, SOUTH, WEST, Box, neighbors3D
+from .vector_tools import Box, neighbors3D
 from .block import Block
-from .block_state_tools import FACING_VALUES, facingToRotation, facingToVector, invertFacing
-from .block_data_tools import signData
+from .block_state_tools import facingToVector
+from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex
 from . import lookup
 from .editor import Editor
-from .minecraft_tools import identifyObtrusiveness, positionToInventoryIndex
 
 
 def centerBuildAreaOnPlayer(editor: Editor, size: ivec3):
@@ -57,20 +56,15 @@ def flood_search_3D(
     return result
 
 
-def placeLectern(editor: Editor, position: ivec3, bookData: str, facing: Optional[str] = None):
-    """Place a lectern with a book in the world."""
+def placeLectern(editor: Editor, position: ivec3, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
+    """Place a lectern with the specified properties.\n
+    If <facing> is None, a least obstructed facing direction will be used."""
     if facing is None:
-        facing = choice(getOptimalDirection(editor, position))
-    editor.placeBlock(
-        position,
-        Block(
-            "lectern", {"facing": facing, "has_book": "true"},
-            data=f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: 0'
-        )
-    )
+        facing = random.choice(getOptimalFacingDirection(editor, position))
+    editor.placeBlock(position, lecternBlock(facing, bookData, page))
 
 
-def placeInventoryBlock(
+def placeContainerBlock(
     editor: Editor,
     position: ivec3,
     block: Block = Block("minecraft:chest"),
@@ -78,9 +72,9 @@ def placeInventoryBlock(
     replace=True
 ):
     """Place a container block with the specified items in the world.\n
-    Items should be a sequence of (position, item, [amount,])-tuples."""
+    <items> should be a sequence of (position, item, [amount,])-tuples."""
     if block.id not in lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE:
-        raise ValueError(f"The inventory size for {block} is not available. Make sure you are using its namespaced ID.")
+        raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE[block]
 
     if not replace and editor.getBlock(position).id != block.id:
@@ -97,96 +91,31 @@ def placeInventoryBlock(
             item = list(item)
             item.append(1)
         globalPosition = editor.transform * position
-        editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item[2]} {item[3]}")
+        editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item[2]} {item[3]}", syncWithBuffer=True)
 
 
-def placeSign(
-    editor: Editor,
-    position: ivec3,
-    facing: Optional[str] = None,
-    rotation: Optional[str] = None,
-    text1="", text2="", text3="", text4="",
-    wood='oak',
-    wall=False
-):
-    """Place a written sign in the world.
+def setContainerItem(editor: Editor, position: ivec3, itemPosition: ivec2, item: str, amount: int = 1):
+    """Sets the item at <itemPosition> in the container block at <position> to the item with id <item>."""
+    globalPosition = editor.transform * position
 
-    Facing is for wall placement, rotation for ground placement
-    If there is no supporting wall the sign will revert to ground placement
-    By default the sign will attempt to orient itself to be most legible
+    block = editor.getBlockGlobal(globalPosition)
+    if block.id not in lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE:
+        raise ValueError(f'The block at ({",".join(position)}) is "{block}", which is not a known container block.')
+    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE[block]
 
-    Note: If you are experiencing performance issues provide your own facing
-    and rotation values to reduce the required calculations
-    """
-    if wood not in lookup.WOODS:
-        raise ValueError(f"{wood} is not a valid wood type!")
-
-    if facing is not None and facing not in FACING_VALUES:
-        eprint(f"{facing} is not a valid direction.\n"
-              "Working with default behaviour.")
-        facing = None
-    try:
-        if not 0 <= int(rotation) <= 15:
-            raise TypeError
-    except TypeError:
-        if rotation is not None:
-            eprint(f"{rotation} is not a valid rotation.\n"
-                  "Working with default behaviour.")
-        rotation = None
-
-    if facing is None and rotation is None:
-        facing = getOptimalDirection(editor, position)
-
-    data = signData(text1, text2, text3, text4)
-
-    if wall:
-        wall = False
-        for direction in facing:
-            inversion = invertFacing(direction)
-            dx, _, dz = facingToVector(inversion)
-            if editor.getBlock(position + ivec3(dx, 0, dz)) in lookup.TRANSPARENT:
-                break
-            wall = True
-            editor.placeBlock(position, Block(f"{wood}_wall_sign", {"facing": choice(facing)}, data=data))
-
-    if not wall:
-        if rotation is None:
-            rotation = facingToRotation(facing if isinstance(facing, str) else choice(facing))
-        editor.placeBlock(position, Block(f"{wood}_sign", {"rotation": str(rotation)}, data=data))
+    index = positionToInventoryIndex(itemPosition, inventorySize)
+    editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item} {amount}", syncWithBuffer=True)
 
 
-def getOptimalDirection(editor: Editor, pos: ivec3):
-    """Return the least obstructed direction to have something facing."""
-    north = (identifyObtrusiveness(editor.getBlock(pos + NORTH)), 'north')
-    east  = (identifyObtrusiveness(editor.getBlock(pos + EAST )), 'east')
-    south = (identifyObtrusiveness(editor.getBlock(pos + SOUTH)), 'south')
-    west  = (identifyObtrusiveness(editor.getBlock(pos + WEST )), 'west')
-
-    min_obstruction = min(north[0], east[0], south[0], west[0])
-    max_obstruction = max(north[0], east[0], south[0], west[0])
-
-    surrounding = [north, east, south, west]
-
-    while surrounding[0][0] != max_obstruction:
-        surrounding.append(surrounding.pop(0))
-
-    directions = []
-    while len(directions) == 0:
-        if min_obstruction == max_obstruction:
-            return ["north", "east", "south", "west"]
-
-        if surrounding[2][0] == min_obstruction:
-            directions.append(surrounding[2][1])
-        if (surrounding[1][0] == min_obstruction
-                and surrounding[3][0] != min_obstruction):
-            directions.append(surrounding[1][1])
-        elif (surrounding[3][0] == min_obstruction
-                and surrounding[1][0] != min_obstruction):
-            directions.append(surrounding[3][1])
-        elif len(directions) == 0:
-            directions.append(surrounding[1][1])
-            directions.append(surrounding[3][1])
-
-        min_obstruction += 1
-
-    return directions
+def getOptimalFacingDirection(editor: Editor, pos: ivec3):
+    """Returns the least obstructed directions to have something facing (a "facing" block state value).\n
+    Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second."""
+    directions = ["north", "east", "south", "west"]
+    obtrusivenesses = np.array([
+        getObtrusiveness(editor.getBlock(pos + facingToVector(direction)))
+        for direction in directions
+    ])
+    candidates              = np.nonzero(obtrusivenesses == np.min(obtrusivenesses))[0]
+    oppositeObtrusivenesses = obtrusivenesses[(candidates + 2) % 4]
+    winners                 = candidates[oppositeObtrusivenesses == np.max(oppositeObtrusivenesses)]
+    return [directions[winner] for winner in winners]

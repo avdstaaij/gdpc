@@ -184,7 +184,7 @@ def buildCity():
     # See the wiki for book formatting codes
     ED.placeBlock(ivec3(xaxis, y, zaxis), Block("emerald_block"))
     bookData = MT.writeBook("This book has a page!")
-    ET.placeLectern(ED, ivec3(xaxis, y + 1, zaxis), bookData)
+    ET.placeLectern(ED, ivec3(xaxis, y + 1, zaxis), bookData=bookData)
 
 
 def buildTower(x, z):

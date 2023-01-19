@@ -1,6 +1,7 @@
 """Provides miscellaneous Minecraft-related utility functions."""
 
 
+from typing import Optional
 from functools import lru_cache
 
 from glm import ivec2
@@ -9,8 +10,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from .vector_tools import Rect
-from .block import Block
 from . import lookup
+from .block import Block
+from .block_data_tools import lecternData
 
 
 def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
@@ -30,18 +32,18 @@ def writeBook(text, title="Chronicle", author="Anonymous",
 
     - `§0`: Black text
     - '§1': Dark blue text
-    - '§2': Dark_green text
-    - '§3': Dark_aqua text
-    - '§4': Dark_red text
-    - '§5': Dark_purple text
+    - '§2': Dark green text
+    - '§3': Dark aqua text
+    - '§4': Dark red text
+    - '§5': Dark purple text
     - '§6': Gold text
     - '§7': Gray text
-    - '§8': Dark_gray text
+    - '§8': Dark gray text
     - '§9': Blue text
     - `§a`: Green text
     - `§b`: Aqua text
     - `§c`: Red text
-    - `§d`: Light_purple text
+    - `§d`: Light purple text
     - `§e`: Yellow text
     - `§f`: White text
 
@@ -200,11 +202,18 @@ def writeBook(text, title="Chronicle", author="Anonymous",
     return bookData
 
 
-def identifyObtrusiveness(block: Block):
-    """Return the percieved obtrusiveness of a given block.
+def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0):
+    """Returns a lectern Block with the specified properties."""
+    return Block(
+        "minecraft:lectern",
+        {"facing": facing, "has_book": ("false" if bookData is None else "true")},
+        data=lecternData(bookData, page)
+    )
 
-    Returns a numeric weight from 0 (invisible) to 4 (opaque)
-    """
+
+def getObtrusiveness(block: Block):
+    """Returns the percieved obtrusiveness of a given block.\n
+    Returns a numeric weight from 0 (invisible) to 4 (opaque)."""
     blockId = block.id if isinstance(block.id, str) else block.id[0] # TODO: mean?
     if blockId in lookup.INVISIBLE:
         return 0

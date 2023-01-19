@@ -200,14 +200,12 @@ class Editor:
 
     def runCommand(self, command: str, syncWithBuffer=False):
         """Executes one or multiple Minecraft commands (separated by newlines).\n
-        The leading "/" can be omitted.\n
+        The leading "/" must be omitted.\n
         If buffering is enabled and <syncWithBuffer>=True, the command is deferred until after the
         next buffer flush."""
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
             return
-        if command[0] == '/':
-            command = command[1:]
         self._interface.runCommand(command)
 
 
@@ -415,7 +413,7 @@ class Editor:
 
             # Flush command buffer
             if commandBuffer:
-                response = runCommand("\n".join(commandBuffer))
+                response = self._interface.runCommand("\n".join(commandBuffer))
                 commandBuffer.clear()
 
                 for line in response:
