@@ -69,7 +69,7 @@ def writeBook(
     IMPORTANT: When using `\\s` text is directly interpreted by Minecraft,
     so all line breaks must be `\\\\n` to function
     """
-    pages_left      = lookup.BOOK_PAGES_PER_BOOK - 2
+    pages_left      = lookup.BOOK_PAGES_PER_BOOK
     characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
     lines_left      = lookup.BOOK_LINES_PER_PAGE
     pixels_left     = lookup.BOOK_PIXELS_PER_LINE
@@ -118,43 +118,6 @@ def writeBook(
         pixels_left     = lookup.BOOK_PIXELS_PER_LINE
         bookData += '"}\',\'{"text":"'    # end page and start new page
 
-    def jokepage():
-        nonlocal bookData
-        bookData += ('"}\',\'{"text":"'
-                     '…and there was more\\\\n'
-                     'to say, but the paper\\\\n'
-                     '        ran out…\\\\n'
-                     '\\\\n'
-                     '\\\\n'
-                     '        ⌠       ⌠\\\\n'
-                     '        `|  THE  |\\\\n'
-                     '        `|  END  |\\\\n'
-                     '        ⌡`       ⌡\\\\n'
-                     '\\\\n'
-                     '\\\\n'
-                     '\\\\n'
-                     '§7§o…and frankly it was\\\\n'
-                     'getting boring…§r')
-        newpage()
-
-    def finalpage():
-        nonlocal bookData
-        bookData += ('§8╔══════════╗\\\\n'
-                     '║                      `║\\\\n'
-                     '║                      `║\\\\n'
-                     '║      ᴘᴜʙʟiꜱʜᴇᴅ   .`║\\\\n'
-                     '║          ʙʏ         `║\\\\n'
-                     '║     §2Ⓟ§8ᴇɴᴅᴇʀᴍᴀɴ  .`║\\\\n'
-                     '║                      `║\\\\n'
-                     '║           ⁂         `║\\\\n'
-                     '║                      `║\\\\n'
-                     '║         GDMC       `║\\\\n'
-                     '║                      `║\\\\n'
-                     '║                      `║\\\\n'
-                     '║                      `║\\\\n'
-                     '╚══════════╝\\\\n'
-                     '"}\']}')
-
     pages = [page for page in text.split('\f')]
 
     bookData = (
@@ -167,7 +130,6 @@ def writeBook(
     bookData += '\'{"text":"'   # start first page
     for page in pages:
         if pages_left < 1:
-            jokepage()
             break
         if page[:3] == '\\\\s':
             bookData += page[3:]
@@ -202,7 +164,7 @@ def writeBook(
                 pixels_left -= width
             newline()           # finish line
         newpage()               # finish page
-    finalpage()        # end last page (book is complete)
+    bookData = bookData[:-len(',\'{"text":"')] + ']}' # end last page (book is complete)
     return bookData
 
 
