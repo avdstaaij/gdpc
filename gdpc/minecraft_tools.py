@@ -22,8 +22,13 @@ def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
     return position.x + position.y * inventorySize.x
 
 
-def writeBook(text, title="Chronicle", author="Anonymous",
-              description="I wonder what\\'s inside?", desccolor='gold'):
+def writeBook(
+    text: str,
+    title="Chronicle",
+    author="Anonymous",
+    description="I wonder what\\'s inside?",
+    desccolor='gold'
+):
     r"""Return NBT data for a correctly formatted book.
 
     The following special characters are used for formatting the book:
@@ -64,10 +69,10 @@ def writeBook(text, title="Chronicle", author="Anonymous",
     IMPORTANT: When using `\\s` text is directly interpreted by Minecraft,
     so all line breaks must be `\\\\n` to function
     """
-    pages_left = 97                     # per book
-    characters_left = CHARACTERS = 255  # per page
-    lines_left = LINES = 14             # per page
-    pixels_left = PIXELS = 113          # per line
+    pages_left      = lookup.BOOK_PAGES_PER_BOOK
+    characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
+    lines_left      = lookup.BOOK_LINES_PER_PAGE
+    pixels_left     = lookup.BOOK_PIXELS_PER_LINE
     toprint = ''
 
     @lru_cache()
@@ -77,10 +82,10 @@ def writeBook(text, title="Chronicle", author="Anonymous",
         If a letter is not found, a width of 9 is assumed
         A character spacing of 1 is automatically integrated
         """
-        return sum([lookup.ASCIIPIXELS[letter] + 1
-                    if letter in lookup.ASCIIPIXELS
-                    else 10
-                    for letter in word]) - 1
+        return sum([
+            lookup.ASCIIPIXELS[letter] + 1 if letter in lookup.ASCIIPIXELS else 10
+            for letter in word
+        ]) - 1
 
     def printline():
         nonlocal bookData, toprint
@@ -102,15 +107,15 @@ def writeBook(text, title="Chronicle", author="Anonymous",
             return newpage()
         characters_left -= 2
         lines_left -= 1
-        pixels_left = PIXELS
+        pixels_left = lookup.BOOK_PIXELS_PER_LINE
         bookData += "\\\\n"
 
     def newpage():
         nonlocal characters_left, lines_left, pixels_left, bookData
         printline()
-        characters_left = CHARACTERS
-        lines_left = LINES
-        pixels_left = PIXELS
+        characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
+        lines_left      = lookup.BOOK_LINES_PER_PAGE
+        pixels_left     = lookup.BOOK_PIXELS_PER_LINE
         bookData += '"}\',\'{"text":"'    # end page and start new page
 
     def jokepage():
@@ -151,13 +156,13 @@ def writeBook(text, title="Chronicle", author="Anonymous",
                      '"}\']}')
 
     pages = [page for page in text.split('\f')]
-    text = [[[word for word in line.split()] for line in page.split('\n')]
-            for page in text.split('\f')]   # convert string to 3D list
 
-    bookData = ("{"
-                f'title: "{title}", author: "{author}", '
-                f'display:{{Lore:[\'[{{"text":"{description}",'
-                f'"color":"{desccolor}"}}]\']}}, pages:[')
+    bookData = (
+        "{"
+        f'title: "{title}", author: "{author}", '
+        f'display:{{Lore:[\'[{{"text":"{description}",'
+        f'"color":"{desccolor}"}}]\']}}, pages:['
+    )
 
     bookData += '\'{"text":"'   # start first page
     for page in pages:
@@ -169,14 +174,13 @@ def writeBook(text, title="Chronicle", author="Anonymous",
             newpage()
             continue
         else:
-            page = [[word for word in line.split()]
-                    for line in page.split('\n')]
+            page = [[word for word in line.split()] for line in page.split('\n')]
         for line in page:
             toprint = ""
             for word in line:
                 width = fontwidth(word + ' ')
                 if width > pixels_left:
-                    if width > PIXELS:  # cut word to fit
+                    if width > lookup.BOOK_PIXELS_PER_LINE:  # cut word to fit
                         original = word
                         for letter in original:
                             charwidth = fontwidth(letter) + 1

@@ -2209,6 +2209,12 @@ ASCIIPIXELS = {
 }
 
 
+BOOK_PAGES_PER_BOOK      = 97
+BOOK_CHARACTERS_PER_PAGE = 255
+BOOK_LINES_PER_PAGE      = 14
+BOOK_PIXELS_PER_LINE     = 113
+
+
 INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
     ivec2(9,3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
     ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper", },
