@@ -69,7 +69,7 @@ def writeBook(
     IMPORTANT: When using `\\s` text is directly interpreted by Minecraft,
     so all line breaks must be `\\\\n` to function
     """
-    pages_left      = lookup.BOOK_PAGES_PER_BOOK
+    pages_left      = lookup.BOOK_PAGES_PER_BOOK - 2
     characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
     lines_left      = lookup.BOOK_LINES_PER_PAGE
     pixels_left     = lookup.BOOK_PIXELS_PER_LINE
