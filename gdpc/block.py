@@ -40,7 +40,6 @@ class Block:
     id:     Union[str, Sequence[str]] = "minecraft:stone"
     states: Dict[str, str]            = field(default_factory=dict)
     data:   Optional[str]             = None
-    needsLatePlacement: bool  = False # Whether the block needs to be placed after its neighbors
 
 
     def chooseId(self):
@@ -71,7 +70,7 @@ class Block:
         return block
 
 
-    def blockStateString(self, rotation: int = 0, flip: bvec3 = bvec3()):
+    def blockStateString(self):
         """Returns a string containing the block states of this block, including the outer brackets."""
         stateString = ",".join([f"{key}={value}" for key, value in self.states.items()])
         return "" if stateString == "" else f"[{stateString}]"
@@ -92,7 +91,6 @@ class Block:
             f"Block({repr(self.id)}"
             + (f",states={repr(self.states)}" if self.states else "")
             + (f",data={repr(self.data)}" if self.data else "")
-            + (",needsLatePlacement=True" if self.needsLatePlacement else "")
             + ")"
         )
 
@@ -106,11 +104,7 @@ class Block:
             properties = blockCompound["Properties"]
             for key in properties:
                 value = str(properties[key])
-                if key in ["shape", "north", "east", "south", "west"]:
-                    # This is a late property. We drop it, but set needs_late_placement to True
-                    block.needsLatePlacement = True
-                else:
-                    block.states[str(key)] = value
+                block.states[str(key)] = value
 
         block.transform(rotation, flip)
 
