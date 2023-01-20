@@ -11,6 +11,8 @@ from matplotlib import pyplot as plt
 
 
 T = TypeVar("T")
+KT = TypeVar("KT")
+VT = TypeVar("VT")
 
 
 def sign(x) -> int:
@@ -86,14 +88,11 @@ def isIterable(value):
 def isSequence(value):
     """Determine whether <value> is a sequence."""
     try:
-        _ = value[0:-1]
+        _ = value[0]
         return True
     except TypeError:
         return False
 
-
-KT = TypeVar("KT")
-VT = TypeVar("VT")
 
 class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
     """Dict ordered from least to most recently looked-up key\n

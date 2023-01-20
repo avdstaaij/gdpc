@@ -7,7 +7,7 @@ from copy import copy
 from glm import ivec3
 
 from .vector_tools import Box
-from .transform import Transform
+from .transform import TransformLike
 from .editor import Editor
 from .block import Block
 
@@ -53,9 +53,9 @@ class Model:
     def build(
         self,
         editor:         Editor,
-        transformOrVec: Optional[Union[Transform, ivec3]] = None,
-        substitutions:  Optional[Dict[str, str]]          = None,
-        replace:        Optional[Union[str, List[str]]]   = None
+        transformLike:  Optional[TransformLike]         = None,
+        substitutions:  Optional[Dict[str, str]]        = None,
+        replace:        Optional[Union[str, List[str]]] = None
     ):
         """Builds the model.
 
@@ -83,7 +83,7 @@ class Model:
 
         lateBlocks: List[LateBlockInfo] = []
 
-        with editor.pushTransform(transformOrVec):
+        with editor.pushTransform(transformLike):
 
             for vec in Box(size=self._size).inner:
                 block = self.block(vec)

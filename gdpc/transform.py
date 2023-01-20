@@ -20,8 +20,8 @@ class Transform:
 
     When applied to a vector, [flip] is applied first, [rotation] second, and [translation] third.
 
-    Note that only 90-degree rotations in the XZ-plane are supported. Hence, [rotation] should
-    be 0, 1, 2 or 3.
+    Note that only the four 90-degree rotations in the XZ-plane are supported. Hence, [rotation]
+    should be 0, 1, 2 or 3.
     """
 
     translation: ivec3 = field(default_factory=ivec3)
@@ -117,17 +117,10 @@ class Transform:
 
 
 class TransformLike(ABC):
-    """An abstract base class. A class is a TransformLike if it is a Transform or if a Transform can
-    be constructed with it."""
-    @classmethod
-    def __subclasshook__(cls, c):
-        if isinstance(c, Transform):
-            return True
-        try:
-            _ = Transform(c)
-        except Exception: # pylint: disable=broad-except
-            return False
-        return True
+    """An abstract base class. A class is a TransformLike if it is a Transform or an ivec3, the
+    latter being interpreted as a translation."""
+TransformLike.register(Transform)
+TransformLike.register(ivec3)
 
 
 def toTransform(transformLike: TransformLike) -> Transform:

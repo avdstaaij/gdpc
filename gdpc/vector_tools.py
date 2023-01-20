@@ -90,7 +90,7 @@ def addDimension(vec: bvec2, dimension: int, value: bool=0) -> bvec3: ...
 def addDimension(vec, dimension, value=0):
     """Inserts <value> into <vec> at <dimension> and returns the resulting 3D vector"""
     l = list(vec)
-    if isinstance(l[1], float): return  vec3(*l[:dimension], value, *l[dimension:])
+    if isinstance(l[0], float): return  vec3(*l[:dimension], value, *l[dimension:])
     if isinstance(l[0], int):   return ivec3(*l[:dimension], value, *l[dimension:])
     if isinstance(l[0], bool):  return bvec3(*l[:dimension], value, *l[dimension:])
     raise TypeError("<vec> has in invalid type.")
@@ -159,8 +159,8 @@ def perpendicular(vec: ivec2) -> ivec2: ...
 def perpendicular(vec):
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
-    if isinstance(vec,  vec2): return  vec2(vec.y, -vec.x)
-    if isinstance(vec, ivec2): return ivec2(vec.y, -vec.x)
+    if isinstance(vec[0], float): return  vec2(vec.y, -vec.x)
+    if isinstance(vec[1], int  ): return ivec2(vec.y, -vec.x)
     raise ValueError()
 
 
