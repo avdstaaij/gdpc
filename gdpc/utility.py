@@ -20,7 +20,7 @@ def sign(x) -> int:
     return (x > 0) - (x < 0)
 
 
-def non_zero_sign(x) -> int:
+def nonZeroSign(x) -> int:
     """Returns the sign of [x], except that non_zero_sign(0) == 1"""
     return 1 if x >= 0 else -1
 

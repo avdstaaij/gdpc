@@ -12,7 +12,7 @@ import skimage.segmentation
 import glm
 from glm import ivec2, ivec3, vec2, vec3, bvec2, bvec3
 
-from .utility import non_zero_sign
+from .utility import nonZeroSign
 
 
 # ==================================================================================================
@@ -221,9 +221,9 @@ def scaleToFlip3D(scale: ivec3):
 def toAxisVector(vec: ivec2):
     """Returns the axis-aligned unit vector closest to [vec]"""
     if abs(vec.x) > abs(vec.y): # pylint: disable=no-else-return
-        return ivec2(non_zero_sign(vec.x), 0)
+        return ivec2(nonZeroSign(vec.x), 0)
     else:
-        return ivec2(0, non_zero_sign(vec.y))
+        return ivec2(0, nonZeroSign(vec.y))
 
 
 def directionToRotation(direction: ivec2):
@@ -665,8 +665,8 @@ def loop2D(begin: ivec2, end: Optional[ivec2] = None):
     if end is None:
         begin, end = ivec2(0, 0), begin
 
-    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
-        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
+    for x in range(begin.x, end.x, nonZeroSign(end.x - begin.x)):
+        for y in range(begin.y, end.y, nonZeroSign(end.y - begin.y)):
             yield ivec2(x, y)
 
 
@@ -676,9 +676,9 @@ def loop3D(begin: ivec3, end: Optional[ivec3] = None):
     if end is None:
         begin, end = ivec3(0, 0, 0), begin
 
-    for x in range(begin.x, end.x, non_zero_sign(end.x - begin.x)):
-        for y in range(begin.y, end.y, non_zero_sign(end.y - begin.y)):
-            for z in range(begin.z, end.z, non_zero_sign(end.z - begin.z)):
+    for x in range(begin.x, end.x, nonZeroSign(end.x - begin.x)):
+        for y in range(begin.y, end.y, nonZeroSign(end.y - begin.y)):
+            for z in range(begin.z, end.z, nonZeroSign(end.z - begin.z)):
                 yield ivec3(x, y, z)
 
 
