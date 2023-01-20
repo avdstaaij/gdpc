@@ -1,20 +1,22 @@
-"""Provides the HTTPInterface class, which contains direct wrappers for the endpoints of the
+"""Provides the Interface class, which contains direct wrappers for the endpoints of the
 GDMC HTTP interface.\n
 
-It is recommended to use the higher-level `editor.Editor` instead.
+It is recommended to use the higher-level `editor.Editor` class instead.
 """
 
 
-from typing import Union, Tuple, Optional, List, Dict, Any
+from typing import Sequence, Union, Tuple, Optional, List, Dict, Any
 from functools import partial
 import time
 
+from glm import ivec2, ivec3
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 from termcolor import colored
 
 from .utility import eprint, withRetries
-from .lookup import SUPPORTED_MINECRAFT_VERSIONS
+from .vector_tools import Box
+from .block import Block
 
 
 def _onRequestRetry(e: Exception, retriesLeft: int):
@@ -36,75 +38,72 @@ def _post(*args, retries: int, **kwargs):
     return withRetries(partial(requests.post, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
 
 
-class HTTPInterface:
-    """Provides direct wrappers for the endpoints of the Minecraft HTTP interface.\n
-    It is recommended to use the higher-level `editor.Editor` instead."""
+class Interface:
+    """Provides wrappers for the endpoints of the GDMC HTTP interface.\n
+    It is recommended to use the higher-level `editor.Editor` class instead."""
 
     def __init__(self, host: str = "http://localhost:9000"):
         self.host = host
 
 
-    def getBlock(self, x: int, y: int, z: int, dx: Optional[int] = None, dy: Optional[int] = None, dz: Optional[int] = None, dimension: Optional[str] = None, includeState=False, includeData=False, retries=5, timeout=None):
+    def getBlocks(self, position: ivec3, size: Optional[ivec3] = None, dimension: Optional[str] = None, includeState=False, includeData=False, retries=5, timeout=None):
         """Returns the blocks in the specified region.
 
         <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-        Returns a list with a dict for each retrieved block. The dicts have the following keys/values:
-        - "x", "y", "z": Coordinates of the block (int).
-        - "id":    Namespaced ID of the block (str).
-        - "state": Block state dict (Dict[str, str]). Present if and only if <includeState> is True.
-        - "data":  NBT data dict (Dict[str,Any]). Present if and only if <includeData> is True.
+        Returns a list of (position, block)-tuples.
 
         If a set of coordinates is invalid, the returned block ID will be "minecraft:void_air".
         """
         url = f"{self.host}/blocks"
+        dx, dy, dz = (None, None, None) if size is None else size
         parameters = {
-            'x': x,
-            'y': y,
-            'z': z,
+            'x': position.x,
+            'y': position.y,
+            'z': position.z,
             'dx': dx,
             'dy': dy,
             'dz': dz,
             'includeState': True if includeState else None,
             'includeData':  True if includeData  else None,
-            'dimension': dimension,
+            'dimension': dimension
         }
         response = _get(url, params=parameters, headers={"accept": "application/json"}, retries=retries, timeout=timeout)
-        blocks: List[Dict[str, Any]] = response.json()
-        return blocks
+        blockDicts: List[Dict[str, Any]] = response.json()
+        # TODO: deal with b.get("data")
+        if includeData:
+            raise NotImplementedError("includeData is still a work-in-progress.")
+        return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}))) for b in blockDicts]
 
 
-    def placeBlock(self, x: int, y: int, z: int, blockStr: str, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=5, timeout=None):
-        """Places one or multiple blocks in the world.
+    def placeBlocks(self, blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=5, timeout=None):
+        """Places blocks in the world.
 
-        Each line of <blockStr> should describe a single block placement, using one of the
-        following formats:
-        1. <block>
-        2. <position> <block>
-
-        Placeholder explanation:
-        - <block>: The (optionally namespaced) id of a block, optionally with block state info.
-        NBT data is not supported. Examples: "minecraft:oak_log[axis=y]", "stone".
-        - <position>: The (x,y,z) coordinates where to place the block. Coordinates can be given using
-        tilde notation, in which case they are seen as relative to this function's <x>,<y>,<z>
-        parameters. Examples: "1 2 3", "~4 ~5 ~6"
+        Each element of <blocks> should be a tuple (position, block). The blocks must each describe
+        exactly one block: palettes or "no placement" blocks are not allowed.
 
         <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-        The <doBlockUpdates>, <spawnDrops> and <customFlags> parameters control block update behavior.
-        See the API documentation for more info.
+        The <doBlockUpdates>, <spawnDrops> and <customFlags> parameters control block update
+        behavior. See the GDMC HTTP API documentation for more info.
 
-        Returns a list with one string for each block placement. If the block placement was successful,
-        the string is "1" if the block changed, or "0" otherwise. If the placement failed, it is the
-        error message.
+        Returns a list with one string for each block placement. If the block placement was
+        successful, the string is "1" if the block changed, or "0" otherwise. If the placement
+        failed, it is the error message.
         """
         url = f"{self.host}/blocks"
+
+        blockStr = "\n".join(
+            f"{pos.x} {pos.y} {pos.z} "
+            f"{block.id + block.blockStateString() + (f'{{{block.data}}}' if block.data else '')}" for pos, block in blocks
+        )
+
         if customFlags != "":
             blockUpdateParams = {"customFlags": customFlags}
         else:
             blockUpdateParams = {"doBlockUpdates": doBlockUpdates, "spawnDrops": spawnDrops}
 
-        parameters = {'x': x, 'y': y, 'z': z}
+        parameters = {"dimension": dimension}
         parameters.update(blockUpdateParams)
 
         return _put(url, data=bytes(blockStr, "utf-8"), params=parameters, retries=retries, timeout=timeout).text.split("\n")
@@ -124,13 +123,13 @@ class HTTPInterface:
         return _post(url, bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout).text.split("\n")
 
 
-    def getBuildArea(self, retries=5, timeout=None) -> Tuple[bool, Union[Tuple[int,int,int,int,int,int],str]]:
+    def getBuildArea(self, retries=5, timeout=None) -> Tuple[bool, Union[Box,str]]:
         """Retrieves the build area that was specified with /setbuildarea in-game.
 
         Fails if the build area was not specified yet.
 
         Returns (success, result).
-        If a build area was specified, result is a 6-tuple (xFrom, yFrom, zFrom, xTo, yTo, zTo).
+        If a build area was specified, result is the box describing the build area.
         Otherwise, result is the error message string.
         """
         response = _get(f"{self.host}/buildarea", retries=retries, timeout=timeout)
@@ -139,20 +138,24 @@ class HTTPInterface:
             return False, response.text
 
         buildAreaJson = response.json()
-        x1 = buildAreaJson["xFrom"]
-        y1 = buildAreaJson["yFrom"]
-        z1 = buildAreaJson["zFrom"]
-        x2 = buildAreaJson["xTo"]
-        y2 = buildAreaJson["yTo"]
-        z2 = buildAreaJson["zTo"]
-        return True, (x1, y1, z1, x2, y2, z2)
+        fromPoint = ivec3(
+            buildAreaJson["xFrom"],
+            buildAreaJson["yFrom"],
+            buildAreaJson["zFrom"]
+        )
+        toPoint = ivec3(
+            buildAreaJson["xTo"],
+            buildAreaJson["yTo"],
+            buildAreaJson["zTo"]
+        )
+        return True, Box.between(fromPoint, toPoint)
 
 
-    def getChunks(self, x: int, z: int, dx: int = 1, dz: int = 1, dimension: Optional[str] = None, asBytes=False, retries=5, timeout=None):
+    def getChunks(self, position: ivec2, size: Optional[ivec2] = None, dimension: Optional[str] = None, asBytes=False, retries=5, timeout=None):
         """Returns raw chunk data.
 
-        <x> and <z> specify the position in chunk coordinates, and <dx> and <dz> specify how many
-        chunks to get.
+        <position> specifies the position in chunk coordinates, and <size> specifies how many chunks
+        to get in each axis (default 1).
         <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
         If <asBytes> is True, returns raw binary data. Otherwise, returns a human-readable
@@ -161,9 +164,10 @@ class HTTPInterface:
         On error, returns the error message instead.
         """
         url = f"{self.host}/chunks"
+        dx, dz = (None, None) if size is None else size
         parameters = {
-            "x": x,
-            "z": z,
+            "x": position.x,
+            "z": position.y,
             "dx": dx,
             "dz": dz,
             "dimension": dimension,
@@ -181,15 +185,12 @@ class HTTPInterface:
         return _get(f"{self.host}/version", retries=retries, timeout=timeout).text
 
 
-    def checkConnection(self) -> Tuple[bool, Optional[bool]]:
-        """Returns booleans (<connected>, <versionSupported>).\n
-        <connected> is True if a HTTP request is succesfully received.\\
-        <versionSupported> is True if the detected Minecraft version is guaranteed to be supported.\n
-        If <connected> is False, <versionSupported> is None.
+    def isConnected(self) -> Tuple[bool, Optional[bool]]:
+        """Returns whether this Interface is currently connected to an active GDMC HTTP interface.\n
+        Checks whether a single HTTP request is succesfully received.
         """
         try:
-            minecraftVersion = self.getVersion(retries=0)
+            _ = self.getVersion(retries=0)
         except RequestConnectionError:
-            return False, None
-
-        return True, minecraftVersion in SUPPORTED_MINECRAFT_VERSIONS
+            return False
+        return True

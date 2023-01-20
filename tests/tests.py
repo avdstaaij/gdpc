@@ -15,7 +15,7 @@ from copy import deepcopy
 
 from glm import ivec3
 
-from gdpc import (editor_tools, http_interface, lookup, minecraft_tools, old_geometry, old_interface)
+from gdpc import (editor_tools, interface, lookup, minecraft_tools, old_geometry, old_interface)
 from gdpc.vector_tools import loop2D, loop3D
 
 __all__ = []
@@ -112,7 +112,7 @@ def testSynchronisation():
         for _z in range(z - 1, z + 2):
             for i in range(0, 128):
                 bws = ws.getBlockAt(_x, i, _z)
-                bdi = http_interface.getBlock(_x, i, _z).get('id')
+                bdi = interface.getBlock(_x, i, _z).get('id')
                 if (bws != bdi and bws != 'minecraft:void_air'):
                     print("{}: ws: {}, di: {}".format((_x, i, _z), bws, bdi))
                     error = True

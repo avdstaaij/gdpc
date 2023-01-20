@@ -2,7 +2,7 @@
 world through the GDMC HTTP interface"""
 
 
-from typing import Dict, Union, Optional, List, Tuple, Iterable
+from typing import Dict, Union, Optional, List, Iterable
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from concurrent import futures
@@ -16,12 +16,12 @@ from .vector_tools import Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
-from .http_interface import HTTPInterface
+from .interface import Interface
 from .world_slice import WorldSlice
 
 
 class Editor:
-    """Provides high-level functions to interact with the Minecraft world through the GDMC HTTP
+    """Provides a high-level functions to interact with the Minecraft world through the GDMC HTTP
     interface.
 
     Stores various settings, resources, buffers and caches related to block placement, and a
@@ -37,10 +37,10 @@ class Editor:
         cacheLimit            = 8192,
         multithreading        = False,
         multithreadingWorkers = 1,
-        interface: Optional[HTTPInterface] = None
+        interface: Optional[Interface] = None
     ):
         """Constructs an Editor instance with the specified transform and settings"""
-        self._interface = HTTPInterface() if interface is None else interface
+        self._interface = Interface() if interface is None else interface
 
         self._transform = Transform() if transformLike is None else toTransform(transformLike)
 
@@ -82,7 +82,7 @@ class Editor:
         return self._interface
 
     @interface.setter
-    def interface(self, value: HTTPInterface):
+    def interface(self, value: Interface):
         self.sendBufferedBlocks()
         self.awaitBufferFlushes()
         self._interface = value
@@ -209,7 +209,7 @@ class Editor:
         self._interface.runCommand(command)
 
 
-    def getBuildArea(self):
+    def getBuildArea(self) -> Box:
         """Returns the build area that was specified by /setbuildarea in-game.\n
         The build area is always in **global coordinates**; self.transform is ignored."""
         success, result = self.interface.getBuildArea()
@@ -219,8 +219,7 @@ class Editor:
                 "Make sure to set the build area with /setbuildarea in-game.\n"
                 "For example: /setbuildarea ~0 0 ~0 ~128 255 ~128"
             ))
-        beginX, beginY, beginZ, endX, endY, endZ = result
-        return Box.between(ivec3(beginX, beginY, beginZ), ivec3(endX, endY, endZ))
+        return result
 
 
     def setBuildArea(self, buildArea: Box):
@@ -230,20 +229,18 @@ class Editor:
         return self.getBuildArea()
 
 
-    # TODO: getBlockData option (waiting for HTTP backend update)
-    def getBlock(self, position: ivec3, getBlockStates: bool = True):
+    def getBlock(self, position: ivec3, getBlockStates=True, getBlockData=False):
         """Returns the block at [position].\n
         <position> is interpreted as local to the coordinate system defined by self.transform.
         The returned block's orientation is also from the perspective of self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
-        block = self.getBlockGlobal(self.transform * position, getBlockStates)
+        block = self.getBlockGlobal(self.transform * position, getBlockStates, getBlockData)
         invTransform = ~self.transform
         block.transform(invTransform.rotation, invTransform.flip)
         return block
 
 
-    # TODO: getBlockData option (waiting for HTTP backend update)
-    def getBlockGlobal(self, position: ivec3, getBlockStates: bool = True):
+    def getBlockGlobal(self, position: ivec3, getBlockStates=True, getBlockData=False):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
         if self.caching:
@@ -264,8 +261,7 @@ class Editor:
         ):
             block = Block.fromBlockCompound(self._worldSlice.getBlockCompoundAt(position))
         else:
-            blockDict = self.interface.getBlock(*position, includeState=getBlockStates, includeData=False)[0]
-            block = Block(blockDict["id"], blockDict["state"])
+            block = self.interface.getBlocks(position, includeState=getBlockStates, includeData=getBlockData)[0][1]
 
         if self.caching:
             self._cache[position] = copy(block)
@@ -367,9 +363,7 @@ class Editor:
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
-        blockStr = block.id + block.blockStateString() + (f"{{{block.data}}}" if block.data else "")
-
-        result = self.interface.placeBlock(*position, blockStr, doBlockUpdates=doBlockUpdates)
+        result = self.interface.placeBlocks([(position, block)], doBlockUpdates=doBlockUpdates)
         if not result[0].isnumeric():
             eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
@@ -400,11 +394,7 @@ class Editor:
         def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
-                blockStr = "\n".join(
-                    f"{pos.x} {pos.y} {pos.z} "
-                    f"{block.id + block.blockStateString() + (f'{{{block.data}}}' if block.data else '')}" for pos, block in blockBuffer.items()
-                )
-                response = self.interface.placeBlock(0, 0, 0, blockStr, doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
+                response = self.interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
                 blockBuffer.clear()
 
                 for line in response:
@@ -456,7 +446,7 @@ class Editor:
         """Loads the world slice for the given XZ-rectangle.\n
         The rectangle must be given in **global coordinates**; self.transform is ignored.\n
         If <rect> is None, the world slice of the current build area is loaded.\n
-        If <cache>=True, the loaded worldSlice is cached in this interface. It can then be accessed
+        If <cache>=True, the loaded worldSlice is cached in this editor. It can then be accessed
         through .worldSlice.
         If a world slice was already cached, it is replaced.
         The cached world slice is used for faster block retrieval. Note that the editor assumes
@@ -482,6 +472,11 @@ class Editor:
     def getMinecraftVersion(self):
         """Returns the Minecraft version as a string."""
         return self.interface.getVersion()
+
+
+    def isConnected(self):
+        """Returns whether the underlying Interface is connected to an active host."""
+        return self.interface.isConnected()
 
 
     @contextmanager
