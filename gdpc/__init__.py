@@ -6,5 +6,5 @@ __author_email__     = "arthurvanderstaaij@gmail.com, blinkenlights@pm.me, nilsg
 __maintainer__       = "Arthur van der Staaij"
 __maintainer_email__ = "arthurvanderstaaij@gmail.com"
 __license__          = "MIT"
-__copyright__        = "Copyright 2022 Arthur van der Staaij, Copyright 2021-2022 Blinkenlights, Copyright 2020-2021 Nils Gawlik"
+__copyright__        = "Copyright 2022-2023 Arthur van der Staaij, Copyright 2021-2022 Blinkenlights, Copyright 2020-2021 Nils Gawlik"
 __version__          = "5.0.2"
