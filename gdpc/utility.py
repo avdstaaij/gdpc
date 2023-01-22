@@ -68,7 +68,6 @@ def withRetries(
     while True:
         try:
             return function()
-        # TODO: is it possible to take the type of the exception to catch here as a parameter?
         except Exception as e: # pylint: disable=broad-except
             if retriesLeft == 0:
                 raise e

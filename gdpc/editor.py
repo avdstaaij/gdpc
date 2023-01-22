@@ -16,7 +16,7 @@ from .vector_tools import Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
-from .interface import Interface
+from . import interface
 from .world_slice import WorldSlice
 
 
@@ -37,10 +37,14 @@ class Editor:
         cacheLimit            = 8192,
         multithreading        = False,
         multithreadingWorkers = 1,
-        interface: Optional[Interface] = None
+        retries               = 4,
+        timeout               = None,
+        host                  = interface.DEFAULT_HOST,
     ):
         """Constructs an Editor instance with the specified transform and settings"""
-        self._interface = Interface() if interface is None else interface
+        self._retries = retries
+        self._timeout = timeout
+        self._host    = host
 
         self._transform = Transform() if transformLike is None else toTransform(transformLike)
 
@@ -75,17 +79,6 @@ class Editor:
         # actually shut down yet. For safety, the last buffer flush must be done on the main thread.
         self.sendBufferedBlocks()
 
-
-    @property
-    def interface(self):
-        """This editor's underlying interface"""
-        return self._interface
-
-    @interface.setter
-    def interface(self, value: Interface):
-        self.sendBufferedBlocks()
-        self.awaitBufferFlushes()
-        self._interface = value
 
     @property
     def transform(self):
@@ -185,6 +178,35 @@ class Editor:
         self._doBlockUpdates = value
 
     @property
+    def retries(self):
+        """The amount of retries for requests to the GDMC HTTP interface"""
+        return self._retries
+
+    @retries.setter
+    def retries(self, value: int):
+        self._retries = value
+
+    @property
+    def timeout(self):
+        """The timeout for requests to the GDMC HTTP interface (as described by the `requests` package)"""
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        self._timeout = value
+
+    @property
+    def host(self):
+        """The address (hostname+port) of the GDMC HTTP interface to use"""
+        return self._host
+
+    @host.setter
+    def host(self, value: str):
+        self.sendBufferedBlocks()
+        self.awaitBufferFlushes()
+        self._host = value
+
+    @property
     def worldSlice(self):
         """The cached WorldSlice"""
         return self._worldSlice
@@ -206,20 +228,13 @@ class Editor:
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
             return
-        self._interface.runCommand(command)
+        interface.runCommand(command, retries=self.retries, timeout=self.timeout, host=self.host)
 
 
     def getBuildArea(self) -> Box:
         """Returns the build area that was specified by /setbuildarea in-game.\n
         The build area is always in **global coordinates**; self.transform is ignored."""
-        success, result = self.interface.getBuildArea()
-        if not success:
-            raise RuntimeError(colored(color="red", text=\
-                "ERROR: Failed to get build area!\n"
-                "Make sure to set the build area with /setbuildarea in-game.\n"
-                "For example: /setbuildarea ~0 0 ~0 ~128 255 ~128"
-            ))
-        return result
+        return interface.getBuildArea(retries=self.retries, timeout=self.timeout, host=self.host)
 
 
     def setBuildArea(self, buildArea: Box):
@@ -261,7 +276,7 @@ class Editor:
         ):
             block = Block.fromBlockCompound(self._worldSlice.getBlockCompoundAt(position))
         else:
-            block = self.interface.getBlocks(position, includeState=getBlockStates, includeData=getBlockData)[0][1]
+            block = interface.getBlocks(position, includeState=getBlockStates, includeData=getBlockData, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
 
         if self.caching:
             self._cache[position] = copy(block)
@@ -363,7 +378,7 @@ class Editor:
         Returns whether the placement succeeded."""
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
-        result = self.interface.placeBlocks([(position, block)], doBlockUpdates=doBlockUpdates)
+        result = interface.placeBlocks([(position, block)], doBlockUpdates=doBlockUpdates, retries=self.retries, timeout=self.timeout, host=self.host)
         if not result[0].isnumeric():
             eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
             return False
@@ -386,7 +401,7 @@ class Editor:
         return True
 
 
-    def sendBufferedBlocks(self, retries = 5):
+    def sendBufferedBlocks(self):
         """Flushes the block placement buffer.\n
         If multithreaded buffer flushing is enabled, the threads can be awaited with
         awaitBufferFlushes()."""
@@ -394,7 +409,7 @@ class Editor:
         def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
-                response = self.interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, retries=retries)
+                response = interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, retries=self.retries, timeout=self.timeout, host=self.host)
                 blockBuffer.clear()
 
                 for line in response:
@@ -403,7 +418,7 @@ class Editor:
 
             # Flush command buffer
             if commandBuffer:
-                response = self._interface.runCommand("\n".join(commandBuffer))
+                response = interface.runCommand("\n".join(commandBuffer), retries=self.retries, timeout=self.timeout, host=self.host)
                 commandBuffer.clear()
 
                 for line in response:
@@ -455,7 +470,7 @@ class Editor:
         slice."""
         if rect is None:
             rect = self.getBuildArea()
-        worldSlice = WorldSlice(self.interface, rect)
+        worldSlice = WorldSlice(rect, retries=self.retries, timeout=self.timeout, host=self.host)
         if cache:
             self._worldSlice      = worldSlice
             self._worldSliceDecay = np.zeros(addY(self._worldSlice.rect.size, lookup.BUILD_HEIGHT), dtype=np.bool)
@@ -471,12 +486,13 @@ class Editor:
 
     def getMinecraftVersion(self):
         """Returns the Minecraft version as a string."""
-        return self.interface.getVersion()
+        return interface.getVersion(retries=self.retries, timeout=self.timeout, host=self.host)
 
 
-    def isConnected(self):
-        """Returns whether the underlying Interface is connected to an active host."""
-        return self.interface.isConnected()
+    def checkConnection(self):
+        """Raises an InterfaceConnectionError if the GDMC HTTP interface cannot be reached.\n
+        Does not perform any retries."""
+        interface.getVersion(retries=0, timeout=self.timeout, host=self.host)
 
 
     @contextmanager

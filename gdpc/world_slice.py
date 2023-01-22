@@ -10,7 +10,7 @@ import numpy as np
 
 from .vector_tools import addY, trueMod, Rect
 from . import lookup
-from .interface import Interface
+from . import interface
 
 
 def _inclusiveBetween(start, end, value):
@@ -98,7 +98,7 @@ class _CachedSection:
 class WorldSlice:
     """Contains information on a slice of the world."""
 
-    def __init__(self, interface: Interface, rect: Rect, heightmapTypes=None):
+    def __init__(self, rect: Rect, heightmapTypes=None, retries=0, timeout=None, host=interface.DEFAULT_HOST):
         """Initialise WorldSlice with region and heightmap."""
         if heightmapTypes is None:
             heightmapTypes = ["MOTION_BLOCKING",
@@ -113,7 +113,7 @@ class WorldSlice:
 
         self.heightmapTypes = heightmapTypes
 
-        chunkBytes = interface.getChunks(self.chunkRect.offset, self.chunkRect.size, asBytes=True)
+        chunkBytes = interface.getChunks(self.chunkRect.offset, self.chunkRect.size, asBytes=True, retries=retries, timeout=timeout, host=host)
         file_like = BytesIO(chunkBytes)
 
         self.nbtfile = nbt.nbt.NBTFile(buffer=file_like)
