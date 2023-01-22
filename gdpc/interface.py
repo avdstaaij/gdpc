@@ -31,6 +31,10 @@ class InterfaceConnectionError(InterfaceError):
     """An error occured when trying to connect to the GDMC HTTP interface"""
 
 
+class InterfaceInternalError(InterfaceError):
+    """The GDMC HTTP interface reported an internal server error (500)"""
+
+
 class BuildAreaNotSetError(InterfaceError):
     """Attempted to retieve the build area while it was not set"""
 
@@ -47,7 +51,7 @@ def _onRequestRetry(e: Exception, retriesLeft: int):
 
 def _request(method: str, url: str, *args, retries: int, **kwargs):
     try:
-        return withRetries(partial(requests.request, method, url, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
+        response = withRetries(partial(requests.request, method, url, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
     except RequestConnectionError as e:
         u = urlparse(url)
         raise InterfaceConnectionError(
@@ -56,6 +60,11 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
              "For example, by running Minecraft with the GDMC HTTP mod installed.\n"
             f"See {__url__}/README.md for more information."
         ) from e
+
+    if response.status_code == 500:
+        raise InterfaceInternalError("The GDMC HTTP interface reported an internal server error (500)")
+
+    return response
 
 
 def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional[str] = None, includeState=False, includeData=False, retries=0, timeout=None, host=DEFAULT_HOST):
