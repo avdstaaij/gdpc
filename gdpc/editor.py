@@ -6,18 +6,22 @@ from typing import Dict, Union, Optional, List, Iterable
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from concurrent import futures
+import logging
 
 import numpy as np
 from glm import ivec3
 from termcolor import colored
 
-from .utility import eprint, eagerAll, OrderedByLookupDict
+from .utility import eagerAll, OrderedByLookupDict
 from .vector_tools import Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
 from . import interface
 from .world_slice import WorldSlice
+
+
+logger = logging.getLogger(__name__)
 
 
 class Editor:
@@ -139,16 +143,17 @@ class Editor:
         if not self._multithreading and value:
             self._bufferFlushExecutor = futures.ThreadPoolExecutor(self._multithreadingWorkers)
             if self._multithreadingWorkers > 1:
-                eprint(colored(color="yellow", text=\
-                    "WARNING: An editor has been set to use multithreaded buffer flushing with more\n"
-                    "than one worker thread.\n"
+                logger.warning(
+                    "Multithreading with more than one worker thread.\n"
+                    "An editor has been set to use multithreaded buffer flushing with more than one\n"
+                    "worker thread.\n"
                     "The editor can no longer guarantee that blocks will be placed in the same order\n"
                     "as they were sent. If buffering or caching is used, this can also cause the\n"
                     "caches to become inconsistent with the actual world.\n"
                     "Multithreading with more than one worker thread can speed up block placement on\n"
                     "some machines, which can be nice during development, but it is NOT RECOMMENDED\n"
                     "for production code."
-                ))
+                )
         elif self._multithreading and not value:
             self._bufferFlushExecutor.shutdown(wait=True)
             del self._bufferFlushExecutor
@@ -228,7 +233,9 @@ class Editor:
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
             return
-        interface.runCommand(command, retries=self.retries, timeout=self.timeout, host=self.host)
+        result = interface.runCommand(command, retries=self.retries, timeout=self.timeout, host=self.host)
+        if not result[0].isnumeric():
+            logger.error("Server returned error upon running command:\n  %s", result[0])
 
 
     def getBuildArea(self) -> Box:
@@ -380,7 +387,7 @@ class Editor:
 
         result = interface.placeBlocks([(position, block)], doBlockUpdates=doBlockUpdates, retries=self.retries, timeout=self.timeout, host=self.host)
         if not result[0].isnumeric():
-            eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing block:\n\t{result}"))
+            logger.error("Server returned error upon placing block:\n  %s", result[0])
             return False
         return True
 
@@ -414,7 +421,7 @@ class Editor:
 
                 for line in response:
                     if not line.isnumeric():
-                        eprint(colored(color="yellow", text=f"Warning: Server returned error upon placing buffered block:\n\t{line}"))
+                        logger.error("Server returned error upon placing buffered block:\n  %s", line)
 
             # Flush command buffer
             if commandBuffer:
@@ -423,7 +430,7 @@ class Editor:
 
                 for line in response:
                     if not line.isnumeric():
-                        eprint(colored(color="yellow", text=f"Warning: Server returned error upon sending buffered command:\n\t{line}"))
+                        logger.error("Server returned error upon running buffered command:\n  %s", line)
 
         if self._multithreading:
             # Clean up finished buffer flush futures

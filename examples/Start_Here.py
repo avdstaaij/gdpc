@@ -35,6 +35,8 @@ This file is not meant to be imported.
 # === STRUCTURE #1
 # These are the modules (libraries) we will use in this code
 # We are giving these modules shorter, but distinct, names for convenience
+import logging
+from termcolor import colored
 from random import randint
 
 from glm import ivec3
@@ -51,6 +53,8 @@ from gdpc import editor_tools as ET
 # I like to write them in capitals so I know they're global
 # NOTE: if you want to change this value inside one of your functions,
 #   you'll have to add a line of code. For an example search 'GLOBAL'
+
+logging.basicConfig(format=colored("%(name)s - %(levelname)s - %(message)s", color="yellow"))
 
 # Here we construct an Editor object
 ED = Editor()

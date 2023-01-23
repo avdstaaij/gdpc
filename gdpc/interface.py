@@ -8,19 +8,22 @@ from typing import Sequence, Tuple, Optional, List, Dict, Any
 from functools import partial
 import time
 from urllib.parse import urlparse
+import logging
 
 from glm import ivec2, ivec3
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
-from termcolor import colored
 
 from . import __url__
-from .utility import eprint, withRetries
+from .utility import withRetries
 from .vector_tools import Box
 from .block import Block
 
 
 DEFAULT_HOST = "http://localhost:9000"
+
+
+logger = logging.getLogger(__name__)
 
 
 class InterfaceError(RuntimeError):
@@ -40,12 +43,13 @@ class BuildAreaNotSetError(InterfaceError):
 
 
 def _onRequestRetry(e: Exception, retriesLeft: int):
-    eprint(colored(color="yellow", text=\
-         "HTTP request failed!\n"
-         "Error:\n"
-        f"{e}\n"
-        f"I'll retry in a bit ({retriesLeft} retries left)."
-    ))
+    logger.warning(
+        "HTTP request failed!\n"
+        "Request exception:\n"
+        "%s\n"
+        "I'll retry in a bit (%i retries left).",
+        e, retriesLeft
+    )
     time.sleep(3)
 
 
