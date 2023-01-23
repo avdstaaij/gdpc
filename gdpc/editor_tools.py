@@ -90,9 +90,9 @@ def placeContainerBlock(
 ):
     """Place a container block with the specified items in the world.\n
     <items> should be a sequence of (position, item, [amount,])-tuples."""
-    if block.id not in lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE:
+    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
+    if inventorySize is None:
         raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE[block]
 
     if not replace and editor.getBlock(position).id != block.id:
         return
@@ -116,9 +116,9 @@ def setContainerItem(editor: Editor, position: ivec3, itemPosition: ivec2, item:
     globalPosition = editor.transform * position
 
     block = editor.getBlockGlobal(globalPosition)
-    if block.id not in lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE:
+    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
+    if inventorySize is None:
         raise ValueError(f'The block at ({",".join(position)}) is "{block}", which is not a known container block.')
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE[block]
 
     index = positionToInventoryIndex(itemPosition, inventorySize)
     editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item} {amount}", syncWithBuffer=True)

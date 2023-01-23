@@ -50,7 +50,7 @@ def verifyPaletteBlocks():
     counter = 0
     badcounter = 0
     passed = []
-    tocheck = [block for i in lookup.PALETTE.values()
+    tocheck = [block for i in lookup.COLOR_TO_BLOCKS.values()
                for block in i] + list(lookup.MAPTRANSPARENT)
     print(f"\t{lookup.TCOLORS['gray']}Preparing done.")
 
@@ -78,7 +78,7 @@ def verifyPaletteBlocks():
                             "Please check you are running"
                             f" on Minecraft {VERSIONNAME}")
 
-    p = {v for nv in lookup.PALETTE.values() for v in nv} \
+    p = {v for nv in lookup.COLOR_TO_BLOCKS.values() for v in nv} \
         | lookup.MAPTRANSPARENT
     b = lookup.BLOCKS
     discrepancy = len(p-b) + len(b-p)

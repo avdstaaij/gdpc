@@ -1,12 +1,61 @@
 """Store lists of various information on blocks, biomes and more."""
 
 
-from typing import Set
+from typing import Dict, Iterable, Optional, Set, Union
 
 from glm import ivec2
 
+from .utils import isIterable
 
-# ========================================================= general constants
+
+# ==================================================================================================
+# Helper functions
+# ==================================================================================================
+
+
+def variate(
+    variations: Iterable[str],
+    extensions: Optional[Union[str, Iterable[Optional[str]]]] = None,
+    isPrefix:   bool          = False,
+    separator:  str           = "_",
+    namespace:  Optional[str] = "minecraft",
+):
+    """Generates block variations.
+
+    Returns a set of strings. For each variation, each extension is either appended or prepended
+    depending on <isPrefix>, using <separator>.
+
+    If <namespace> is not None, each string is additionally prefixed with "<namespace>:".
+    """
+
+    joined = None
+    combinations = set()
+
+    if extensions is None:
+        joined = variations
+    elif isinstance(extensions, str):
+        combinations = {(v, extensions) for v in variations}
+    elif isIterable(extensions):
+        combinations = {(v, e) for v in variations for e in extensions}
+    if isPrefix:
+        combinations = {(e, v) for v, e in combinations}
+
+    namespacePrefix = f"{namespace}:" if namespace is not None else ""
+
+    if joined is None:
+        joined = set()
+        for c in combinations:
+            if None in c:
+                temp = list(c)
+                temp.remove(None)
+                c = tuple(temp)
+            joined.add(separator.join(c))
+    return {f"{namespacePrefix}{j}" for j in joined}
+
+
+# ==================================================================================================
+# Data
+# ==================================================================================================
 
 
 SUPPORTED_MINECRAFT_VERSIONS = [
@@ -20,53 +69,6 @@ BUILD_HEIGHT = BUILD_Y_MAX - BUILD_Y_MIN + 1
 
 
 # ========================================================= materials
-
-
-def variate(variations, extensions=None, isprefix=False,
-            namespace="minecraft", separator="_", ns_separator=":") -> set:
-    """Generate block variations.
-
-    TODO: documentation
-    TODO: refactor to take optional suffix and prefix, replace named types
-    """
-
-    def is_iterable(iterable):
-        """Determine whether iterable is an iterable."""
-        try:
-            _ = iter(iterable)
-            return True
-        except TypeError:
-            return False
-
-    if not is_iterable(variations):
-        # TODO: improve error message
-        raise ValueError()
-    joined = None
-    combinations = set()
-    if extensions is None:
-        joined = variations
-    elif isinstance(extensions, str):
-        combinations = {(v, extensions) for v in variations}
-    elif is_iterable(extensions):
-        combinations = {(v, e) for v in variations for e in extensions}
-    if isprefix:
-        combinations = {(e, v) for v, e in combinations}
-    if namespace is None:
-        namespace, ns_separator = "", ""
-    elif ns_separator is None:
-        ns_separator = ""
-    if separator is None:
-        separator = ""
-
-    if joined is None:
-        joined = set()
-        for c in combinations:
-            if None in c:
-                temp = list(c)
-                temp.remove(None)
-                c = tuple(temp)
-            joined.add(separator.join(c))
-    return {f"{namespace}{ns_separator}{j}" for j in joined}
 
 
 # COLOURS
@@ -208,7 +210,7 @@ POTTED_PLANT_TYPES = {"dandelion", "poppy", "blue_orchid", "allium",
 
 LIVE_CORAL_TYPES = set(CORAL_SHADES) - {"dead"}
 DEAD_CORAL_TYPES = variate(LIVE_CORAL_TYPES, "dead",
-                           isprefix=True, namespace=None)
+                           isPrefix=True, namespace=None)
 CORAL_TYPES = LIVE_CORAL_TYPES | DEAD_CORAL_TYPES
 
 WOODY_TYPES = WOOD_TYPES | FUNGUS_TYPES
@@ -223,9 +225,9 @@ QUARTZ_BLOCK_TYPES = {"block", "pillar", "bricks", }
 POLISHED_BLACKSTONE_TYPES = {None, "brick", }
 POLISHED_BLACKSTONE_BRICK_TYPES = {None, "cracked", }
 SMOOTH_SANDSTONE_TYPES = variate(SAND_TYPES, "smooth",
-                                 isprefix=True, namespace=None)
+                                 isPrefix=True, namespace=None)
 CUT_SANDSTONE_TYPES = variate(SAND_TYPES, "cut",
-                              isprefix=True, namespace=None)
+                              isPrefix=True, namespace=None)
 PRISMARINE_TYPES = {None, "dark", }
 LIMITED_NETHER_BRICK_TYPES = {None, "red", }
 NETHER_BRICK_TYPES = {"cracked", "chiseled", } | LIMITED_NETHER_BRICK_TYPES
@@ -262,9 +264,9 @@ NAMED_CORAL_TYPES = NAMED_LIVE_CORAL_TYPES | NAMED_DEAD_CORAL_TYPES
 
 NAMED_POLISHED_BLACKSTONE_TYPES = \
     variate(POLISHED_BLACKSTONE_TYPES, "polished_blackstone",
-            isprefix=True, namespace=None)
+            isPrefix=True, namespace=None)
 NAMED_POLISHED_IGNEOUS_TYPES = variate(IGNEOUS_TYPES, "polished",
-                                       isprefix=True, namespace=None)
+                                       isPrefix=True, namespace=None)
 NAMED_PRISMARINE_TYPES = variate(PRISMARINE_TYPES, "prismarine",
                                  namespace=None)
 
@@ -309,8 +311,8 @@ IGNEOUS = variate(IGNEOUS_TYPES)
 OBSIDIAN_BLOCKS = variate(OBSIDIAN_TYPES, "obsidian")
 COBBLESTONES = variate(COBBLESTONE_TYPES, "cobblestone")
 INFESTED_STONE_BRICKS = variate(
-    NAMED_STONE_BRICK_TYPES, "infested", isprefix=True)
-INFESTED = variate(STONE_TYPES, "infested", isprefix=True) \
+    NAMED_STONE_BRICK_TYPES, "infested", isPrefix=True)
+INFESTED = variate(STONE_TYPES, "infested", isPrefix=True) \
            | INFESTED_STONE_BRICKS
 RAW_SANDSTONES = variate(SAND_TYPES, "sandstone")
 TERRACOTTAS = variate({None, } | set(DYE_COLORS), "terracotta")
@@ -361,8 +363,8 @@ FUNGUS_VINES = variate(FUNGUS_VINE_TYPES, "vines")
 BARKED_FUNGUS_STEMS = variate(FUNGUS_TYPES, "stem")
 BARKED_FUNGUS_HYPHAE = variate(FUNGUS_TYPES, "hyphae")
 BARKED_FUNGUS_STALKS = BARKED_FUNGUS_STEMS | BARKED_FUNGUS_HYPHAE
-STRIPPED_FUNGUS_STEMS = variate(NAMED_STEM_TYPES, "stripped", isprefix=True)
-STRIPPED_FUNGUS_HYPHAE = variate(NAMED_HYPHAE_TYPES, "stripped", isprefix=True)
+STRIPPED_FUNGUS_STEMS = variate(NAMED_STEM_TYPES, "stripped", isPrefix=True)
+STRIPPED_FUNGUS_HYPHAE = variate(NAMED_HYPHAE_TYPES, "stripped", isPrefix=True)
 STRIPPED_FUNGUS_STALKS = STRIPPED_FUNGUS_STEMS | STRIPPED_FUNGUS_HYPHAE
 FUNGUS_STEMS = BARKED_FUNGUS_STEMS | STRIPPED_FUNGUS_STEMS
 FUNGUS_HYPHAE = BARKED_FUNGUS_HYPHAE | STRIPPED_FUNGUS_HYPHAE
@@ -387,8 +389,8 @@ FOLIAGE = {"minecraft:vine", } | LEAVES
 BARKED_LOGS = variate(WOOD_TYPES, "log")
 BARKED_WOODS = variate(WOOD_TYPES, "wood")
 BARKED_TRUNKS = BARKED_LOGS | BARKED_WOODS
-STRIPPED_LOGS = variate(NAMED_LOG_TYPES, "stripped", isprefix=True)
-STRIPPED_WOODS = variate(NAMED_WOOD_TYPES, "stripped", isprefix=True)
+STRIPPED_LOGS = variate(NAMED_LOG_TYPES, "stripped", isPrefix=True)
+STRIPPED_WOODS = variate(NAMED_WOOD_TYPES, "stripped", isPrefix=True)
 STRIPPED_TRUNKS = STRIPPED_LOGS | STRIPPED_WOODS
 WOODS = BARKED_TRUNKS | STRIPPED_WOODS
 LOGS = BARKED_LOGS | STRIPPED_LOGS
@@ -641,7 +643,7 @@ WOOD_PLANKS = variate(WOOD_TYPES, "planks")
 FUNGUS_PLANKS = variate(FUNGUS_TYPES, "planks")
 PLANKS = WOOD_PLANKS | FUNGUS_PLANKS
 
-POLISHED_IGNEOUS_BLOCKS = variate(IGNEOUS_TYPES, "polished", isprefix=True)
+POLISHED_IGNEOUS_BLOCKS = variate(IGNEOUS_TYPES, "polished", isPrefix=True)
 
 STONE_BRICKS = {"minecraft:smooth_stone", } \
                | variate(STONE_BRICK_TYPES, "stone_bricks")
@@ -671,7 +673,7 @@ POLISHED_BLACKSTONES = {"minecraft:polished_blackstone",
 QUARTZES = {"minecraft:smooth_quartz", "minecraft:chiseled_quartz_block",
             "minecraft:quartz_block", "minecraft:quartz_bricks",
             "minecraft:quartz_pillar", }
-PURPUR_BLOCKS = variate(PURPUR_TYPES, "purpur", isprefix=True)
+PURPUR_BLOCKS = variate(PURPUR_TYPES, "purpur", isPrefix=True)
 
 SHULKER_BOXES = variate({None, } | set(DYE_COLORS), "shulker_box")
 DYEABLE_BLOCKS = WOOLS | CARPETS | BEDS | BANNERS | STAINED_GLASSES \
@@ -750,7 +752,7 @@ SWITCHES = {"minecraft:lever", } | BUTTONS
 
 # interaction has an immediate effect (no UI)
 FLOWER_POTS = {"minecraft:flower_pot", } \
-              | variate(POTTED_PLANT_TYPES, "potted", isprefix=True)
+              | variate(POTTED_PLANT_TYPES, "potted", isPrefix=True)
 USABLE_BLOCKS = {"minecraft:bell", "minecraft:cake", "minecraft:conduit",
                  "minecraft:jukebox", "minecraft:lodestone",
                  "minecraft:respawn_anchor", "minecraft:spawner",
@@ -1379,7 +1381,7 @@ MAPTRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
 
 # base map colours
 # WARNING: all non-transparent blocks are listed individually here again
-PALETTE = {
+COLOR_TO_BLOCKS: Dict[int, Set[str]] = {
     0x7FB238: {"minecraft:grass_block", "minecraft:slime_block", },
     0xF7E9A3: {
                   "minecraft:sand",
@@ -2015,10 +2017,10 @@ PALETTE = {
     0x562C3E: ("minecraft:warped_hyphae", "minecraft:stripped_warped_hyphae"),
     0x14B485: ("minecraft:warped_wart_block",),
 }
-PALETTELOOKUP = {}
-for hexval, ids in PALETTE.items():
-    for id in ids:
-        PALETTELOOKUP[id] = hexval
+BLOCK_TO_COLOR: Dict[str, int] = {}
+for hexval, ids in COLOR_TO_BLOCKS.items():
+    for bid in ids:
+        BLOCK_TO_COLOR[bid] = hexval
 
 # ========================================================= biome-related
 
@@ -2109,7 +2111,7 @@ BIOMES = {
 # the width of ASCII characters in pixels
 # space between characters is 1
 # the widest supported Unicode character is 9 wide
-ASCIIPIXELS = {
+ASCII_CHAR_TO_WIDTH = {
     "A":  5,
     "a":  5,
     "B":  5,
@@ -2223,5 +2225,5 @@ INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
 }
 CONTAINER_BLOCK_TO_INVENTORY_SIZE = {}
 for size, ids in INVENTORY_SIZE_TO_CONTAINER_BLOCKS.items():
-    for id in ids:
-        CONTAINER_BLOCK_TO_INVENTORY_SIZE[id] = size
+    for bid in ids:
+        CONTAINER_BLOCK_TO_INVENTORY_SIZE[bid] = size

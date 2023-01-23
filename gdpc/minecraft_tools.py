@@ -103,10 +103,7 @@ def bookData(
         If a letter is not found, a width of 9 is assumed
         A character spacing of 1 is automatically integrated
         """
-        return sum([
-            lookup.ASCIIPIXELS[letter] + 1 if letter in lookup.ASCIIPIXELS else 10
-            for letter in word
-        ]) - 1
+        return sum([lookup.ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word]) - 1
 
     def printline():
         nonlocal data, toprint

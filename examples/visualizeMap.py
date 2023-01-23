@@ -32,7 +32,7 @@ if __name__ == '__main__':
     gradientY = cv2.Scharr(cvheightmap, cv2.CV_16S, 0, 1)
 
     # create a dictionary mapping block ids ("minecraft:...") to colors
-    palette = lookup.PALETTELOOKUP
+    palette = lookup.BLOCK_TO_COLOR
 
     # create a 2d map containing the surface block colors
     topcolor = np.zeros(buildRect.size, dtype='int')
