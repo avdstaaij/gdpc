@@ -15,8 +15,8 @@ SUPPORTED_MINECRAFT_VERSIONS = [
 
 
 BUILD_Y_MIN = -64
-BUILD_Y_MAX = 320 # Exclusive
-BUILD_HEIGHT = BUILD_Y_MAX - BUILD_Y_MIN
+BUILD_Y_MAX = 319
+BUILD_HEIGHT = BUILD_Y_MAX - BUILD_Y_MIN + 1
 
 
 # ========================================================= materials
