@@ -18,28 +18,13 @@ from . import __url__
 from .utility import withRetries
 from .vector_tools import Box
 from .block import Block
+from . import exceptions
 
 
 DEFAULT_HOST = "http://localhost:9000"
 
 
 logger = logging.getLogger(__name__)
-
-
-class InterfaceError(RuntimeError):
-    """An error occured when communicating with the GDMC HTTP interface"""
-
-
-class InterfaceConnectionError(InterfaceError):
-    """An error occured when trying to connect to the GDMC HTTP interface"""
-
-
-class InterfaceInternalError(InterfaceError):
-    """The GDMC HTTP interface reported an internal server error (500)"""
-
-
-class BuildAreaNotSetError(InterfaceError):
-    """Attempted to retieve the build area while it was not set"""
 
 
 def _onRequestRetry(e: Exception, retriesLeft: int):
@@ -58,7 +43,7 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
         response = withRetries(partial(requests.request, method, url, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
     except RequestConnectionError as e:
         u = urlparse(url)
-        raise InterfaceConnectionError(
+        raise exceptions.InterfaceConnectionError(
             f"Could not connect to the GDMC HTTP interface at {u.scheme}://{u.netloc}.\n"
              "To use GDPC, you need to use a \"backend\" that provides the GDMC HTTP interface.\n"
              "For example, by running Minecraft with the GDMC HTTP mod installed.\n"
@@ -66,7 +51,7 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
         ) from e
 
     if response.status_code == 500:
-        raise InterfaceInternalError("The GDMC HTTP interface reported an internal server error (500)")
+        raise exceptions.InterfaceInternalError("The GDMC HTTP interface reported an internal server error (500)")
 
     return response
 
@@ -160,7 +145,7 @@ def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
     response = _request("GET", f"{host}/buildarea", retries=retries, timeout=timeout)
 
     if not response.ok or response.json() == -1:
-        raise BuildAreaNotSetError(
+        raise exceptions.BuildAreaNotSetError(
             "Failed to get the build area.\n"
             "Make sure to set the build area with /setbuildarea in-game.\n"
             "For example: /setbuildarea ~0 0 ~0 ~128 255 ~128"
