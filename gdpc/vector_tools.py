@@ -12,7 +12,7 @@ import skimage.segmentation
 import glm
 from glm import ivec2, ivec3, vec2, vec3, bvec2, bvec3
 
-from .utility import nonZeroSign
+from .utils import nonZeroSign
 
 
 # ==================================================================================================

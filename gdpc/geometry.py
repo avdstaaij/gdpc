@@ -5,7 +5,7 @@ from typing import Optional, Union, List, Iterable
 
 from glm import ivec2, ivec3
 
-from .vector_tools import Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D, rotateSizeXZ
+from .vector_tools import Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D
 from .block import Block
 from .editor import Editor
 

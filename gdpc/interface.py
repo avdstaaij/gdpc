@@ -15,7 +15,7 @@ import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
 from . import __url__
-from .utility import withRetries
+from .utils import withRetries
 from .vector_tools import Box
 from .block import Block
 from . import exceptions

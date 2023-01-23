@@ -10,9 +10,8 @@ import logging
 
 import numpy as np
 from glm import ivec3
-from termcolor import colored
 
-from .utility import eagerAll, OrderedByLookupDict
+from .utils import eagerAll, OrderedByLookupDict
 from .vector_tools import Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
