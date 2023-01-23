@@ -289,7 +289,7 @@ def testBooks():
             '╚══════════╝')
 
     print(f"\t{lookup.TCOLORS['gray']}Writing book...", end="\r")
-    book = minecraft_tools.writeBook(text, TITLE, AUTHOR,
+    book = minecraft_tools.bookData(text, TITLE, AUTHOR,
                              DESCRIPTION, DESCRIPTIONCOLOR)
     print("\tWriting book done.")
 

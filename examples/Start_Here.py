@@ -187,7 +187,7 @@ def buildCity():
     # Place a book on a Lectern
     # See the wiki for book formatting codes
     ED.placeBlock(ivec3(xaxis, y, zaxis), Block("emerald_block"))
-    bookData = MT.writeBook("This book has a page!")
+    bookData = MT.bookData("This book has a page!")
     ET.placeLectern(ED, ivec3(xaxis, y + 1, zaxis), bookData=bookData)
 
 

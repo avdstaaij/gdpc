@@ -1,7 +1,7 @@
-"""Provides miscellaneous Minecraft-related utility functions."""
+"""Provides various Minecraft-related utility functions."""
 
 
-from typing import Optional, Union
+from typing import Optional, Union, List
 from functools import lru_cache
 
 from glm import ivec2
@@ -9,24 +9,48 @@ from glm import ivec2
 from .vector_tools import Rect
 from . import lookup
 from .block import Block
-from .block_data_tools import lecternData, signData
 
 
-def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
-    """Returns the flat index of the slot at <position> in an inventory of size <inventorySize>."""
-    if not Rect(size=inventorySize).contains(position):
-        raise ValueError(f"{position} is not between (0, 0) and {inventorySize}!")
-    return position.x + position.y * inventorySize.x
+# ==================================================================================================
+# SNBT generation utilities
+# ==================================================================================================
 
 
-def writeBook(
+def signData(
+    line1: str = "",
+    line2: str = "",
+    line3: str = "",
+    line4: str = "",
+    color: str = "",
+):
+    """Returns an SNBT string with sign data"""
+    nbtFields: List[str] = []
+
+    for i, line in enumerate([line1, line2, line3, line4]):
+        if line:
+            nbtFields.append(f"Text{i+1}: '{{\"text\":\"{line}\"}}'")
+
+    if color:
+        nbtFields.append(f"Color: \"{color}\"")
+
+    return ",".join(nbtFields)
+
+
+def lecternData(bookData: Optional[str] = None, page: int = 0):
+    """Returns an SNBT string with lectern data"""
+    if bookData is None:
+        return ""
+    return f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: {page}'
+
+
+def bookData(
     text: str,
     title="Chronicle",
     author="Anonymous",
     description="I wonder what\\'s inside?",
     desccolor='gold'
 ):
-    r"""Return NBT data for a correctly formatted book.
+    r"""Returns an SNBT string with written book data.
 
     The following special characters are used for formatting the book:
     - `\n`: New line
@@ -85,51 +109,51 @@ def writeBook(
         ]) - 1
 
     def printline():
-        nonlocal bookData, toprint
+        nonlocal data, toprint
         formatting = toprint[:2]
         spaces_left = pixels_left // 4 + 3
         if formatting == '\\c':      # centered text
-            bookData += spaces_left // 2 * ' ' \
+            data += spaces_left // 2 * ' ' \
                 + toprint[2:-1] + spaces_left // 2 * ' '
         elif formatting == '\\r':    # right-aligned text
-            bookData += spaces_left * ' ' + toprint[2:-1]
+            data += spaces_left * ' ' + toprint[2:-1]
         else:
-            bookData += toprint
+            data += toprint
         toprint = ''
 
     def newline():
-        nonlocal characters_left, lines_left, pixels_left, bookData
+        nonlocal characters_left, lines_left, pixels_left, data
         printline()
         if characters_left < 2 or lines_left < 1:
             return newpage()
         characters_left -= 2
         lines_left -= 1
         pixels_left = lookup.BOOK_PIXELS_PER_LINE
-        bookData += "\\\\n"
+        data += "\\\\n"
 
     def newpage():
-        nonlocal characters_left, lines_left, pixels_left, bookData
+        nonlocal characters_left, lines_left, pixels_left, data
         printline()
         characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
         lines_left      = lookup.BOOK_LINES_PER_PAGE
         pixels_left     = lookup.BOOK_PIXELS_PER_LINE
-        bookData += '"}\',\'{"text":"'    # end page and start new page
+        data += '"}\',\'{"text":"'    # end page and start new page
 
     pages = [page for page in text.split('\f')]
 
-    bookData = (
+    data = (
         "{"
         f'title: "{title}", author: "{author}", '
         f'display:{{Lore:[\'[{{"text":"{description}",'
         f'"color":"{desccolor}"}}]\']}}, pages:['
     )
 
-    bookData += '\'{"text":"'   # start first page
+    data += '\'{"text":"'   # start first page
     for page in pages:
         if pages_left < 1:
             break
         if page[:3] == '\\\\s':
-            bookData += page[3:]
+            data += page[3:]
             newpage()
             continue
         else:
@@ -161,8 +185,13 @@ def writeBook(
                 pixels_left -= width
             newline()           # finish line
         newpage()               # finish page
-    bookData = bookData[:-len(',\'{"text":"')] + ']}' # end last page (book is complete)
-    return bookData
+    data = data[:-len(',\'{"text":"')] + ']}' # end last page (book is complete)
+    return data
+
+
+# ==================================================================================================
+# Block generating utilities
+# ==================================================================================================
 
 
 def signBlock(
@@ -183,6 +212,18 @@ def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: in
         {"facing": facing, "has_book": ("false" if bookData is None else "true")},
         data=lecternData(bookData, page)
     )
+
+
+# ==================================================================================================
+# Misc. utilities
+# ==================================================================================================
+
+
+def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
+    """Returns the flat index of the slot at <position> in an inventory of size <inventorySize>."""
+    if not Rect(size=inventorySize).contains(position):
+        raise ValueError(f"{position} is not between (0, 0) and {inventorySize}!")
+    return position.x + position.y * inventorySize.x
 
 
 def getObtrusiveness(block: Block):
