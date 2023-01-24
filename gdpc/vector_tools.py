@@ -116,7 +116,7 @@ def addY(vec: ivec2, y: int) -> ivec3: ...
 def addY(vec: bvec2, y: bool) -> bvec3: ...
 
 def addY(vec, y=0):
-    """Returns a 3D vector (vec.x, y, vec.y)"""
+    """Returns a 3D vector (vec[0], y, vec[1])"""
     return ivec3(vec.x, y, vec.y)
 
 
@@ -350,6 +350,15 @@ class Rect:
         self.size = value - self.begin
 
     @property
+    def last(self):
+        """Equivalent to self.offset + self.size - 1. Setting will modify self.size."""
+        return self.offset + self.size - 1
+
+    @last.setter
+    def last(self, value: ivec2):
+        self.size = value - self.offset + 1
+
+    @property
     def middle(self):
         """This Rect's middle point, rounded down"""
         return (self.begin + self.size) // 2
@@ -476,7 +485,7 @@ class Box:
         return self.offset
 
     @begin.setter
-    def begin(self, value: ivec2):
+    def begin(self, value: ivec3):
         self.offset = value
 
     @property
@@ -485,8 +494,17 @@ class Box:
         return self.begin + self.size
 
     @end.setter
-    def end(self, value: ivec2):
+    def end(self, value: ivec3):
         self.size = value - self.begin
+
+    @property
+    def last(self):
+        """Equivalent to self.offset + self.size - 1. Setting will modify self.size."""
+        return self.offset + self.size - 1
+
+    @last.setter
+    def last(self, value: ivec3):
+        self.size = value - self.offset + 1
 
     @property
     def middle(self):
@@ -567,12 +585,12 @@ class Box:
         """Returns a copy of this Box, morphologically eroded by [erosion]"""
         return self.dilated(-erosion)
 
-    def centeredSubBoxOffset(self, size: ivec2):
+    def centeredSubBoxOffset(self, size: ivec3):
         """Returns an offset such that Box(offset, [size]).middle == self.middle"""
         difference = self.size - size
         return self.offset + difference/2
 
-    def centeredSubBox(self, size: ivec2):
+    def centeredSubBox(self, size: ivec3):
         """Returns an box of size [size] with the same middle as this box"""
         return Box(self.centeredSubBoxOffset(size), size)
 

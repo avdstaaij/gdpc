@@ -1370,7 +1370,7 @@ TRANSPARENT = INVISIBLE | FILTERING | UNOBTRUSIVE | OBTRUSIVE
 # liberty was taken to move stained glass panes and various flowers
 # into the appropriate colour category
 
-MAPTRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
+MAP_TRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
                   "minecraft:ladder",
                   "minecraft:tripwire_hook", "minecraft:tripwire",
                   "minecraft:end_rod",

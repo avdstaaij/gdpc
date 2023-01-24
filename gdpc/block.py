@@ -7,6 +7,7 @@ from copy import copy, deepcopy
 import random
 
 from glm import bvec3
+from nbt import nbt
 
 from .block_state_tools import transformAxis, transformFacing, transformRotation
 
@@ -96,8 +97,8 @@ class Block:
 
 
     @staticmethod
-    def fromBlockCompound(blockCompound, rotation: int = 0, flip: bvec3 = bvec3()):
-        """Parses a block compound into a Block."""
+    def fromBlockCompound(blockCompound: nbt.TAG_Compound):
+        """Parses a block state compound tag into a Block."""
         # TODO: parse block entity NBT data
         block = Block(str(blockCompound["Name"]))
         if "Properties" in blockCompound:
@@ -105,7 +106,5 @@ class Block:
             for key in properties:
                 value = str(properties[key])
                 block.states[str(key)] = value
-
-        block.transform(rotation, flip)
 
         return block

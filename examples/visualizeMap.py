@@ -44,17 +44,17 @@ if __name__ == '__main__':
             # calculate absolute coordinates
             y = int(heightmap[(x - x1, z - z1)]) - dy
 
-            blockID = worldSlice.getBlockAt(ivec3(x,y,z))
-            if blockID in lookup.MAPTRANSPARENT:
+            block = worldSlice.getBlockGlobal(ivec3(x,y,z))
+            if block.id in lookup.MAP_TRANSPARENT:
                 # transparent blocks are ignored
                 continue
+
+            if block.id not in palette:
+                # unknown blocks remembered for debug purposes
+                unknownBlocks.add(block.id)
             else:
-                if blockID not in palette:
-                    # unknown blocks remembered for debug purposes
-                    unknownBlocks.add(blockID)
-                else:
-                    topcolor[(x - x1, z - z1)] = palette[blockID]
-                break
+                topcolor[(x - x1, z - z1)] = palette[block.id]
+            break
 
     if len(unknownBlocks) > 0:
         print("Unknown blocks: " + str(unknownBlocks))
