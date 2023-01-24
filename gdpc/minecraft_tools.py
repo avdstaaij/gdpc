@@ -1,7 +1,7 @@
 """Provides various Minecraft-related utility functions."""
 
 
-from typing import Optional, Union, List
+from typing import Any, Optional, Union, List
 from functools import lru_cache
 
 from glm import ivec2
@@ -12,7 +12,7 @@ from .block import Block
 
 
 # ==================================================================================================
-# SNBT generation utilities
+# NBT generation utilities
 # ==================================================================================================
 
 
@@ -22,35 +22,39 @@ def signData(
     line3: str = "",
     line4: str = "",
     color: str = "",
+    isGlowing: bool = False,
 ):
-    """Returns an SNBT string with sign data"""
-    nbtFields: List[str] = []
+    """Returns a JSON-like structure of Python objects with sign data"""
+    data = {}
 
     for i, line in enumerate([line1, line2, line3, line4]):
         if line:
-            nbtFields.append(f"Text{i+1}: '{{\"text\":\"{line}\"}}'")
+            data[f"Text{i+1}"] = f'{{"text":"{line}"}}'
 
     if color:
-        nbtFields.append(f"Color: \"{color}\"")
+        data["Color"] = color
 
-    return ",".join(nbtFields)
+    if isGlowing:
+        data["GlowingText"] = "true"
+
+    return data
 
 
-def lecternData(bookData: Optional[str] = None, page: int = 0):
-    """Returns an SNBT string with lectern data"""
+def lecternData(bookData: Any, page: int = 0):
+    """Returns a JSON-like structure of Python objects with lectern data"""
     if bookData is None:
-        return ""
-    return f'Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}}}, Page: {page}'
+        return None
+    return {"Book": {"id": "minecraft:written_book", "Count": 1, "tag": bookData}, "Page": page}
 
 
 def bookData(
     text: str,
-    title="Chronicle",
-    author="Anonymous",
-    description="I wonder what\\'s inside?",
-    desccolor='gold'
+    title       = "Chronicle",
+    author      = "Anonymous",
+    description = "I wonder what\\'s inside?",
+    desccolor   = "gold"
 ):
-    r"""Returns an SNBT string with written book data.
+    r"""Returns a JSON-like structure of Python objects with written book data
 
     The following special characters are used for formatting the book:
     - `\n`: New line
@@ -106,51 +110,45 @@ def bookData(
         return sum([lookup.ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word]) - 1
 
     def printline():
-        nonlocal data, toprint
+        nonlocal pageData, toprint
         formatting = toprint[:2]
         spaces_left = pixels_left // 4 + 3
         if formatting == '\\c':      # centered text
-            data += spaces_left // 2 * ' ' \
-                + toprint[2:-1] + spaces_left // 2 * ' '
+            pageData[-1] += spaces_left // 2 * ' ' + toprint[2:-1] + spaces_left // 2 * ' '
         elif formatting == '\\r':    # right-aligned text
-            data += spaces_left * ' ' + toprint[2:-1]
+            pageData[-1] += spaces_left * ' ' + toprint[2:-1]
         else:
-            data += toprint
+            pageData[-1] += toprint
         toprint = ''
 
     def newline():
-        nonlocal characters_left, lines_left, pixels_left, data
+        nonlocal characters_left, lines_left, pixels_left, pageData
         printline()
         if characters_left < 2 or lines_left < 1:
-            return newpage()
+            newpage()
+            return
         characters_left -= 2
         lines_left -= 1
         pixels_left = lookup.BOOK_PIXELS_PER_LINE
-        data += "\\\\n"
+        pageData[-1] += "\\n"
 
     def newpage():
-        nonlocal characters_left, lines_left, pixels_left, data
+        nonlocal characters_left, lines_left, pixels_left, pageData
         printline()
         characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
         lines_left      = lookup.BOOK_LINES_PER_PAGE
         pixels_left     = lookup.BOOK_PIXELS_PER_LINE
-        data += '"}\',\'{"text":"'    # end page and start new page
+        pageData.append("") # end page and start new page
 
     pages = [page for page in text.split('\f')]
 
-    data = (
-        "{"
-        f'title: "{title}", author: "{author}", '
-        f'display:{{Lore:[\'[{{"text":"{description}",'
-        f'"color":"{desccolor}"}}]\']}}, pages:['
-    )
+    pageData: List[str] = [""] # start first page
 
-    data += '\'{"text":"'   # start first page
     for page in pages:
         if pages_left < 1:
             break
         if page[:3] == '\\\\s':
-            data += page[3:]
+            pageData[-1] += page[3:]
             newpage()
             continue
         else:
@@ -182,8 +180,14 @@ def bookData(
                 pixels_left -= width
             newline()           # finish line
         newpage()               # finish page
-    data = data[:-len(',\'{"text":"')] + ']}' # end last page (book is complete)
-    return data
+    del pageData[-1] # end last page (book is complete)
+
+    return {
+        "title": title,
+        "author": author,
+        "display": {"Lore": [f'[{{"text":"{description}","color":"{desccolor}"}}]']},
+        "pages": [f'{{"text":"{page}"}}' for page in pageData]
+    }
 
 
 # ==================================================================================================
@@ -194,12 +198,12 @@ def bookData(
 def signBlock(
     wood="oak", wall=False,
     facing: str = "north", rotation: Union[str,int] = "0",
-    text1="", text2="", text3="", text4="", color=""
+    text1="", text2="", text3="", text4="", color="", isGlowing=False
 ):
     """Returns a sign Block with the specified properties."""
     blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
     states = {"facing": facing} if wall else {"rotation": str(rotation)}
-    return Block(blockId, states, data=signData(text1, text2, text3, text4, color))
+    return Block(blockId, states, data=signData(text1, text2, text3, text4, color, isGlowing))
 
 
 def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0):

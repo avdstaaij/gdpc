@@ -9,6 +9,7 @@ from functools import partial
 import time
 from urllib.parse import urlparse
 import logging
+import json
 
 from glm import ivec2, ivec3
 import requests
@@ -56,7 +57,7 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
     return response
 
 
-def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional[str] = None, includeState=False, includeData=False, retries=0, timeout=None, host=DEFAULT_HOST):
+def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the blocks in the specified region.
 
     <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
@@ -80,10 +81,7 @@ def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional
     }
     response = _request("GET", url, params=parameters, headers={"accept": "application/json"}, retries=retries, timeout=timeout)
     blockDicts: List[Dict[str, Any]] = response.json()
-    # TODO: deal with b.get("data")
-    if includeData:
-        raise NotImplementedError("includeData is still a work-in-progress.")
-    return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}))) for b in blockDicts]
+    return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data"))) for b in blockDicts]
 
 
 def placeBlocks(blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
@@ -103,11 +101,6 @@ def placeBlocks(blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] 
     """
     url = f"{host}/blocks"
 
-    blockStr = "\n".join(
-        f"{pos.x} {pos.y} {pos.z} "
-        f"{block.id + block.blockStateString() + (f'{{{block.data}}}' if block.data else '')}" for pos, block in blocks
-    )
-
     if customFlags != "":
         blockUpdateParams = {"customFlags": customFlags}
     else:
@@ -116,7 +109,20 @@ def placeBlocks(blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] 
     parameters = {"dimension": dimension}
     parameters.update(blockUpdateParams)
 
-    return _request("PUT", url, data=bytes(blockStr, "utf-8"), params=parameters, retries=retries, timeout=timeout).text.split("\n")
+    body = (
+        "[" +
+        ",".join(
+            '{' +
+            f'"x":{pos.x},"y":{pos.y},"z":{pos.z},"id":"{block.id}"' +
+            (f',"state":{json.dumps(block.states)}' if block.states else '') +
+            (f',"data":{json.dumps(block.data)}' if block.data is not None else '') +
+            '}'
+            for pos, block in blocks
+        ) +
+        "]"
+    )
+
+    return _request("PUT", url, data=bytes(body, "utf-8"), params=parameters, headers={"Content-Type": "application/json"}, retries=retries, timeout=timeout).text.split("\n")
 
 
 def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):

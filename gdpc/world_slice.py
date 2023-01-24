@@ -68,7 +68,7 @@ class _ChunkSection:
     biomesPalette:       nbt.TAG_List
     biomesBitArray:      _BitArray
 
-    def getBlockCompoundAtIndex(self, index) -> nbt.TAG_Compound:
+    def getBlockStateTagAtIndex(self, index) -> nbt.TAG_Compound:
         return self.blockPalette[self.blockStatesBitArray[index]]
 
     def getBiomeAtIndex(self, index) -> nbt.TAG_String:
@@ -105,6 +105,8 @@ class WorldSlice:
             self._heightmaps[hmName] = np.zeros(self._rect.size, dtype=int)
 
         self._sections: Dict[ivec3, _ChunkSection] = {}
+
+        self._blockEntities: Dict[ivec3, nbt.TAG_Compound] = {}
 
         inChunkRectOffset = trueMod(self._rect.offset, 16)
 
@@ -157,6 +159,16 @@ class WorldSlice:
                     blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
                 )
 
+            # Read block entities
+            if 'block_entities' in chunkTag:
+                for blockEntityTag in chunkTag['block_entities']:
+                    blockEntityPos = ivec3(
+                        blockEntityTag['x'].value,
+                        blockEntityTag['y'].value,
+                        blockEntityTag['z'].value
+                    )
+                    self._blockEntities[blockEntityPos] = blockEntityTag
+
 
     def __repr__(self):
         return f"WorldSlice{repr(self._rect)}"
@@ -173,8 +185,8 @@ class WorldSlice:
         return self._chunkRect
 
     @property
-    def nbt(self):
-        """Returns the raw NBT data for the chunks of this WorldSlice.\n
+    def nbt(self) -> nbt.TAG_Compound:
+        """Returns the parsed NBT data for the chunks of this WorldSlice.\n
         Its structure is described in the GDMC HTTP interface API."""
         return self._nbt
 
@@ -198,7 +210,7 @@ class WorldSlice:
         return self._sections.get(self.getChunkSectionPositionGlobal(blockPosition))
 
 
-    def getBlockCompoundGlobal(self, position: ivec3):
+    def getBlockStateTagGlobal(self, position: ivec3):
         """Returns the block state compound tag at global <position>.\n
         If <position> is not contained in this WorldSlice, returns None."""
         chunkSection = self._getChunkSectionGlobal(position)
@@ -209,21 +221,22 @@ class WorldSlice:
             (position.z % 16) * 16 +
             (position.x % 16)
         )
-        return chunkSection.getBlockCompoundAtIndex(blockIndex)
+        return chunkSection.getBlockStateTagAtIndex(blockIndex)
 
-    def getblockCompound(self, position: ivec3):
+    def getBlockStateTag(self, position: ivec3):
         """Returns the block state compound tag at local <position>.\n
         If <position> is not contained in this WorldSlice, returns None."""
-        return self.getBlockCompoundGlobal(position + addY(self._rect.offset))
+        return self.getBlockStateTagGlobal(position + addY(self._rect.offset))
 
 
     def getBlockGlobal(self, position: ivec3):
         """Returns the block at global <position>.\n
         If <position> is not contained in this WorldSlice, returns Block("minecraft:void_air")."""
-        blockCompound = self.getBlockCompoundGlobal(position)
-        if blockCompound is None:
+        blockStateTag = self.getBlockStateTagGlobal(position)
+        if blockStateTag is None:
             return Block("minecraft:void_air")
-        return Block.fromBlockCompound(blockCompound)
+        blockEntityTag = self._blockEntities.get(position)
+        return Block.fromBlockStateTag(blockStateTag, blockEntityTag)
 
     def getBlock(self, position: ivec3):
         """Returns the block at local <position>.\n

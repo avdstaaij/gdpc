@@ -80,7 +80,7 @@ class Editor:
         # interpreter shutdown, and it appears that scheduling a new future at that point fails with
         # "RuntimeError: cannot schedule new futures after shutdown" even if the executor has not
         # actually shut down yet. For safety, the last buffer flush must be done on the main thread.
-        self.sendBufferedBlocks()
+        self.flushBuffer()
 
 
     @property
@@ -100,7 +100,7 @@ class Editor:
     @buffering.setter
     def buffering(self, value: bool):
         if self.buffering and not value:
-            self.sendBufferedBlocks()
+            self.flushBuffer()
         self._buffering = value
 
     @property
@@ -112,7 +112,7 @@ class Editor:
     def bufferLimit(self, value: int):
         self._bufferLimit = value
         if len(self._buffer) >= self.bufferLimit:
-            self.sendBufferedBlocks()
+            self.flushBuffer()
 
     @property
     def caching(self):
@@ -206,7 +206,7 @@ class Editor:
 
     @host.setter
     def host(self, value: str):
-        self.sendBufferedBlocks()
+        self.flushBuffer()
         self.awaitBufferFlushes()
         self._host = value
 
@@ -250,30 +250,29 @@ class Editor:
         return self.getBuildArea()
 
 
-    def getBlock(self, position: ivec3, getBlockStates=True, getBlockData=False):
+    def getBlock(self, position: ivec3):
         """Returns the block at [position].\n
         <position> is interpreted as local to the coordinate system defined by self.transform.
         The returned block's orientation is also from the perspective of self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
-        block = self.getBlockGlobal(self.transform * position, getBlockStates, getBlockData)
+        block = self.getBlockGlobal(self.transform * position)
         invTransform = ~self.transform
         block.transform(invTransform.rotation, invTransform.flip)
         return block
 
 
-    def getBlockGlobal(self, position: ivec3, getBlockStates=True, getBlockData=False):
+    def getBlockGlobal(self, position: ivec3):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
         if self.caching:
-            try:
-                return copy(self._cache[position])
-            except TypeError:
-                pass
+            block = self._cache.get(position)
+            if block is not None:
+                return copy(block)
 
         if self.buffering:
-            block = self._buffer.get(position, None)
+            block = self._buffer.get(position)
             if block is not None:
-                return block
+                return copy(block)
 
         if (
             self._worldSlice is not None and
@@ -282,7 +281,7 @@ class Editor:
         ):
             block = self._worldSlice.getBlockGlobal(position)
         else:
-            block = interface.getBlocks(position, includeState=getBlockStates, includeData=getBlockData, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
+            block = interface.getBlocks(position, includeState=True, includeData=True, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
 
         if self.caching:
             self._cache[position] = copy(block)
@@ -397,19 +396,19 @@ class Editor:
         if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
 
         if doBlockUpdates != self._bufferDoBlockUpdates:
-            self.sendBufferedBlocks()
+            self.flushBuffer()
             self._bufferDoBlockUpdates = doBlockUpdates
 
         elif len(self._buffer) >= self.bufferLimit:
-            self.sendBufferedBlocks()
+            self.flushBuffer()
 
         self._buffer[position] = block
         return True
 
 
-    def sendBufferedBlocks(self):
+    def flushBuffer(self):
         """Flushes the block placement buffer.\n
-        If multithreaded buffer flushing is enabled, the threads can be awaited with
+        If multithreaded buffer flushing is enabled, the worker threads can be awaited with
         awaitBufferFlushes()."""
 
         def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):

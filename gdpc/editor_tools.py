@@ -61,7 +61,7 @@ def placeSign(
     position: ivec3,
     wood="oak", wall=False,
     facing: Optional[str] = None, rotation: Optional[Union[str, int]] = None,
-    text1="", text2="", text3="", text4="", color=""
+    text1="", text2="", text3="", text4="", color="", isGlowing=False
 ):
     """Places a sign with the specified properties.\n
     If <wall> is True, <facing> is used. Otherwise, <rotation> is used.
@@ -70,7 +70,7 @@ def placeSign(
         facing = random.choice(getOptimalFacingDirection(editor, position))
     elif not wall and rotation is None:
         rotation = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
-    editor.placeBlock(position, signBlock(wood, wall, facing, rotation, text1, text2, text3, text4, color))
+    editor.placeBlock(position, signBlock(wood, wall, facing, rotation, text1, text2, text3, text4, color, isGlowing))
 
 
 def placeLectern(editor: Editor, position: ivec3, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
