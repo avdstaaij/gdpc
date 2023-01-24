@@ -41,9 +41,9 @@ class Block:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
 
-    id:     Union[str, Sequence[str]] = "minecraft:stone"
-    states: Dict[str, str]            = field(default_factory=dict)
-    data:   Any                       = None
+    id:     Union[str, Sequence[Optional[str]]] = "minecraft:stone"
+    states: Dict[str, str]                      = field(default_factory=dict)
+    data:   Any                                 = None
 
 
     def chooseId(self):
@@ -88,8 +88,8 @@ class Block:
     def __str__(self):
         statesAndData = self.stateString() + self.dataString()
         if isinstance(self.id, str):
-            return "" if self.id == "" else self.id + statesAndData
-        return ",".join([(name if name == "" else name + statesAndData) for name in self.id])
+            return self.id + statesAndData
+        return ",".join(id + statesAndData for id in self.id if id is not None)
 
 
     def __repr__(self):

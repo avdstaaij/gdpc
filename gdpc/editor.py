@@ -2,9 +2,10 @@
 world through the GDMC HTTP interface"""
 
 
-from typing import Dict, Union, Optional, List, Iterable
+from typing import Dict, Sequence, Union, Optional, List, Iterable
 from contextlib import contextmanager
 from copy import copy, deepcopy
+import random
 from concurrent import futures
 import logging
 
@@ -292,7 +293,7 @@ class Editor:
     def placeBlock(
         self,
         position:       Union[ivec3, Iterable[ivec3]],
-        block:          Block,
+        block:          Union[Block, Sequence[Optional[Block]]],
         replace:        Optional[Union[str, List[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
@@ -300,11 +301,12 @@ class Editor:
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
         If <position> is iterable (e.g. a list), <block> is placed at all positions.
         This is slightly more efficient than calling this method in a loop.\n
-        If <block>.name is a list, names are sampled randomly.\n
+        If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
+        iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
         return self.placeBlockGlobal(
             self.transform * position if isinstance(position, ivec3) else (self.transform * pos for pos in position),
-            block.transformed(self.transform.rotation, self.transform.flip),
+            block.transformed(self.transform.rotation, self.transform.flip) if isinstance(block, Block) else (block.transformed(self.transform.rotation, self.transform.flip) for block in block),
             replace,
             doBlockUpdates
         )
@@ -313,14 +315,15 @@ class Editor:
     def placeBlockGlobal(
         self,
         position:       Union[ivec3, Iterable[ivec3]],
-        block:          Block,
+        block:          Union[Block, Sequence[Optional[Block]]],
         replace:        Optional[Union[str, Iterable[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
         If <position> is iterable (e.g. a list), <block> is placed at all positions.
         In this case, buffering is temporarily enabled for better performance.\n
-        If <block>.name is a list, names are sampled randomly.\n
+        If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
+        iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
 
         if isinstance(position, ivec3):
@@ -336,12 +339,13 @@ class Editor:
     def _placeSingleBlockGlobal(
         self,
         position:       ivec3,
-        block:          Block,
+        block:          Union[Block, Sequence[Optional[Block]]],
         replace:        Optional[Union[str, Iterable[str]]] = None,
         doBlockUpdates: Optional[bool] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
-        If <block>.name is a list, names are sampled randomly.\n
+        If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
+        iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
 
         # Check replace condition
@@ -352,13 +356,12 @@ class Editor:
                 return True
 
         # Select block from palette
+        if not isinstance(block, Block):
+            block = random.choice(block)
+            if block is None:
+                return True
         block = block.chooseId()
-
-        # Support for "no placement" in block palettes
         if not block.id:
-            return True
-
-        if (self.caching and block.id in self.getBlockGlobal(position)): # TODO: this is very error-prone! "stone" is in "stone_stairs". Also, we may want to change only block state or nbt data.
             return True
 
         if self._buffering:
