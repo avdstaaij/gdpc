@@ -228,15 +228,16 @@ def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
 
 
 def getObtrusiveness(block: Block):
-    """Returns the percieved obtrusiveness of a given block.\n
+    """Returns the percieved obtrusiveness of the given <block>.\n
     Returns a numeric weight from 0 (invisible) to 4 (opaque)."""
-    blockId = block.id if isinstance(block.id, str) else block.id[0] # TODO: mean?
-    if blockId in lookup.INVISIBLE:
+    if not isinstance(block.id, str):
+        raise ValueError("Cannot determine the obtrusiveness of a block palette!")
+    if block.id in lookup.INVISIBLE:
         return 0
-    if blockId in lookup.FILTERING:
+    if block.id in lookup.FILTERING:
         return 1
-    if blockId in lookup.UNOBTRUSIVE:
+    if block.id in lookup.UNOBTRUSIVE:
         return 2
-    if blockId in lookup.OBTRUSIVE:
+    if block.id in lookup.OBTRUSIVE:
         return 3
     return 4
