@@ -1,25 +1,7 @@
 ---
 name: Generic issue
-about: Describe this issue template's purpose here.
+about: ''
 title: ''
 labels: ''
-assignees: Flashing-Blinkenlights
-
+assignees:
 ---
-
-**Feature branch: `None`**
-
-Your suggestion here.
-
-### Suggested implementation:
-
-```py
-def what_I_imagine():
-    ...
-```
-
-Pro:
-- [fill me]
-
-Con:
-- [fill me]
