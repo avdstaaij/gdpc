@@ -465,7 +465,7 @@ class Editor:
         self._bufferFlushFutures = futures.wait(self._bufferFlushFutures, timeout).not_done
 
 
-    def loadWorldSlice(self, rect: Optional[Rect]=None, cache=False):
+    def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache=False):
         """Loads the world slice for the given XZ-rectangle.\n
         The rectangle must be given in **global coordinates**; self.transform is ignored.\n
         If <rect> is None, the world slice of the current build area is loaded.\n
@@ -478,7 +478,7 @@ class Editor:
         slice."""
         if rect is None:
             rect = self.getBuildArea()
-        worldSlice = WorldSlice(rect, retries=self.retries, timeout=self.timeout, host=self.host)
+        worldSlice = WorldSlice(rect, heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
         if cache:
             self._worldSlice      = worldSlice
             self._worldSliceDecay = np.zeros(addY(self._worldSlice.rect.size, lookup.BUILD_HEIGHT), dtype=np.bool)
@@ -489,7 +489,7 @@ class Editor:
         """Updates the cached world slice."""
         if self._worldSlice is None:
             raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
-        return self.loadWorldSlice(self._worldSlice.rect)
+        return self.loadWorldSlice(self._worldSlice.rect, self._worldSlice.heightmaps.keys(), cache=True)
 
 
     def getMinecraftVersion(self):
