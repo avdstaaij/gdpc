@@ -40,13 +40,13 @@ class Model:
         return copy(self._blocks) # Allows block modification, but not resizing
 
 
-    def block(self, vec: ivec3):
+    def getBlock(self, position: ivec3):
         """Returns the block at [vec]"""
-        return self._blocks[(vec.x * self._size.y + vec.y) * self._size.z + vec.z]
+        return self._blocks[(position.x * self._size.y + position.y) * self._size.z + position.z]
 
-    def set_block(self, vec: ivec3, block: Optional[Block]):
+    def setBlock(self, position: ivec3, block: Optional[Block]):
         """Sets the block at [vec] to [block]"""
-        self._blocks[(vec.x * self._size.y + vec.y) * self._size.z + vec.z] = block
+        self._blocks[(position.x * self._size.y + position.y) * self._size.z + position.z] = block
 
 
     def build(
@@ -64,7 +64,7 @@ class Model:
 
         with editor.pushTransform(transformLike):
             for vec in Box(size=self._size).inner:
-                block = self.block(vec)
+                block = self.getBlock(vec)
                 if block is not None:
                     blockToPlace = copy(block)
                     blockToPlace.id = substitutions.get(block.id, block.id)
