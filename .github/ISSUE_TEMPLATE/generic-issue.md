@@ -1,6 +1,6 @@
 ---
 name: Generic issue
-about: ''
+about: 'A regular issue.'
 title: ''
 labels: ''
 assignees:
