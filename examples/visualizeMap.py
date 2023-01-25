@@ -7,8 +7,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from gdpc.editor import Editor
-from gdpc import lookup
+from gdpc import Editor, lookup
 
 
 if __name__ == '__main__':
