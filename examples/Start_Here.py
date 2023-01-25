@@ -236,11 +236,11 @@ def buildTower(x, z):
 
     GEO.placeCuboid(ED, ivec3(x, y + 1, z + radius), ivec3( x, y + height + 2, z + radius), Block("air"))
     GEO.placeCuboid(ED, ivec3(x, y + 1, z + radius - 1), ivec3(x, y + height + 2, z + radius - 1), Block("lime_stained_glass"))
-    ED.placeBlock(ivec3(x, y + 1, z + radius - 1), Block("warped_door", {"facing": "south"}))
+    ED.placeBlock(ivec3(x, y + 1, z + radius - 1), Block("warped_door", {"facing": "north"}))
 
     GEO.placeCuboid(ED, ivec3(x, y + 1, z - radius), ivec3( x, y + height + 2, z - radius), Block("air"))
     GEO.placeCuboid(ED, ivec3(x, y + 1, z - radius + 1), ivec3(x, y + height + 2, z - radius + 1), Block("lime_stained_glass"))
-    ED.placeBlock(ivec3(x, y + 1, z - radius + 1), Block("warped_door", {"facing": "north"}))
+    ED.placeBlock(ivec3(x, y + 1, z - radius + 1), Block("warped_door", {"facing": "south"}))
 
 
 # === STRUCTURE #4
