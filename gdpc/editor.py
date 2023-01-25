@@ -66,7 +66,9 @@ class Editor:
         self._bufferFlushFutures: List[futures.Future] = []
 
         self._doBlockUpdates = True
-        self._bufferDoBlockUpdates = True
+        self._spawnDrops     = False
+        self._bufferDoBlockUpdates = self._doBlockUpdates
+        self._bufferSpawnDrops     = self._spawnDrops
 
         self._worldSlice: Optional[WorldSlice] = None
         self._worldSliceDecay: Optional[np.ndarray] = None
@@ -172,15 +174,27 @@ class Editor:
             self.multithreading = False
             self.multithreading = True
 
-    # TODO: Add support for the other block placement flags?
-    # https://github.com/nilsgawlik/gdmc_http_interface/wiki/Interface-Endpoints
     @property
     def doBlockUpdates(self):
+        """Whether placed blocks should receive a block update"""
         return self._doBlockUpdates
 
     @doBlockUpdates.setter
     def doBlockUpdates(self, value: bool):
+        if self.buffering and value != self._doBlockUpdates:
+            self.flushBuffer()
         self._doBlockUpdates = value
+
+    @property
+    def spawnDrops(self):
+        """Whether overwritten blocks should drop items"""
+        return self._spawnDrops
+
+    @spawnDrops.setter
+    def spawnDrops(self, value: bool):
+        if self.buffering and value != self._spawnDrops:
+            self.flushBuffer()
+        self._spawnDrops = value
 
     @property
     def retries(self):
@@ -294,8 +308,7 @@ class Editor:
         self,
         position:       Union[ivec3, Iterable[ivec3]],
         block:          Union[Block, Sequence[Optional[Block]]],
-        replace:        Optional[Union[str, List[str]]] = None,
-        doBlockUpdates: Optional[bool] = None
+        replace:        Optional[Union[str, List[str]]] = None
     ):
         """Places <block> at <position>.\n
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
@@ -307,8 +320,7 @@ class Editor:
         return self.placeBlockGlobal(
             self.transform * position if isinstance(position, ivec3) else (self.transform * pos for pos in position),
             block.transformed(self.transform.rotation, self.transform.flip) if isinstance(block, Block) else (block.transformed(self.transform.rotation, self.transform.flip) for block in block),
-            replace,
-            doBlockUpdates
+            replace
         )
 
 
@@ -316,8 +328,7 @@ class Editor:
         self,
         position:       Union[ivec3, Iterable[ivec3]],
         block:          Union[Block, Sequence[Optional[Block]]],
-        replace:        Optional[Union[str, Iterable[str]]] = None,
-        doBlockUpdates: Optional[bool] = None
+        replace:        Optional[Union[str, Iterable[str]]] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
         If <position> is iterable (e.g. a list), <block> is placed at all positions.
@@ -327,11 +338,11 @@ class Editor:
         Returns whether the placement succeeded fully."""
 
         if isinstance(position, ivec3):
-            return self._placeSingleBlockGlobal(position, block, replace, doBlockUpdates)
+            return self._placeSingleBlockGlobal(position, block, replace)
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(self._placeSingleBlockGlobal(pos, block, replace, doBlockUpdates) for pos in position)
+        success = eagerAll(self._placeSingleBlockGlobal(pos, block, replace) for pos in position)
         self.buffering = oldBuffering
         return success
 
@@ -340,8 +351,7 @@ class Editor:
         self,
         position:       ivec3,
         block:          Union[Block, Sequence[Optional[Block]]],
-        replace:        Optional[Union[str, Iterable[str]]] = None,
-        doBlockUpdates: Optional[bool] = None
+        replace:        Optional[Union[str, Iterable[str]]] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
         If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
@@ -365,9 +375,9 @@ class Editor:
             return True
 
         if self._buffering:
-            success = self._placeSingleBlockGlobalBuffered(position, block, doBlockUpdates)
+            success = self._placeSingleBlockGlobalBuffered(position, block)
         else:
-            success = self._placeSingleBlockGlobalDirect(position, block, doBlockUpdates)
+            success = self._placeSingleBlockGlobalDirect(position, block)
 
         if not success:
             return False
@@ -381,30 +391,21 @@ class Editor:
         return True
 
 
-    def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block, doBlockUpdates: Optional[bool]):
+    def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block):
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
-        if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
-
-        result = interface.placeBlocks([(position, block)], doBlockUpdates=doBlockUpdates, retries=self.retries, timeout=self.timeout, host=self.host)
+        result = interface.placeBlocks([(position, block)], doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
         if not result[0].isnumeric():
             logger.error("Server returned error upon placing block:\n  %s", result[0])
             return False
         return True
 
 
-    def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block, doBlockUpdates: Optional[bool]):
+    def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block):
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
-        if doBlockUpdates is None: doBlockUpdates = self.doBlockUpdates
-
-        if doBlockUpdates != self._bufferDoBlockUpdates:
+        if len(self._buffer) >= self.bufferLimit:
             self.flushBuffer()
-            self._bufferDoBlockUpdates = doBlockUpdates
-
-        elif len(self._buffer) >= self.bufferLimit:
-            self.flushBuffer()
-
         self._buffer[position] = block
         return True
 
@@ -417,7 +418,7 @@ class Editor:
         def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
-                response = interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, retries=self.retries, timeout=self.timeout, host=self.host)
+                response = interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
                 blockBuffer.clear()
 
                 for line in response:
