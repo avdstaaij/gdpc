@@ -35,13 +35,17 @@ This file is not meant to be imported.
 # === STRUCTURE #1
 # These are the modules (libraries) we will use in this code
 # We are giving these modules shorter, but distinct, names for convenience
+import logging
+from termcolor import colored
 from random import randint
 
-from gdpc import geometry as GEO
-from gdpc import interface as INTF
-from gdpc import toolbox as TB
-from gdpc import interface_toolbox as ITB
-from gdpc import worldLoader as WL
+from glm import ivec3
+
+from gdpc import Block, Editor
+from gdpc import geometry as geometry
+from gdpc import minecraft_tools as minecraft_tools
+from gdpc import editor_tools as editor_tools
+
 
 # === STRUCTURE #2
 # These variables are global and can be read from anywhere in the code
@@ -49,8 +53,15 @@ from gdpc import worldLoader as WL
 # NOTE: if you want to change this value inside one of your functions,
 #   you'll have to add a line of code. For an example search 'GLOBAL'
 
+logging.basicConfig(format=colored("%(name)s - %(levelname)s - %(message)s", color="yellow"))
+
+# Here we construct an Editor object
+ED = Editor()
+
 # Here we read start and end coordinates of our build area
-STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = INTF.requestBuildArea()  # BUILDAREA
+BUILD_AREA = ED.getBuildArea()  # BUILDAREA
+STARTX, STARTY, STARTZ = BUILD_AREA.begin
+LASTX, LASTY, LASTZ = BUILD_AREA.end - 1
 
 # WORLDSLICE
 # Using the start and end coordinates we are generating a world slice
@@ -60,8 +71,7 @@ STARTX, STARTY, STARTZ, ENDX, ENDY, ENDZ = INTF.requestBuildArea()  # BUILDAREA
 #
 # IMPORTANT: Keep in mind that a wold slice is a 'snapshot' of the world,
 #   and any changes you make later on will not be reflected in the world slice
-WORLDSLICE = WL.WorldSlice(STARTX, STARTZ,
-                           ENDX + 1, ENDZ + 1)  # this takes a while
+WORLDSLICE = ED.loadWorldSlice(BUILD_AREA.toRect(), cache=True)  # this takes a while
 
 ROADHEIGHT = 0
 
@@ -91,42 +101,42 @@ def buildPerimeter():
     print("Building east-west walls...")
     # building the east-west walls
 
-    for x in range(STARTX, ENDX + 1):
+    for x in range(STARTX, LASTX + 1):
         # the northern wall
         y = heights[(x - STARTX, 0)]
-        GEO.placeCuboid(x, y - 2, STARTZ, x, y, STARTZ, "granite")
-        GEO.placeCuboid(x, y + 1, STARTZ, x, y + 4, STARTZ, "granite_wall")
+        geometry.placeCuboid(ED, ivec3(x, y - 2, STARTZ), ivec3(x, y, STARTZ), Block("granite"))
+        geometry.placeCuboid(ED, ivec3(x, y + 1, STARTZ), ivec3( x, y + 4, STARTZ), Block("granite_wall"))
         # the southern wall
-        y = heights[(x - STARTX, ENDZ - STARTZ)]
-        GEO.placeCuboid(x, y - 2, ENDZ, x, y, ENDZ, "red_sandstone")
-        GEO.placeCuboid(x, y + 1, ENDZ, x, y + 4, ENDZ, "red_sandstone_wall")
+        y = heights[(x - STARTX, LASTZ - STARTZ)]
+        geometry.placeCuboid(ED, ivec3(x, y - 2, LASTZ), ivec3( x, y, LASTZ), Block("red_sandstone"))
+        geometry.placeCuboid(ED, ivec3(x, y + 1, LASTZ), ivec3( x, y + 4, LASTZ), Block("red_sandstone_wall"))
 
     print("Building north-south walls...")
     # building the north-south walls
-    for z in range(STARTZ, ENDZ + 1):
+    for z in range(STARTZ, LASTZ + 1):
         # the western wall
         y = heights[(0, z - STARTZ)]
-        GEO.placeCuboid(STARTX, y - 2, z, STARTX, y, z, "sandstone")
-        GEO.placeCuboid(STARTX, y + 1, z, STARTX, y + 4, z, "sandstone_wall")
+        geometry.placeCuboid(ED, ivec3(STARTX, y - 2, z), ivec3( STARTX, y, z), Block("sandstone"))
+        geometry.placeCuboid(ED, ivec3(STARTX, y + 1, z), ivec3( STARTX, y + 4, z), Block("sandstone_wall"))
         # the eastern wall
-        y = heights[(ENDX - STARTX, z - STARTZ)]
-        GEO.placeCuboid(ENDX, y - 2, z, ENDX, y, z, "prismarine")
-        GEO.placeCuboid(ENDX, y + 1, z, ENDX, y + 4, z, "prismarine_wall")
+        y = heights[(LASTX - STARTX, z - STARTZ)]
+        geometry.placeCuboid(ED, ivec3(LASTX, y - 2, z), ivec3( LASTX, y, z), Block("prismarine"))
+        geometry.placeCuboid(ED, ivec3(LASTX, y + 1, z), ivec3( LASTX, y + 4, z), Block("prismarine_wall"))
 
 
 def buildRoads():
     """Build a road from north to south and east to west."""
-    xaxis = STARTX + (ENDX - STARTX) // 2  # getting start + half the length
-    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    xaxis = STARTX + (LASTX - STARTX) // 2  # getting start + half the length
+    zaxis = STARTZ + (LASTZ - STARTZ) // 2
     heights = WORLDSLICE.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 
     print("Calculating road height...")
     # caclulating the average height along where we want to build our road
     y = heights[(xaxis - STARTX, zaxis - STARTZ)]
-    for x in range(STARTX, ENDX + 1):
+    for x in range(STARTX, LASTX + 1):
         newy = heights[(x - STARTX, zaxis - STARTZ)]
         y = (y + newy) // 2
-    for z in range(STARTZ, ENDZ + 1):
+    for z in range(STARTZ, LASTZ + 1):
         newy = heights[(xaxis - STARTX, z - STARTZ)]
         y = (y + newy) // 2
 
@@ -138,121 +148,98 @@ def buildRoads():
 
     print("Building east-west road...")
     # building the east-west road
-    GEO.placeCuboid(xaxis - 2, y, STARTZ,
-                    xaxis - 2, y, ENDZ, "end_stone_bricks")
-    GEO.placeCuboid(xaxis - 1, y, STARTZ,
-                    xaxis + 1, y, ENDZ, "gold_block")
-    GEO.placeCuboid(xaxis + 2, y, STARTZ,
-                    xaxis + 2, y, ENDZ, "end_stone_bricks")
-    GEO.placeCuboid(xaxis - 1, y + 1, STARTZ,
-                    xaxis + 1, y + 3, ENDZ, "air")
+    geometry.placeCuboid(ED, ivec3(xaxis - 2, y, STARTZ), ivec3(xaxis - 2, y, LASTZ), Block("end_stone_bricks"))
+    geometry.placeCuboid(ED, ivec3(xaxis - 1, y, STARTZ), ivec3(xaxis + 1, y, LASTZ), Block("gold_block"))
+    geometry.placeCuboid(ED, ivec3(xaxis + 2, y, STARTZ), ivec3(xaxis + 2, y, LASTZ), Block("end_stone_bricks"))
+    geometry.placeCuboid(ED, ivec3(xaxis - 1, y + 1, STARTZ), ivec3(xaxis + 1, y + 3, LASTZ), Block("air"))
 
     print("Building north-south road...")
     # building the north-south road
-    GEO.placeCuboid(STARTX, y, zaxis - 2,
-                    ENDX, y, zaxis - 2, "end_stone_bricks")
-    GEO.placeCuboid(STARTX, y, zaxis - 1,
-                    ENDX, y, zaxis + 1, "gold_block")
-    GEO.placeCuboid(STARTX, y, zaxis + 2,
-                    ENDX, y, zaxis + 2, "end_stone_bricks")
-    GEO.placeCuboid(STARTX, y + 1, zaxis - 1,
-                    ENDX, y + 3, zaxis + 1, "air")
+    geometry.placeCuboid(ED, ivec3(STARTX, y, zaxis - 2), ivec3(LASTX, y, zaxis - 2), Block("end_stone_bricks"))
+    geometry.placeCuboid(ED, ivec3(STARTX, y, zaxis - 1), ivec3(LASTX, y, zaxis + 1), Block("gold_block"))
+    geometry.placeCuboid(ED, ivec3(STARTX, y, zaxis + 2), ivec3(LASTX, y, zaxis + 2), Block("end_stone_bricks"))
+    geometry.placeCuboid(ED, ivec3(STARTX, y + 1, zaxis - 1), ivec3(LASTX, y + 3, zaxis + 1), Block("air"))
 
 
 def buildCity():
-    xaxis = STARTX + (ENDX - STARTX) // 2  # getting center
-    zaxis = STARTZ + (ENDZ - STARTZ) // 2
+    xaxis = STARTX + (LASTX - STARTX) // 2  # getting center
+    zaxis = STARTZ + (LASTZ - STARTZ) // 2
     y = ROADHEIGHT
 
     print("Building city platform...")
     # Building a platform and clearing a dome for the city to sit in
-    GEO.placeCenteredCylinder(xaxis, y, zaxis, 1, 21, "end_stone_bricks")
-    GEO.placeCenteredCylinder(xaxis, y, zaxis, 1, 20, "gold_block")
-    GEO.placeCenteredCylinder(xaxis, y + 1, zaxis, 3, 20, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 4, zaxis, 2, 19, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 6, zaxis, 1, 18, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 7, zaxis, 1, 17, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 8, zaxis, 1, 15, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 9, zaxis, 1, 12, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 10, zaxis, 1, 8, "air")
-    GEO.placeCenteredCylinder(xaxis, y + 11, zaxis, 1, 3, "air")
+    geometry.placeCylinder(ED, ivec3(xaxis, y,      zaxis), 39, 1, Block("end_stone_bricks"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y,      zaxis), 37, 1, Block("gold_block"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y +  1, zaxis), 37, 3, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y +  4, zaxis), 35, 2, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y +  6, zaxis), 33, 1, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y +  7, zaxis), 32, 1, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y +  8, zaxis), 27, 1, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y +  9, zaxis), 21, 1, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y + 10, zaxis), 13, 1, Block("air"))
+    geometry.placeCylinder(ED, ivec3(xaxis, y + 11, zaxis),  3, 1, Block("air"))
 
-    for i in range(50):
+    for _ in range(50):
         buildTower(randint(xaxis - 20, xaxis + 20),
                    randint(zaxis - 20, zaxis + 20))
 
     # Place a book on a Lectern
     # See the wiki for book formatting codes
-    INTF.placeBlock(xaxis, y, zaxis, "emerald_block")
-    bookData = TB.writeBook("This book has a page!")
-    ITB.placeLectern(xaxis, y + 1, zaxis, bookData)
+    ED.placeBlock(ivec3(xaxis, y, zaxis), Block("emerald_block"))
+    bookData = minecraft_tools.bookData("This book has a page!")
+    editor_tools.placeLectern(ED, ivec3(xaxis, y + 1, zaxis), bookData=bookData)
 
 
 def buildTower(x, z):
     radius = 3
+    diameter = 2*radius + 1
     y = ROADHEIGHT
 
     print(f"Building tower at {x}, {z}...")
     # if the blocks to the north, south, east and west aren't all gold
-    if not (INTF.getBlock(x - radius, y, z) == "minecraft:gold_block"
-            and INTF.getBlock(x + radius, y, z) == "minecraft:gold_block"
-            and INTF.getBlock(x, y, z - radius) == "minecraft:gold_block"
-            and INTF.getBlock(x, y, z + radius) == "minecraft:gold_block"):
+    if not (
+            ED.getBlock(ivec3(x - radius, y, z)).id == "minecraft:gold_block"
+        and ED.getBlock(ivec3(x + radius, y, z)).id == "minecraft:gold_block"
+        and ED.getBlock(ivec3(x, y, z - radius)).id == "minecraft:gold_block"
+        and ED.getBlock(ivec3(x, y, z + radius)).id == "minecraft:gold_block"
+    ):
         return  # return without building anything
 
     # lay the foundation
-    GEO.placeCenteredCylinder(x, y, z, 1, radius, "emerald_block")
+    geometry.placeCylinder(ED, ivec3(x, y, z), diameter, 1, Block("emerald_block"))
 
     # build ground floor
-    GEO.placeCenteredCylinder(x, y + 1, z, 3, radius,
-                              "lime_concrete", tube=True)
+    geometry.placeCylinder(ED, ivec3(x, y + 1, z), diameter, 3, Block("lime_concrete"), tube=True)
 
     # extend height
     height = randint(5, 20)
-    GEO.placeCenteredCylinder(
-        x, y + 4, z, height, radius, "lime_concrete", tube=True)
+    geometry.placeCylinder(ED, ivec3(x, y + 4, z), diameter, height, Block("lime_concrete"), tube=True)
     height += 4
 
     # build roof
-    GEO.placeCenteredCylinder(x, y + height, z, 1, radius, "emerald_block")
-    GEO.placeCenteredCylinder(x, y + height + 1, z, 1,
-                              radius - 1, "emerald_block")
-    GEO.placeCenteredCylinder(x, y + height + 2, z, 1,
-                              radius - 2, "emerald_block")
-    GEO.placeCuboid(x, y + height, z, x, y + height
-                    + 2, z, "lime_stained_glass")
-    INTF.placeBlock(x, y + 1, z, "beacon")
+    geometry.placeCylinder(ED, ivec3(x, y + height, z), diameter, 1, Block("emerald_block"))
+    geometry.placeCylinder(ED, ivec3(x, y + height + 1, z), diameter-2, 2, Block("emerald_block"))
+    geometry.placeCuboid(ED, ivec3(x, y + height, z), ivec3(x, y + height + 2, z), Block("lime_stained_glass"))
+    ED.placeBlock(ivec3(x, y + 1, z), Block("beacon"))
 
     # trim sides and add windows and doors
-    # GEO.placeCuboid(x + radius, y + 1, z, x + radius, y + height + 2, z, "air")
-    GEO.placeCuboid(x + radius - 1, y + 1, z,
-                    x + radius - 1, y + height + 2, z, "lime_stained_glass")
-    # NOTE: When placing doors you need to place two blocks,
-    #   the upper block defines the direction
-    INTF.placeBlock(x + radius - 1, y + 1, z, "warped_door")
-    INTF.placeBlock(x + radius - 1, y + 2, z,
-                    "warped_door[facing=west, half=upper]")
+    # NOTE: When placing doors, you only need to place the bottom block.
+    # the upper block defines the direction
+    geometry.placeCuboid(ED, ivec3(x + radius, y + 1, z), ivec3( x + radius, y + height + 2, z), Block("air"))
+    geometry.placeCuboid(ED, ivec3(x + radius - 1, y + 1, z), ivec3(x + radius - 1, y + height + 2, z), Block("lime_stained_glass"))
+    ED.placeBlock(ivec3(x + radius - 1, y + 1, z), Block("warped_door", {"facing": "west"}))
 
-    GEO.placeCuboid(x - radius, y + 1, z, x - radius, y + height + 2, z, "air")
-    GEO.placeCuboid(x - radius + 1, y + 1, z,
-                    x - radius + 1, y + height + 2, z, "lime_stained_glass")
-    INTF.placeBlock(x - radius + 1, y + 1, z, "warped_door")
-    INTF.placeBlock(x - radius + 1, y + 2, z,
-                    "warped_door[facing=east, half=upper]")
+    geometry.placeCuboid(ED, ivec3(x - radius, y + 1, z), ivec3( x - radius, y + height + 2, z), Block("air"))
+    geometry.placeCuboid(ED, ivec3(x - radius + 1, y + 1, z), ivec3(x - radius + 1, y + height + 2, z), Block("lime_stained_glass"))
+    ED.placeBlock(ivec3(x - radius + 1, y + 1, z), Block("warped_door", {"facing": "east"}))
 
-    GEO.placeCuboid(x, y + 1, z + radius, x, y + height + 2, z + radius, "air")
-    GEO.placeCuboid(x, y + 1, z + radius - 1,
-                    x, y + height + 2, z + radius - 1, "lime_stained_glass")
-    INTF.placeBlock(x, y + 1, z + radius - 1, "warped_door")
-    INTF.placeBlock(x, y + 2, z + radius - 1,
-                    "warped_door[facing=south, half=upper]")
+    geometry.placeCuboid(ED, ivec3(x, y + 1, z + radius), ivec3( x, y + height + 2, z + radius), Block("air"))
+    geometry.placeCuboid(ED, ivec3(x, y + 1, z + radius - 1), ivec3(x, y + height + 2, z + radius - 1), Block("lime_stained_glass"))
+    ED.placeBlock(ivec3(x, y + 1, z + radius - 1), Block("warped_door", {"facing": "north"}))
 
-    GEO.placeCuboid(x, y + 1, z - radius, x, y + height + 2, z - radius, "air")
-    GEO.placeCuboid(x, y + 1, z - radius + 1,
-                    x, y + height + 2, z - radius + 1, "lime_stained_glass")
-    INTF.placeBlock(x, y + 1, z - radius + 1, "warped_door")
-    INTF.placeBlock(x, y + 2, z - radius + 1,
-                    "warped_door[facing=north, half=upper]")
+    geometry.placeCuboid(ED, ivec3(x, y + 1, z - radius), ivec3( x, y + height + 2, z - radius), Block("air"))
+    geometry.placeCuboid(ED, ivec3(x, y + 1, z - radius + 1), ivec3(x, y + height + 2, z - radius + 1), Block("lime_stained_glass"))
+    ED.placeBlock(ivec3(x, y + 1, z - radius + 1), Block("warped_door", {"facing": "south"}))
 
 
 # === STRUCTURE #4
@@ -265,8 +252,8 @@ if __name__ == '__main__':
     try:
         # height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(STARTX, STARTY)]
         height = WORLDSLICE.heightmaps["MOTION_BLOCKING"][(0, 0)]
-        INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
-        print(f"/tp @a {STARTX} {height} {STARTZ}")
+        # INTF.runCommand(f"tp @a {STARTX} {height} {STARTZ}")
+        # print(f"/tp @a {STARTX} {height} {STARTZ}")
         buildPerimeter()
         buildRoads()
         buildCity()

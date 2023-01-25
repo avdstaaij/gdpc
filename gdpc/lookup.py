@@ -1,155 +1,46 @@
 """Store lists of various information on blocks, biomes and more."""
 
-import os
-import sys
-from typing import Set
+
+from typing import Dict, Iterable, Optional, Set, Union
+
+from glm import ivec2
+
+from .utils import isIterable
 
 
-# to translate a string of regular names
-# into the appropriate list of minecraft block IDs
-# >>> def f(string):
-# >>>     return ["minecraft:" + i.strip().lower().replace(" ", "_")
-# >>>         for i in string.split(", ")]
-
-# to translate a 255 RGB to hex RGB value
-# >>> def f(r, g, b): return "0x"+(hex(r)+hex(g)+hex(b)).replace("0x", "")
-
-# See https://minecraft.fandom.com/wiki/Data_version#List_of_data_versions
-SUPPORTS = 3120  # Supported Minecraft version code
-
-# all major Minecraft version codes
-VERSIONS = {
-    3105: "1.19",
-    3117: "1.19.1",
-    3120: "1.19.2",
-    3218: "1.19.3",
-    2860: "1.18",
-    2865: "1.18.1",
-    2975: "1.18.2",
-    2724: "1.17",
-    2730: "1.17.1",
-    2566: "1.16",
-    2567: "1.16.1",
-    2578: "1.16.2",
-    2580: "1.16.3",
-    2584: "1.16.4",
-    2586: "1.16.5",
-    2225: "1.15",
-    2227: "1.15.1",
-    2230: "1.15.2",
-    1952: "1.14",
-    1957: "1.14.1",
-    1963: "1.14.2",
-    1968: "1.14.3",
-    1976: "1.14.4",
-    1519: "1.13",
-    1628: "1.13.1",
-    1631: "1.13.2",
-    1139: "1.12",
-    1241: "1.12.1",
-    1343: "1.12.2",
-    819:  "1.11",
-    921:  "1.11.1",
-    922:  "1.11.2",
-    510:  "1.10",
-    511:  "1.10.1",
-    512:  "1.10.2",
-    169:  "1.9",
-    175:  "1.9.1",
-    176:  "1.9.2",
-    183:  "1.9.3",
-    184:  "1.9.4",
-    0:    "Pre-1.9",
-}
-VERSIONIDS = dict([(value, key) for key, value in VERSIONS.items()])
-
-# ========================================================= custom values
+# ==================================================================================================
+# Helper functions
+# ==================================================================================================
 
 
-AXES = ("x", "y", "z")
-DIRECTIONS = ("top", "bottom", "north", "east", "south", "west")
-VECTORS = ((0, 1, 0), (0, -1, 0), (0, 0, -1), (1, 0, 0), (0, 0, 1), (-1, 0, 0))
-DIAGONALVECTORS = (
-    (1, 1, 0),
-    (1, 0, 1),
-    (0, 1, 1),
-    (1, -1, 0),
-    (1, 0, -1),
-    (0, 1, -1),
-    (-1, 1, 0),
-    (-1, 0, 1),
-    (0, -1, 1),
-    (-1, -1, 0),
-    (-1, 0, -1),
-    (0, -1, -1),
-    (1, 1, 1),
-    (1, 1, -1),
-    (1, -1, 1),
-    (-1, 1, 1),
-    (1, -1, -1),
-    (-1, -1, 1),
-    (-1, 1, -1),
-    (-1, -1, -1),
-)
-INVERTDIRECTION = {
-    "top":    "bottom",
-    "bottom": "top",
-    "north":  "south",
-    "east":   "west",
-    "south":  "north",
-    "west":   "east",
-}
-DIRECTION2VECTOR = {
-    "top":    (0, 1, 0),
-    "bottom": (0, -1, 0),
-    "north":  (0, 0, -1),
-    "east":   (1, 0, 0),
-    "south":  (0, 0, 1),
-    "west":   (-1, 0, 0),
-}
-VECTOR2DIRECTION = dict([(val, key) for key, val in DIRECTION2VECTOR.items()])
-AXIS2VECTOR = {"x": (1, 0, 0), "y": (0, 1, 0), "z": (0, 0, 1)}
-VECTOR2AXIS = dict([(val, key) for key, val in AXIS2VECTOR.items()])
+def variate(
+    variations: Iterable[str],
+    extensions: Optional[Union[str, Iterable[Optional[str]]]] = None,
+    isPrefix:   bool          = False,
+    separator:  str           = "_",
+    namespace:  Optional[str] = "minecraft",
+):
+    """Generates block variations.
 
+    Returns a set of strings. For each variation, each extension is either appended or prepended
+    depending on <isPrefix>, using <separator>.
 
-# ========================================================= materials
-
-
-def variate(variations, extensions=None, isprefix=False,
-            namespace="minecraft", separator="_", ns_separator=":") -> set:
-    """Generate block variations.
-
-    TODO: documentation
-    TODO: refactor to take optional suffix and prefix, replace named types
+    If <namespace> is not None, each string is additionally prefixed with "<namespace>:".
     """
 
-    def is_iterable(iterable):
-        """Determine whether iterable is an iterable."""
-        try:
-            _ = iter(iterable)
-            return True
-        except TypeError:
-            return False
-
-    if not is_iterable(variations):
-        # TODO: improve error message
-        raise ValueError()
     joined = None
     combinations = set()
+
     if extensions is None:
         joined = variations
     elif isinstance(extensions, str):
         combinations = {(v, extensions) for v in variations}
-    elif is_iterable(extensions):
+    elif isIterable(extensions):
         combinations = {(v, e) for v in variations for e in extensions}
-    if isprefix:
+    if isPrefix:
         combinations = {(e, v) for v, e in combinations}
-    if namespace is None:
-        namespace, ns_separator = "", ""
-    elif ns_separator is None:
-        ns_separator = ""
-    if separator is None:
-        separator = ""
+
+    namespacePrefix = f"{namespace}:" if namespace is not None else ""
 
     if joined is None:
         joined = set()
@@ -159,7 +50,25 @@ def variate(variations, extensions=None, isprefix=False,
                 temp.remove(None)
                 c = tuple(temp)
             joined.add(separator.join(c))
-    return {f"{namespace}{ns_separator}{j}" for j in joined}
+    return {f"{namespacePrefix}{j}" for j in joined}
+
+
+# ==================================================================================================
+# Data
+# ==================================================================================================
+
+
+SUPPORTED_MINECRAFT_VERSIONS = [
+    "1.19.2",
+]
+
+
+BUILD_Y_MIN = -64
+BUILD_Y_MAX = 319
+BUILD_HEIGHT = BUILD_Y_MAX - BUILD_Y_MIN + 1
+
+
+# ========================================================= materials
 
 
 # COLOURS
@@ -301,7 +210,7 @@ POTTED_PLANT_TYPES = {"dandelion", "poppy", "blue_orchid", "allium",
 
 LIVE_CORAL_TYPES = set(CORAL_SHADES) - {"dead"}
 DEAD_CORAL_TYPES = variate(LIVE_CORAL_TYPES, "dead",
-                           isprefix=True, namespace=None)
+                           isPrefix=True, namespace=None)
 CORAL_TYPES = LIVE_CORAL_TYPES | DEAD_CORAL_TYPES
 
 WOODY_TYPES = WOOD_TYPES | FUNGUS_TYPES
@@ -316,9 +225,9 @@ QUARTZ_BLOCK_TYPES = {"block", "pillar", "bricks", }
 POLISHED_BLACKSTONE_TYPES = {None, "brick", }
 POLISHED_BLACKSTONE_BRICK_TYPES = {None, "cracked", }
 SMOOTH_SANDSTONE_TYPES = variate(SAND_TYPES, "smooth",
-                                 isprefix=True, namespace=None)
+                                 isPrefix=True, namespace=None)
 CUT_SANDSTONE_TYPES = variate(SAND_TYPES, "cut",
-                              isprefix=True, namespace=None)
+                              isPrefix=True, namespace=None)
 PRISMARINE_TYPES = {None, "dark", }
 LIMITED_NETHER_BRICK_TYPES = {None, "red", }
 NETHER_BRICK_TYPES = {"cracked", "chiseled", } | LIMITED_NETHER_BRICK_TYPES
@@ -355,9 +264,9 @@ NAMED_CORAL_TYPES = NAMED_LIVE_CORAL_TYPES | NAMED_DEAD_CORAL_TYPES
 
 NAMED_POLISHED_BLACKSTONE_TYPES = \
     variate(POLISHED_BLACKSTONE_TYPES, "polished_blackstone",
-            isprefix=True, namespace=None)
+            isPrefix=True, namespace=None)
 NAMED_POLISHED_IGNEOUS_TYPES = variate(IGNEOUS_TYPES, "polished",
-                                       isprefix=True, namespace=None)
+                                       isPrefix=True, namespace=None)
 NAMED_PRISMARINE_TYPES = variate(PRISMARINE_TYPES, "prismarine",
                                  namespace=None)
 
@@ -402,8 +311,8 @@ IGNEOUS = variate(IGNEOUS_TYPES)
 OBSIDIAN_BLOCKS = variate(OBSIDIAN_TYPES, "obsidian")
 COBBLESTONES = variate(COBBLESTONE_TYPES, "cobblestone")
 INFESTED_STONE_BRICKS = variate(
-    NAMED_STONE_BRICK_TYPES, "infested", isprefix=True)
-INFESTED = variate(STONE_TYPES, "infested", isprefix=True) \
+    NAMED_STONE_BRICK_TYPES, "infested", isPrefix=True)
+INFESTED = variate(STONE_TYPES, "infested", isPrefix=True) \
            | INFESTED_STONE_BRICKS
 RAW_SANDSTONES = variate(SAND_TYPES, "sandstone")
 TERRACOTTAS = variate({None, } | set(DYE_COLORS), "terracotta")
@@ -454,8 +363,8 @@ FUNGUS_VINES = variate(FUNGUS_VINE_TYPES, "vines")
 BARKED_FUNGUS_STEMS = variate(FUNGUS_TYPES, "stem")
 BARKED_FUNGUS_HYPHAE = variate(FUNGUS_TYPES, "hyphae")
 BARKED_FUNGUS_STALKS = BARKED_FUNGUS_STEMS | BARKED_FUNGUS_HYPHAE
-STRIPPED_FUNGUS_STEMS = variate(NAMED_STEM_TYPES, "stripped", isprefix=True)
-STRIPPED_FUNGUS_HYPHAE = variate(NAMED_HYPHAE_TYPES, "stripped", isprefix=True)
+STRIPPED_FUNGUS_STEMS = variate(NAMED_STEM_TYPES, "stripped", isPrefix=True)
+STRIPPED_FUNGUS_HYPHAE = variate(NAMED_HYPHAE_TYPES, "stripped", isPrefix=True)
 STRIPPED_FUNGUS_STALKS = STRIPPED_FUNGUS_STEMS | STRIPPED_FUNGUS_HYPHAE
 FUNGUS_STEMS = BARKED_FUNGUS_STEMS | STRIPPED_FUNGUS_STEMS
 FUNGUS_HYPHAE = BARKED_FUNGUS_HYPHAE | STRIPPED_FUNGUS_HYPHAE
@@ -480,8 +389,8 @@ FOLIAGE = {"minecraft:vine", } | LEAVES
 BARKED_LOGS = variate(WOOD_TYPES, "log")
 BARKED_WOODS = variate(WOOD_TYPES, "wood")
 BARKED_TRUNKS = BARKED_LOGS | BARKED_WOODS
-STRIPPED_LOGS = variate(NAMED_LOG_TYPES, "stripped", isprefix=True)
-STRIPPED_WOODS = variate(NAMED_WOOD_TYPES, "stripped", isprefix=True)
+STRIPPED_LOGS = variate(NAMED_LOG_TYPES, "stripped", isPrefix=True)
+STRIPPED_WOODS = variate(NAMED_WOOD_TYPES, "stripped", isPrefix=True)
 STRIPPED_TRUNKS = STRIPPED_LOGS | STRIPPED_WOODS
 WOODS = BARKED_TRUNKS | STRIPPED_WOODS
 LOGS = BARKED_LOGS | STRIPPED_LOGS
@@ -734,7 +643,7 @@ WOOD_PLANKS = variate(WOOD_TYPES, "planks")
 FUNGUS_PLANKS = variate(FUNGUS_TYPES, "planks")
 PLANKS = WOOD_PLANKS | FUNGUS_PLANKS
 
-POLISHED_IGNEOUS_BLOCKS = variate(IGNEOUS_TYPES, "polished", isprefix=True)
+POLISHED_IGNEOUS_BLOCKS = variate(IGNEOUS_TYPES, "polished", isPrefix=True)
 
 STONE_BRICKS = {"minecraft:smooth_stone", } \
                | variate(STONE_BRICK_TYPES, "stone_bricks")
@@ -764,7 +673,7 @@ POLISHED_BLACKSTONES = {"minecraft:polished_blackstone",
 QUARTZES = {"minecraft:smooth_quartz", "minecraft:chiseled_quartz_block",
             "minecraft:quartz_block", "minecraft:quartz_bricks",
             "minecraft:quartz_pillar", }
-PURPUR_BLOCKS = variate(PURPUR_TYPES, "purpur", isprefix=True)
+PURPUR_BLOCKS = variate(PURPUR_TYPES, "purpur", isPrefix=True)
 
 SHULKER_BOXES = variate({None, } | set(DYE_COLORS), "shulker_box")
 DYEABLE_BLOCKS = WOOLS | CARPETS | BEDS | BANNERS | STAINED_GLASSES \
@@ -843,7 +752,7 @@ SWITCHES = {"minecraft:lever", } | BUTTONS
 
 # interaction has an immediate effect (no UI)
 FLOWER_POTS = {"minecraft:flower_pot", } \
-              | variate(POTTED_PLANT_TYPES, "potted", isprefix=True)
+              | variate(POTTED_PLANT_TYPES, "potted", isPrefix=True)
 USABLE_BLOCKS = {"minecraft:bell", "minecraft:cake", "minecraft:conduit",
                  "minecraft:jukebox", "minecraft:lodestone",
                  "minecraft:respawn_anchor", "minecraft:spawner",
@@ -1461,7 +1370,7 @@ TRANSPARENT = INVISIBLE | FILTERING | UNOBTRUSIVE | OBTRUSIVE
 # liberty was taken to move stained glass panes and various flowers
 # into the appropriate colour category
 
-MAPTRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
+MAP_TRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
                   "minecraft:ladder",
                   "minecraft:tripwire_hook", "minecraft:tripwire",
                   "minecraft:end_rod",
@@ -1472,7 +1381,7 @@ MAPTRANSPARENT = {"minecraft:redstone_lamp", "minecraft:cake",
 
 # base map colours
 # WARNING: all non-transparent blocks are listed individually here again
-PALETTE = {
+COLOR_TO_BLOCKS: Dict[int, Set[str]] = {
     0x7FB238: {"minecraft:grass_block", "minecraft:slime_block", },
     0xF7E9A3: {
                   "minecraft:sand",
@@ -2108,10 +2017,10 @@ PALETTE = {
     0x562C3E: ("minecraft:warped_hyphae", "minecraft:stripped_warped_hyphae"),
     0x14B485: ("minecraft:warped_wart_block",),
 }
-PALETTELOOKUP = {}
-for hexval, blocks in PALETTE.items():
-    for block in blocks:
-        PALETTELOOKUP[block] = hexval
+BLOCK_TO_COLOR: Dict[str, int] = {}
+for hexval, ids in COLOR_TO_BLOCKS.items():
+    for bid in ids:
+        BLOCK_TO_COLOR[bid] = hexval
 
 # ========================================================= biome-related
 
@@ -2202,7 +2111,7 @@ BIOMES = {
 # the width of ASCII characters in pixels
 # space between characters is 1
 # the widest supported Unicode character is 9 wide
-ASCIIPIXELS = {
+ASCII_CHAR_TO_WIDTH = {
     "A":  5,
     "a":  5,
     "B":  5,
@@ -2302,64 +2211,19 @@ ASCIIPIXELS = {
 }
 
 
-# terminal colour codes
+BOOK_PAGES_PER_BOOK      = 100
+BOOK_CHARACTERS_PER_PAGE = 255
+BOOK_LINES_PER_PAGE      = 14
+BOOK_PIXELS_PER_LINE     = 114
 
 
-def supports_color():
-    """Return True if the running system's terminal supports color."""
-    plat = sys.platform
-    supported_platform = plat != "Pocket PC" and (
-            plat != "win32" or "ANSICON" in os.environ
-    )
-    # isatty is not always implemented, #6223.
-    is_a_tty = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
-    return supported_platform and is_a_tty
-
-
-if supports_color():
-    TCOLORS = {
-        "black":     "\033[38;2;000;000;000m",
-        "gray":      "\033[38;2;128;128;128m",
-        "white":     "\033[38;2;255;255;255m",
-        "pink":      "\033[38;2;255;192;203m",
-        "red":       "\033[38;2;255;000;000m",
-        "orange":    "\033[38;2;255;165;000m",
-        "yellow":    "\033[38;2;255;255;000m",
-        "darkgreen": "\033[38;2;000;128;000m",
-        "green":     "\033[38;2;000;255;000m",
-        "blue":      "\033[38;2;135;206;235m",
-        "darkblue":  "\033[38;2;000;000;255m",
-        "magenta":   "\033[38;2;255;000;255m",
-        "brown":     "\033[38;2;139;069;019m",
-        "CLR":       "\033[0m",
-    }  # 38 is replaced by 48 for background
-else:
-    TCOLORS = {
-        "black":     "",
-        "gray":      "",
-        "white":     "",
-        "pink":      "",
-        "red":       "",
-        "orange":    "",
-        "yellow":    "",
-        "darkgreen": "",
-        "green":     "",
-        "blue":      "",
-        "darkblue":  "",
-        "magenta":   "",
-        "brown":     "",
-        "CLR":       "",
-    }  # colour codes not printed
-
-INVENTORYDIMENSIONS = {
-    (9, 3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
-    (3, 3): {"minecraft:dispenser", "minecraft:dropper", },
-    (5, 1): {"minecraft:hopper", "minecraft:brewing_stand", },
-    (3, 1): FURNACES,
+INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
+    ivec2(9,3): {"minecraft:barrel", } | CHESTS | SHULKER_BOXES,
+    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper", },
+    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand", },
+    ivec2(3,1): FURNACES,
 }
-INVENTORYLOOKUP = {}
-for dimensions, blocks in INVENTORYDIMENSIONS.items():
-    for block in blocks:
-        INVENTORYLOOKUP[block] = dimensions
-
-# version checking
+CONTAINER_BLOCK_TO_INVENTORY_SIZE = {}
+for size, ids in INVENTORY_SIZE_TO_CONTAINER_BLOCKS.items():
+    for bid in ids:
+        CONTAINER_BLOCK_TO_INVENTORY_SIZE[bid] = size

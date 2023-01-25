@@ -1,438 +1,202 @@
-"""Provide tools for placing and getting blocks and more.
+"""Provides wrappers for the endpoints of the GDMC HTTP interface.
 
-This module contains functions to:
-- Request the build area as defined in-world
-- Run Minecraft commands
-- Get the block ID at a particular coordinate
-- Place blocks in the world
+It is recommended to use the higher-level `editor.Editor` class instead.
 """
 
-from collections import OrderedDict
-from random import choice
 
-import numpy as np
+from typing import Sequence, Tuple, Optional, List, Dict, Any
+from functools import partial
+import time
+from urllib.parse import urlparse
+import logging
+import json
 
-from . import direct_interface as di
-from .lookup import TCOLORS
-from .toolbox import is_sequence, normalizeCoordinates
-from .worldLoader import WorldSlice
+from glm import ivec2, ivec3
+import requests
+from requests.exceptions import ConnectionError as RequestConnectionError
+
+from . import __url__
+from .utils import withRetries
+from .vector_tools import Box
+from .block import Block
+from . import exceptions
 
 
-class OrderedByLookupDict(OrderedDict):
-    """Limit size, evicting the least recently looked-up key when full.
+DEFAULT_HOST = "http://localhost:9000"
 
-    Taken from
-    https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
+
+logger = logging.getLogger(__name__)
+
+
+def _onRequestRetry(e: Exception, retriesLeft: int):
+    logger.warning(
+        "HTTP request failed!\n"
+        "Request exception:\n"
+        "%s\n"
+        "I'll retry in a bit (%i retries left).",
+        e, retriesLeft
+    )
+    time.sleep(3)
+
+
+def _request(method: str, url: str, *args, retries: int, **kwargs):
+    try:
+        response = withRetries(partial(requests.request, method, url, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
+    except RequestConnectionError as e:
+        u = urlparse(url)
+        raise exceptions.InterfaceConnectionError(
+            f"Could not connect to the GDMC HTTP interface at {u.scheme}://{u.netloc}.\n"
+             "To use GDPC, you need to use a \"backend\" that provides the GDMC HTTP interface.\n"
+             "For example, by running Minecraft with the GDMC HTTP mod installed.\n"
+            f"See {__url__}/README.md for more information."
+        ) from e
+
+    if response.status_code == 500:
+        raise exceptions.InterfaceInternalError("The GDMC HTTP interface reported an internal server error (500)")
+
+    return response
+
+
+def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
+    """Returns the blocks in the specified region.
+
+    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+
+    Returns a list of (position, block)-tuples.
+
+    If a set of coordinates is invalid, the returned block ID will be "minecraft:void_air".
     """
-
-    def __init__(self, maxsize, *args, **kwds):
-        self.maxsize = maxsize
-        super().__init__(*args, **kwds)
-
-    # inherited __repr__ from OrderedDict is sufficient
-
-    def __getitem__(self, key):
-        value = super().__getitem__(key)
-        self.move_to_end(key)
-        return value
-
-    def __setitem__(self, key, value):
-        if key in self:
-            self.move_to_end(key)
-        super().__setitem__(key, value)
-        if self.maxsize > 0 and len(self) > self.maxsize:
-            oldest = next(iter(self))
-            del self[oldest]
+    url = f"{host}/blocks"
+    dx, dy, dz = (None, None, None) if size is None else size
+    parameters = {
+        'x': position.x,
+        'y': position.y,
+        'z': position.z,
+        'dx': dx,
+        'dy': dy,
+        'dz': dz,
+        'includeState': True if includeState else None,
+        'includeData':  True if includeData  else None,
+        'dimension': dimension
+    }
+    response = _request("GET", url, params=parameters, headers={"accept": "application/json"}, retries=retries, timeout=timeout)
+    blockDicts: List[Dict[str, Any]] = response.json()
+    return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data"))) for b in blockDicts]
 
 
-class Interface():
-    """Provides tools for interacting with the HTML interface.
+def placeBlocks(blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+    """Places blocks in the world.
 
-    All function parameters and returns are in local coordinates.
+    Each element of <blocks> should be a tuple (position, block). The blocks must each describe
+    exactly one block: palettes or "no placement" blocks are not allowed.
+
+    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+
+    The <doBlockUpdates>, <spawnDrops> and <customFlags> parameters control block update
+    behavior. See the GDMC HTTP API documentation for more info.
+
+    Returns a list with one string for each block placement. If the block placement was
+    successful, the string is "1" if the block changed, or "0" otherwise. If the placement
+    failed, it is the error message.
     """
+    url = f"{host}/blocks"
 
-    def __init__(self, x=0, y=0, z=0,
-                 buffering=False, bufferlimit=1024,
-                 caching=False, cachelimit=8192):
-        """Initialise an interface with offset and buffering."""
-        self.offset = x, y, z
-        self.__buffering = buffering
-        self.bufferlimit = bufferlimit
-        self.buffer = []    # buffer is in global coordinates
-        self.placeBlockflags = (True, None)   # (doBlockUpdates, CustomFlags)
-        self.bufferblockflags = (True, None)   # (doBlockUpdates, CustomFlags)
-        self.caching = caching
-        # cache is in global coordinates
-        self.cache = OrderedByLookupDict(cachelimit)
-        # Interface.cache.maxsize to change size
+    if customFlags != "":
+        blockUpdateParams = {"customFlags": customFlags}
+    else:
+        blockUpdateParams = {"doBlockUpdates": doBlockUpdates, "spawnDrops": spawnDrops}
 
-    def __del__(self):
-        """Clean up before destruction."""
-        self.sendBlocks()
+    parameters = {"dimension": dimension}
+    parameters.update(blockUpdateParams)
 
-    # __repr__ displays the class well enough so __str__ is omitted
-    def __repr__(self):
-        """Represent the Interface as a constructor."""
-        return "Interface(" \
-            f"{self.offset[0]}, {self.offset[1]}, {self.offset[2]}, " \
-            f"{self.__buffering}, {self.bufferlimit}, " \
-            f"{self.caching}, {self.cache.maxsize})"
+    body = (
+        "[" +
+        ",".join(
+            '{' +
+            f'"x":{pos.x},"y":{pos.y},"z":{pos.z},"id":"{block.id}"' +
+            (f',"state":{json.dumps(block.states)}' if block.states else '') +
+            (f',"data":{json.dumps(block.data)}' if block.data is not None else '') +
+            '}'
+            for pos, block in blocks
+        ) +
+        "]"
+    )
 
-    def getBlock(self, x, y, z):
-        """Return the block ID in the world.
-
-        Takes local coordinates, works with global coordinates
-        """
-        x, y, z = self.local2global(x, y, z)
-
-        if self.caching and (x, y, z) in self.cache.keys():
-            return self.cache[(x, y, z)]
-
-        if self.caching and globalWorldSlice is not None:
-            dx, dy, dz = global2buildlocal(x, y, z)  # convert for decay index
-            if not checkOutOfBounds(x, y, z) and not globalDecay[dx][dy][dz]:
-                block = globalWorldSlice.getBlockAt(x, y, z)
-                if block == 'minecraft:void_air':
-                    block = di.getBlock(x, y, z).get('id')
-                self.cache[(x, y, z)] = block
-                return block
-
-        response = di.getBlock(x, y, z).get('id')
-        if self.caching:
-            self.cache[(x, y, z)] = response
-
-        return response
-
-    def placeBlock(self, x, y, z, block, replace=None,
-                   doBlockUpdates=-1, customFlags=-1):
-        """Place a block in the world depending on buffer activation.
-
-        Takes local coordinates, works with local and global coordinates
-        """
-        flags = doBlockUpdates, customFlags
-        if isinstance(replace, str):
-            if self.getBlock(x, y, z) != replace:
-                return '0'
-        elif is_sequence(replace) and self.getBlock(x, y, z) not in replace:
-            return '0'
-        elif (self.caching
-              and isinstance(block, str) and block in self.getBlock(x, y, z)):
-            return '0'
-
-        if not isinstance(block, str) and is_sequence(block):
-            block = choice(block)
-
-        if self.__buffering:
-            response = self.placeBlockBuffered(x, y, z, block,
-                                               self.bufferlimit, flags)
-        else:
-            response = self.placeBlockDirect(x, y, z, block, flags)
-
-        # switch to global coordinates
-        x, y, z = self.local2global(x, y, z)
-        if self.caching:
-            self.cache[(x, y, z)] = block
-        # mark block as decayed
-        if not checkOutOfBounds(x, y, z) and globalDecay is not None:
-            x, y, z = global2buildlocal(x, y, z)
-            globalDecay[x][y][z] = True
-
-        return response
-
-    def placeBlockDirect(self, x, y, z, blockStr,
-                         doBlockUpdates=-1, customFlags=-1):
-        """Place a single block in the world directly.
-
-        Takes local coordinates, works with global coordinates
-        """
-        if doBlockUpdates == -1:
-            doBlockUpdates = self.placeBlockflags[0]
-        if customFlags == -1:
-            customFlags = self.placeBlockflags[1]
-
-        x, y, z = self.local2global(x, y, z)
-        result = di.placeBlock(x, y, z, blockStr, doBlockUpdates, customFlags)
-        if not result.isnumeric():
-            print(f"{TCOLORS['orange']}Warning: Server returned error "
-                  f"upon placing block:\n\t{TCOLORS['CLR']}{result}")
-        return result
-
-    def getBlockFlags(self):
-        """Get default block placement flags."""
-        return self.placeBlockflags
-
-    def placeBlockFlags(self, doBlockUpdates=True, customFlags=None):
-        """Set default block placement flags."""
-        self.placeBlockflags = doBlockUpdates, customFlags
-
-    # ----------------------------------------------------- block buffers
-
-    def isBuffering(self):
-        """Get self.__buffering."""
-        return self.__buffering
-
-    def setBuffering(self, value, notify=True):
-        """Set self.__buffering."""
-        self.__buffering = value
-        if self.__buffering and notify:
-            print("Buffering has been activated.")
-        elif notify:
-            self.sendBlocks()
-            print("Buffering has been deactivated.")
-
-    def getBufferLimit(self):
-        """Get self.bufferlimit."""
-        return self.bufferlimit
-
-    def setBufferLimit(self, value):
-        """Set self.bufferlimit."""
-        self.bufferlimit = value
-
-    def isCaching(self):
-        """Get self.caching."""
-        return self.caching
-
-    def setCaching(self, value=False):
-        """Set self.caching."""
-        globalinterface.caching = value
-        if self == globalinterface and not value:
-            global globalDecay
-            globalDecay = None
-
-    def getCacheLimit(self):
-        """Get maximum cache size."""
-        return self.cache.maxsize
-
-    def setCacheLimit(self, value=8192):
-        """Set maximum cache size."""
-        self.cache.maxsize = value
-
-    def placeBlockBuffered(self, x, y, z, blockStr, limit=50,
-                           doBlockUpdates=-1, customFlags=-1):
-        """Place a block in the buffer and send once limit is exceeded.
-
-        Takes local coordinates and works with global coordinates
-        """
-        if doBlockUpdates == -1:
-            doBlockUpdates = self.placeBlockflags[0]
-        if customFlags == -1:
-            customFlags = self.placeBlockflags[1]
-
-        if (doBlockUpdates, customFlags) != self.bufferblockflags:
-            self.sendBlocks()
-            self.bufferblockflags = doBlockUpdates, customFlags
-
-        x, y, z = self.local2global(x, y, z)
-
-        self.buffer.append((x, y, z, blockStr))
-        if len(self.buffer) >= limit:
-            return self.sendBlocks()
-        else:
-            return '0'
-
-    def sendBlocks(self, x=0, y=0, z=0, retries=5):
-        """Send the buffer to the server and clear it.
-
-        Since the buffer contains global coordinates,
-        no conversion takes place in this function.
-        """
-        if self.buffer == []:
-            return '0'
-        response = di.sendBlocks(self.buffer, x, y, z,
-                                 retries, *self.bufferblockflags).split('\n')
-        if all(map(lambda val: val.isnumeric(), response)):  # no errors
-            self.buffer = []
-            return str(sum(map(int, response)))
-
-        print(f"{TCOLORS['orange']}Warning: Server returned error upon "
-              f"sending block buffer:\n\t{TCOLORS['CLR']}{repr(response)}")
-        return repr(response)
-
-    # ----------------------------------------------------- utility functions
-
-    def local2global(self, x, y, z):
-        """Translate local to global coordinates."""
-        result = []
-        if x is not None:
-            result.append(x + self.offset[0])
-        if y is not None:
-            result.append(y + self.offset[1])
-        if z is not None:
-            result.append(z + self.offset[2])
-        return result
-
-    def global2local(self, x, y, z):
-        """Translate global to local coordinates."""
-        result = []
-        if x is not None:
-            result.append(x - self.offset[0])
-        if y is not None:
-            result.append(y - self.offset[1])
-        if z is not None:
-            result.append(z - self.offset[2])
-        return result
+    return _request("PUT", url, data=bytes(body, "utf-8"), params=parameters, headers={"Content-Type": "application/json"}, retries=retries, timeout=timeout).text.split("\n")
 
 
-def runCommand(command):
-    """Run a Minecraft command in the world."""
-    if command[0] == '/':
-        command = command[1:]
-    return di.runCommand(command)
+def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+    """Executes one or multiple Minecraft commands (separated by newlines).
 
+    The leading "/" must be omitted.
 
-def setBuildArea(x1, y1, z1, x2, y2, z2):
-    """Set and return the build area."""
-    runCommand(f"setbuildarea {x1} {y1} {z1} {x2} {y2} {z2}")
-    return requestBuildArea()
+    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-
-def requestBuildArea():
-    """Return the current building area.
-
-    Will reset anything dependant on the build area.
+    Returns a list with one string for each command. If the command was successful, the string
+    is its return value. Otherwise, it is the error message.
     """
-    global globalBuildArea
-
-    globalBuildArea = normalizeCoordinates(*di.requestBuildArea())
-
-    if globalWorldSlice is not None:
-        resetGlobalDecay()
-
-    return globalBuildArea
+    url = f"{host}/command"
+    return _request("POST", url, bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout).text.split("\n")
 
 
-def requestPlayerArea(dx=128, dz=128):
-    """Return the building area surrounding the player."""
-    # Correcting for offset from player position
-    dx -= 1
-    dz -= 1
-    runCommand("execute at @p run setbuildarea "
-               f"~{-dx//2} 0 ~{-dz//2} ~{dx//2} 255 ~{dz//2}")
-    return requestBuildArea()
+def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
+    """Retrieves the build area that was specified with /setbuildarea in-game.
+
+    Fails if the build area was not specified yet.
+
+    Returns (success, result).
+    If a build area was specified, result is the box describing the build area.
+    Otherwise, result is the error message string.
+    """
+    response = _request("GET", f"{host}/buildarea", retries=retries, timeout=timeout)
+
+    if not response.ok or response.json() == -1:
+        raise exceptions.BuildAreaNotSetError(
+            "Failed to get the build area.\n"
+            "Make sure to set the build area with /setbuildarea in-game.\n"
+            "For example: /setbuildarea ~0 0 ~0 ~128 255 ~128"
+        )
+
+    buildAreaJson = response.json()
+    fromPoint = ivec3(
+        buildAreaJson["xFrom"],
+        buildAreaJson["yFrom"],
+        buildAreaJson["zFrom"]
+    )
+    toPoint = ivec3(
+        buildAreaJson["xTo"],
+        buildAreaJson["yTo"],
+        buildAreaJson["zTo"]
+    )
+    return Box.between(fromPoint, toPoint)
 
 
-# ========================================================= global interface
+def getChunks(position: ivec2, size: Optional[ivec2] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST):
+    """Returns raw chunk data.
+
+    <position> specifies the position in chunk coordinates, and <size> specifies how many chunks
+    to get in each axis (default 1).
+    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+
+    If <asBytes> is True, returns raw binary data. Otherwise, returns a human-readable
+    representation.
+
+    On error, returns the error message instead.
+    """
+    url = f"{host}/chunks"
+    dx, dz = (None, None) if size is None else size
+    parameters = {
+        "x": position.x,
+        "z": position.y,
+        "dx": dx,
+        "dz": dz,
+        "dimension": dimension,
+    }
+    acceptType = "application/octet-stream" if asBytes else "text/plain"
+    response = _request("GET", url, params=parameters, headers={"Accept": acceptType}, retries=retries, timeout=timeout)
+    return response.content if asBytes else response.text
 
 
-globalWorldSlice = None
-globalDecay = None
-globalBuildArea = requestBuildArea()
-
-globalinterface = Interface()
-
-
-def makeGlobalSlice():
-    """Instantiate a global WorldSlice and refresh building area."""
-    global globalWorldSlice
-    x1, _, z1, x2, _, z2 = requestBuildArea()
-    globalWorldSlice = WorldSlice(x1, z1, x2, z2)
-    resetGlobalDecay()
-    return globalWorldSlice
-
-
-def getBlock(x, y, z):
-    """Global getBlock."""
-    return globalinterface.getBlock(x, y, z)
-
-
-def placeBlock(x, y, z, blocks, replace=None):
-    """Global placeBlock."""
-    return globalinterface.placeBlock(x, y, z, blocks, replace)
-
-
-def getBlockFlags():
-    """Global getBlockFlags."""
-    return globalinterface.getBlockFlags()
-
-
-def placeBlockFlags(doBlockUpdates=True, customFlags=None):
-    """Global placeBlockFlags."""
-    globalinterface.placeBlockFlags(doBlockUpdates, customFlags)
-
-# ----------------------------------------------------- block buffers
-
-
-def isCaching():
-    """Global isCaching."""
-    return globalinterface.isCaching()
-
-
-def setCaching(value=False):
-    """Global setCaching."""
-    globalinterface.setCaching(value)
-
-
-def getCacheLimit():
-    """Global getCacheLimit."""
-    return globalinterface.getCacheLimit()
-
-
-def setCacheLimit(value=8192):
-    """Global setCacheLimit."""
-    globalinterface.setCacheLimit(value)
-
-
-def isBuffering():
-    """Global isBuffering."""
-    return globalinterface.isBuffering()
-
-
-def setBuffering(val):
-    """Global setBuffering."""
-    globalinterface.setBuffering(val)
-
-
-def getBufferLimit():
-    """Global getBufferLimit."""
-    return globalinterface.getBufferLimit()
-
-
-def setBufferLimit(val):
-    """Global setBufferLimit."""
-    globalinterface.setBufferLimit(val)
-
-
-def sendBlocks(x=0, y=0, z=0, retries=5):
-    """Global sendBlocks."""
-    return globalinterface.sendBlocks(x, y, z, retries)
-
-# ----------------------------------------------------- utility functions
-
-
-def checkOutOfBounds(x, y, z,
-                     x1=None, y1=None, z1=None,
-                     x2=None, y2=None, z2=None,
-                     warn=True):
-    """Check whether a given coordinate is outside the build area."""
-    x1 = globalBuildArea[0] if x1 is None else x1
-    y1 = globalBuildArea[1] if y1 is None else y1
-    z1 = globalBuildArea[2] if z1 is None else z1
-    x2 = globalBuildArea[3] if x2 is None else x2
-    y2 = globalBuildArea[4] if y2 is None else y2
-    z2 = globalBuildArea[5] if z2 is None else z2
-    if not (x1 <= x <= x2 and y1 <= y <= y2 and z1 <= z <= z2):
-        if warn:
-            # building outside the build area can be less efficient
-            print(f"{TCOLORS['orange']}WARNING: Block at {x, y, z} is outside "
-                  f"the build area!{TCOLORS['CLR']}")
-        return True
-    return False
-
-
-def global2buildlocal(x, y, z):
-    """Convert global coordinates to ones relative to the build area."""
-    x0, y0, z0, _, _, _ = globalBuildArea
-    return x - x0, y - y0, z - z0
-
-
-def buildlocal2global(x, y, z):
-    """Convert global coordinates to ones relative to the build area."""
-    x0, y0, z0, _, _, _ = globalBuildArea
-    return x + x0, y + y0, z + z0
-
-
-def resetGlobalDecay():
-    """Reset the global decay marker."""
-    global globalDecay
-    x1, _, z1, x2, _, z2 = globalBuildArea
-    globalDecay = np.zeros((x2 - x1, 256, z2 - z1), dtype=bool)
+def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
+    """Returns the Minecraft version as a string."""
+    return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text
