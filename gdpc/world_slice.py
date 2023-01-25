@@ -9,7 +9,7 @@ from glm import ivec2, ivec3
 from nbt import nbt
 import numpy as np
 
-from .vector_tools import addY, loop2D, loop3D, trueMod, Rect
+from .vector_tools import addY, loop2D, loop3D, trueMod2D, Rect
 from .block import Block
 from . import interface
 
@@ -108,7 +108,7 @@ class WorldSlice:
 
         self._blockEntities: Dict[ivec3, nbt.TAG_Compound] = {}
 
-        inChunkRectOffset = trueMod(self._rect.offset, 16)
+        inChunkRectOffset = trueMod2D(self._rect.offset, 16)
 
         # This assumes that the Y minimum is the same for every chunk.
         yMin = 16 * int(self._nbt["Chunks"][0]["yPos"].value)

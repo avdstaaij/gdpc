@@ -65,14 +65,7 @@ DIAGONALS_3D = (
 )
 
 
-@overload
-def dropDimension(vec: vec3, dimension: int) -> vec2: ...
-@overload
-def dropDimension(vec: ivec3, dimension: int) -> ivec2: ...
-@overload
-def dropDimension(vec: bvec3, dimension: int) -> bvec2: ...
-
-def dropDimension(vec, dimension):
+def dropDimension(vec: ivec3, dimension) -> ivec2:
     """Returns <vec> without its <dimension>-th component"""
     if dimension == 0: return vec.yz
     if dimension == 1: return vec.xz
@@ -80,75 +73,36 @@ def dropDimension(vec, dimension):
     raise ValueError(f'Invalid dimension "{dimension}"')
 
 
-@overload
-def addDimension(vec: vec2, dimension: int, value: float=0) -> vec3: ...
-@overload
-def addDimension(vec: ivec2, dimension: int, value: int=0) -> ivec3: ...
-@overload
-def addDimension(vec: bvec2, dimension: int, value: bool=0) -> bvec3: ...
-
-def addDimension(vec, dimension, value=0):
+def addDimension(vec: ivec2, dimension, value=0):
     """Inserts <value> into <vec> at <dimension> and returns the resulting 3D vector"""
     l = list(vec)
-    if isinstance(l[0], float): return  vec3(*l[:dimension], value, *l[dimension:])
-    if isinstance(l[0], int):   return ivec3(*l[:dimension], value, *l[dimension:])
-    if isinstance(l[0], bool):  return bvec3(*l[:dimension], value, *l[dimension:])
-    raise TypeError("<vec> has in invalid type.")
+    return ivec3(*l[:dimension], value, *l[dimension:])
 
 
-@overload
-def dropY(vec: vec3) -> vec2: ...
-@overload
-def dropY(vec: ivec3) -> ivec2: ...
-@overload
-def dropY(vec: bvec3) -> bvec2: ...
-
-def dropY(vec):
+def dropY(vec: ivec3) -> ivec2:
     """Returns [vec] without its y-component (i.e., projected on the XZ-plane)"""
     return vec.xz
 
 
-@overload
-def addY(vec: vec2, y: float) -> vec3: ...
-@overload
-def addY(vec: ivec2, y: int) -> ivec3: ...
-@overload
-def addY(vec: bvec2, y: bool) -> bvec3: ...
-
-def addY(vec, y=0):
+def addY(vec: ivec2, y=0):
     """Returns a 3D vector (vec[0], y, vec[1])"""
     return ivec3(vec.x, y, vec.y)
 
 
-@overload
-def setY(vec: vec3, y: float) -> vec3: ...
-@overload
-def setY(vec: ivec3, y: int) -> ivec3: ...
-@overload
-def setY(vec: bvec3, y: bool) -> bvec3: ...
-
-def setY(vec, y=0):
+def setY(vec: ivec3, y=0):
     """Returns [vec] with its y-component set to [y]"""
     return ivec3(vec.x, y, vec.z)
 
 
-@overload
-def trueMod(vec: vec2, modulus: float) -> vec2: ...
-@overload
-def trueMod(vec: ivec2, modulus: int) -> ivec2: ...
-@overload
-def trueMod(vec: vec3, modulus: float) -> vec3: ...
-@overload
-def trueMod(vec: ivec3, modulus: int) -> ivec3: ...
+def trueMod2D(vec: ivec2, modulus: int):
+    """Returns <v> modulo <modulus>.\n
+    Negative numbers are handled just like Python's built-in integer modulo."""
+    return ivec2(vec.x % modulus, vec.y % modulus)
 
-def trueMod(vec, modulus):
-    """Returns the true value of <v> modulo <modulus>, as opposed to <v> % <modulus> which may yield
-    negative numbers."""
-    result = vec % modulus
-    for i in range(len(result)): # pylint: disable=consider-using-enumerate
-        if result[i] < 0:
-            result[i] += modulus
-    return result
+def trueMod3D(vec: ivec3, modulus: int):
+    """Returns <v> modulo <modulus>.\n
+    Negative numbers are handled just like Python's built-in integer modulo."""
+    return ivec3(vec.x % modulus, vec.y % modulus, vec.z % modulus)
 
 
 @overload
@@ -160,7 +114,7 @@ def perpendicular(vec):
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
     if isinstance(vec[0], float): return  vec2(vec.y, -vec.x)
-    if isinstance(vec[1], int  ): return ivec2(vec.y, -vec.x)
+    if isinstance(vec[0], int  ): return ivec2(vec.y, -vec.x)
     raise ValueError()
 
 

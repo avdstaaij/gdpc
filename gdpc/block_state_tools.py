@@ -77,7 +77,7 @@ def vectorToAxis(vec: ivec3):
     try:
         return __VECTOR_TO_AXIS[v]
     except KeyError as e:
-        raise ValueError("axisVectorToString: exactly one vector component must be non-zero") from e
+        raise ValueError("Exactly one vector component must be non-zero") from e
 
 
 __AXIS_TO_VECTOR = {
@@ -112,7 +112,7 @@ def vectorToFacing(vec: ivec3):
     try:
         return __VECTOR_TO_FACING[v]
     except KeyError as e:
-        raise ValueError("facingVectorToString: exactly one vector component must be non-zero") from e
+        raise ValueError("Exactly one vector component must be non-zero") from e
 
 
 __FACING_TO_VECTOR = {
@@ -149,7 +149,7 @@ def rotationToVector(rotation: str):
 # Axis
 
 
-def rotateXZaxis(axis: str, rotation: int):
+def rotateAxis(axis: str, rotation: int):
     """Returns the rotated "axis" block state string"""
     strings = ["x", "z"]
     try:
@@ -161,14 +161,14 @@ def rotateXZaxis(axis: str, rotation: int):
 def transformAxis(axis: str, rotation: int = 0):
     """Returns the transformed "axis" block state string"""
     # Flipping is a no-op for axis strings
-    return rotateXZaxis(axis, rotation)
+    return rotateAxis(axis, rotation)
 
 
 # --------------------------------------------------------------------------------------------------
 # Facing
 
 
-def rotateXZfacing(facing: str, rotation: int):
+def rotateFacing(facing: str, rotation: int):
     """Returns the rotated "facing" block state string"""
     strings = ["north", "east", "south", "west"]
     try:
@@ -194,7 +194,7 @@ def flipFacing(facing: str, flip: bvec3):
 def transformFacing(facing: str, rotation: int = 0, flip: bvec3 = bvec3()):
     """Returns the transformed "facing" block state string.\n
     Flips first, rotates second."""
-    return rotateXZfacing(flipFacing(facing, flip), rotation)
+    return rotateFacing(flipFacing(facing, flip), rotation)
 
 
 __INVERT_FACING = {
@@ -214,10 +214,10 @@ def invertFacing(facing: str):
 # Rotation
 
 
-def rotateXZrotation(blockStateRotation: str, rotation: int):
+def rotateRotation(blockStateRotation: str, rotation: int):
     """Returns the rotated "rotation" block state string.\n
     Yes, this is confusing. <blockStateRotation> denotes a value of the "rotation" block state, as
-    used by e.g. signs. <rotation> denotes a rotation as used by the transformation system, so one
+    used by e.g. signs. <rotation> denotes a rotation as used by GDPC's transformation system, so one
     of {0,1,2,3}. This function name is consistent with the other block state rotation functions."""
     return str((int(blockStateRotation) + 4*rotation) % 16)
 
@@ -235,4 +235,4 @@ def flipRotation(rotation: str, flip: bvec3):
 def transformRotation(blockStateRotation: str, rotation: int = 0, flip: bvec3 = bvec3()):
     """Returns the transformed "rotation" block state string.\n
     Flips first, rotates second."""
-    return rotateXZrotation(flipRotation(blockStateRotation, flip), rotation)
+    return rotateRotation(flipRotation(blockStateRotation, flip), rotation)
