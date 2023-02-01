@@ -11,13 +11,13 @@ from urllib.parse import urlparse
 import logging
 import json
 
-from glm import ivec2, ivec3
+from glm import ivec3
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
 from . import __url__
 from .utils import withRetries
-from .vector_tools import Box
+from .vector_tools import Vec2iLike, Vec3iLike, Box
 from .block import Block
 from . import exceptions
 
@@ -57,7 +57,7 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
     return response
 
 
-def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
+def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the blocks in the specified region.
 
     <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
@@ -67,11 +67,12 @@ def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional
     If a set of coordinates is invalid, the returned block ID will be "minecraft:void_air".
     """
     url = f"{host}/blocks"
+    x, y, z = position
     dx, dy, dz = (None, None, None) if size is None else size
     parameters = {
-        'x': position.x,
-        'y': position.y,
-        'z': position.z,
+        'x': x,
+        'y': y,
+        'z': z,
         'dx': dx,
         'dy': dy,
         'dz': dz,
@@ -84,7 +85,7 @@ def getBlocks(position: ivec3, size: Optional[ivec3] = None, dimension: Optional
     return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data"))) for b in blockDicts]
 
 
-def placeBlocks(blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places blocks in the world.
 
     Each element of <blocks> should be a tuple (position, block). The blocks must each describe
@@ -113,7 +114,7 @@ def placeBlocks(blocks: Sequence[Tuple[ivec3, Block]], dimension: Optional[str] 
         "[" +
         ",".join(
             '{' +
-            f'"x":{pos.x},"y":{pos.y},"z":{pos.z},"id":"{block.id}"' +
+            f'"x":{pos[0]},"y":{pos[1]},"z":{pos[2]},"id":"{block.id}"' +
             (f',"state":{json.dumps(block.states)}' if block.states else '') +
             (f',"data":{json.dumps(block.data)}' if block.data is not None else '') +
             '}'
@@ -171,7 +172,7 @@ def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
     return Box.between(fromPoint, toPoint)
 
 
-def getChunks(position: ivec2, size: Optional[ivec2] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST):
+def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns raw chunk data.
 
     <position> specifies the position in chunk coordinates, and <size> specifies how many chunks
@@ -184,10 +185,11 @@ def getChunks(position: ivec2, size: Optional[ivec2] = None, dimension: Optional
     On error, returns the error message instead.
     """
     url = f"{host}/chunks"
+    x, z = position
     dx, dz = (None, None) if size is None else size
     parameters = {
-        "x": position.x,
-        "z": position.y,
+        "x": x,
+        "z": z,
         "dx": dx,
         "dz": dz,
         "dimension": dimension,

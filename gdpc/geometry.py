@@ -3,14 +3,12 @@
 
 from typing import Optional, Union, List, Iterable
 
-from glm import ivec2, ivec3
-
-from .vector_tools import Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D
+from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D
 from .block import Block
 from .editor import Editor
 
 
-def placeCuboid(editor: Editor, first: ivec3, last: ivec3, block: Block, replace: Optional[Union[str, List[str]]] = None):
+def placeCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Block, replace: Optional[Union[str, List[str]]] = None):
     """Places a box of [block] blocks from [first] to [last] (inclusive)."""
     # Transform only the key points instead of all points
     first = editor.transform * first
@@ -19,7 +17,7 @@ def placeCuboid(editor: Editor, first: ivec3, last: ivec3, block: Block, replace
     editor.placeBlockGlobal(Box.between(first, last).inner, block, replace)
 
 
-def placeCuboidHollow(editor: Editor, first: ivec3, last: ivec3, block: Block, replace: Optional[Union[str, List[str]]] = None):
+def placeCuboidHollow(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Block, replace: Optional[Union[str, List[str]]] = None):
     """Places a hollow box of [block] blocks from [first] to [last] (inclusive)."""
     # Transform only the key points instead of all points
     first = editor.transform * first
@@ -28,7 +26,7 @@ def placeCuboidHollow(editor: Editor, first: ivec3, last: ivec3, block: Block, r
     editor.placeBlockGlobal(Box.between(first, last).shell, block, replace)
 
 
-def placeCuboidWireframe(editor: Editor, first: ivec3, last: ivec3, block: Block, replace: Optional[Union[str, List[str]]] = None):
+def placeCuboidWireframe(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Block, replace: Optional[Union[str, List[str]]] = None):
     """Places a wireframe of [block] blocks from [first] to [last] (inclusive)."""
     # Transform only the key points instead of all points
     first = editor.transform * first
@@ -65,7 +63,7 @@ def placeRectOutline(editor: Editor, rect: Rect, y: int, block: Block, replace: 
     placeBoxWireframe(editor, rect.toBox(y, 1), block, replace)
 
 
-def placeCheckeredCuboid(editor: Editor, first: ivec3, last: ivec3, block1: Block, block2: Block = Block(""), replace: Optional[Union[str, List[str]]] = None):
+def placeCheckeredCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1: Block, block2: Block = Block(""), replace: Optional[Union[str, List[str]]] = None):
     """Places a checker pattern of [block1] and [block2] in the box between [first] and [last] (inclusive)"""
     placeCheckeredBox(editor, Box.between(first, last), block1, block2, replace)
 
@@ -77,7 +75,7 @@ def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = B
         editor.placeBlock(box.offset + pos, block1 if sum(pos) % 2 == 0 else block2, replace)
 
 
-def placeStripedCuboid(editor: Editor, first: ivec3, last: ivec3, stripeAxis: int, block1: Block, block2: Block = Block(""), replace: Optional[Union[str, List[str]]] = None):
+def placeStripedCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, stripeAxis: int, block1: Block, block2: Block = Block(""), replace: Optional[Union[str, List[str]]] = None):
     """Places a stripe pattern of [block1] and [block2] along [stripeAxis] (0, 1 or 2) in the box
     between [first] and [last] (inclusive)"""
     placeStripedBox(editor, Box.between(first, last), stripeAxis, block1, block2, replace)
@@ -90,7 +88,7 @@ def placeStripedBox(editor: Editor, box: Box, stripeAxis: int, block1: Block, bl
         editor.placeBlock(box.offset + pos, block1 if pos[stripeAxis] % 2 == 0 else block2, replace)
 
 
-def placeLine(editor: Editor, first: ivec3, last: ivec3, block: Block, width=1, replace: Optional[Union[str, List[str]]] = None):
+def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Block, width=1, replace: Optional[Union[str, List[str]]] = None):
     """Places a line of [block] blocks from [first] to [last] (inclusive).\n
     When placing axis-aligned lines, placeCuboid and placeBox are more efficient."""
     # Transform only the key points instead of all points
@@ -100,14 +98,14 @@ def placeLine(editor: Editor, first: ivec3, last: ivec3, block: Block, width=1, 
     editor.placeBlockGlobal(line3D(first, last, width), block, replace)
 
 
-def placeLineSequence(editor: Editor, points: Iterable[ivec3], block: Block, closed=False, replace: Optional[Union[str, List[str]]] = None):
+def placeLineSequence(editor: Editor, points: Iterable[Vec3iLike], block: Block, closed=False, replace: Optional[Union[str, List[str]]] = None):
     """Place lines that run from point to point."""
     editor.placeBlock(lineSequence3D(points, closed=closed), block, replace)
 
 
 def placeCylinder(
     editor: Editor,
-    baseCenter: ivec3, diameters: Union[ivec2, int], length: int,
+    baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: int,
     block: Block,
     axis=1, tube=False, hollow=False,
     replace: Optional[Union[str, List[str]]] = None
@@ -118,7 +116,7 @@ def placeCylinder(
 
 def placeFittingCylinder(
     editor: Editor,
-    corner1: ivec3, corner2: ivec3,
+    corner1: Vec3iLike, corner2: Vec3iLike,
     block: Block,
     axis=1, tube=False, hollow=False,
     replace: Optional[Union[str, List[str]]] = None

@@ -4,9 +4,7 @@
 from typing import Any, Optional, Union, List
 from functools import lru_cache
 
-from glm import ivec2
-
-from .vector_tools import Rect
+from .vector_tools import Vec2iLike, Rect
 from . import lookup
 from .block import Block
 
@@ -220,11 +218,11 @@ def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: in
 # ==================================================================================================
 
 
-def positionToInventoryIndex(position: ivec2, inventorySize: ivec2):
+def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike):
     """Returns the flat index of the slot at <position> in an inventory of size <inventorySize>."""
     if not Rect(size=inventorySize).contains(position):
         raise ValueError(f"{position} is not between (0, 0) and {inventorySize}!")
-    return position.x + position.y * inventorySize.x
+    return position[0] + position[1] * inventorySize[0]
 
 
 def getObtrusiveness(block: Block):

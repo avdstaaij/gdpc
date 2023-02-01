@@ -7,7 +7,7 @@ import random
 import numpy as np
 from glm import ivec2, ivec3
 
-from .vector_tools import Box, neighbors3D
+from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block
 from .block_state_tools import facingToRotation, facingToVector
 from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
@@ -15,11 +15,11 @@ from . import lookup
 from .editor import Editor
 
 
-def centerBuildAreaOnPlayer(editor: Editor, size: ivec3):
+def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike):
     """Sets <editor>'s build area to a box of <size> centered on the player, and returns it.\n
     The build area is always in **global coordinates**; <editor>.transform is ignored."""
     # -1 to correct for offset from player position
-    radius = (size - 1) // 2
+    radius = (ivec3(*size) - 1) // 2
     editor.runCommand(
         "execute at @p run setbuildarea "
         f"~{-radius.x} ~{-radius.y} ~{-radius.z} ~{radius.x} ~{radius.y} ~{radius.z}")
@@ -28,7 +28,7 @@ def centerBuildAreaOnPlayer(editor: Editor, size: ivec3):
 
 def flood_search_3D(
     editor: Editor,
-    origin: ivec3,
+    origin: Vec3iLike,
     boundingBox: Box,
     search_block_ids: Iterable[str],
     diagonal=False,
@@ -52,13 +52,13 @@ def flood_search_3D(
 
     result:  Set[ivec3] = set()
     visited: Set[ivec3] = set()
-    flood_search_3D_recursive(origin, result, visited, depth)
+    flood_search_3D_recursive(ivec3(*origin), result, visited, depth)
     return result
 
 
 def placeSign(
     editor: Editor,
-    position: ivec3,
+    position: Vec3iLike,
     wood="oak", wall=False,
     facing: Optional[str] = None, rotation: Optional[Union[str, int]] = None,
     text1="", text2="", text3="", text4="", color="", isGlowing=False
@@ -73,7 +73,7 @@ def placeSign(
     editor.placeBlock(position, signBlock(wood, wall, facing, rotation, text1, text2, text3, text4, color, isGlowing))
 
 
-def placeLectern(editor: Editor, position: ivec3, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
+def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
     """Place a lectern with the specified properties.\n
     If <facing> is None, a least obstructed facing direction will be used."""
     if facing is None:
@@ -83,7 +83,7 @@ def placeLectern(editor: Editor, position: ivec3, facing: Optional[str] = None, 
 
 def placeContainerBlock(
     editor: Editor,
-    position: ivec3,
+    position: Vec3iLike,
     block: Block = Block("minecraft:chest"),
     items: Optional[Iterable[Union[Tuple[ivec2, str], Tuple[ivec2, str, int]]]] = None,
     replace=True
@@ -111,7 +111,7 @@ def placeContainerBlock(
         editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item[2]} {item[3]}", syncWithBuffer=True)
 
 
-def setContainerItem(editor: Editor, position: ivec3, itemPosition: ivec2, item: str, amount: int = 1):
+def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1):
     """Sets the item at <itemPosition> in the container block at <position> to the item with id <item>."""
     globalPosition = editor.transform * position
 
@@ -124,12 +124,12 @@ def setContainerItem(editor: Editor, position: ivec3, itemPosition: ivec2, item:
     editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item} {amount}", syncWithBuffer=True)
 
 
-def getOptimalFacingDirection(editor: Editor, pos: ivec3):
+def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike):
     """Returns the least obstructed directions to have something facing (a "facing" block state value).\n
     Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second."""
     directions = ["north", "east", "south", "west"]
     obtrusivenesses = np.array([
-        getObtrusiveness(editor.getBlock(pos + facingToVector(direction)))
+        getObtrusiveness(editor.getBlock(ivec3(*pos) + facingToVector(direction)))
         for direction in directions
     ])
     candidates              = np.nonzero(obtrusivenesses == np.min(obtrusivenesses))[0]

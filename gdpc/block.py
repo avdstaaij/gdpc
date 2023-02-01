@@ -9,6 +9,7 @@ import random
 from glm import bvec3
 from nbt import nbt
 
+from .vector_tools import Vec3bLike
 from .nbt_tools import nbtToPythonObject, pythonObjectToSnbt
 from .block_state_tools import transformAxis, transformFacing, transformRotation
 
@@ -55,7 +56,7 @@ class Block:
         return result
 
 
-    def transform(self, rotation: int = 0, flip: bvec3 = bvec3()):
+    def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()):
         """Transforms this block.\n
         Flips first, rotates second."""
         axisState     = self.states.get("axis")
@@ -66,7 +67,7 @@ class Block:
         if rotationState is not None: self.states["rotation"] = transformRotation(rotationState, rotation, flip)
 
 
-    def transformed(self, rotation: int = 0, flip: bvec3 = bvec3()):
+    def transformed(self, rotation: int = 0, flip: Vec3bLike = bvec3()):
         """Returns a transformed copy of this block.\n
         Flips first, rotates second."""
         block = deepcopy(self)

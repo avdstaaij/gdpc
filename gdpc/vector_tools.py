@@ -1,8 +1,9 @@
 """Various vector utilities"""
 
 
-from typing import Any, Iterable, List, Optional, Set, Tuple, Union, overload
-from dataclasses import dataclass, field
+from typing import Sequence, Any, Iterable, List, Optional, Set, Tuple, Union
+from abc import ABC
+from dataclasses import dataclass
 import math
 
 from more_itertools import powerset
@@ -16,7 +17,49 @@ from .utils import nonZeroSign
 
 
 # ==================================================================================================
-# General
+# VecLike ABCs
+# ==================================================================================================
+
+
+class Vec2iLike(ABC, Sequence[int]):
+    """An abstract base class. A class is a Vec2i if it acts like a sequence of two ints."""
+    @classmethod
+    def __subclasshook__(cls, C):
+        try:
+            return len(C) == 2 and all(isinstance(C[i], int) for i in range(2))
+        except TypeError:
+            return False
+
+class Vec3iLike(ABC, Sequence[int]):
+    """An abstract base class. A class is a Vec3i if it acts like a sequence of three ints."""
+    @classmethod
+    def __subclasshook__(cls, C):
+        try:
+            return len(C) == 3 and all(isinstance(C[i], int) for i in range(3))
+        except TypeError:
+            return False
+
+class Vec2bLike(ABC, Sequence[bool]):
+    """An abstract base class. A class is a Vec2b if it acts like a sequence of two bools."""
+    @classmethod
+    def __subclasshook__(cls, C):
+        try:
+            return len(C) == 2 and all(isinstance(C[i], bool) for i in range(2))
+        except TypeError:
+            return False
+
+class Vec3bLike(ABC, Sequence[bool]):
+    """An abstract base class. A class is a Vec3b if it acts like a sequence of three bools."""
+    @classmethod
+    def __subclasshook__(cls, C):
+        try:
+            return len(C) == 3 and all(isinstance(C[i], bool) for i in range(3))
+        except TypeError:
+            return False
+
+
+# ==================================================================================================
+# Constants
 # ==================================================================================================
 
 
@@ -65,202 +108,198 @@ DIAGONALS_3D = (
 )
 
 
-def dropDimension(vec: ivec3, dimension) -> ivec2:
+# ==================================================================================================
+# General
+# ==================================================================================================
+
+
+def dropDimension(vec: Vec2iLike, dimension: int):
     """Returns <vec> without its <dimension>-th component"""
-    if dimension == 0: return vec.yz
-    if dimension == 1: return vec.xz
-    if dimension == 2: return vec.xy
+    if dimension == 0: return ivec2(vec[1], vec[2])
+    if dimension == 1: return ivec2(vec[0], vec[2])
+    if dimension == 2: return ivec2(vec[0], vec[1])
     raise ValueError(f'Invalid dimension "{dimension}"')
 
 
-def addDimension(vec: ivec2, dimension, value=0):
+def addDimension(vec: Vec2iLike, dimension: int, value=0):
     """Inserts <value> into <vec> at <dimension> and returns the resulting 3D vector"""
     l = list(vec)
     return ivec3(*l[:dimension], value, *l[dimension:])
 
 
-def dropY(vec: ivec3) -> ivec2:
+def dropY(vec: Vec2iLike):
     """Returns [vec] without its y-component (i.e., projected on the XZ-plane)"""
-    return vec.xz
+    return ivec2(vec[0], vec[2])
 
 
-def addY(vec: ivec2, y=0):
+def addY(vec: Vec2iLike, y=0):
     """Returns a 3D vector (vec[0], y, vec[1])"""
-    return ivec3(vec.x, y, vec.y)
+    return ivec3(vec[0], y, vec[1])
 
 
-def setY(vec: ivec3, y=0):
+def setY(vec: Vec2iLike, y=0):
     """Returns [vec] with its y-component set to [y]"""
-    return ivec3(vec.x, y, vec.z)
+    return ivec3(vec[0], y, vec[1])
 
 
-def trueMod2D(vec: ivec2, modulus: int):
+def trueMod2D(vec: Vec2iLike, modulus):
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
-    return ivec2(vec.x % modulus, vec.y % modulus)
+    return ivec2(vec[0] % modulus, vec[1] % modulus)
 
-def trueMod3D(vec: ivec3, modulus: int):
+def trueMod3D(vec: Vec3iLike, modulus):
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
-    return ivec3(vec.x % modulus, vec.y % modulus, vec.z % modulus)
+    return ivec3(vec[0] % modulus, vec[1] % modulus, vec[2] % modulus)
 
 
-@overload
-def perpendicular(vec: vec2) -> vec2: ...
-@overload
-def perpendicular(vec: ivec2) -> ivec2: ...
-
-def perpendicular(vec):
+def perpendicular(vec: Vec3iLike):
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
-    if isinstance(vec[0], float): return  vec2(vec.y, -vec.x)
-    if isinstance(vec[0], int  ): return ivec2(vec.y, -vec.x)
-    raise ValueError()
+    return ivec2(vec[1], -vec[0])
 
 
-def rotate(vec: ivec2, rotation: int):
+def rotate2D(vec: Vec2iLike, rotation: int):
     """Returns [vec], rotated by [rotation]"""
-    if rotation == 0: return vec
-    if rotation == 1: return ivec2(-vec.y,  vec.x)
-    if rotation == 2: return ivec2(-vec.x, -vec.y)
-    if rotation == 3: return ivec2( vec.y, -vec.x)
+    if rotation == 0: return ivec2(*vec)
+    if rotation == 1: return ivec2(-vec[1],  vec[0])
+    if rotation == 2: return ivec2(-vec[0], -vec[1])
+    if rotation == 3: return ivec2( vec[1], -vec[0])
     raise ValueError("Rotation must be in {0,1,2,3}")
 
 
-def rotateXZ(vec: ivec3, rotation: int):
+def rotate3D(vec: Vec3iLike, rotation: int):
     """Returns [vec], rotated in the XZ-plane by [rotation]"""
-    return addY(rotate(dropY(vec), rotation), vec.y)
+    return addY(rotate2D(dropY(vec), rotation), vec[1])
 
 
-def flipRotation(rotation: int, flip: bvec2):
+def flipRotation2D(rotation: int, flip: Vec2bLike):
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
     after <rotation>."""
     scale = flipToScale2D(flip)
     return (rotation * scale.x * scale.y + 4) % 4
 
-def flipRotationXZ(rotation: int, flip: bvec3):
+def flipRotation3D(rotation: int, flip: Vec3bLike):
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
     after <rotation>"""
-    return flipRotation(rotation, dropY(flip))
+    return flipRotation2D(rotation, dropY(flip))
 
 
-def rotateSize(size: ivec2, rotation: int):
+def rotateSize(size: Vec2iLike, rotation: int):
     """Returns the effective size of a rect of size [size] that has been rotated by [rotation]."""
-    return ivec2(size.y, size.x) if rotation in [1, 3] else size
+    return ivec2(size[1], size[0]) if rotation in [1, 3] else size
 
 
-def rotateSizeXZ(size: ivec3, rotation: int):
+def rotateSizeXZ(size: Vec3iLike, rotation: int):
     """Returns the effective size of a box of size [size] that has been rotated by [rotation]."""
-    return addY(rotateSize(dropY(size), rotation), size.y)
+    return addY(rotateSize(dropY(size), rotation), size[1])
 
 
-def flipToScale2D(flip: bvec2):
+def flipToScale2D(flip: Vec2bLike):
     """Returns a vector with a 1 where <flip> is false, and -1 where <flip> is true"""
-    return 1 - 2*ivec2(flip)
+    return 1 - 2*ivec2(*flip)
 
-def flipToScale3D(flip: bvec3):
+def flipToScale3D(flip: Vec3bLike):
     """Returns a vector with a 1 where <flip> is false, and -1 where <flip> is true"""
-    return 1 - 2*ivec3(flip)
+    return 1 - 2*ivec3(*flip)
 
 
-def scaleToFlip2D(scale: ivec2):
+def scaleToFlip2D(scale: Vec2iLike):
     """Returns whether [scale] flips space in each axis"""
-    return bvec2(scale.x < 0, scale.y < 0)
+    return bvec2(scale[0] < 0, scale[1] < 0)
 
-def scaleToFlip3D(scale: ivec3):
+def scaleToFlip3D(scale: Vec3iLike):
     """Returns whether [scale] flips space in each axis"""
-    return bvec3(scale.x < 0, scale.y < 0, scale.z < 0)
+    return bvec3(scale[0] < 0, scale[1] < 0, scale[2] < 0)
 
 
-def toAxisVector(vec: ivec2):
+def toAxisVector(vec: Vec2iLike):
     """Returns the axis-aligned unit vector closest to [vec]"""
-    if abs(vec.x) > abs(vec.y): # pylint: disable=no-else-return
-        return ivec2(nonZeroSign(vec.x), 0)
+    if abs(vec[0]) > abs(vec[1]): # pylint: disable=no-else-return
+        return ivec2(nonZeroSign(vec[0]), 0)
     else:
-        return ivec2(0, nonZeroSign(vec.y))
+        return ivec2(0, nonZeroSign(vec[1]))
 
 
-def directionToRotation(direction: ivec2):
+def directionToRotation(direction: Vec2iLike):
     """Returns the rotation that rotates (0,-1) closest to [direction]"""
     vec = toAxisVector(direction)
-    if vec.y < 0: return 0
-    if vec.x > 0: return 1
-    if vec.y > 0: return 2
-    if vec.x < 0: return 3
+    if vec[1] < 0: return 0
+    if vec[0] > 0: return 1
+    if vec[1] > 0: return 2
+    if vec[0] < 0: return 3
     raise ValueError()
 
 
 # For some reason, glm's length, length2, distance, distance2 and l1Norm refuse to work with integer
 # vectors. We provide some wrappers.
 
-def length(vec: Union[ivec2, ivec3]):
+def length(vec: Union[Vec2iLike, Vec3iLike]):
     """Returns the length of [vec]"""
-    if isinstance(vec, ivec2): return glm.length(vec2(vec))
-    if isinstance(vec, ivec3): return glm.length(vec3(vec))
+    if len(vec) == 2: return glm.length(vec2(*vec))
+    if len(vec) == 3: return glm.length(vec3(*vec))
     raise ValueError()
 
-def length2(vec: Union[ivec2, ivec3]):
+def length2(vec: Union[Vec2iLike, Vec3iLike]):
     """Returns the squared length of [vec]"""
-    if isinstance(vec, ivec2): return int(glm.length2(vec2(vec)))
-    if isinstance(vec, ivec3): return int(glm.length2(vec3(vec)))
+    if len(vec) == 2: return int(glm.length2(vec2(*vec)))
+    if len(vec) == 3: return int(glm.length2(vec3(*vec)))
     raise ValueError()
 
-def distance(vecA: Union[ivec2, ivec3], vecB: Union[ivec2, ivec3]) -> float:
+def distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]) -> float:
     """Returns the distance between [vecA] and [vecB]"""
-    if isinstance(vecA, ivec2) and isinstance(vecB, ivec2): return glm.distance(vec2(vecA), vec2(vecB))
-    if isinstance(vecA, ivec3) and isinstance(vecB, ivec2): return glm.distance(vec3(vecA), vec3(vecB))
+    if len(vecA) == 2 and len(vecB) == 2: return glm.distance(vec2(*vecA), vec2(*vecB))
+    if len(vecA) == 3 and len(vecB) == 3: return glm.distance(vec3(*vecA), vec3(*vecB))
     raise ValueError()
 
-def distance2(vecA: Union[ivec2, ivec3], vecB: Union[ivec2, ivec3]):
+def distance2(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]):
     """Returns the squared distance between [vecA] and [vecB]"""
-    if isinstance(vecA, ivec2) and isinstance(vecB, ivec2): return int(glm.distance2(vec2(vecA), vec2(vecB)))
-    if isinstance(vecA, ivec3) and isinstance(vecB, ivec2): return int(glm.distance2(vec3(vecA), vec3(vecB)))
+    if len(vecA) == 2 and len(vecB) == 2: return int(glm.distance2(vec2(*vecA), vec2(*vecB)))
+    if len(vecA) == 3 and len(vecB) == 3: return int(glm.distance2(vec3(*vecA), vec3(*vecB)))
     raise ValueError()
 
-def l1Norm(vec: Union[ivec2, ivec3]):
+def l1Norm(vec: Union[Vec2iLike, Vec3iLike]):
     """Returns the L1 norm of [vec]"""
-    if isinstance(vec, ivec2): return abs(vec.x) + abs(vec.y)
-    if isinstance(vec, ivec3): return abs(vec.x) + abs(vec.y) + abs(vec.z)
-    raise ValueError()
+    return sum(abs(n) for n in vec)
 
-def l1Distance(vecA: Union[ivec2, ivec3], vecB: Union[ivec2, ivec3]):
+def l1Distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]):
     """Returns the L1 norm distance between [vecA] and [vecB]"""
     return l1Norm(vecA - vecB)
 
 
-def orderedCorners2D(corner1: ivec2, corner2: ivec2):
+def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike):
     """Returns two corners of the rectangle defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
     return (
         ivec2(
-            corner1.x if corner1.x <= corner2.x else corner2.x,
-            corner1.y if corner1.y <= corner2.y else corner2.y,
+            corner1[0] if corner1[0] <= corner2[0] else corner2[0],
+            corner1[1] if corner1[1] <= corner2[1] else corner2[1],
         ),
         ivec2(
-            corner1.x if corner1.x > corner2.x else corner2.x,
-            corner1.y if corner1.y > corner2.y else corner2.y,
+            corner1[0] if corner1[0] > corner2[0] else corner2[0],
+            corner1[1] if corner1[1] > corner2[1] else corner2[1],
         )
     )
 
 
-def orderedCorners3D(corner1: ivec3, corner2: ivec3):
+def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike):
     """Returns two corners of the box defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
     return (
         ivec3(
-            corner1.x if corner1.x <= corner2.x else corner2.x,
-            corner1.y if corner1.y <= corner2.y else corner2.y,
-            corner1.z if corner1.z <= corner2.z else corner2.z,
+            corner1[0] if corner1[0] <= corner2[0] else corner2[0],
+            corner1[1] if corner1[1] <= corner2[1] else corner2[1],
+            corner1[2] if corner1[2] <= corner2[2] else corner2[2],
         ),
         ivec3(
-            corner1.x if corner1.x > corner2.x else corner2.x,
-            corner1.y if corner1.y > corner2.y else corner2.y,
-            corner1.z if corner1.z > corner2.z else corner2.z,
+            corner1[0] if corner1[0] > corner2[0] else corner2[0],
+            corner1[1] if corner1[1] > corner2[1] else corner2[1],
+            corner1[2] if corner1[2] > corner2[2] else corner2[2],
         )
     )
 
 
-def getDimensionality(corner1: Union[ivec2, ivec3], corner2: Union[ivec2, ivec3]) -> Tuple[int, List[str]]:
+def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2iLike, Vec3iLike]) -> Tuple[int, List[str]]:
     """Determines the number of dimensions for which <corner1> and <corner2> are in general
     position, i.e. the number of dimensions for which the volume they define is not flat.\n
     Returns (dimensionality, list of indices of dimensions for which the volume is flat).
@@ -282,40 +321,65 @@ def getDimensionality(corner1: Union[ivec2, ivec3], corner2: Union[ivec2, ivec3]
 class Rect:
     """A rectangle, defined by an offset and a size"""
 
-    offset: ivec2 = field(default_factory=ivec2)
-    size:   ivec2 = field(default_factory=ivec2)
+    _offset: ivec2
+    _size:   ivec2
+
+    def __init__(self, offset: Vec2iLike = (0,0), size: Vec2iLike = (0,0)):
+        self._offset = ivec2(*offset)
+        self._size   = ivec2(*size)
+
+    def __repr__(self):
+        return f"Rect({self._offset}, {self._size})"
+
+    @property
+    def offset(self):
+        """This Rect's offset"""
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: Vec2iLike):
+        self._offset = ivec2(*value)
+
+    @property
+    def size(self):
+        """This Rect's size"""
+        return self._size
+
+    @size.setter
+    def size(self, value: Vec2iLike):
+        self._size = ivec2(*value)
 
     @property
     def begin(self):
         """Equivalent to self.offset. Setting will modify self.offset."""
-        return self.offset
+        return self._offset
 
     @begin.setter
-    def begin(self, value: ivec2):
-        self.offset = value
+    def begin(self, value: Vec2iLike):
+        self._offset = ivec2(*value)
 
     @property
     def end(self):
         """Equivalent to self.offset + self.size. Setting will modify self.size."""
-        return self.begin + self.size
+        return self.begin + self._size
 
     @end.setter
-    def end(self, value: ivec2):
-        self.size = value - self.begin
+    def end(self, value: Vec2iLike):
+        self._size = ivec2(*value) - self.begin
 
     @property
     def last(self):
         """Equivalent to self.offset + self.size - 1. Setting will modify self.size."""
-        return self.offset + self.size - 1
+        return self._offset + self._size - 1
 
     @last.setter
-    def last(self, value: ivec2):
-        self.size = value - self.offset + 1
+    def last(self, value: Vec2iLike):
+        self._size = ivec2(*value) - self._offset + 1
 
     @property
     def middle(self):
         """This Rect's middle point, rounded down"""
-        return (self.begin + self.size) // 2
+        return (self._offset + self._size) // 2
 
     @property
     def inner(self):
@@ -329,21 +393,21 @@ class Rect:
     @property
     def area(self):
         """This Rect's surface area"""
-        return self.size.x*self.size.y
+        return self._size.x*self._size.y
 
     @property
     def corners(self):
         """Yields this Rect's corner points"""
         return (
-            self.offset + sum(subset)
-            for subset in powerset([ivec2(self.size.x, 0), ivec2(0, self.size.y)])
+            self._offset + sum(subset)
+            for subset in powerset([ivec2(self._size.x, 0), ivec2(0, self._size.y)])
         )
 
-    def contains(self, vec: ivec2):
+    def contains(self, vec: Vec2iLike):
         """Returns whether this Rect contains [vec]"""
         return (
-            self.begin.x <= vec.x < self.end.x and
-            self.begin.y <= vec.y < self.end.y
+            self.begin.x <= vec[0] < self.end.x and
+            self.begin.y <= vec[1] < self.end.y
         )
 
     def collides(self, other: 'Rect'):
@@ -355,28 +419,28 @@ class Rect:
             self.end  .y >= other.begin.y
         )
 
-    def squaredDistanceToVec(self, vec: ivec2):
+    def squaredDistanceToVec(self, vec: Vec2iLike):
         """Returns the squared distance between this Rect and [vec]"""
-        dx = max(self.begin.x - vec.x, 0, vec.x - (self.end.x - 1))
-        dy = max(self.begin.y - vec.y, 0, vec.y - (self.end.y - 1))
+        dx = max(self.begin.x - vec[0], 0, vec[0] - (self.end[0] - 1))
+        dy = max(self.begin.y - vec[1], 0, vec[1] - (self.end[1] - 1))
         return dx*dx + dy*dy
 
-    def distanceToVec(self, vec: ivec2):
+    def distanceToVec(self, vec: Vec2iLike):
         """Returns the distance between this Rect and [vec]"""
         return math.sqrt(self.squaredDistanceToVec(vec))
 
-    def translated(self, translation: Union[ivec2, int]):
+    def translated(self, translation: Union[Vec2iLike, int]):
         """Returns a copy of this Rect, translated by [translation]"""
-        return Rect(self.offset + translation, self.size)
+        return Rect(self._offset + ivec2(*translation), self._size)
 
     def dilate(self, dilation: int = 1):
         """Morphologically dilates this rect by [dilation]"""
-        self.offset -= dilation
-        self.size   += dilation*2
+        self._offset  -= dilation
+        self._size    += dilation*2
 
     def dilated(self, dilation: int = 1):
         """Returns a copy of this Rect, morphologically dilated by [dilation]"""
-        return Rect(self.offset - dilation, self.size + dilation*2)
+        return Rect(self._offset - dilation, self._size + dilation*2)
 
     def erode(self, erosion: int = 1):
         """Morphologically erodes this rect by [erosion]"""
@@ -386,24 +450,24 @@ class Rect:
         """Returns a copy of this Rect, morphologically eroded by [erosion]"""
         return self.dilated(-erosion)
 
-    def centeredSubRectOffset(self, size: ivec2):
+    def centeredSubRectOffset(self, size: Vec2iLike):
         """Returns an offset such that Rect(offset, [size]).middle == self.middle"""
-        difference = self.size - size
-        return self.offset + difference/2
+        difference = self._size - ivec2(*size)
+        return self._offset + difference/2
 
-    def centeredSubRect(self, size: ivec2):
+    def centeredSubRect(self, size: Vec2iLike):
         """Returns a rect of size [size] with the same middle as this rect"""
         return Rect(self.centeredSubRectOffset(size), size)
 
     @staticmethod
-    def between(cornerA: ivec2, cornerB: ivec2):
+    def between(cornerA: Vec2iLike, cornerB: Vec2iLike):
         """Returns the Rect between [cornerA] and [cornerB] (inclusive),
         which may be any opposing corners."""
         first, last = orderedCorners2D(cornerA, cornerB)
         return Rect(first, (last - first) + 1)
 
     @staticmethod
-    def bounding(points: Iterable[ivec2]):
+    def bounding(points: Iterable[Vec2iLike]):
         """Returns the smallest Rect containing all [points]"""
         pointArray = np.array(points)
         minPoint = np.min(pointArray, axis=0)
@@ -412,7 +476,7 @@ class Rect:
 
     def toBox(self, offsetY = 0, sizeY = 0):
         """Returns a corresponding Box"""
-        return Box(addY(self.offset, offsetY), addY(self.size, sizeY))
+        return Box(addY(self.offset, offsetY), addY(self._size, sizeY))
 
     @property
     def outline(self):
@@ -430,40 +494,65 @@ class Rect:
 class Box:
     """A box, defined by an offset and a size"""
 
-    offset: ivec3 = field(default_factory=ivec3)
-    size:   ivec3 = field(default_factory=ivec3)
+    _offset: ivec3
+    _size:   ivec3
+
+    def __init__(self, offset: Vec3iLike = (0,0,0), size: Vec3iLike = (0,0,0)):
+        self._offset = ivec3(*offset)
+        self._size   = ivec3(*size)
+
+    def __repr__(self):
+        return f"Box({self._offset}, {self._size})"
+
+    @property
+    def offset(self):
+        """This Box's offset"""
+        return self._offset
+
+    @offset.setter
+    def offset(self, value: Vec3iLike):
+        self._offset = ivec3(*value)
+
+    @property
+    def size(self):
+        """This Box's size"""
+        return self._size
+
+    @size.setter
+    def size(self, value: Vec3iLike):
+        self._size = ivec3(*value)
 
     @property
     def begin(self):
         """Equivalent to self.offset. Setting will modify self.offset."""
-        return self.offset
+        return self._offset
 
     @begin.setter
-    def begin(self, value: ivec3):
-        self.offset = value
+    def begin(self, value: Vec3iLike):
+        self._offset = ivec3(*value)
 
     @property
     def end(self):
         """Equivalent to self.offset + self.size. Setting will modify self.size."""
-        return self.begin + self.size
+        return self.begin + self._size
 
     @end.setter
-    def end(self, value: ivec3):
-        self.size = value - self.begin
+    def end(self, value: Vec3iLike):
+        self._size = ivec3(*value) - self.begin
 
     @property
     def last(self):
         """Equivalent to self.offset + self.size - 1. Setting will modify self.size."""
-        return self.offset + self.size - 1
+        return self._offset + self._size - 1
 
     @last.setter
-    def last(self, value: ivec3):
-        self.size = value - self.offset + 1
+    def last(self, value: Vec3iLike):
+        self._size = ivec3(*value) - self._offset + 1
 
     @property
     def middle(self):
         """This Box's middle point, rounded down"""
-        return (self.begin + self.size) // 2
+        return (self.begin + self._size) // 2
 
     @property
     def inner(self):
@@ -478,22 +567,22 @@ class Box:
     @property
     def volume(self):
         """This Box's volume"""
-        return self.size.x*self.size.y*self.size.z
+        return self._size.x*self._size.y*self._size.z
 
     @property
     def corners(self):
         """Yields this Box's corner points"""
         return [
-            self.offset + sum(subset)
-            for subset in powerset([ivec3(self.size.x, 0, 0), ivec3(0, self.size.y, 0), ivec3(0, 0, self.size.z)])
+            self._offset + sum(subset)
+            for subset in powerset([ivec3(self._size.x, 0, 0), ivec3(0, self._size.y, 0), ivec3(0, 0, self._size.z)])
         ]
 
-    def contains(self, vec: ivec3):
+    def contains(self, vec: Vec3iLike):
         """Returns whether this Box contains [vec]"""
         return (
-            self.begin.x <= vec.x < self.end.x and
-            self.begin.y <= vec.y < self.end.y and
-            self.begin.z <= vec.z < self.end.z
+            self.begin.x <= vec[0] < self.end.x and
+            self.begin.y <= vec[1] < self.end.y and
+            self.begin.z <= vec[2] < self.end.z
         )
 
     def collides(self, other: 'Box'):
@@ -507,29 +596,29 @@ class Box:
             self.end  .z >= other.begin.z
         )
 
-    def squaredDistanceToVec(self, vec: ivec3):
+    def squaredDistanceToVec(self, vec: Vec3iLike):
         """Returns the squared distance between this Box and [vec]"""
-        dx = max(self.begin.x - vec.x, 0, vec.x - (self.end.x - 1))
-        dy = max(self.begin.y - vec.y, 0, vec.y - (self.end.y - 1))
-        dz = max(self.begin.z - vec.z, 0, vec.z - (self.end.z - 1))
+        dx = max(self.begin.x - vec[0], 0, vec[0] - (self.end.x - 1))
+        dy = max(self.begin.y - vec[1], 0, vec[1] - (self.end.y - 1))
+        dz = max(self.begin.z - vec[2], 0, vec[2] - (self.end.z - 1))
         return dx*dx + dy*dy + dz*dz
 
-    def distanceToVec(self, vec: ivec3):
+    def distanceToVec(self, vec: Vec3iLike):
         """Returns the distance between this Box and [vec]"""
         return math.sqrt(self.squaredDistanceToVec(vec))
 
-    def translated(self, translation: Union[ivec3, int]):
+    def translated(self, translation: Union[Vec3iLike, int]):
         """Returns a copy of this Box, translated by [translation]"""
-        return Box(self.offset + translation, self.size)
+        return Box(self._offset + ivec3(*translation), self._size)
 
     def dilate(self, dilation: int = 1):
         """Morphologically dilates this box by [dilation]"""
-        self.offset -= dilation
-        self.size   += dilation*2
+        self._offset -= dilation
+        self._size   += dilation*2
 
     def dilated(self, dilation: int = 1):
         """Returns a copy of this Box, morphologically dilated by [dilation]"""
-        return Rect(self.offset - dilation, self.size + dilation*2)
+        return Rect(self._offset - dilation, self._size + dilation*2)
 
     def erode(self, erosion: int = 1):
         """Morphologically erodes this box by [erosion]"""
@@ -539,24 +628,24 @@ class Box:
         """Returns a copy of this Box, morphologically eroded by [erosion]"""
         return self.dilated(-erosion)
 
-    def centeredSubBoxOffset(self, size: ivec3):
+    def centeredSubBoxOffset(self, size: Vec3iLike):
         """Returns an offset such that Box(offset, [size]).middle == self.middle"""
-        difference = self.size - size
-        return self.offset + difference/2
+        difference = self._size - ivec3(*size)
+        return self._offset + difference/2
 
-    def centeredSubBox(self, size: ivec3):
+    def centeredSubBox(self, size: Vec3iLike):
         """Returns an box of size [size] with the same middle as this box"""
         return Box(self.centeredSubBoxOffset(size), size)
 
     @staticmethod
-    def between(cornerA: ivec3, cornerB: ivec3):
+    def between(cornerA: Vec3iLike, cornerB: Vec3iLike):
         """Returns the Box between [cornerA] and [cornerB] (both inclusive),
         which may be any opposing corners"""
         first, last = orderedCorners3D(cornerA, cornerB)
         return Box(first, last - first + 1)
 
     @staticmethod
-    def bounding(points: Iterable[ivec3]):
+    def bounding(points: Iterable[Vec3iLike]):
         """Returns the smallest Box containing all [points]"""
         pointArray = np.array(points)
         minPoint = np.min(pointArray, axis=0)
@@ -565,7 +654,7 @@ class Box:
 
     def toRect(self):
         """Returns this Box's XZ-plane as a Rect"""
-        return Rect(dropY(self.offset), dropY(self.size))
+        return Rect(dropY(self._offset), dropY(self._size))
 
     @property
     def shell(self):
@@ -631,40 +720,40 @@ def setBoxSlice(array: np.ndarray, box: Box, value: Any):
 # ==================================================================================================
 
 
-def loop2D(begin: ivec2, end: Optional[ivec2] = None):
+def loop2D(begin: Vec2iLike, end: Optional[Vec2iLike] = None):
     """Yields all points between <begin> and <end> (end-exclusive).\n
     If <end> is not given, yields all points between (0,0) and <begin>."""
     if end is None:
-        begin, end = ivec2(0, 0), begin
+        begin, end = (0, 0), begin
 
-    for x in range(begin.x, end.x, nonZeroSign(end.x - begin.x)):
-        for y in range(begin.y, end.y, nonZeroSign(end.y - begin.y)):
+    for x in range(begin[0], end[0], nonZeroSign(end[0] - begin[0])):
+        for y in range(begin[1], end[1], nonZeroSign(end[1] - begin[1])):
             yield ivec2(x, y)
 
 
-def loop3D(begin: ivec3, end: Optional[ivec3] = None):
+def loop3D(begin: Vec3iLike, end: Optional[Vec3iLike] = None):
     """Yields all points between <begin> and <end> (end-exclusive).\n
     If <end> is not given, yields all points between (0,0,0) and <begin>."""
     if end is None:
-        begin, end = ivec3(0, 0, 0), begin
+        begin, end = (0, 0, 0), begin
 
-    for x in range(begin.x, end.x, nonZeroSign(end.x - begin.x)):
-        for y in range(begin.y, end.y, nonZeroSign(end.y - begin.y)):
-            for z in range(begin.z, end.z, nonZeroSign(end.z - begin.z)):
+    for x in range(begin[0], end[0], nonZeroSign(end[0] - begin[0])):
+        for y in range(begin[1], end[1], nonZeroSign(end[1] - begin[1])):
+            for z in range(begin[2], end[2], nonZeroSign(end[2] - begin[2])):
                 yield ivec3(x, y, z)
 
 
-def cuboid2D(corner1: ivec2, corner2: ivec2):
+def cuboid2D(corner1: Vec2iLike, corner2: Vec2iLike):
     """Yields all points in the rectangle between <corner1> and <corner2> (inclusive)."""
     return Rect.between(corner1, corner2).inner
 
 
-def cuboid3D(corner1: ivec3, corner2: ivec3):
+def cuboid3D(corner1: Vec3iLike, corner2: Vec3iLike):
     """Yields all points in the box between <corner1> and <corner2> (inclusive)."""
     return Box.between(corner1, corner2).inner
 
 
-def filled2DArray(points: Iterable[ivec2], seedPoint: ivec2, boundingRect: Optional[Rect] = None, includeInputPoints=True) -> np.ndarray:
+def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints=True) -> np.ndarray:
     """Fills the shape defined by <points>, starting at <seedPoint> and returns a (n,2) numpy array
     containing the resulting points.\n
     <boundingRect> should contain all <points>. If not provided, it is calculated."""
@@ -673,19 +762,19 @@ def filled2DArray(points: Iterable[ivec2], seedPoint: ivec2, boundingRect: Optio
 
     pointMap = np.zeros(boundingRect.size, dtype=int)
     pointMap[tuple(np.transpose(np.array(points) - np.array(boundingRect.offset)))] = 1
-    filled = skimage.segmentation.flood_fill(pointMap, tuple(seedPoint - boundingRect.offset), 1, footprint=np.array([[0,1,0],[1,1,1],[0,1,0]]))
+    filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec2(*seedPoint) - boundingRect.offset), 1, footprint=np.array([[0,1,0],[1,1,1],[0,1,0]]))
     if not includeInputPoints:
         filled -= pointMap
     return np.argwhere(filled) + np.array(boundingRect.offset)
 
 
-def filled2D(points: Iterable[ivec2], seedPoint: ivec2, boundingRect: Optional[Rect] = None, includeInputPoints=True):
+def filled2D(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints=True):
     """Fills the shape defined by <points>, starting at <seedPoint> and yields the resulting points.\n
     <boundingRect> should contain all <points>. If not provided, it is calculated."""
     return (ivec2(*point) for point in filled2DArray(points, seedPoint, boundingRect, includeInputPoints))
 
 
-def filled3DArray(points: Iterable[ivec3], seedPoint: ivec3, boundingBox: Optional[Box] = None, includeInputPoints=True) -> np.ndarray:
+def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Optional[Box] = None, includeInputPoints=True) -> np.ndarray:
     """Fills the shape defined by <points>, starting at <seedPoint> and returns a (n,3) numpy array
     containing the resulting points.\n
     <boundingBox> should contain all <points>. If not provided, it is calculated."""
@@ -694,21 +783,23 @@ def filled3DArray(points: Iterable[ivec3], seedPoint: ivec3, boundingBox: Option
 
     pointMap = np.zeros(boundingBox.size, dtype=int)
     pointMap[tuple(np.transpose(np.array(points) - np.array(boundingBox.offset)))] = 1
-    filled = skimage.segmentation.flood_fill(pointMap, tuple(seedPoint - boundingBox.offset), 1, connectivity=1)
+    filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec3(*seedPoint) - boundingBox.offset), 1, connectivity=1)
     if not includeInputPoints:
         filled -= pointMap
     return np.argwhere(filled) + np.array(boundingBox.offset)
 
 
-def filled3D(points: Iterable[ivec3], seedPoint: ivec3, boundingBox: Optional[Box] = None, includeInputPoints=True):
+def filled3D(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Optional[Box] = None, includeInputPoints=True):
     """Fills the shape defined by <points>, starting at <seedPoint> and yields the resulting points.\n
     <boundingBox> should contain all <points>. If not provided, it is calculated."""
     return (ivec3(*point) for point in filled3DArray(points, seedPoint, boundingBox, includeInputPoints))
 
 
 # TODO: separate out thickening code?
-def _lineArray(begin: Union[ivec2, ivec3], end: Union[ivec2, ivec3], width: int = 1) -> np.ndarray:
-    delta = np.array(end - begin)
+def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLike], width: int = 1) -> np.ndarray:
+    begin: np.ndarray = np.array(begin)
+    end:   np.ndarray = np.array(end)
+    delta = end - begin
     maxDelta = int(max(abs(delta)))
     if maxDelta == 0:
         return np.array([])
@@ -716,7 +807,7 @@ def _lineArray(begin: Union[ivec2, ivec3], end: Union[ivec2, ivec3], width: int 
     points = np.rint(points).astype(np.signedinteger)
 
     if width > 1:
-        minPoint = np.array(glm.min(begin, end))
+        minPoint = np.minimum(begin, end)
 
         # convert point array to a map
         array_width = maxDelta + width*2
@@ -733,44 +824,46 @@ def _lineArray(begin: Union[ivec2, ivec3], end: Union[ivec2, ivec3], width: int 
     return points
 
 
-def line2DArray(begin: ivec2, end: ivec2, width: int = 1):
+def line2DArray(begin: Vec2iLike, end: Vec2iLike, width: int = 1):
     """Returns (n,2) numpy array of points on the line between [begin] and [end] (inclusive)"""
     return _lineArray(begin, end, width)
 
 
-def line2D(begin: ivec2, end: ivec2, width: int = 1):
+def line2D(begin: Vec2iLike, end: Vec2iLike, width: int = 1):
     """Yields the points on the line between [begin] and [end] (inclusive)"""
     return (ivec2(*point) for point in _lineArray(begin, end, width))
 
 
-def line3Darray(begin: ivec3, end: ivec3, width: int = 1):
+def line3Darray(begin: Vec3iLike, end: Vec3iLike, width: int = 1):
     """Returns (n,3) numpy array of points on the line between [begin] and [end] (inclusive)"""
     return _lineArray(begin, end, width)
 
 
-def line3D(begin: ivec3, end: ivec3, width: int = 1):
+def line3D(begin: Vec3iLike, end: Vec3iLike, width: int = 1):
     """Yields the points on the line between [begin] and [end] (inclusive)"""
     return (ivec3(*point) for point in _lineArray(begin, end, width))
 
 
-def lineSequence2D(points: Iterable[ivec2], closed=False):
+def lineSequence2D(points: Iterable[Vec2iLike], closed=False):
     """Yields all points on the lines that connect <points>"""
     for i in range((-1 if closed else 0), len(points)-1):
         yield from line2D(points[i], points[i+1])
 
 
-def lineSequence3D(points: Iterable[ivec3], closed=False):
+def lineSequence3D(points: Iterable[Vec3iLike], closed=False):
     """Yields all points on the lines that connect <points>"""
     for i in range((-1 if closed else 0), len(points)-1):
         yield from line3D(points[i], points[i+1])
 
 
-def circle(center: ivec2, diameter: int, filled=False):
+def circle(center: Vec2iLike, diameter: int, filled=False):
     """Yields the points of the specified circle.\n
     If <diameter> is even, <center> will be the bottom left center point."""
 
     # With 'inspiration' from:
     # https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
+
+    center: ivec2 = ivec2(*center)
 
     if diameter == 0:
         empty: List[ivec2] = []
@@ -814,20 +907,23 @@ def circle(center: ivec2, diameter: int, filled=False):
     return (point for point in points)
 
 
-def fittingCircle(corner1: ivec2, corner2: ivec2, filled=False):
+def fittingCircle(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
     """Yields the points of the largest circle that fits between <corner1> and <corner2>.\n
     The circle is centered in the larger axis."""
-    corner1, corner2 = orderedCorners2D(corner1, corner2)
-    diameter = min(corner2.x - corner1.x, corner2.y - corner1.y) + 1
-    return circle((corner1 + corner2) // 2, diameter, filled)
+    _corner1, _corner2 = orderedCorners2D(corner1, corner2)
+    diameter = min(_corner2.x - _corner1.x, _corner2.y - _corner1.y) + 1
+    return circle((_corner1 + _corner2) // 2, diameter, filled)
 
 
-def ellipse(center: ivec2, diameters: ivec2, filled=False):
+def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False):
     """Yields the points of the specified ellipse.\n
     If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis."""
 
     # Modified version 'inspired' by chandan_jnu from
     # https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
+
+    center:    ivec2 = ivec2(*center)
+    diameters: ivec2 = ivec2(*diameters)
 
     if diameters.x == 0 or diameters.y == 0:
         empty: List[ivec2] = []
@@ -900,20 +996,20 @@ def ellipse(center: ivec2, diameters: ivec2, filled=False):
     return (point for point in points)
 
 
-def fittingEllipse(corner1: ivec2, corner2: ivec2, filled=False):
+def fittingEllipse(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
     """Yields the points of the largest ellipse that fits between <corner1> and <corner2>."""
-    corner1, corner2 = orderedCorners2D(corner1, corner2)
-    diameters = (corner2 - corner1) + 1
-    return ellipse((corner1 + corner2) // 2, diameters, filled)
+    _corner1, _corner2 = orderedCorners2D(corner1, corner2)
+    diameters = (_corner2 - _corner1) + 1
+    return ellipse((_corner1 + _corner2) // 2, diameters, filled)
 
 
-def cylinder(baseCenter: ivec3, diameters: Union[ivec2, int], length: int, axis=1, tube=False, hollow=False):
+def cylinder(baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: int, axis=1, tube=False, hollow=False):
     """Yields the points from the specified cylinder.\n
     If <diameter> is even, <center> will be the bottom left center point.\n
     <tube> has precedence over <hollow>."""
 
-    if isinstance(diameters, int):
-        diameters = ivec2(diameters, diameters)
+    diameters:  ivec2 = ivec2(diameters) if isinstance(diameters, int) else ivec2(*diameters)
+    baseCenter: ivec3 = ivec3(*baseCenter)
 
     if diameters.x == 0 or diameters.y == 0 or length == 0:
         empty: List[ivec3] = []
@@ -924,25 +1020,25 @@ def cylinder(baseCenter: ivec3, diameters: Union[ivec2, int], length: int, axis=
     return fittingCylinder(corner1, corner2, axis, tube, hollow)
 
 
-def fittingCylinder(corner1: ivec3, corner2: ivec3, axis=1, tube=False, hollow=False):
+def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, hollow=False):
     """Yields the points of the largest cylinder that fits between <corner1> and <corner2>.\n
     <tube> has precedence over <hollow>."""
 
-    corner1, corner2 = orderedCorners3D(corner1, corner2)
-    dimensionality, flatSides = getDimensionality(corner1, corner2)
+    _corner1, _corner2 = orderedCorners3D(corner1, corner2)
+    dimensionality, flatSides = getDimensionality(_corner1, _corner2)
 
     if dimensionality == 0:
-        yield corner1
+        yield _corner1
         return
 
     if (dimensionality == 1 or (dimensionality == 2 and flatSides[0] != axis)):
-        yield from cuboid3D(corner1, corner2)
+        yield from cuboid3D(_corner1, _corner2)
         return
 
-    baseCorner1 = dropDimension(corner1, axis)
-    baseCorner2 = dropDimension(corner2, axis)
-    h0 = corner1[axis]
-    hn = corner2[axis]
+    baseCorner1 = dropDimension(_corner1, axis)
+    baseCorner2 = dropDimension(_corner2, axis)
+    h0 = _corner1[axis]
+    hn = _corner2[axis]
 
     ellipsePoints2D = list(fittingEllipse(baseCorner1, baseCorner2, filled=False))
     ellipsePoints3D = [addDimension(point, axis, h0) for point in ellipsePoints2D]
@@ -962,71 +1058,71 @@ def fittingCylinder(corner1: ivec3, corner2: ivec3, axis=1, tube=False, hollow=F
         yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
 
 
-def neighbors2D(point: ivec2, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
+def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
     """Yields the neighbors of [point] within [bounding_rect].\n
     Useful for pathfinding."""
 
     end = boundingRect.end
 
-    left  = point.x - stride >= boundingRect.offset.x
-    down  = point.y - stride >= boundingRect.offset.y
-    right = point.x + stride <  end.x
-    up    = point.y + stride <  end.y
+    left  = point[0] - stride >= boundingRect.offset.x
+    down  = point[1] - stride >= boundingRect.offset.y
+    right = point[0] + stride <  end.x
+    up    = point[1] + stride <  end.y
 
-    if left:   yield ivec2(point.x - stride, point.y         )
-    if down:   yield ivec2(point.x         , point.y - stride)
-    if right:  yield ivec2(point.x + stride, point.y         )
-    if up:     yield ivec2(point.x         , point.y + stride)
+    if left:   yield ivec2(point[0] - stride, point[1]         )
+    if down:   yield ivec2(point[0]         , point[1] - stride)
+    if right:  yield ivec2(point[0] + stride, point[1]         )
+    if up:     yield ivec2(point[0]         , point[1] + stride)
 
     if not diagonal:
         return
 
-    if left  and down: yield ivec2(point.x - stride, point.y - stride)
-    if left  and up:   yield ivec2(point.x - stride, point.y + stride)
-    if right and down: yield ivec2(point.x + stride, point.y - stride)
-    if right and up:   yield ivec2(point.x + stride, point.y + stride)
+    if left  and down: yield ivec2(point[0] - stride, point[1] - stride)
+    if left  and up:   yield ivec2(point[0] - stride, point[1] + stride)
+    if right and down: yield ivec2(point[0] + stride, point[1] - stride)
+    if right and up:   yield ivec2(point[0] + stride, point[1] + stride)
 
 
-def neighbors3D(point: ivec3, boundingBox: Box, diagonal: bool = False, stride: int = 1):
+def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stride: int = 1):
     """Yields the neighbors of [point] within [bounding_box].\n
     Useful for pathfinding."""
 
     end = boundingBox.end
 
-    left  = point.x - stride >= boundingBox.offset.x
-    down  = point.y - stride >= boundingBox.offset.y
-    back  = point.z - stride >= boundingBox.offset.z
-    right = point.x + stride <  end.x
-    up    = point.y + stride <  end.y
-    front = point.z + stride <  end.z
+    left  = point[0] - stride >= boundingBox.offset.x
+    down  = point[1] - stride >= boundingBox.offset.y
+    back  = point[2] - stride >= boundingBox.offset.z
+    right = point[0] + stride <  end.x
+    up    = point[1] + stride <  end.y
+    front = point[2] + stride <  end.z
 
-    if left:  yield ivec3(point.x - stride, point.y         , point.z         )
-    if down:  yield ivec3(point.x         , point.y - stride, point.z         )
-    if back:  yield ivec3(point.x         , point.y         , point.z - stride)
-    if right: yield ivec3(point.x + stride, point.y         , point.z         )
-    if up:    yield ivec3(point.x         , point.y + stride, point.z         )
-    if front: yield ivec3(point.x         , point.y         , point.z + stride)
+    if left:  yield ivec3(point[0] - stride, point[1]         , point[2]         )
+    if down:  yield ivec3(point[0]         , point[1] - stride, point[2]         )
+    if back:  yield ivec3(point[0]         , point[1]         , point[2] - stride)
+    if right: yield ivec3(point[0] + stride, point[1]         , point[2]         )
+    if up:    yield ivec3(point[0]         , point[1] + stride, point[2]         )
+    if front: yield ivec3(point[0]         , point[1]         , point[2] + stride)
 
     if not diagonal:
         return
 
-    if left  and down:           yield ivec3(point.x - stride, point.y - stride, point.z         )
-    if left  and back:           yield ivec3(point.x - stride, point.y         , point.z - stride)
-    if left  and up:             yield ivec3(point.x - stride, point.y + stride, point.z         )
-    if left  and front:          yield ivec3(point.x - stride, point.y         , point.z + stride)
-    if right and down:           yield ivec3(point.x + stride, point.y - stride, point.z         )
-    if right and back:           yield ivec3(point.x + stride, point.y         , point.z - stride)
-    if right and up:             yield ivec3(point.x + stride, point.y + stride, point.z         )
-    if right and front:          yield ivec3(point.x + stride, point.y         , point.z + stride)
-    if down  and back:           yield ivec3(point.x         , point.y - stride, point.z - stride)
-    if down  and front:          yield ivec3(point.x         , point.y - stride, point.z + stride)
-    if up    and back:           yield ivec3(point.x         , point.y + stride, point.z - stride)
-    if up    and front:          yield ivec3(point.x         , point.y + stride, point.z + stride)
-    if left  and down and back:  yield ivec3(point.x - stride, point.y - stride, point.z - stride)
-    if left  and down and front: yield ivec3(point.x - stride, point.y - stride, point.z + stride)
-    if left  and up   and back:  yield ivec3(point.x - stride, point.y + stride, point.z - stride)
-    if left  and up   and front: yield ivec3(point.x - stride, point.y + stride, point.z + stride)
-    if right and down and back:  yield ivec3(point.x + stride, point.y - stride, point.z - stride)
-    if right and down and front: yield ivec3(point.x + stride, point.y - stride, point.z + stride)
-    if right and up   and back:  yield ivec3(point.x + stride, point.y + stride, point.z - stride)
-    if right and up   and front: yield ivec3(point.x + stride, point.y + stride, point.z + stride)
+    if left  and down:           yield ivec3(point[0] - stride, point[1] - stride, point[2]         )
+    if left  and back:           yield ivec3(point[0] - stride, point[1]         , point[2] - stride)
+    if left  and up:             yield ivec3(point[0] - stride, point[1] + stride, point[2]         )
+    if left  and front:          yield ivec3(point[0] - stride, point[1]         , point[2] + stride)
+    if right and down:           yield ivec3(point[0] + stride, point[1] - stride, point[2]         )
+    if right and back:           yield ivec3(point[0] + stride, point[1]         , point[2] - stride)
+    if right and up:             yield ivec3(point[0] + stride, point[1] + stride, point[2]         )
+    if right and front:          yield ivec3(point[0] + stride, point[1]         , point[2] + stride)
+    if down  and back:           yield ivec3(point[0]         , point[1] - stride, point[2] - stride)
+    if down  and front:          yield ivec3(point[0]         , point[1] - stride, point[2] + stride)
+    if up    and back:           yield ivec3(point[0]         , point[1] + stride, point[2] - stride)
+    if up    and front:          yield ivec3(point[0]         , point[1] + stride, point[2] + stride)
+    if left  and down and back:  yield ivec3(point[0] - stride, point[1] - stride, point[2] - stride)
+    if left  and down and front: yield ivec3(point[0] - stride, point[1] - stride, point[2] + stride)
+    if left  and up   and back:  yield ivec3(point[0] - stride, point[1] + stride, point[2] - stride)
+    if left  and up   and front: yield ivec3(point[0] - stride, point[1] + stride, point[2] + stride)
+    if right and down and back:  yield ivec3(point[0] + stride, point[1] - stride, point[2] - stride)
+    if right and down and front: yield ivec3(point[0] + stride, point[1] - stride, point[2] + stride)
+    if right and up   and back:  yield ivec3(point[0] + stride, point[1] + stride, point[2] - stride)
+    if right and up   and front: yield ivec3(point[0] + stride, point[1] + stride, point[2] + stride)

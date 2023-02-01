@@ -2,7 +2,6 @@
 
 """### Displays a map of the build area."""
 
-from glm import ivec3
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,7 +42,7 @@ if __name__ == '__main__':
             # calculate absolute coordinates
             y = int(heightmap[(x - x1, z - z1)]) - dy
 
-            block = worldSlice.getBlockGlobal(ivec3(x,y,z))
+            block = worldSlice.getBlockGlobal((x,y,z))
             if block.id in lookup.MAP_TRANSPARENT:
                 # transparent blocks are ignored
                 continue
