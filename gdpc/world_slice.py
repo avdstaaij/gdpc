@@ -9,7 +9,7 @@ from glm import ivec2, ivec3
 from nbt import nbt
 import numpy as np
 
-from .vector_tools import addY, loop2D, loop3D, trueMod2D, Rect
+from .vector_tools import Vec3iLike, addY, loop2D, loop3D, trueMod2D, Rect
 from .block import Block
 from . import interface
 
@@ -196,55 +196,55 @@ class WorldSlice:
         return self._heightmaps
 
 
-    def getChunkSectionPositionGlobal(self, blockPosition: ivec3):
+    def getChunkSectionPositionGlobal(self, blockPosition: Vec3iLike) -> ivec3:
         """Returns the local position of the chunk section that contains the global <blockPosition>."""
-        return (blockPosition >> 4) - addY(self._chunkRect.offset)
+        return (ivec3(*blockPosition) >> 4) - addY(self._chunkRect.offset)
 
-    def getChunkSectionPosition(self, blockPosition: ivec3):
+    def getChunkSectionPosition(self, blockPosition: Vec3iLike):
         """Returns the local position of the chunk section that contains the local <blockPosition>."""
-        return self.getChunkSectionPositionGlobal(blockPosition + addY(self._rect.offset))
+        return self.getChunkSectionPositionGlobal(ivec3(*blockPosition) + addY(self._rect.offset))
 
 
-    def _getChunkSectionGlobal(self, blockPosition: ivec3):
+    def _getChunkSectionGlobal(self, blockPosition: Vec3iLike):
         """Returns the chunk section that contains the global <blockPosition>."""
         return self._sections.get(self.getChunkSectionPositionGlobal(blockPosition))
 
 
-    def getBlockStateTagGlobal(self, position: ivec3):
+    def getBlockStateTagGlobal(self, position: Vec3iLike):
         """Returns the block state compound tag at global <position>.\n
         If <position> is not contained in this WorldSlice, returns None."""
         chunkSection = self._getChunkSectionGlobal(position)
         if chunkSection is None:
             return None
         blockIndex = (
-            (position.y % 16) * 16 * 16 +
-            (position.z % 16) * 16 +
-            (position.x % 16)
+            (position[1] % 16) * 16 * 16 +
+            (position[2] % 16) * 16 +
+            (position[0] % 16)
         )
         return chunkSection.getBlockStateTagAtIndex(blockIndex)
 
-    def getBlockStateTag(self, position: ivec3):
+    def getBlockStateTag(self, position: Vec3iLike):
         """Returns the block state compound tag at local <position>.\n
         If <position> is not contained in this WorldSlice, returns None."""
-        return self.getBlockStateTagGlobal(position + addY(self._rect.offset))
+        return self.getBlockStateTagGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getBlockGlobal(self, position: ivec3):
+    def getBlockGlobal(self, position: Vec3iLike):
         """Returns the block at global <position>.\n
         If <position> is not contained in this WorldSlice, returns Block("minecraft:void_air")."""
         blockStateTag = self.getBlockStateTagGlobal(position)
         if blockStateTag is None:
             return Block("minecraft:void_air")
-        blockEntityTag = self._blockEntities.get(position)
+        blockEntityTag = self._blockEntities.get(ivec3(*position))
         return Block.fromBlockStateTag(blockStateTag, blockEntityTag)
 
-    def getBlock(self, position: ivec3):
+    def getBlock(self, position: Vec3iLike):
         """Returns the block at local <position>.\n
         If <position> is not contained in this WorldSlice, returns Block("minecraft:void_air")."""
-        return self.getBlockGlobal(position + addY(self._rect.offset))
+        return self.getBlockGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getBiomeGlobal(self, position: ivec3):
+    def getBiomeGlobal(self, position: Vec3iLike):
         """Returns namespaced id of the biome at global <position>.\n
         If <position> is contained in this WorldSlice, returns None.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
@@ -255,22 +255,22 @@ class WorldSlice:
         # Constrain pos to inside this chunk, then shift 2 bits since biome data is encoded
         # in 64 groups of 4x4x4 per chunk.
         biomePos = ivec3(
-            (position.z % 16) >> 2,
-            (position.y % 16) >> 2,
-            (position.z % 16) >> 2
+            (position[0] % 16) >> 2,
+            (position[1] % 16) >> 2,
+            (position[2] % 16) >> 2
         )
         biomeIndex = (biomePos.y << 4) | (biomePos.z << 2) | biomePos.x # pylint: disable=unsupported-binary-operation
         return str(chunkSection.getBiomeAtIndex(biomeIndex).value)
 
-    def getBiome(self, position: ivec3):
+    def getBiome(self, position: Vec3iLike):
         """Returns namespaced id of the biome at local <position>.\n
         If <position> is contained in this WorldSlice, returns None.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
         biome of <position>'s group."""
-        return self.getBiomeGlobal(position + addY(self._rect.offset))
+        return self.getBiomeGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getBiomeCountsInChunkGlobal(self, position: ivec3):
+    def getBiomeCountsInChunkGlobal(self, position: Vec3iLike):
         """Returns a dict of biomes in the same chunk as the global <position>.\n
         If <position> is contained in this WorldSlice, returns None.\n
         Minecraft stores biomes in groups of 4x4x4 blocks. The returned dict maps the namespaced id
@@ -285,22 +285,22 @@ class WorldSlice:
             biomeCounts[biome] = biomeCounts.get(biome, 0) + 1
         return biomeCounts
 
-    def getBiomeCountsInChunk(self, position: ivec3):
+    def getBiomeCountsInChunk(self, position: Vec3iLike):
         """Returns a dict of biomes in the same chunk as the local <position>.\n
         If <position> is contained in this WorldSlice, returns None.\n
         Minecraft stores biomes in groups of 4x4x4 blocks. The returned dict maps the namespaced id
         of a biome to the number of groups with that biome in the chunk."""
-        return self.getBiomeCountsInChunkGlobal(position + addY(self._rect.offset))
+        return self.getBiomeCountsInChunkGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getPrimaryBiomeInChunkGlobal(self, position: ivec3):
+    def getPrimaryBiomeInChunkGlobal(self, position: Vec3iLike):
         """Returns the most prevalent biome in the same chunk as the global <position>.\n
         If <position> is contained in this WorldSlice, returns None."""
         foundBiomes = self.getBiomeCountsInChunkGlobal(position)
         biome: str = max(foundBiomes.keys(), key=foundBiomes.get)
         return biome
 
-    def getPrimaryBiomeInChunk(self, position: ivec3):
+    def getPrimaryBiomeInChunk(self, position: Vec3iLike):
         """Returns the most prevalent biome in the same chunk as the local <position>.\n
         If <position> is contained in this WorldSlice, returns None."""
-        return self.getPrimaryBiomeInChunkGlobal(position + addY(self._rect.offset))
+        return self.getPrimaryBiomeInChunkGlobal(ivec3(*position) + addY(self._rect.offset))

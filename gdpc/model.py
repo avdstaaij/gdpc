@@ -5,7 +5,7 @@ from typing import Union, Optional, List, Dict
 from copy import copy
 from glm import ivec3
 
-from .vector_tools import Box
+from .vector_tools import Vec3iLike, Box
 from .transform import TransformLike
 from .editor import Editor
 from .block import Block
@@ -18,15 +18,16 @@ class Model:
     transformations.
     """
 
-    def __init__(self, size: ivec3, blocks: Optional[List[Optional[Block]]] = None):
+    def __init__(self, size: Vec3iLike, blocks: Optional[List[Optional[Block]]] = None):
         """Constructs a Model of size [size], optionally filled with [blocks]."""
-        self._size = copy(size)
+        self._size = ivec3(*size)
         if blocks is not None:
-            if len(blocks) != size.x * size.y * size.z:
-                raise ValueError("The number of blocks should be equal to size.x * size.y * size.z")
+            volume = self._size.x * self._size.y * self._size.z
+            if len(blocks) != volume:
+                raise ValueError("The number of blocks should be equal to size[0] * size[1] * size[2]")
             self._blocks = copy(blocks)
         else:
-            self._blocks = [None] * (size.x * size.y * size.z)
+            self._blocks = [None] * volume
 
 
     @property
@@ -40,13 +41,13 @@ class Model:
         return copy(self._blocks) # Allows block modification, but not resizing
 
 
-    def getBlock(self, position: ivec3):
+    def getBlock(self, position: Vec3iLike):
         """Returns the block at [vec]"""
-        return self._blocks[(position.x * self._size.y + position.y) * self._size.z + position.z]
+        return self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]]
 
-    def setBlock(self, position: ivec3, block: Optional[Block]):
+    def setBlock(self, position: Vec3iLike, block: Optional[Block]):
         """Sets the block at [vec] to [block]"""
-        self._blocks[(position.x * self._size.y + position.y) * self._size.z + position.z] = block
+        self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]] = block
 
 
     def build(

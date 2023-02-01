@@ -3,6 +3,8 @@
 
 from glm import ivec3, bvec3
 
+from .vector_tools import Vec3iLike, Vec3bLike
+
 
 # ==================================================================================================
 # Listings
@@ -67,12 +69,12 @@ __VECTOR_TO_AXIS = {
     (0,1,0): "y",
     (0,0,1): "z",
 }
-def vectorToAxis(vec: ivec3):
+def vectorToAxis(vec: Vec3iLike):
     """Returns the "axis" block state string corresponding to the direction vector [vec]"""
     v = (
-        vec.x != 0,
-        vec.y != 0,
-        vec.z != 0,
+        vec[0] != 0,
+        vec[1] != 0,
+        vec[2] != 0,
     )
     try:
         return __VECTOR_TO_AXIS[v]
@@ -102,7 +104,7 @@ __VECTOR_TO_FACING = {
     (-1, 0, 0): "west",
     ( 1, 0, 0): "east",
 }
-def vectorToFacing(vec: ivec3):
+def vectorToFacing(vec: Vec3iLike):
     """Returns the "facing" block state string corresponding to the direction vector [vec]"""
     v = (
         -1 if vec[0] < 0 else 1 if vec[0] > 0 else 0,
@@ -177,21 +179,21 @@ def rotateFacing(facing: str, rotation: int):
         return facing # up, down
 
 
-def flipFacing(facing: str, flip: bvec3):
+def flipFacing(facing: str, flip: Vec3bLike):
     """Returns the flipped "facing" block state string"""
-    if flip.x:
+    if flip[0]:
         if facing == "east":  return "west"
         if facing == "west":  return "east"
-    if flip.y:
+    if flip[1]:
         if facing == "down":  return "up"
         if facing == "up":    return "down"
-    if flip.z:
+    if flip[2]:
         if facing == "north": return "south"
         if facing == "south": return "north"
     return facing
 
 
-def transformFacing(facing: str, rotation: int = 0, flip: bvec3 = bvec3()):
+def transformFacing(facing: str, rotation: int = 0, flip: Vec3bLike = bvec3()):
     """Returns the transformed "facing" block state string.\n
     Flips first, rotates second."""
     return rotateFacing(flipFacing(facing, flip), rotation)
@@ -222,17 +224,17 @@ def rotateRotation(blockStateRotation: str, rotation: int):
     return str((int(blockStateRotation) + 4*rotation) % 16)
 
 
-def flipRotation(rotation: str, flip: bvec3):
+def flipRotation(rotation: str, flip: Vec3bLike):
     """Returns the flipped "rotation" block state string"""
     rotationInt = int(rotation)
-    if flip.x:
+    if flip[0]:
         rotationInt = (16 - rotationInt) % 16
-    if flip.z:
+    if flip[2]:
         rotationInt = (8 - rotationInt) % 16
     return str(rotationInt)
 
 
-def transformRotation(blockStateRotation: str, rotation: int = 0, flip: bvec3 = bvec3()):
+def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLike = bvec3()):
     """Returns the transformed "rotation" block state string.\n
     Flips first, rotates second."""
     return rotateRotation(flipRotation(blockStateRotation, flip), rotation)

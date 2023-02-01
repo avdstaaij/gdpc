@@ -1,12 +1,12 @@
 """Provides the Transform class and related functions"""
 
 
-from abc import ABC
-from dataclasses import dataclass, field
+from typing import Union
+from dataclasses import dataclass
 
 from glm import ivec3, bvec3
 
-from .vector_tools import rotateXZ, flipRotationXZ, flipToScale3D, rotateSizeXZ, Box
+from .vector_tools import Vec3iLike, Vec3bLike, rotate3D, flipRotation3D, flipToScale3D, rotateSizeXZ, Box
 
 
 # ==================================================================================================
@@ -14,6 +14,7 @@ from .vector_tools import rotateXZ, flipRotationXZ, flipToScale3D, rotateSizeXZ,
 # ==================================================================================================
 
 
+# pylint: disable=protected-access
 @dataclass
 class Transform:
     """Represents a transformation of space.
@@ -24,45 +25,79 @@ class Transform:
     should be 0, 1, 2 or 3.
     """
 
-    translation: ivec3 = field(default_factory=ivec3)
-    rotation:    int   = 0
-    flip:        bvec3 = field(default_factory=bvec3)
+    _translation: ivec3
+    _rotation:    int
+    _flip:        bvec3
 
-    def apply(self, vec: ivec3):
+    def __init__(self, translation: Vec3iLike = ivec3(), rotation: int = 0, flip: Vec3bLike = bvec3()):
+        self._translation = ivec3(*translation)
+        self._rotation    = rotation
+        self._flip        = bvec3(*flip)
+
+
+    @property
+    def translation(self) -> ivec3:
+        """The translation component of this transform"""
+        return self._translation
+
+    @translation.setter
+    def translation(self, value: Vec3iLike):
+        self._translation = ivec3(*value)
+
+    @property
+    def rotation(self) -> int:
+        """The rotation component of this transform"""
+        return self._rotation
+
+    @rotation.setter
+    def rotation(self, value: int):
+        self._rotation = value % 4
+
+    @property
+    def flip(self) -> bvec3:
+        """The flip component of this transform"""
+        return self._flip
+
+    @flip.setter
+    def flip(self, value: Vec3bLike):
+        self._flip = bvec3(*value)
+
+
+    def apply(self, vec: Vec3iLike):
         """Applies this transform to [vec].\n
         Equivalent to [self] * [vec]. """
-        return rotateXZ(vec * flipToScale3D(self.flip), self.rotation) + self.translation
+        return rotate3D(vec * flipToScale3D(self._flip), self._rotation) + self._translation
 
-    def invApply(self, vec: ivec3):
+    def invApply(self, vec: Vec3iLike):
         """Applies the inverse of this transform to [vec].\n
         Faster version of ~[self] * [vec]."""
-        return rotateXZ(vec - self.translation, (-self.rotation + 4) % 4) * flipToScale3D(self.flip)
+        return rotate3D(ivec3(*vec) - self._translation, (-self._rotation + 4) % 4) * flipToScale3D(self._flip)
 
     def compose(self, other: 'Transform'):
         """Returns a transform that applies [self] after [other].\n
         Equivalent to [self] @ [other]. """
         return Transform(
-            translation = self.apply(other.translation),
-            rotation    = (self.rotation + flipRotationXZ(other.rotation, self.flip)) % 4,
-            flip        = self.flip ^ other.flip
+            translation = self.apply(other._translation),
+            rotation    = (self._rotation + flipRotation3D(other._rotation, self._flip)) % 4,
+            flip        = self._flip ^ other._flip
         )
 
     def invCompose(self, other: 'Transform'):
         """Returns a transform that applies [self]^-1 after [other].\n
         Faster version of ~[self] @ [other]."""
         return Transform(
-            translation = self.invApply(other.translation),
-            rotation    = flipRotationXZ((other.rotation - self.rotation + 4) % 4, self.flip),
-            flip        = self.flip ^ other.flip
+            translation = self.invApply(other._translation),
+            rotation    = flipRotation3D((other._rotation - self._rotation + 4) % 4, self._flip),
+            flip        = self._flip ^ other._flip
         )
 
     def composeInv(self, other: 'Transform'):
         """Returns a transform that applies [self] after [other]^-1.\n
         Faster version of [self] @ ~[other]."""
-        flip = self.flip ^ other.flip
-        rotation = (self.rotation - flipRotationXZ(other.rotation, flip) + 4) % 4
+        flip = self._flip ^ other._flip
+        rotation = (self._rotation - flipRotation3D(other._rotation, flip) + 4) % 4
         return Transform(
-            translation = self.translation - rotateXZ(other.translation * flipToScale3D(flip), rotation),
+            translation = self._translation - rotate3D(other._translation * flipToScale3D(flip), rotation),
             rotation    = rotation,
             flip        = flip
         )
@@ -70,23 +105,23 @@ class Transform:
     def push(self, other: 'Transform'):
         """Adds the effect of [other] to this transform.\n
         Equivalent to [self] @= [other]."""
-        self.translation += rotateXZ(other.translation * flipToScale3D(self.flip), self.rotation)
-        self.rotation     = (self.rotation + flipRotationXZ(other.rotation, self.flip)) % 4
-        self.flip         = self.flip ^ other.flip
+        self._translation += rotate3D(other._translation * flipToScale3D(self._flip), self._rotation)
+        self._rotation     = (self._rotation + flipRotation3D(other._rotation, self._flip)) % 4
+        self._flip         = self._flip ^ other._flip
 
     def pop(self, other: 'Transform'):
         """The inverse of push. Removes the effect of [other] from this transform.\n
         Faster version of [self] @= ~[other]."""
-        self.flip         = self.flip ^ other.flip
-        self.rotation     = (self.rotation - flipRotationXZ(other.rotation, self.flip) + 4) % 4
-        self.translation -= rotateXZ(other.translation * flipToScale3D(self.flip), self.rotation)
+        self._flip         = self._flip ^ other._flip
+        self._rotation     = (self._rotation - flipRotation3D(other._rotation, self._flip) + 4) % 4
+        self._translation -= rotate3D(other._translation * flipToScale3D(self._flip), self._rotation)
 
     def inverted(self):
         """Equivalent to ~[self]."""
-        flip = self.flip # Flip stays unchanged
-        rotation = flipRotationXZ((-self.rotation + 4) % 4, flip)
+        flip = self._flip # Flip stays unchanged
+        rotation = flipRotation3D((-self._rotation + 4) % 4, flip)
         return Transform(
-            translation = - rotateXZ(self.translation * flipToScale3D(self.flip), self.rotation),
+            translation = - rotate3D(self._translation * flipToScale3D(self._flip), self._rotation),
             rotation    = rotation,
             flip        = flip
         )
@@ -94,14 +129,14 @@ class Transform:
     def invert(self):
         """Faster version of [self] = ~[self]."""
         # Flip stays unchanged
-        self.rotation    = flipRotationXZ((-self.rotation + 4) % 4, self.flip)
-        self.translation = - rotateXZ(self.translation * flipToScale3D(self.flip), self.rotation)
+        self._rotation    = flipRotation3D((-self._rotation + 4) % 4, self._flip)
+        self._translation = - rotate3D(self._translation * flipToScale3D(self._flip), self._rotation)
 
-    def __matmul__(self, other: 'Transform') -> 'Transform':
+    def __matmul__(self, other: 'Transform'):
         return self.compose(other)
 
-    def __mul__(self, vec: ivec3) -> ivec3:
-        return self.apply(vec)
+    def __mul__(self, vec: Vec3iLike):
+        return self.apply(ivec3(*vec))
 
     def __imatmul__(self, other: 'Transform'):
         self.push(other)
@@ -112,15 +147,13 @@ class Transform:
 
 
 # ==================================================================================================
-# TransformLike ABC
+# TransformLike
 # ==================================================================================================
 
 
-class TransformLike(ABC):
-    """An abstract base class. A class is a TransformLike if it is a Transform or an ivec3, the
-    latter being interpreted as a translation."""
-TransformLike.register(Transform)
-TransformLike.register(ivec3)
+TransformLike = Union[Transform, Vec3iLike]
+"""A class is a TransformLike if it is a Transform or a Vec3iLike, the latter being interpreted as
+a translation."""
 
 
 def toTransform(transformLike: TransformLike) -> Transform:
@@ -158,9 +191,9 @@ def rotatedBoxTransformAndSize(box: Box, rotation: int):
     return rotatedBoxTransform(box, rotation), rotateSizeXZ(box.size, rotation)
 
 
-def flippedBoxTransform(box: Box, flip: bvec3):
+def flippedBoxTransform(box: Box, flip: Vec3bLike):
     """Returns a transform that maps the box ((0,0,0), [box].size) to [box] under [flip]."""
     return Transform(
-        translation = box.offset + (box.size - 1) * ivec3(flip),
+        translation = box.offset + (box.size - 1) * ivec3(*flip),
         flip = flip
     )

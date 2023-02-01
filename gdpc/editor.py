@@ -13,7 +13,7 @@ import numpy as np
 from glm import ivec3
 
 from .utils import eagerAll, OrderedByLookupDict
-from .vector_tools import Rect, Box, addY, dropY
+from .vector_tools import Vec3iLike, Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block
 from . import lookup
@@ -265,7 +265,7 @@ class Editor:
         return self.getBuildArea()
 
 
-    def getBlock(self, position: ivec3):
+    def getBlock(self, position: Vec3iLike):
         """Returns the block at [position].\n
         <position> is interpreted as local to the coordinate system defined by self.transform.
         The returned block's orientation is also from the perspective of self.transform.\n
@@ -276,37 +276,39 @@ class Editor:
         return block
 
 
-    def getBlockGlobal(self, position: ivec3):
+    def getBlockGlobal(self, position: Vec3iLike):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
+        _position = ivec3(*position)
+
         if self.caching:
-            block = self._cache.get(position)
+            block = self._cache.get(_position)
             if block is not None:
                 return copy(block)
 
         if self.buffering:
-            block = self._buffer.get(position)
+            block = self._buffer.get(_position)
             if block is not None:
                 return copy(block)
 
         if (
             self._worldSlice is not None and
-            self._worldSlice.rect.contains(dropY(position)) and
-            not self._worldSliceDecay[tuple(position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
+            self._worldSlice.rect.contains(dropY(_position)) and
+            not self._worldSliceDecay[tuple(_position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
         ):
-            block = self._worldSlice.getBlockGlobal(position)
+            block = self._worldSlice.getBlockGlobal(_position)
         else:
-            block = interface.getBlocks(position, includeState=True, includeData=True, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
+            block = interface.getBlocks(_position, includeState=True, includeData=True, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
 
         if self.caching:
-            self._cache[position] = copy(block)
+            self._cache[_position] = copy(block)
 
         return block
 
 
     def placeBlock(
         self,
-        position:       Union[ivec3, Iterable[ivec3]],
+        position:       Union[Vec3iLike, Iterable[Vec3iLike]],
         block:          Union[Block, Sequence[Optional[Block]]],
         replace:        Optional[Union[str, List[str]]] = None
     ):
@@ -317,16 +319,15 @@ class Editor:
         If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
         iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
-        return self.placeBlockGlobal(
-            self.transform * position if isinstance(position, ivec3) else (self.transform * pos for pos in position),
-            block.transformed(self.transform.rotation, self.transform.flip) if isinstance(block, Block) else (block.transformed(self.transform.rotation, self.transform.flip) for block in block),
-            replace
-        )
+        # Distinguising between Vec3iLike and Iterable[Vec3iLike] is... not easy.
+        globalPosition = self.transform * position if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], int) else (self.transform * pos for pos in position)
+        globalBlock = block.transformed(self.transform.rotation, self.transform.flip) if isinstance(block, Block) else (block.transformed(self.transform.rotation, self.transform.flip) for block in block)
+        return self.placeBlockGlobal(globalPosition, globalBlock, replace)
 
 
     def placeBlockGlobal(
         self,
-        position:       Union[ivec3, Iterable[ivec3]],
+        position:       Union[Vec3iLike, Iterable[Vec3iLike]],
         block:          Union[Block, Sequence[Optional[Block]]],
         replace:        Optional[Union[str, Iterable[str]]] = None
     ):
@@ -337,12 +338,12 @@ class Editor:
         iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
 
-        if isinstance(position, ivec3):
+        if hasattr(position, "__len__") and len(position) == 3 and isinstance(position, ivec3):
             return self._placeSingleBlockGlobal(position, block, replace)
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(self._placeSingleBlockGlobal(pos, block, replace) for pos in position)
+        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in position)
         self.buffering = oldBuffering
         return success
 
