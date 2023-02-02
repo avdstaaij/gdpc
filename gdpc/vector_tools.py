@@ -382,6 +382,11 @@ class Rect:
         return (self._offset + self._size) // 2
 
     @property
+    def center(self):
+        """Equivalent to .middle"""
+        return self.middle
+
+    @property
     def inner(self):
         """Yields all points contained in this Rect"""
         return (
@@ -553,6 +558,11 @@ class Box:
     def middle(self):
         """This Box's middle point, rounded down"""
         return (self.begin + self._size) // 2
+
+    @property
+    def center(self):
+        """Equivalent to .middle"""
+        return self.middle
 
     @property
     def inner(self):

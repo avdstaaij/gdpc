@@ -81,6 +81,10 @@ class WorldSlice:
     def __init__(self, rect: Rect, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST):
         """Initialise WorldSlice with region and heightmap."""
 
+        # To protect from calling this with a Box, which can lead to very confusing bugs.
+        if not isinstance(rect, Rect):
+            raise TypeError(f"<rect> should be a Rect, not a {type(rect)}")
+
         if heightmapTypes is None:
             heightmapTypes = [
                 "MOTION_BLOCKING",
