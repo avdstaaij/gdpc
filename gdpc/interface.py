@@ -85,6 +85,32 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data"))) for b in blockDicts]
 
 
+def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+    """Returns the biomes in the specified region.
+
+    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+
+    Returns a list of (position, biome id)-tuples.
+
+    If a set of coordinates is invalid, the returned biome ID is unspecified.
+    """
+    url = f"{host}/biomes"
+    x, y, z = position
+    dx, dy, dz = (None, None, None) if size is None else size
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'dx': dx,
+        'dy': dy,
+        'dz': dz,
+        'dimension': dimension
+    }
+    response = _request("GET", url, params=parameters, headers={"accept": "application/json"}, retries=retries, timeout=timeout)
+    biomeDicts: List[Dict[str, Any]] = response.json()
+    return [(ivec3(b["x"], b["y"], b["z"]), str(b["id"])) for b in biomeDicts]
+
+
 def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places blocks in the world.
 

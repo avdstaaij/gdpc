@@ -245,13 +245,13 @@ class WorldSlice:
 
 
     def getBiomeGlobal(self, position: Vec3iLike):
-        """Returns namespaced id of the biome at global <position>.\n
-        If <position> is contained in this WorldSlice, returns None.\n
+        """Returns the namespaced id of the biome at global <position>.\n
+        If <position> is not contained in this WorldSlice, returns an empty string.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
         biome of <position>'s group."""
         chunkSection = self._getChunkSectionGlobal(position)
         if chunkSection is None:
-            return None
+            return ""
         # Constrain pos to inside this chunk, then shift 2 bits since biome data is encoded
         # in 64 groups of 4x4x4 per chunk.
         biomePos = ivec3(
@@ -263,8 +263,8 @@ class WorldSlice:
         return str(chunkSection.getBiomeAtIndex(biomeIndex).value)
 
     def getBiome(self, position: Vec3iLike):
-        """Returns namespaced id of the biome at local <position>.\n
-        If <position> is contained in this WorldSlice, returns None.\n
+        """Returns the namespaced id of the biome at local <position>.\n
+        If <position> is contained in this WorldSlice, returns an empty string.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
         biome of <position>'s group."""
         return self.getBiomeGlobal(ivec3(*position) + addY(self._rect.offset))

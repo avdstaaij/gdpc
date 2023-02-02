@@ -306,6 +306,26 @@ class Editor:
         return block
 
 
+    def getBiome(self, position: Vec3iLike):
+        """Returns the biome at <position>.\n
+        <position> is interpreted as local to the coordinate system defined by self.transform.\n
+        If the given coordinates are invalid, the result is unspecified."""
+        return self.getBiomeGlobal(self.transform * position)
+
+
+    def getBiomeGlobal(self, position: Vec3iLike):
+        """Returns the biome at <position>, ignoring self.transform.\n
+        If the given coordinates are invalid, the result is unspecified."""
+        if (
+            self._worldSlice is not None and
+            self._worldSlice.rect.contains(dropY(position)) and
+            not self._worldSliceDecay[tuple(ivec3(position) - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
+        ):
+            return self._worldSlice.getBiomeGlobal(position)
+
+        return interface.getBiomes(position, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
+
+
     def placeBlock(
         self,
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
@@ -474,10 +494,10 @@ class Editor:
         If <cache>=True, the loaded worldSlice is cached in this editor. It can then be accessed
         through .worldSlice.
         If a world slice was already cached, it is replaced.
-        The cached world slice is used for faster block retrieval. Note that the editor assumes
-        that nothing besides itself changes the given area of the world. If the given world area is
-        changed other than through this editor, call .updateWorldSlice() to update the cached world
-        slice."""
+        The cached world slice is used for faster block and biome retrieval. Note that the editor
+        assumes that nothing besides itself changes the given area of the world. If the given world
+        area is changed other than through this editor, call .updateWorldSlice() to update the
+        cached world slice."""
         if rect is None:
             rect = self.getBuildArea()
         worldSlice = WorldSlice(rect, heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
