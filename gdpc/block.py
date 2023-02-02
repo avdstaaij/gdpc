@@ -83,7 +83,7 @@ class Block:
 
     def dataString(self):
         """Returns this block's block entity NBT data as an SNBT string."""
-        return "" if self.data is None else pythonObjectToSnbt(self.data)
+        return pythonObjectToSnbt(self.data) if self.data else ""
 
 
     def __str__(self):
