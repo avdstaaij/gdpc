@@ -294,6 +294,7 @@ class Editor:
         if (
             self._worldSlice is not None and
             self._worldSlice.rect.contains(dropY(_position)) and
+            lookup.BUILD_Y_MIN <= _position.y <= lookup.BUILD_Y_MAX and
             not self._worldSliceDecay[tuple(_position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
         ):
             block = self._worldSlice.getBlockGlobal(_position)
@@ -319,6 +320,7 @@ class Editor:
         if (
             self._worldSlice is not None and
             self._worldSlice.rect.contains(dropY(position)) and
+            lookup.BUILD_Y_MIN <= position[1] <= lookup.BUILD_Y_MAX and
             not self._worldSliceDecay[tuple(ivec3(position) - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
         ):
             return self._worldSlice.getBiomeGlobal(position)
