@@ -185,7 +185,7 @@ class WorldSlice:
         return self._chunkRect
 
     @property
-    def nbt(self) -> nbt.TAG_Compound:
+    def nbt(self):
         """Returns the parsed NBT data for the chunks of this WorldSlice.\n
         Its structure is described in the GDMC HTTP interface API."""
         return self._nbt
