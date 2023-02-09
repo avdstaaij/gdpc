@@ -379,7 +379,7 @@ class Rect:
     @property
     def middle(self):
         """This Rect's middle point, rounded down"""
-        return (self._offset + self._size) // 2
+        return self._offset + self._size // 2
 
     @property
     def center(self):
@@ -557,7 +557,7 @@ class Box:
     @property
     def middle(self):
         """This Box's middle point, rounded down"""
-        return (self.begin + self._size) // 2
+        return self.begin + self._size // 2
 
     @property
     def center(self):
