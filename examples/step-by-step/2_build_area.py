@@ -5,7 +5,9 @@ Get the specified build area and use it to place a block.
 """
 
 import sys
-from gdpc import Editor, Block, exceptions, __url__
+
+from gdpc import __url__, Editor, Block
+from gdpc.exceptions import InterfaceConnectionError, BuildAreaNotSetError
 
 
 # Create an editor object.
@@ -16,7 +18,7 @@ editor = Editor()
 # Check if the editor can connect to the GDMC HTTP interface.
 try:
     editor.checkConnection()
-except exceptions.InterfaceConnectionError:
+except InterfaceConnectionError:
     print(
         f"Error: Could not connect to the GDMC HTTP interface at {editor.host}!\n"
         "To use GDPC, you need to use a \"backend\" that provides the GDMC HTTP interface.\n"
@@ -29,11 +31,11 @@ except exceptions.InterfaceConnectionError:
 # Get the build area.
 try:
     buildArea = editor.getBuildArea()
-except exceptions.BuildAreaNotSetError:
+except BuildAreaNotSetError:
     print(
         "Error: failed to get the build area!\n"
         "Make sure to set the build area with the /setbuildarea command in-game.\n"
-        "For example: /setbuildarea ~0 0 ~0 ~128 200 ~128"
+        "For example: /setbuildarea ~0 0 ~0 ~64 200 ~64"
     )
     sys.exit(1)
 

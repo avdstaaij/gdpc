@@ -5,7 +5,9 @@ Place and retrieve a single block in the world.
 """
 
 import sys
-from gdpc import Editor, Block, exceptions, __url__
+
+from gdpc import __url__, Editor, Block
+from gdpc.exceptions import InterfaceConnectionError
 
 
 # Create an editor object.
@@ -16,7 +18,7 @@ editor = Editor()
 # Check if the editor can connect to the GDMC HTTP interface.
 try:
     editor.checkConnection()
-except exceptions.InterfaceConnectionError:
+except InterfaceConnectionError:
     print(
         f"Error: Could not connect to the GDMC HTTP interface at {editor.host}!\n"
         "To use GDPC, you need to use a \"backend\" that provides the GDMC HTTP interface.\n"
