@@ -30,11 +30,6 @@ def clamp(x: T, minimum: T, maximum: T) -> T:
     return max(minimum, min(maximum, x))
 
 
-def eprint(*args, **kwargs):
-    """print(), but to stderr"""
-    print(*args, file=sys.stderr, **kwargs)
-
-
 def eagerAll(iterable: Iterable):
     """Like all(), but always evaluates every element"""
     results = [result for result in iterable]
