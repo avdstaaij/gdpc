@@ -56,23 +56,26 @@ def normalized(a, order=2, axis=-1):
 
 
 def withRetries(
-    function: Callable[[], T],
-    retries:  int                              = 1,
-    onRetry:  Callable[[Exception, int], None] = lambda *_: time.sleep(1)
+    function:      Callable[[], T],
+    exceptionType: type                             = Exception,
+    retries:       int                              = 1,
+    onRetry:       Callable[[Exception, int], None] = lambda *_: time.sleep(1),
+    reRaise:       bool                             = True
 ):
     """Retries <function> up to <retries> times if an exception occurs.\n
     Before retrying, calls <onRetry>(last exception, remaining retries).
     The default callback sleeps for one second.\n
-    If the retries have ran out, re-raises the last exception."""
-    retriesLeft = retries
+    If the retries have ran out and <reRaise> is True, the last exception is re-raised."""
     while True:
         try:
             return function()
-        except Exception as e: # pylint: disable=broad-except
-            if retriesLeft == 0:
-                raise e
-            onRetry(e, retriesLeft)
-            retriesLeft -= 1
+        except exceptionType as e: # pylint: disable=broad-except
+            if retries == 0:
+                if reRaise:
+                    raise e
+                return
+            onRetry(e, retries)
+            retries -= 1
 
 
 def isIterable(value):

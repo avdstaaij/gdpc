@@ -41,7 +41,7 @@ def _onRequestRetry(e: Exception, retriesLeft: int):
 
 def _request(method: str, url: str, *args, retries: int, **kwargs):
     try:
-        response = withRetries(partial(requests.request, method, url, *args, **kwargs), retries=retries, onRetry=_onRequestRetry)
+        response = withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry)
     except RequestConnectionError as e:
         u = urlparse(url)
         raise exceptions.InterfaceConnectionError(
