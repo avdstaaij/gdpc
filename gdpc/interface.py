@@ -92,7 +92,7 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
 
     Returns a list of (position, biome id)-tuples.
 
-    If a set of coordinates is invalid, the returned biome ID is unspecified.
+    If a set of coordinates is invalid, the returned biome ID will be an empty string.
     """
     url = f"{host}/biomes"
     x, y, z = position

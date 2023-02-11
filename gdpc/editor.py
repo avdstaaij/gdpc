@@ -309,13 +309,13 @@ class Editor:
     def getBiome(self, position: Vec3iLike):
         """Returns the biome at <position>.\n
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
-        If the given coordinates are invalid, the result is unspecified."""
+        If the given coordinates are invalid, returns an empty string."""
         return self.getBiomeGlobal(self.transform * position)
 
 
     def getBiomeGlobal(self, position: Vec3iLike):
         """Returns the biome at <position>, ignoring self.transform.\n
-        If the given coordinates are invalid, the result is unspecified."""
+        If the given coordinates are invalid, returns an empty string."""
         if (
             self._worldSlice is not None and
             self._worldSlice.box.contains(position) and
