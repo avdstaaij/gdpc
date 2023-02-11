@@ -114,8 +114,9 @@ class WorldSlice:
 
         inChunkRectOffset = trueMod2D(self._rect.offset, 16)
 
-        # This assumes that the Y minimum is the same for every chunk.
-        yMin = 16 * int(self._nbt["Chunks"][0]["yPos"].value)
+        # This assumes that the build bounds are the same for every chunk.
+        self._yBegin = 16 * int(self._nbt["Chunks"][0]["yPos"].value)
+        self._ySize  = 16 * len(self._nbt["Chunks"][0]["sections"])
 
         # Loop through chunks
         for chunkPos in loop2D(self._chunkRect.size):
@@ -132,9 +133,9 @@ class WorldSlice:
                     try:
                         # In the heightmap data, the lowest point is encoded as 0, while since
                         # Minecraft 1.18 the actual lowest y position is below zero. We subtract
-                        # yMin from the heightmap value to compensate for this difference.
+                        # yBegin from the heightmap value to compensate for this difference.
                         hmPos = -inChunkRectOffset + chunkPos * 16 + inChunkPos # pylint: disable=invalid-unary-operand-type
-                        heightmap[hmPos.x, hmPos.y] = hmBitArray[inChunkPos.y * 16 + inChunkPos.x] + yMin
+                        heightmap[hmPos.x, hmPos.y] = hmBitArray[inChunkPos.y * 16 + inChunkPos.x] + self._yBegin
                     except IndexError:
                         pass
 
@@ -180,23 +181,43 @@ class WorldSlice:
 
     @property
     def rect(self):
-        """Returns the Rect of block coordinates this WorldSlice covers."""
+        """The Rect of block coordinates this WorldSlice covers."""
         return self._rect
 
     @property
     def chunkRect(self):
-        """Returns the Rect of chunk coordinates this WorldSlice covers."""
+        """The Rect of chunk coordinates this WorldSlice covers."""
         return self._chunkRect
 
     @property
+    def yBegin(self):
+        """The minimum block y coordinate."""
+        return self._yBegin
+
+    @property
+    def yEnd(self):
+        """The maximum block y coordinate (exclusive); the "build height" plus one."""
+        return self._yBegin + self._ySize
+
+    @property
+    def ySize(self):
+        """The amount of blocks in the Y-axis."""
+        return self._ySize
+
+    @property
+    def box(self):
+        """The Box of block coordinates this WorldSlice covers."""
+        return self._rect.toBox(offsetY=self._yBegin, sizeY=self._ySize)
+
+    @property
     def nbt(self):
-        """Returns the parsed NBT data for the chunks of this WorldSlice.\n
+        """The parsed NBT data for the chunks of this WorldSlice.\n
         Its structure is described in the GDMC HTTP interface API."""
         return self._nbt
 
     @property
     def heightmaps(self):
-        """Returns the heightmaps of this WorldSlice."""
+        """The heightmaps of this WorldSlice."""
         return self._heightmaps
 
 

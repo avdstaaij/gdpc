@@ -293,9 +293,8 @@ class Editor:
 
         if (
             self._worldSlice is not None and
-            self._worldSlice.rect.contains(dropY(_position)) and
-            lookup.BUILD_Y_MIN <= _position.y <= lookup.BUILD_Y_MAX and
-            not self._worldSliceDecay[tuple(_position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
+            self._worldSlice.box.contains(_position) and
+            not self._worldSliceDecay[tuple(_position - self._worldSlice.box.offset)]
         ):
             block = self._worldSlice.getBlockGlobal(_position)
         else:
@@ -319,9 +318,8 @@ class Editor:
         If the given coordinates are invalid, the result is unspecified."""
         if (
             self._worldSlice is not None and
-            self._worldSlice.rect.contains(dropY(position)) and
-            lookup.BUILD_Y_MIN <= position[1] <= lookup.BUILD_Y_MAX and
-            not self._worldSliceDecay[tuple(ivec3(position) - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))]
+            self._worldSlice.box.contains(position) and
+            not self._worldSliceDecay[tuple(ivec3(position) - self._worldSlice.box.offset)]
         ):
             return self._worldSlice.getBiomeGlobal(position)
 
@@ -409,7 +407,7 @@ class Editor:
             self._cache[position] = block
 
         if self._worldSlice is not None and self._worldSlice.rect.contains(dropY(position)):
-            self._worldSliceDecay[tuple(position - addY(self._worldSlice.rect.offset, lookup.BUILD_Y_MIN))] = True
+            self._worldSliceDecay[tuple(position - self._worldSlice.box.offset)] = True
 
         return True
 
@@ -505,7 +503,7 @@ class Editor:
         worldSlice = WorldSlice(rect, heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
         if cache:
             self._worldSlice      = worldSlice
-            self._worldSliceDecay = np.zeros(addY(self._worldSlice.rect.size, lookup.BUILD_HEIGHT), dtype=np.bool)
+            self._worldSliceDecay = np.zeros(self._worldSlice.box.size, dtype=np.bool)
         return worldSlice
 
 
