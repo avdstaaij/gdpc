@@ -678,6 +678,8 @@ class Box:
         # Top face
         yield from loop3D(ivec3(first.x, last.y, first.z), ivec3(last.x, last.y, last.z) + 1)
         # Sides
+        if self._size.y < 3:
+            return
         yield from loop3D(ivec3(first.x, first.y+1, first.z), ivec3(last.x -1,  last.y-1, first.z   ) + 1)
         yield from loop3D(ivec3(last.x,  first.y+1, first.z), ivec3(last.x,     last.y-1, last.z  -1) + 1)
         yield from loop3D(ivec3(last.x,  first.y+1, last.z ), ivec3(first.x +1, last.y+1, last.z    ) - 1)
@@ -700,6 +702,8 @@ class Box:
         yield from loop3D(ivec3(last.x,  last.y,  last.z ), ivec3(first.x +1, last.y,  last.z    ) - 1)
         yield from loop3D(ivec3(first.x, last.y,  last.z ), ivec3(first.x,    last.y,  first.z +1) - 1)
         # sides
+        if self._size.y < 3:
+            return
         yield from loop3D(ivec3(first.x, first.y+1, first.z), ivec3(first.x, last.y-1, first.z) + 1)
         yield from loop3D(ivec3(last.x,  first.y+1, first.z), ivec3(last.x,  last.y-1, first.z) + 1)
         yield from loop3D(ivec3(last.x,  first.y+1, last.z ), ivec3(last.x,  last.y-1, last.z ) + 1)
