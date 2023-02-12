@@ -59,7 +59,7 @@ def placeRect(editor: Editor, rect: Rect, y: int, block: Block, replace: Optiona
 
 
 def placeRectOutline(editor: Editor, rect: Rect, y: int, block: Block, replace: Optional[Union[str, List[str]]] = None):
-    """Places the outline of a rectangle of blocks in the XY-plane, at height [y]"""
+    """Places the outline of a rectangle of blocks in the XZ-plane, at height [y]"""
     placeBoxWireframe(editor, rect.toBox(y, 1), block, replace)
 
 
@@ -75,17 +75,17 @@ def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = B
         editor.placeBlock(box.offset + pos, block1 if sum(pos) % 2 == 0 else block2, replace)
 
 
-def placeStripedCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, stripeAxis: int, block1: Block, block2: Block = Block(""), replace: Optional[Union[str, List[str]]] = None):
-    """Places a stripe pattern of [block1] and [block2] along [stripeAxis] (0, 1 or 2) in the box
+def placeStripedCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1: Block, block2: Block = Block(""), axis: int = 0, replace: Optional[Union[str, List[str]]] = None):
+    """Places a stripe pattern of [block1] and [block2] along [axis] (0, 1 or 2) in the box
     between [first] and [last] (inclusive)"""
-    placeStripedBox(editor, Box.between(first, last), stripeAxis, block1, block2, replace)
+    placeStripedBox(editor, Box.between(first, last), block1, block2, axis, replace)
 
 
-def placeStripedBox(editor: Editor, box: Box, stripeAxis: int, block1: Block, block2: Block = Block(""), replace: Optional[Union[str, List[str]]] = None):
-    """Places a stripe pattern of [block1] and [block2] along [stripeAxis] (0, 1 or 2) in [box]"""
+def placeStripedBox(editor: Editor, box: Box, block1: Block, block2: Block = Block(""), axis: int = 0, replace: Optional[Union[str, List[str]]] = None):
+    """Places a stripe pattern of [block1] and [block2] along [axis] (0, 1 or 2) in [box]"""
     # We loop through [box]-local positions so that the pattern start is independent of [box].offset
     for pos in Box(size=box.size).inner:
-        editor.placeBlock(box.offset + pos, block1 if pos[stripeAxis] % 2 == 0 else block2, replace)
+        editor.placeBlock(box.offset + pos, block1 if pos[axis] % 2 == 0 else block2, replace)
 
 
 def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Block, width=1, replace: Optional[Union[str, List[str]]] = None):

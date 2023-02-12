@@ -42,9 +42,9 @@ class Block:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
 
-    id:     Union[str, Sequence[Optional[str]]] = "minecraft:stone"
-    states: Dict[str, str]                      = field(default_factory=dict)
-    data:   Any                                 = None
+    id:     Union[Optional[str], Sequence[Optional[str]]] = "minecraft:stone"
+    states: Dict[str, str]                                = field(default_factory=dict)
+    data:   Any                                           = None
 
 
     def chooseId(self):

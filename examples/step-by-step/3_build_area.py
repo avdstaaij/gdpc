@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Get the specified build area and use it to place a block.
+Get the specified build area and use it to place a block inside the bounds.
 """
 
 import sys
@@ -28,6 +28,18 @@ except InterfaceConnectionError:
     sys.exit(1)
 
 
+# The GDPC HTTP interface includes a so-called build area. This is a 3D box that can be set in-game
+# which defines the bounds in which you should place blocks.
+#
+# The Generative Design in Minecraft Competition (GDMC) uses this build area to communicate to
+# generator algorithms where they need to build. It can also be useful to you to control where your
+# generator builds during development.
+#
+# In GDPC, the build area is merely a suggestion: its bounds are not enforced. It is up to you to
+# request the build area and adhere to it. Future versions of the GDMC HTTP interface may however
+# add enforcement.
+
+
 # Get the build area.
 try:
     buildArea = editor.getBuildArea()
@@ -41,14 +53,14 @@ except BuildAreaNotSetError:
 
 
 # buildArea is a Box object, which is defined by an offset and a size.
-print(f"Build area offset: {buildArea.offset}")
-print(f"Build area size:   {buildArea.size}")
+print(f"Build area offset: {tuple(buildArea.offset)}")
+print(f"Build area size:   {tuple(buildArea.size)}")
 
 # The Box class has many convenience methods and properties. Here are a few.
-print(f"Build area end:    {buildArea.end}")
-print(f"Build area last:   {buildArea.last}")
-print(f"Build area center: {buildArea.center}")
+print(f"Build area end:    {tuple(buildArea.end)}")
+print(f"Build area last:   {tuple(buildArea.last)}")
+print(f"Build area center: {tuple(buildArea.center)}")
 
 # Place a block in the middle of the build area.
-print(f"\nPlacing a block at {buildArea.center}...")
+print(f"\nPlacing a block at {tuple(buildArea.center)}...")
 editor.placeBlock(buildArea.center, Block("red_concrete"))

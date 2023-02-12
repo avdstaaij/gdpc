@@ -6,8 +6,11 @@ Load and use a world slice.
 
 import sys
 
+import numpy as np
+
 from gdpc import __url__, Editor, Block
 from gdpc.exceptions import InterfaceConnectionError, BuildAreaNotSetError
+from gdpc.vector_tools import addY
 
 
 # Create an editor object.
@@ -56,6 +59,16 @@ except BuildAreaNotSetError:
 print("Loading world slice...")
 buildRect = buildArea.toRect()
 worldSlice = editor.loadWorldSlice(buildRect)
+print("World slice loaded!")
+
+
+# Most of worldSlice's functions have a "local" and a "global" variant. The local variant expects
+# coordinates relatve to the rect with which it was constructed, while the global variant expects
+# absolute coorndates.
+
+vec = addY(buildRect.center, 30)
+print(f"Block at {vec}: {worldSlice.getBlock(vec - buildArea.offset)}")
+print(f"Block at {vec}: {worldSlice.getBlockGlobal(vec)}")
 
 
 # Heightmaps are an easy way to get the uppermost block at any coordinate. They are very useful for
@@ -77,16 +90,22 @@ heightmap = worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 
 print(f"Heightmap shape: {heightmap.shape}")
 
+localCenter = buildRect.size // 2
+# When indexing a numpy array with a vector, you need to convert to a tuple first.
+centerHeight = heightmap[tuple(localCenter)]
+centerTopBlock = worldSlice.getBlock(addY(localCenter, centerHeight - 1))
+print(f"Top block at the center of the build area: {centerTopBlock}")
+
+print(f"Average height: {int(np.mean(heightmap))}")
+
 
 # Place walls of stone bricks on the perimeter of the build area, following the curvature of the
 # terrain.
 
 print("Placing walls...")
 
-offsetX, offsetZ = buildRect.offset
-
-for x,z in buildRect.outline:
-    height = heightmap[x - offsetX, z - offsetZ]
+for point in buildRect.outline:
+    height = heightmap[tuple(point - buildRect.offset)]
 
     for y in range(height, height + 5):
-        editor.placeBlock((x,y,z), Block("stone_bricks"))
+        editor.placeBlock(addY(point, y), Block("stone_bricks"))
