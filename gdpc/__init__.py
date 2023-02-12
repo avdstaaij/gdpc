@@ -5,7 +5,7 @@ It was created for use in the Generative Design in Minecraft Competition (GDMC).
 """
 
 __title__            = "gdpc"
-__description__      = __doc__
+__description__      = "The Generative Design Python Client is a Python-based interface for the Minecraft HTTP Interface mod.\nIt was created for use in the Generative Design in Minecraft Competition (GDMC)."
 __url__              = "https://github.com/avdstaaij/gdpc"
 __author__           = "Arthur van der Staaij, Blinkenlights, Nils Gawlik"
 __author_email__     = "arthurvanderstaaij@gmail.com, blinkenlights@pm.me, nilsgawlik@gmx.de"
