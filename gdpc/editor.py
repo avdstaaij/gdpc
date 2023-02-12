@@ -3,6 +3,7 @@ world through the GDMC HTTP interface"""
 
 
 from typing import Dict, Sequence, Union, Optional, List, Iterable
+from numbers import Integral
 from contextlib import contextmanager
 from copy import copy, deepcopy
 import random
@@ -340,7 +341,7 @@ class Editor:
         iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
         # Distinguising between Vec3iLike and Iterable[Vec3iLike] is... not easy.
-        globalPosition = self.transform * position if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], int) else (self.transform * pos for pos in position)
+        globalPosition = self.transform * position if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral) else (self.transform * pos for pos in position)
         globalBlock = block.transformed(self.transform.rotation, self.transform.flip) if isinstance(block, Block) else (block.transformed(self.transform.rotation, self.transform.flip) for block in block)
         return self.placeBlockGlobal(globalPosition, globalBlock, replace)
 
@@ -358,7 +359,7 @@ class Editor:
         iterable, block IDs are sampled randomly for that block.\n
         Returns whether the placement succeeded fully."""
 
-        if hasattr(position, "__len__") and len(position) == 3 and isinstance(position, ivec3):
+        if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral):
             return self._placeSingleBlockGlobal(position, block, replace)
 
         oldBuffering = self.buffering

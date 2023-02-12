@@ -3,6 +3,7 @@
 
 from typing import Sequence, Any, Iterable, List, Optional, Set, Tuple, Union
 from abc import ABC
+from numbers import Integral
 from dataclasses import dataclass
 import math
 
@@ -22,20 +23,20 @@ from .utils import nonZeroSign
 
 
 class Vec2iLike(ABC, Sequence[int]):
-    """An abstract base class. A class is a Vec2i if it acts like a sequence of two ints."""
+    """An abstract base class. A class is a Vec2i if it acts like a sequence of two Integrals."""
     @classmethod
     def __subclasshook__(cls, C):
         try:
-            return len(C) == 2 and all(isinstance(C[i], int) for i in range(2))
+            return len(C) == 2 and all(isinstance(C[i], Integral) for i in range(2))
         except TypeError:
             return False
 
 class Vec3iLike(ABC, Sequence[int]):
-    """An abstract base class. A class is a Vec3i if it acts like a sequence of three ints."""
+    """An abstract base class. A class is a Vec3i if it acts like a sequence of three Integrals."""
     @classmethod
     def __subclasshook__(cls, C):
         try:
-            return len(C) == 3 and all(isinstance(C[i], int) for i in range(3))
+            return len(C) == 3 and all(isinstance(C[i], Integral) for i in range(3))
         except TypeError:
             return False
 
