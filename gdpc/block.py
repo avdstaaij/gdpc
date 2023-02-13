@@ -10,7 +10,7 @@ from glm import bvec3
 from nbt import nbt
 
 from .vector_tools import Vec3bLike
-from .nbt_tools import nbtToPythonObject, pythonObjectToSnbt
+from .nbt_tools import nbtToSnbt
 from .block_state_tools import transformAxis, transformFacing, transformRotation
 
 
@@ -18,10 +18,8 @@ from .block_state_tools import transformAxis, transformFacing, transformRotation
 class Block:
     """A Minecraft block.
 
-    Block states can be stored in .states, and block entity NBT data can be stored in .data.
-
-    Block entity NBT data should be specified as a JSON-like structure of built-in Python objects
-    (dict, list, int, etc.). For example: `{"Key1": [1, 2, 3], "Key2": "foobar"}`
+    Block states can be stored in .states, and block entity data can be stored in .data as an SNBT
+    string.
 
     If .id is a sequence, the instance represents a palette of blocks that share the same
     block states and block entity NBT data.
@@ -44,7 +42,7 @@ class Block:
 
     id:     Union[Optional[str], Sequence[Optional[str]]] = "minecraft:stone"
     states: Dict[str, str]                                = field(default_factory=dict)
-    data:   Any                                           = None
+    data:   Optional[str]                                 = None
 
 
     def chooseId(self):
@@ -81,13 +79,10 @@ class Block:
         return "" if stateString == "" else f"[{stateString}]"
 
 
-    def dataString(self):
-        """Returns this block's block entity NBT data as an SNBT string."""
-        return pythonObjectToSnbt(self.data) if self.data else ""
-
-
     def __str__(self):
-        statesAndData = self.stateString() + self.dataString()
+        if self.id is None:
+            return ""
+        statesAndData = self.stateString() + (self.data if self.data else "")
         if isinstance(self.id, str):
             return self.id + statesAndData
         return ",".join(id + statesAndData for id in self.id if id is not None)
@@ -100,7 +95,7 @@ class Block:
         return (
             f"Block({repr(self.id)}"
             + (f",states={repr(self.states)}" if self.states else "")
-            + (f",data={repr(self.data)}" if self.data is not None else "")
+            + (f",data={repr(self.data)}"     if self.data   else "")
             + ")"
         )
 
@@ -116,11 +111,12 @@ class Block:
                 block.states[str(tag.name)] = str(tag.value)
 
         if blockEntityTag is not None:
-            block.data = nbtToPythonObject(blockEntityTag)
-            del block.data['x']
-            del block.data['y']
-            del block.data['z']
-            del block.data['id']
-            del block.data['keepPacked']
+            blockEntityTag = deepcopy(blockEntityTag)
+            del blockEntityTag["x"]
+            del blockEntityTag["y"]
+            del blockEntityTag["z"]
+            del blockEntityTag["id"]
+            del blockEntityTag["keepPacked"]
+            block.data = nbtToSnbt(blockEntityTag)
 
         return block

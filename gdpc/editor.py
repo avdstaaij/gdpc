@@ -249,8 +249,8 @@ class Editor:
             self._commandBuffer.append(command)
             return
         result = interface.runCommand(command, retries=self.retries, timeout=self.timeout, host=self.host)
-        if not result[0].isnumeric():
-            logger.error("Server returned error upon running command:\n  %s", result[0])
+        if not result[0][0]:
+            logger.error("Server returned error upon running command:\n  %s", result[0][1])
 
 
     def getBuildArea(self) -> Box:
@@ -417,8 +417,8 @@ class Editor:
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
         result = interface.placeBlocks([(position, block)], doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
-        if not result[0].isnumeric():
-            logger.error("Server returned error upon placing block:\n  %s", result[0])
+        if not result[0][0]:
+            logger.error("Server returned error upon placing block:\n  %s", result[0][1])
             return False
         return True
 
@@ -443,18 +443,18 @@ class Editor:
                 response = interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
                 blockBuffer.clear()
 
-                for line in response:
-                    if not line.isnumeric():
-                        logger.error("Server returned error upon placing buffered block:\n  %s", line)
+                for entry in response:
+                    if not entry[0]:
+                        logger.error("Server returned error upon placing buffered block:\n  %s", entry[1])
 
             # Flush command buffer
             if commandBuffer:
                 response = interface.runCommand("\n".join(commandBuffer), retries=self.retries, timeout=self.timeout, host=self.host)
                 commandBuffer.clear()
 
-                for line in response:
-                    if not line.isnumeric():
-                        logger.error("Server returned error upon running buffered command:\n  %s", line)
+                for entry in response:
+                    if not entry[0]:
+                        logger.error("Server returned error upon running buffered command:\n  %s", entry[1])
 
         if self._multithreading:
             # Clean up finished buffer flush futures

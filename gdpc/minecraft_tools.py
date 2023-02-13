@@ -3,6 +3,7 @@
 
 from typing import Any, Optional, Union, List
 from functools import lru_cache
+import json
 
 from .vector_tools import Vec2iLike, Rect
 from . import lookup
@@ -10,7 +11,7 @@ from .block import Block
 
 
 # ==================================================================================================
-# NBT generation utilities
+# SNBT generation utilities
 # ==================================================================================================
 
 
@@ -22,52 +23,56 @@ def signData(
     color: str = "",
     isGlowing: bool = False,
 ):
-    """Returns a JSON-like structure of Python objects with sign data"""
-    data = {}
+    """Returns an SNBT string with sign data"""
+    fields: List[str] = []
 
     for i, line in enumerate([line1, line2, line3, line4]):
         if line:
-            data[f"Text{i+1}"] = f'{{"text":"{line}"}}'
+            fields.append(f'Text{i+1}: {json.dumps({"text": line})}')
 
     if color:
-        data["Color"] = color
+        fields.append(f'Color: {repr(color)}')
 
     if isGlowing:
-        data["GlowingText"] = "true"
+        fields.append('GlowingText: 1b')
 
-    return data
+    return "{" + ",".join(fields) + "}"
 
 
-def lecternData(bookData: Any, page: int = 0):
-    """Returns a JSON-like structure of Python objects with lectern data"""
+def lecternData(bookData: Optional[str], page: int = 0):
+    """Returns an SNBT string with lectern data\n
+
+    <bookData> should be an SNBT string defining a book.
+    You can use bookData() to create such a string.
+    """
     if bookData is None:
-        return None
-    return {"Book": {"id": "minecraft:written_book", "Count": 1, "tag": bookData}, "Page": page}
+        return ""
+    return f'{{Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}, Page: {page}}}}}'
 
 
 def bookData(
     text: str,
     title       = "Chronicle",
     author      = "Anonymous",
-    description = "I wonder what\\'s inside?",
+    description = "I wonder what's inside?",
     desccolor   = "gold"
 ):
-    r"""Returns a JSON-like structure of Python objects with written book data
+    r"""Returns an SNBT string with written book data
 
-    The following special characters are used for formatting the book:
+    The following special characters can be used to format the book:
     - `\n`: New line
     - `\f`: Form/page break
 
     - `§0`: Black text
-    - '§1': Dark blue text
-    - '§2': Dark green text
-    - '§3': Dark aqua text
-    - '§4': Dark red text
-    - '§5': Dark purple text
-    - '§6': Gold text
-    - '§7': Gray text
-    - '§8': Dark gray text
-    - '§9': Blue text
+    - `§1`: Dark blue text
+    - `§2`: Dark green text
+    - `§3`: Dark aqua text
+    - `§4`: Dark red text
+    - `§5`: Dark purple text
+    - `§6`: Gold text
+    - `§7`: Gray text
+    - `§8`: Dark gray text
+    - `§9`: Blue text
     - `§a`: Green text
     - `§b`: Aqua text
     - `§c`: Red text
@@ -88,9 +93,6 @@ def bookData(
 
     NOTE: For supported special characters see
     https://minecraft.fandom.com/wiki/Language#Font
-
-    IMPORTANT: When using `\\s` text is directly interpreted by Minecraft,
-    so all line breaks must be `\\\\n` to function
     """
     pages_left      = lookup.BOOK_PAGES_PER_BOOK
     characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
@@ -105,22 +107,22 @@ def bookData(
         If a letter is not found, a width of 9 is assumed
         A character spacing of 1 is automatically integrated
         """
-        return sum([lookup.ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word]) - 1
+        return sum(lookup.ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word) - 1
 
     def printline():
-        nonlocal pageData, toprint
+        nonlocal outputPages, toprint
         formatting = toprint[:2]
         spaces_left = pixels_left // 4 + 3
         if formatting == '\\c':      # centered text
-            pageData[-1] += spaces_left // 2 * ' ' + toprint[2:-1] + spaces_left // 2 * ' '
+            outputPages[-1] += spaces_left // 2 * ' ' + toprint[2:-1] + spaces_left // 2 * ' '
         elif formatting == '\\r':    # right-aligned text
-            pageData[-1] += spaces_left * ' ' + toprint[2:-1]
+            outputPages[-1] += spaces_left * ' ' + toprint[2:-1]
         else:
-            pageData[-1] += toprint
+            outputPages[-1] += toprint
         toprint = ''
 
     def newline():
-        nonlocal characters_left, lines_left, pixels_left, pageData
+        nonlocal characters_left, lines_left, pixels_left, outputPages
         printline()
         if characters_left < 2 or lines_left < 1:
             newpage()
@@ -128,25 +130,25 @@ def bookData(
         characters_left -= 2
         lines_left -= 1
         pixels_left = lookup.BOOK_PIXELS_PER_LINE
-        pageData[-1] += "\\n"
+        outputPages[-1] += "\n"
 
     def newpage():
-        nonlocal characters_left, lines_left, pixels_left, pageData
+        nonlocal characters_left, lines_left, pixels_left, outputPages
         printline()
         characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
         lines_left      = lookup.BOOK_LINES_PER_PAGE
         pixels_left     = lookup.BOOK_PIXELS_PER_LINE
-        pageData.append("") # end page and start new page
+        outputPages.append("") # end page and start new page
 
-    pages = [page for page in text.split('\f')]
+    pages = list(text.split('\f'))
 
-    pageData: List[str] = [""] # start first page
+    outputPages: List[str] = [""] # start first page
 
     for page in pages:
         if pages_left < 1:
             break
         if page[:3] == '\\\\s':
-            pageData[-1] += page[3:]
+            outputPages[-1] += page[3:]
             newpage()
             continue
         else:
@@ -178,14 +180,17 @@ def bookData(
                 pixels_left -= width
             newline()           # finish line
         newpage()               # finish page
-    del pageData[-1] # end last page (book is complete)
+    del outputPages[-1] # end last page (book is complete)
 
-    return {
-        "title": title,
-        "author": author,
-        "display": {"Lore": [f'[{{"text":"{description}","color":"{desccolor}"}}]']},
-        "pages": [f'{{"text":"{page}"}}' for page in pageData]
-    }
+    loreJSON = json.dumps([{"text": description, "color": desccolor}])
+    pageJSON = [json.dumps({"text": p}) for p in outputPages]
+    return (
+        "{"
+        f'title: {repr(title)}, author: {repr(author)}, '
+        f'display:{{Lore:[{repr(loreJSON)}]}}, '
+        f'pages: [{",".join(repr(p) for p in pageJSON)}]'
+        "}"
+    )
 
 
 # ==================================================================================================
