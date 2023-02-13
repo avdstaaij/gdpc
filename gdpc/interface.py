@@ -4,7 +4,7 @@ It is recommended to use the higher-level `editor.Editor` class instead.
 """
 
 
-from typing import Sequence, Tuple, Optional, List, Dict, Any
+from typing import Sequence, Tuple, Optional, List, Dict, Any, Union
 from functools import partial
 import time
 from urllib.parse import urlparse
@@ -80,7 +80,7 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
         'includeData':  True if includeData  else None,
         'dimension': dimension
     }
-    response = _request("GET", url, params=parameters, headers={"accept": "application/json"}, retries=retries, timeout=timeout)
+    response = _request("GET", url, params=parameters, retries=retries, timeout=timeout)
     blockDicts: List[Dict[str, Any]] = response.json()
     return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data"))) for b in blockDicts]
 
@@ -106,7 +106,7 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
         'dz': dz,
         'dimension': dimension
     }
-    response = _request("GET", url, params=parameters, headers={"accept": "application/json"}, retries=retries, timeout=timeout)
+    response = _request("GET", url, params=parameters, retries=retries, timeout=timeout)
     biomeDicts: List[Dict[str, Any]] = response.json()
     return [(ivec3(b["x"], b["y"], b["z"]), str(b["id"])) for b in biomeDicts]
 
@@ -122,9 +122,9 @@ def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[s
     The <doBlockUpdates>, <spawnDrops> and <customFlags> parameters control block update
     behavior. See the GDMC HTTP API documentation for more info.
 
-    Returns a list with one string for each block placement. If the block placement was
-    successful, the string is "1" if the block changed, or "0" otherwise. If the placement
-    failed, it is the error message.
+    Returns a list of (success, result)-tuples, one for each block. If a block placement was
+    successful, result will be 1 if the block changed, or 0 otherwise. If a block placement failed,
+    result will be the error message.
     """
     url = f"{host}/blocks"
 
@@ -141,15 +141,18 @@ def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[s
         ",".join(
             '{' +
             f'"x":{pos[0]},"y":{pos[1]},"z":{pos[2]},"id":"{block.id}"' +
-            (f',"state":{json.dumps(block.states)}' if block.states else '') +
-            (f',"data":{json.dumps(block.data)}' if block.data is not None else '') +
+            (f',"state":{json.dumps(block.states, separators=(",",":"))}' if block.states else '') +
+            (f',"data":{repr(block.data)}' if block.data is not None else '') +
             '}'
             for pos, block in blocks
         ) +
         "]"
     )
 
-    return _request("PUT", url, data=bytes(body, "utf-8"), params=parameters, headers={"Content-Type": "application/json"}, retries=retries, timeout=timeout).text.split("\n")
+    response = _request("PUT", url, data=bytes(body, "utf-8"), params=parameters, retries=retries, timeout=timeout)
+
+    result: List[Tuple[bool, Union[int, str]]] = [("message" not in entry, entry.get("message", int(entry["status"]))) for entry in response.json()]
+    return result
 
 
 def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
@@ -159,11 +162,13 @@ def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout
 
     <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-    Returns a list with one string for each command. If the command was successful, the string
-    is its return value. Otherwise, it is the error message.
+    Returns a list of (success, result)-tuples, one for each command. If a command was succesful,
+    result is its return value (if any). Otherwise, it is the error message.
     """
     url = f"{host}/command"
-    return _request("POST", url, bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout).text.split("\n")
+    response = _request("POST", url, bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout)
+    result: List[Tuple[bool, Optional[str]]] = [(bool(entry["status"]), entry.get("message")) for entry in response.json()]
+    return result
 
 
 def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
