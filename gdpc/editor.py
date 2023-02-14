@@ -78,7 +78,7 @@ class Editor:
     def __del__(self):
         """Cleans up this Editor instance"""
         # awaits any pending buffer flush futures and shuts down the buffer flush executor
-        self.multithreading = False # awaits any pending buffer flush futures and shuts down the buffer flush executor
+        self.multithreading = False
         # Flush any remaining blocks in the buffer.
         # This is purposefully done *after* disabling multithreading! This __del__ may be called at
         # interpreter shutdown, and it appears that scheduling a new future at that point fails with
@@ -235,9 +235,12 @@ class Editor:
     def worldSliceDecay(self):
         """3D boolean array indicating whether the block at the specified position in the cached
         worldSlice is still valid.\n
-        Do not edit the returned array.\n
         Note that the lowest Y-layer is at [:,0,:], despite Minecraft's negative Y coordinates."""
-        return self._worldSliceDecay
+        if self._worldSliceDecay is None:
+            return None
+        view: np.ndarray = self._worldSliceDecay.view()
+        view.flags.writeable = False
+        return view
 
 
     def runCommand(self, command: str, syncWithBuffer=False):

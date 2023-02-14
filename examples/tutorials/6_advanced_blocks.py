@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 
 """
-Use the geometry module to place geometrical regions of blocks.
+Place blocks with block states, block entity data, and block id palettes.
 """
 
 import sys
 
-from glm import ivec3
+from glm import ivec2, ivec3
 
 from gdpc import __url__, Editor, Block
 from gdpc.exceptions import InterfaceConnectionError, BuildAreaNotSetError
-from gdpc.vector_tools import addY
+from gdpc.vector_tools import addY, dropY
 from gdpc.minecraft_tools import signBlock
 from gdpc.editor_tools import placeContainerBlock
 from gdpc.geometry import placeBox, placeCuboid
+
+
+# The minimum build area size in the XZ-plane for this example.
+MIN_BUILD_AREA_SIZE = ivec2(6, 9)
 
 
 # Create an editor object.
@@ -46,14 +50,17 @@ except BuildAreaNotSetError:
     sys.exit(1)
 
 
-# Get a world slice
-print("Loading world slice...")
-buildRect = buildArea.toRect()
-worldSlice = editor.loadWorldSlice(buildRect)
-print("World slice loaded!")
+# Check if the build area is large enough in the XZ-plane.
+if any(dropY(buildArea.size) < MIN_BUILD_AREA_SIZE):
+    print(
+        "Error: the build area is too small for this example!\n"
+        f"It should be at least {tuple(MIN_BUILD_AREA_SIZE)} blocks large in the XZ-plane."
+    )
+    sys.exit(1)
 
 
 # Build a floating 5x9 platform in the middle of the build area.
+buildRect = buildArea.toRect()
 platformRect = buildRect.centeredSubRect((6,9))
 placeBox(editor, platformRect.toBox(100,  1), Block("sandstone"))
 placeBox(editor, platformRect.toBox(101, 10), Block("air")) # Clear some space
