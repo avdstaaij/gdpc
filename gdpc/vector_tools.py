@@ -23,7 +23,7 @@ from .utils import nonZeroSign
 
 
 class Vec2iLike(ABC, Sequence[int]):
-    """An abstract base class. A class is a Vec2i if it acts like a sequence of two Integrals."""
+    """An abstract base class. A class is a Vec2iLike if it acts like a sequence of two Integrals."""
     @classmethod
     def __subclasshook__(cls, C):
         try:
@@ -32,7 +32,7 @@ class Vec2iLike(ABC, Sequence[int]):
             return False
 
 class Vec3iLike(ABC, Sequence[int]):
-    """An abstract base class. A class is a Vec3i if it acts like a sequence of three Integrals."""
+    """An abstract base class. A class is a Vec3iLike if it acts like a sequence of three Integrals."""
     @classmethod
     def __subclasshook__(cls, C):
         try:
@@ -41,7 +41,7 @@ class Vec3iLike(ABC, Sequence[int]):
             return False
 
 class Vec2bLike(ABC, Sequence[bool]):
-    """An abstract base class. A class is a Vec2b if it acts like a sequence of two bools."""
+    """An abstract base class. A class is a Vec2bLike if it acts like a sequence of two bools."""
     @classmethod
     def __subclasshook__(cls, C):
         try:
@@ -50,7 +50,7 @@ class Vec2bLike(ABC, Sequence[bool]):
             return False
 
 class Vec3bLike(ABC, Sequence[bool]):
-    """An abstract base class. A class is a Vec3b if it acts like a sequence of three bools."""
+    """An abstract base class. A class is a Vec3bLike if it acts like a sequence of three bools."""
     @classmethod
     def __subclasshook__(cls, C):
         try:
@@ -114,7 +114,7 @@ DIAGONALS_3D = (
 # ==================================================================================================
 
 
-def dropDimension(vec: Vec2iLike, dimension: int):
+def dropDimension(vec: Vec3iLike, dimension: int):
     """Returns <vec> without its <dimension>-th component"""
     if dimension == 0: return ivec2(vec[1], vec[2])
     if dimension == 1: return ivec2(vec[0], vec[2])
@@ -128,7 +128,7 @@ def addDimension(vec: Vec2iLike, dimension: int, value=0):
     return ivec3(*l[:dimension], value, *l[dimension:])
 
 
-def dropY(vec: Vec2iLike):
+def dropY(vec: Vec3iLike):
     """Returns [vec] without its y-component (i.e., projected on the XZ-plane)"""
     return ivec2(vec[0], vec[2])
 
@@ -138,23 +138,23 @@ def addY(vec: Vec2iLike, y=0):
     return ivec3(vec[0], y, vec[1])
 
 
-def setY(vec: Vec2iLike, y=0):
+def setY(vec: Vec3iLike, y=0):
     """Returns [vec] with its y-component set to [y]"""
-    return ivec3(vec[0], y, vec[1])
+    return ivec3(vec[0], y, vec[2])
 
 
-def trueMod2D(vec: Vec2iLike, modulus):
+def trueMod2D(vec: Vec2iLike, modulus: int):
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
     return ivec2(vec[0] % modulus, vec[1] % modulus)
 
-def trueMod3D(vec: Vec3iLike, modulus):
+def trueMod3D(vec: Vec3iLike, modulus: int):
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
     return ivec3(vec[0] % modulus, vec[1] % modulus, vec[2] % modulus)
 
 
-def perpendicular(vec: Vec3iLike):
+def perpendicular(vec: Vec2iLike):
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
     return ivec2(vec[1], -vec[0])
@@ -214,7 +214,7 @@ def scaleToFlip3D(scale: Vec3iLike):
     return bvec3(scale[0] < 0, scale[1] < 0, scale[2] < 0)
 
 
-def toAxisVector(vec: Vec2iLike):
+def toAxisVector2D(vec: Vec2iLike):
     """Returns the axis-aligned unit vector closest to [vec]"""
     if abs(vec[0]) > abs(vec[1]): # pylint: disable=no-else-return
         return ivec2(nonZeroSign(vec[0]), 0)
@@ -224,7 +224,7 @@ def toAxisVector(vec: Vec2iLike):
 
 def directionToRotation(direction: Vec2iLike):
     """Returns the rotation that rotates (0,-1) closest to [direction]"""
-    vec = toAxisVector(direction)
+    vec = toAxisVector2D(direction)
     if vec[1] < 0: return 0
     if vec[0] > 0: return 1
     if vec[1] > 0: return 2

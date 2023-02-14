@@ -11,7 +11,7 @@ from glm import ivec2, ivec3
 
 from gdpc import __url__, Editor, Block
 from gdpc.exceptions import InterfaceConnectionError
-from gdpc.vector_tools import X, Y, Z, XZ, addY, dropY, loop2D, loop3D, perpendicular, toAxisVector
+from gdpc.vector_tools import X, Y, Z, XZ, addY, dropY, loop2D, loop3D, perpendicular, toAxisVector2D
 
 
 # Create an editor object.
@@ -85,8 +85,8 @@ print(f"vecF: {tuple(vecF)}")
 vecG = perpendicular((1,0))
 print(f"vecG: {tuple(vecG)}")
 
-# toAxisVector() returns the axis-aligned vector that is closest to the given one.
-vecH = toAxisVector((11,2))
+# toAxisVector2D() returns the axis-aligned vector that is closest to the given one.
+vecH = toAxisVector2D((11,2))
 print(f"vecH: {tuple(vecH)}")
 
 # loop2D() loops over a 2D area defined by two corners.
