@@ -61,7 +61,7 @@ def placeSign(
     position: Vec3iLike,
     wood="oak", wall=False,
     facing: Optional[str] = None, rotation: Optional[Union[str, int]] = None,
-    text1="", text2="", text3="", text4="", color="", isGlowing=False
+    line1="", line2="", line3="", line4="", color="", isGlowing=False
 ):
     """Places a sign with the specified properties.\n
     If <wall> is True, <facing> is used. Otherwise, <rotation> is used.
@@ -70,7 +70,7 @@ def placeSign(
         facing = random.choice(getOptimalFacingDirection(editor, position))
     elif not wall and rotation is None:
         rotation = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
-    editor.placeBlock(position, signBlock(wood, wall, facing, rotation, text1, text2, text3, text4, color, isGlowing))
+    editor.placeBlock(position, signBlock(wood, wall, facing, rotation, line1, line2, line3, line4, color, isGlowing))
 
 
 def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
@@ -85,7 +85,7 @@ def placeContainerBlock(
     editor: Editor,
     position: Vec3iLike,
     block: Block = Block("minecraft:chest"),
-    items: Optional[Iterable[Union[Tuple[ivec2, str], Tuple[ivec2, str, int]]]] = None,
+    items: Optional[Iterable[Union[Tuple[Vec2iLike, str], Tuple[Vec2iLike, str, int]]]] = None,
     replace=True
 ):
     """Place a container block with the specified items in the world.\n
@@ -104,11 +104,11 @@ def placeContainerBlock(
 
     for item in items:
         index = positionToInventoryIndex(item[0], inventorySize)
-        if len(item) == 3:
+        if len(item) == 2:
             item = list(item)
             item.append(1)
         globalPosition = editor.transform * position
-        editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item[2]} {item[3]}", syncWithBuffer=True)
+        editor.runCommand(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item[1]} {item[2]}", syncWithBuffer=True)
 
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1):
@@ -118,10 +118,10 @@ def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLik
     block = editor.getBlockGlobal(globalPosition)
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
     if inventorySize is None:
-        raise ValueError(f'The block at ({",".join(position)}) is "{block}", which is not a known container block.')
+        raise ValueError(f'The block at {tuple(position)} is "{block}", which is not a known container block.')
 
     index = positionToInventoryIndex(itemPosition, inventorySize)
-    editor.runCommand(f"replaceitem block {' '.join(globalPosition)} container.{index} {item} {amount}", syncWithBuffer=True)
+    editor.runCommand(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item} {amount}", syncWithBuffer=True)
 
 
 def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike):

@@ -49,8 +49,8 @@ class Block:
         """Returns a copy of this block with a single ID.\n
         If .id is a sequence, one ID is chosen at random."""
         result = copy(self)
-        if not isinstance(self.id, str):
-            self.id = random.choice(self.id)
+        if result.id is not None and not isinstance(result.id, str):
+            result.id = random.choice(result.id)
         return result
 
 

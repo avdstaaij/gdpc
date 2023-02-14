@@ -166,7 +166,7 @@ def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout
     result is its return value (if any). Otherwise, it is the error message.
     """
     url = f"{host}/command"
-    response = _request("POST", url, bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout)
+    response = _request("POST", url, data=bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout)
     result: List[Tuple[bool, Optional[str]]] = [(bool(entry["status"]), entry.get("message")) for entry in response.json()]
     return result
 

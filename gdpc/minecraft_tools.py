@@ -28,7 +28,7 @@ def signData(
 
     for i, line in enumerate([line1, line2, line3, line4]):
         if line:
-            fields.append(f'Text{i+1}: {json.dumps({"text": line})}')
+            fields.append(f'Text{i+1}: {repr(json.dumps({"text": line}))}')
 
     if color:
         fields.append(f'Color: {repr(color)}')
@@ -201,12 +201,12 @@ def bookData(
 def signBlock(
     wood="oak", wall=False,
     facing: str = "north", rotation: Union[str,int] = "0",
-    text1="", text2="", text3="", text4="", color="", isGlowing=False
+    line1="", line2="", line3="", line4="", color="", isGlowing=False
 ):
     """Returns a sign Block with the specified properties."""
     blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
     states = {"facing": facing} if wall else {"rotation": str(rotation)}
-    return Block(blockId, states, data=signData(text1, text2, text3, text4, color, isGlowing))
+    return Block(blockId, states, data=signData(line1, line2, line3, line4, color, isGlowing))
 
 
 def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0):
@@ -226,7 +226,7 @@ def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: in
 def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike):
     """Returns the flat index of the slot at <position> in an inventory of size <inventorySize>."""
     if not Rect(size=inventorySize).contains(position):
-        raise ValueError(f"{position} is not between (0, 0) and {inventorySize}!")
+        raise ValueError(f"{position} is not between (0, 0) and {tuple(inventorySize)}!")
     return position[0] + position[1] * inventorySize[0]
 
 
