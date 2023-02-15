@@ -31,8 +31,8 @@ If you are having trouble with dependencies, download `requirements.txt` *(see b
 ## Scripts:
 To download one of the following scripts, click on the link, then right-click and `Save As...` *(I know it's tedious, if you have a better idea we'd be glad to hear it)*.
 
-- [**`visualizeMap.py`**](examples/visualizeMap.py): Displays a map of the Minecraft world using OpenCV
-- [**`Start_Here.py`**](examples/Start_Here.py): Demonstrates all of the basic GDPC functionality by building a simple model of the Emerald City and introduces various concepts of coding in Python
+- [**`visualize_map.py`**](examples/visualize_map.py): Displays a map of the Minecraft world using OpenCV.
+- [**`emerald_city.py`**](examples/emerald_city.py): Demonstrates basic GDPC functionality by building a simple model of the Emerald City, and introduces various concepts of coding in Python.
 
 ## Developed by:
 - Arthur van der Staaij
