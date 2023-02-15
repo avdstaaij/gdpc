@@ -82,7 +82,7 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     }
     response = _request("GET", url, params=parameters, retries=retries, timeout=timeout)
     blockDicts: List[Dict[str, Any]] = response.json()
-    return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data"))) for b in blockDicts]
+    return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data") if b.get("data") != "{}" else None)) for b in blockDicts]
 
 
 def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
