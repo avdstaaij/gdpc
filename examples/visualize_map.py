@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""### Displays a map of the build area."""
+"""A script that displays a map of the build area."""
 
 import cv2
 import matplotlib.pyplot as plt
