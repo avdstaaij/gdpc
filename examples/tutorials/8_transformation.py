@@ -5,7 +5,6 @@ Use GDPC's powerful transformation system.
 """
 
 import sys
-import time
 
 from glm import ivec2, ivec3
 
@@ -181,7 +180,7 @@ print(f"Placing a block at global position {tuple(editor.transform * position)}"
 editor.placeBlock(position, Block("red_concrete"))
 
 # Note that this carries over to all functions that use the editor to get or place blocks,
-# including, for exammple, all geometry functions.
+# including, for example, all geometry functions.
 
 placeBox(editor, Box((1,100,3), (3,3,3)), Block("blue_concrete"))
 
@@ -197,7 +196,7 @@ def buildStaircase(editor):
             placeBox(editor, Box(ivec3(0,y,z), ivec3(3,1,1)), Block("cobblestone"))
         placeBox(editor, Box(ivec3(0,z,z), ivec3(3,1,1)), Block("oak_stairs", {"facing": "south"}))
 
-# Build the staircase at local coordinates (4,100,0).
+# Build the staircase at local coordinates (5,100,1).
 # Notice how we're stacking two "local coordinate systems" on top of each other.
 transform = Transform((5,100,1))
 editor.transform.push(transform) # Transform.push() is equivalent to @=
@@ -231,11 +230,11 @@ with editor.pushTransform((5,100,13)):
 #
 # GDPC's transformation system can can automatically deal with most of these orientated blocks.
 
-# Build the staircase at "(8,100,0)", but rotated. Notice how the stairs blocks are rotated as well.
+# Build the staircase at "(9,100,1)", but rotated. Notice how the stairs blocks are rotated as well.
 with editor.pushTransform(Transform((9,100,1+2), rotation=3)):
     buildStaircase(editor)
 
-# Build the staircase at "(8,100,4)", but flipped.
+# Build the staircase at "(9,100,5)", but flipped.
 with editor.pushTransform(Transform((9,100,5+2), flip=(False, False, True))):
     buildStaircase(editor)
 
@@ -247,11 +246,11 @@ with editor.pushTransform(Transform((9,100,5+2), flip=(False, False, True))):
 #
 # GDPC's `transform` module contains some helper functions that perform these corrections for you.
 
-# Build the staircase at (8,100,8), but rotated.
+# Build the staircase at (9,100,9), but rotated.
 with editor.pushTransform(rotatedBoxTransform(Box((9,100,9), (3,3,3)), 1)):
     buildStaircase(editor)
 
-# Build the staircase at (8,100,12), but flipped.
+# Build the staircase at (9,100,13), but flipped.
 with editor.pushTransform(flippedBoxTransform(Box((9,100,13), (3,3,3)), (False, False, True))):
     buildStaircase(editor)
 
