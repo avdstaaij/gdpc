@@ -186,14 +186,16 @@ def flipRotation3D(rotation: int, flip: Vec3bLike):
     return flipRotation2D(rotation, dropY(flip))
 
 
-def rotateSize(size: Vec2iLike, rotation: int):
-    """Returns the effective size of a rect of size [size] that has been rotated by [rotation]."""
+def rotateSize2D(size: Vec2iLike, rotation: int):
+    """Returns the effective size of a rect of size [size] that has been rotated in the XZ-plane by
+    [rotation]."""
     return ivec2(size[1], size[0]) if rotation in [1, 3] else size
 
 
-def rotateSizeXZ(size: Vec3iLike, rotation: int):
-    """Returns the effective size of a box of size [size] that has been rotated by [rotation]."""
-    return addY(rotateSize(dropY(size), rotation), size[1])
+def rotateSize3D(size: Vec3iLike, rotation: int):
+    """Returns the effective size of a box of size [size] that has been rotated in the XZ-plane by
+    [rotation]."""
+    return addY(rotateSize2D(dropY(size), rotation), size[1])
 
 
 def flipToScale2D(flip: Vec2bLike):
@@ -330,7 +332,7 @@ class Rect:
         self._size   = ivec2(*size)
 
     def __repr__(self):
-        return f"Rect({self._offset}, {self._size})"
+        return f"Rect({tuple(self._offset)}, {tuple(self._size)})"
 
     @property
     def offset(self):
@@ -508,7 +510,7 @@ class Box:
         self._size   = ivec3(*size)
 
     def __repr__(self):
-        return f"Box({self._offset}, {self._size})"
+        return f"Box({tuple(self._offset)}, {tuple(self._size)})"
 
     @property
     def offset(self):

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from glm import ivec3, bvec3
 
-from .vector_tools import Vec3iLike, Vec3bLike, rotate3D, flipRotation3D, flipToScale3D, rotateSizeXZ, Box
+from .vector_tools import Vec3iLike, Vec3bLike, rotate3D, flipRotation3D, flipToScale3D, rotateSize3D, Box
 
 
 # ==================================================================================================
@@ -22,7 +22,8 @@ class Transform:
     When applied to a vector, [flip] is applied first, [rotation] second, and [translation] third.
 
     Note that only the four 90-degree rotations in the XZ-plane are supported. Hence, [rotation]
-    should be 0, 1, 2 or 3.
+    should be 0, 1, 2 or 3. A rotation of 1 rotates (1,0,0) to (0,0,1). In Minecraft's right-handed
+    coordinate system, this is clockwise.
     """
 
     _translation: ivec3
@@ -33,6 +34,10 @@ class Transform:
         self._translation = ivec3(*translation)
         self._rotation    = rotation
         self._flip        = bvec3(*flip)
+
+
+    def __repr__(self):
+        return f"Transform(translation={tuple(self._translation)}, rotation={self._rotation}, flip={tuple(self._flip)})"
 
 
     @property
@@ -174,7 +179,7 @@ def toTransform(transformLike: TransformLike) -> Transform:
 
 def rotatedBoxTransform(box: Box, rotation: int):
     """Returns a transform that maps the box ((0,0,0), size) to [box] under [rotation], where
-    size == vector_util.rotateXZScale([box].size, [rotation])."""
+    size == vector_tools.rotateSize3D([box].size, [rotation])."""
     return Transform(
         translation = box.offset + ivec3(
             box.size.x - 1 if rotation in [1, 2] else 0,
@@ -188,7 +193,7 @@ def rotatedBoxTransform(box: Box, rotation: int):
 def rotatedBoxTransformAndSize(box: Box, rotation: int):
     """Returns (transform, size) such that [transform] maps the box ((0,0,0), [size]) to [box],
     under [rotation]."""
-    return rotatedBoxTransform(box, rotation), rotateSizeXZ(box.size, rotation)
+    return rotatedBoxTransform(box, rotation), rotateSize3D(box.size, rotation)
 
 
 def flippedBoxTransform(box: Box, flip: Vec3bLike):
