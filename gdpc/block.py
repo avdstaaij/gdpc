@@ -21,11 +21,9 @@ class Block:
     Block states can be stored in .states, and block entity data can be stored in .data as an SNBT
     string.
 
-    If .id is a sequence, the instance represents a palette of blocks that share the same
-    block states and block entity NBT data.
-
-    If (an element of) .id is an empty string or None, that element represents "no placement":
-    placing such a block has no effect.
+    If .id is an empty string or None, the block represents "nothing". Placing such a block has no
+    effect. This is opposed to blocks of air, which do replace existing blocks. Nothing-blocks can
+    be useful in block palettes.
 
     The transform methods modify a number of orientation-related block states. These are:
     - axis
@@ -40,18 +38,9 @@ class Block:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
 
-    id:     Union[Optional[str], Sequence[Optional[str]]] = "minecraft:stone"
-    states: Dict[str, str]                                = field(default_factory=dict)
-    data:   Optional[str]                                 = None
-
-
-    def chooseId(self):
-        """Returns a copy of this block with a single ID.\n
-        If .id is a sequence, one ID is chosen at random."""
-        result = copy(self)
-        if result.id is not None and not isinstance(result.id, str):
-            result.id = random.choice(result.id)
-        return result
+    id:     Optional[str]  = "minecraft:stone"
+    states: Dict[str, str] = field(default_factory=dict)
+    data:   Optional[str]  = None
 
 
     def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()):
@@ -80,12 +69,9 @@ class Block:
 
 
     def __str__(self):
-        if self.id is None:
+        if not self.id:
             return ""
-        statesAndData = self.stateString() + (self.data if self.data else "")
-        if isinstance(self.id, str):
-            return self.id + statesAndData
-        return ",".join(id + statesAndData for id in self.id if id is not None)
+        return self.id + self.stateString() + (self.data if self.data else "")
 
 
     def __repr__(self):
@@ -120,3 +106,11 @@ class Block:
             block.data = nbtToSnbt(blockEntityTag)
 
         return block
+
+
+def transformedBlockOrPalette(block: Union[Block, Sequence[Block]], rotation: int, flip: Vec3bLike):
+    """Convenience function that transforms a block or a palette of blocks."""
+    if isinstance(block, Block):
+        return block.transformed(rotation, flip)
+    else:
+        return [b.transformed(rotation, flip) for b in block]

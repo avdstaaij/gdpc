@@ -41,7 +41,6 @@ def signData(
 
 def lecternData(bookData: Optional[str], page: int = 0):
     """Returns an SNBT string with lectern data\n
-
     <bookData> should be an SNBT string defining a book.
     You can use bookData() to create such a string.
     """
@@ -233,8 +232,8 @@ def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike):
 def getObtrusiveness(block: Block):
     """Returns the percieved obtrusiveness of the given <block>.\n
     Returns a numeric weight from 0 (invisible) to 4 (opaque)."""
-    if not isinstance(block.id, str):
-        raise ValueError("Cannot determine the obtrusiveness of a block palette!")
+    if not block.id:
+        return 0
     if block.id in lookup.INVISIBLE:
         return 0
     if block.id in lookup.FILTERING:

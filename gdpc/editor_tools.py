@@ -42,7 +42,7 @@ def flood_search_3D(
 
         visited.add(point)
 
-        if editor.getBlock(point) not in search_block_ids:
+        if editor.getBlock(point).id not in search_block_ids:
             return
 
         result.add(point)
@@ -75,7 +75,9 @@ def placeSign(
 
 def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
     """Place a lectern with the specified properties.\n
-    If <facing> is None, a least obstructed facing direction will be used."""
+    If <facing> is None, a least obstructed facing direction will be used.\n
+    <bookData> should be an SNBT string defining a book.
+    You can use minecraft_tools.bookData() to create such a string."""
     if facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     editor.placeBlock(position, lecternBlock(facing, bookData, page))

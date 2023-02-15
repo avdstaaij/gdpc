@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Place blocks with block states, block entity data, and block id palettes.
+Place blocks with block states and block entity data, and use block palettes.
 """
 
 import sys
@@ -149,18 +149,21 @@ placeContainerBlock(
 )
 
 
-# The Block class has one more useful feature: it can also represent a *palette* of blocks. This
-# can be extremely useful for building textured structures. The code below builds a wall using
-# a palette of primarily stone bricks with some cobblestone and polished andesite mixed in. The wall
-# will look different every time you run this example.
+# One more GDPC feature related to blocks is *block palettes*. Most of GDPC's block placing
+# functions work not only with a single Block, but also with a sequence of Blocks. If a sequence is
+# passed, blocks are sampled randomly. This feature can be extremely useful for building textured
+# structures.
 
-wallBlock = Block(3*["stone_bricks"] + ["cobblestone", "polished_andesite"])
+# The code below builds a wall using a palette of primarily stone bricks with some cobblestone and
+# polished andesite mixed in. The wall will look different every time you run this example.
+
+wallPalette = [Block(id) for id in 3*["stone_bricks"] + ["cobblestone", "polished_andesite"]]
 
 placeCuboid(
     editor,
     addY(platformRect.offset) + ivec3(5,101,0),
     addY(platformRect.offset) + ivec3(5,103,8),
-    wallBlock
+    wallPalette
 )
 
 # Do note that these kinds of block palettes can only vary the block id, and not the block states or

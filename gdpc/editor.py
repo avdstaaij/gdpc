@@ -16,8 +16,7 @@ from glm import ivec3
 from .utils import eagerAll, OrderedByLookupDict
 from .vector_tools import Vec3iLike, Rect, Box, addY, dropY
 from .transform import Transform, TransformLike, toTransform
-from .block import Block
-from . import lookup
+from .block import Block, transformedBlockOrPalette
 from . import interface
 from .world_slice import WorldSlice
 
@@ -333,33 +332,31 @@ class Editor:
     def placeBlock(
         self,
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
-        block:          Union[Block, Sequence[Optional[Block]]],
+        block:          Union[Block, Sequence[Block]],
         replace:        Optional[Union[str, List[str]]] = None
     ):
         """Places <block> at <position>.\n
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
         If <position> is iterable (e.g. a list), <block> is placed at all positions.
         This is slightly more efficient than calling this method in a loop.\n
-        If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
-        iterable, block IDs are sampled randomly for that block.\n
+        If <block> is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
         # Distinguising between Vec3iLike and Iterable[Vec3iLike] is... not easy.
         globalPosition = self.transform * position if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral) else (self.transform * pos for pos in position)
-        globalBlock = block.transformed(self.transform.rotation, self.transform.flip) if isinstance(block, Block) else (block.transformed(self.transform.rotation, self.transform.flip) for block in block)
+        globalBlock = transformedBlockOrPalette(block, self.transform.rotation, self.transform.flip)
         return self.placeBlockGlobal(globalPosition, globalBlock, replace)
 
 
     def placeBlockGlobal(
         self,
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
-        block:          Union[Block, Sequence[Optional[Block]]],
+        block:          Union[Block, Sequence[Block]],
         replace:        Optional[Union[str, Iterable[str]]] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
         If <position> is iterable (e.g. a list), <block> is placed at all positions.
         In this case, buffering is temporarily enabled for better performance.\n
-        If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
-        iterable, block IDs are sampled randomly for that block.\n
+        If <block> is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
 
         if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral):
@@ -375,27 +372,23 @@ class Editor:
     def _placeSingleBlockGlobal(
         self,
         position:       ivec3,
-        block:          Union[Block, Sequence[Optional[Block]]],
+        block:          Union[Block, Sequence[Block]],
         replace:        Optional[Union[str, Iterable[str]]] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
-        If <block> is a sequence (e.g. a list), blocks are sampled randomly. If a block's .id is
-        iterable, block IDs are sampled randomly for that block.\n
+        If <block> is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
 
         # Check replace condition
         if replace is not None:
             if isinstance(replace, str):
                 replace = [replace]
-            if self.getBlockGlobal(position) not in replace:
+            if self.getBlockGlobal(position).id not in replace:
                 return True
 
         # Select block from palette
         if not isinstance(block, Block):
             block = random.choice(block)
-            if block is None:
-                return True
-        block = block.chooseId()
         if not block.id:
             return True
 

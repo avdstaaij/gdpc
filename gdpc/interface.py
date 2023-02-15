@@ -114,8 +114,8 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
 def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places blocks in the world.
 
-    Each element of <blocks> should be a tuple (position, block). The blocks must each describe
-    exactly one block: palettes or "no placement" blocks are not allowed.
+    Each element of <blocks> should be a tuple (position, block). Empty blocks (blocks without an
+    id) are not allowed.
 
     <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
