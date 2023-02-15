@@ -165,6 +165,3 @@ placeCuboid(
     addY(platformRect.offset) + ivec3(5,103,8),
     wallPalette
 )
-
-# Do note that these kinds of block palettes can only vary the block id, and not the block states or
-# the block entity data.
