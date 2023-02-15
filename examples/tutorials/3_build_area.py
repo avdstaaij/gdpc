@@ -58,7 +58,7 @@ print(f"Build area size:   {tuple(buildArea.size)}")
 
 # The Box class has many convenience methods and properties. Here are a few.
 print(f"Build area end:    {tuple(buildArea.end)}")
-print(f"Build area last:   {tuple(buildArea.last)}")
+print(f"Build area last:   {tuple(buildArea.last)}") # Last is inclusive, end is exclusive.
 print(f"Build area center: {tuple(buildArea.center)}")
 
 # Place a block in the middle of the build area.
