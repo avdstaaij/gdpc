@@ -500,7 +500,7 @@ class Editor:
         worldSlice = WorldSlice(rect, heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
         if cache:
             self._worldSlice      = worldSlice
-            self._worldSliceDecay = np.zeros(self._worldSlice.box.size, dtype=np.bool)
+            self._worldSliceDecay = np.zeros(self._worldSlice.box.size, dtype=bool)
         return worldSlice
 
 
