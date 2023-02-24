@@ -43,3 +43,5 @@ print(f"Block at (0,80,0): {block}")
 #
 # To get the ID of a block in your inventory, you can also press F3 + H and then hover over the
 # block. The ID should be shown at the bottom of the tooltip.
+#
+# You can also "delete" a block by placing Block("air") at its position.
