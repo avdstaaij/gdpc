@@ -68,7 +68,7 @@ def withRetries(
             if retries == 0:
                 if reRaise:
                     raise e
-                return
+                return None
             onRetry(e, retries)
             retries -= 1
 
