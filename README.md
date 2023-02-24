@@ -54,3 +54,8 @@ There are various [**tutorial scripts**](examples/tutorials) that will help to g
 Some practical examples are also available, though they're slightly older and may not reflect the latest features:
 - [**`visualize_map.py`**](examples/visualize_map.py): Displays a map of the Minecraft world using OpenCV.
 - [**`emerald_city.py`**](examples/emerald_city.py): Demonstrates basic GDPC functionality by building a simple model of the Emerald City.
+
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information about how to contribute.
