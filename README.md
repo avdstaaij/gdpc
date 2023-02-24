@@ -13,7 +13,7 @@ The latest version of GDPC is compatible with GDMC-HTTP versions **>=1.0.0, <2.0
 These abbreviations are all very similar, but stand for different things.
 
 GDMC is short for the [Generative Design in Minecraft Competition](https://gendesignmc.engineering.nyu.edu), a yearly competition for generative AI systems in Minecraft.
-The challenge is to write an algorithm that creates a settlement while adapting to the pre-existing terrain. The competition also has a [Discord server](https://discord.gg/ueaxuXj).
+The challenge is to write an algorithm that creates a settlement while adapting to the pre-existing terrain. The competition also has a [Discord server](https://discord.gg/YwpPCRQWND).
 
 [GDMC-HTTP](https://github.com/Niels-NTG/gdmc_http_interface) is a Minecraft Forge mod that provides a HTTP interface to edit the world.
 It allows you to modify the world live, while you're playing in it. This makes it possible to iterate quickly on generator algorithms.

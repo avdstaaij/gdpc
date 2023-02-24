@@ -24,4 +24,4 @@ If you're new to GitHub pull requests, here's a very basic guide:
 
 ## Discussion
 
-You can chat with the developers of GDPC (and other GDMC-related frameworks) in the [#frameworks](https://discord.gg/43eTuUNx5U) channel of the [GDMC Discord](https://discord.gg/ueaxuXj)!
+You can chat with the developers of GDPC (and other GDMC-related frameworks) in the [#frameworks](https://discord.gg/43eTuUNx5U) channel of the [GDMC Discord](https://discord.gg/YwpPCRQWND)!
