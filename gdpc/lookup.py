@@ -175,7 +175,7 @@ ICE_TYPES = {None, "blue", "packed", "frosted"}
 # bedrock NOTE: "flowing",
 LIQUID_TYPES = {None, }
 
-WOOD_TYPES = {"oak", "birch", "spruce", "jungle", "dark_oak", "acacia", }
+WOOD_TYPES = {"oak", "birch", "spruce", "jungle", "dark_oak", "acacia", "mangrove", }
 MUSHROOM_TYPES = {"brown", "red", }
 WART_TYPES = {"nether", "warped", }
 FUNGUS_TYPES = {"crimson", "warped", }
