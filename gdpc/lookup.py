@@ -1,4 +1,15 @@
-"""Store lists of various information on blocks, biomes and more."""
+"""Stores lists of various information on blocks, biomes and more.
+
+NOTE: The block id categories here may not be fully up-to-date with the latest supported Minecraft
+version. Although the block categories are not officially deprecated, there is a high chance that
+they will be in the future. They will most likely be replaced with categories automatically
+constructed from Minecraft's block tags (https://minecraft.fandom.com/wiki/Tag#Block_tags), because
+this is more standardized and way easier to keep up-to-date.
+
+To get a complete listing of all blocks for any Minecraft version, including various properties,
+we currently recommend the `minecraft-data` package
+(https://github.com/SpockBotMC/python-minecraft-data).
+"""
 
 
 from typing import Dict, Iterable, Optional, Set, Union
