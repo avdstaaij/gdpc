@@ -246,6 +246,25 @@ class Editor:
         """Executes one or multiple Minecraft commands (separated by newlines).\n
         The leading "/" must be omitted.\n
         If buffering is enabled and <syncWithBuffer>=True, the command is deferred until after the
+        next buffer flush.\n
+        The command is executed from the perspective self.transform, as far as this is possible.
+        Its excecution position is set to self.transform.offset, and its execution rotation is set
+        to self.transform.rotation (self.transform.flip is ignored).
+        For the effect that this has on passed coordinates, see
+        https://minecraft.fandom.com/wiki/Coordinates#Commands"""
+        self.runCommandGlobal(
+            "\n".join(
+                f"execute positioned {' '.join(str(c) for c in self.transform.translation)} rotated {self.transform.rotation * 90} 0 run {cmd}"
+                for cmd in command.splitlines()
+            ),
+            syncWithBuffer=syncWithBuffer
+        )
+
+
+    def runCommandGlobal(self, command: str, syncWithBuffer=False):
+        """Executes one or multiple Minecraft commands (separated by newlines), ignoring self.transform.\n
+        The leading "/" must be omitted.\n
+        If buffering is enabled and <syncWithBuffer>=True, the command is deferred until after the
         next buffer flush."""
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
@@ -264,7 +283,7 @@ class Editor:
     def setBuildArea(self, buildArea: Box):
         """Sets the build area to [box], and returns it.\n
         The build area must be given in **global coordinates**; self.transform is ignored."""
-        self.runCommand(f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}")
+        self.runCommandGlobal(f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}")
         return self.getBuildArea()
 
 

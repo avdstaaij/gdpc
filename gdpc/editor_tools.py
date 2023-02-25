@@ -20,7 +20,7 @@ def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike):
     The build area is always in **global coordinates**; <editor>.transform is ignored."""
     # -1 to correct for offset from player position
     radius = (ivec3(*size) - 1) // 2
-    editor.runCommand(
+    editor.runCommandGlobal(
         "execute at @p run setbuildarea "
         f"~{-radius.x} ~{-radius.y} ~{-radius.z} ~{radius.x} ~{radius.y} ~{radius.z}")
     return editor.getBuildArea()
@@ -104,26 +104,26 @@ def placeContainerBlock(
     if items is None:
         return
 
+    globalPosition = editor.transform * position
     for item in items:
         index = positionToInventoryIndex(item[0], inventorySize)
         if len(item) == 2:
             item = list(item)
             item.append(1)
-        globalPosition = editor.transform * position
-        editor.runCommand(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item[1]} {item[2]}", syncWithBuffer=True)
+        editor.runCommandGlobal(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item[1]} {item[2]}", syncWithBuffer=True)
 
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1):
     """Sets the item at <itemPosition> in the container block at <position> to the item with id <item>."""
     globalPosition = editor.transform * position
 
-    block = editor.getBlockGlobal(globalPosition)
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
+    blockId = editor.getBlockGlobal(globalPosition).id
+    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(blockId)
     if inventorySize is None:
-        raise ValueError(f'The block at {tuple(position)} is "{block}", which is not a known container block.')
+        raise ValueError(f'The block at {tuple(position)} is "{blockId}", which is not a known container block.')
 
     index = positionToInventoryIndex(itemPosition, inventorySize)
-    editor.runCommand(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item} {amount}", syncWithBuffer=True)
+    editor.runCommandGlobal(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item} {amount}", syncWithBuffer=True)
 
 
 def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike):
