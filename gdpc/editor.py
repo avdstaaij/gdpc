@@ -35,6 +35,7 @@ class Editor:
     def __init__(
         self,
         transformLike: Optional[TransformLike] = None,
+        dimension: Optional[str] = None,
         buffering             = False,
         bufferLimit           = 1024,
         caching               = False,
@@ -51,6 +52,8 @@ class Editor:
         self._host    = host
 
         self._transform = Transform() if transformLike is None else toTransform(transformLike)
+
+        self._dimension = dimension
 
         self._buffering = buffering
         self._bufferLimit = bufferLimit
@@ -94,6 +97,24 @@ class Editor:
     @transform.setter
     def transform(self, value: Union[Transform, ivec3]):
         self._transform = toTransform(value)
+
+    @property
+    def dimension(self):
+        """The dimension this editor interacts with\n
+        Changing the dimension will flush the block buffer and invalidate all caches.\n
+        Note that the transform is NOT reset or modified when the dimension is changed! In
+        particular, the transform's translation (if any) is NOT adjusted for the nether's 8x smaller
+        scale."""
+        return self._dimension
+
+    @dimension.setter
+    def dimension(self, value: Optional[str]):
+        if value != self._dimension:
+            self.flushBuffer()
+            self._cache.clear()
+            self._worldSlice      = None
+            self._worldSliceDecay = None
+        self._dimension = value
 
     @property
     def buffering(self) -> bool:
@@ -216,13 +237,19 @@ class Editor:
 
     @property
     def host(self):
-        """The address (hostname+port) of the GDMC HTTP interface to use"""
+        """The address (hostname+port) of the GDMC HTTP interface to use\n
+        Changing the host will flush the buffer and invalidate all caches.\n
+        Note that the transform is NOT reset or modified when the host is changed!"""
         return self._host
 
     @host.setter
     def host(self, value: str):
-        self.flushBuffer()
-        self.awaitBufferFlushes()
+        if value != self._host:
+            self.flushBuffer()
+            self.awaitBufferFlushes()
+            self._cache.clear()
+            self._worldSlice      = None
+            self._worldSliceDecay = None
         self._host = value
 
     @property
@@ -269,7 +296,7 @@ class Editor:
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
             return
-        result = interface.runCommand(command, retries=self.retries, timeout=self.timeout, host=self.host)
+        result = interface.runCommand(command, dimension=self.dimension, retries=self.retries, timeout=self.timeout, host=self.host)
         if not result[0][0]:
             logger.error("Server returned error upon running command:\n  %s", result[0][1])
 
@@ -320,7 +347,7 @@ class Editor:
         ):
             block = self._worldSlice.getBlockGlobal(_position)
         else:
-            block = interface.getBlocks(_position, includeState=True, includeData=True, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
+            block = interface.getBlocks(_position, dimension=self.dimension, includeState=True, includeData=True, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
 
         if self.caching:
             self._cache[_position] = copy(block)
@@ -345,7 +372,7 @@ class Editor:
         ):
             return self._worldSlice.getBiomeGlobal(position)
 
-        return interface.getBiomes(position, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
+        return interface.getBiomes(position, dimension=self.dimension, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
 
 
     def placeBlock(
@@ -431,7 +458,7 @@ class Editor:
     def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block):
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
-        result = interface.placeBlocks([(position, block)], doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
+        result = interface.placeBlocks([(position, block)], dimension=self.dimension, doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
         if not result[0][0]:
             logger.error("Server returned error upon placing block:\n  %s", result[0][1])
             return False
@@ -455,7 +482,7 @@ class Editor:
         def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
-                response = interface.placeBlocks(blockBuffer.items(), doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
+                response = interface.placeBlocks(blockBuffer.items(), dimension=self.dimension, doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
                 blockBuffer.clear()
 
                 for entry in response:
@@ -464,7 +491,7 @@ class Editor:
 
             # Flush command buffer
             if commandBuffer:
-                response = interface.runCommand("\n".join(commandBuffer), retries=self.retries, timeout=self.timeout, host=self.host)
+                response = interface.runCommand("\n".join(commandBuffer), dimension=self.dimension, retries=self.retries, timeout=self.timeout, host=self.host)
                 commandBuffer.clear()
 
                 for entry in response:
@@ -515,8 +542,8 @@ class Editor:
         area is changed other than through this editor, call .updateWorldSlice() to update the
         cached world slice."""
         if rect is None:
-            rect = self.getBuildArea()
-        worldSlice = WorldSlice(rect, heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
+            rect = self.getBuildArea().toRect()
+        worldSlice = WorldSlice(rect, dimension=self.dimension, heightmapTypes=heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
         if cache:
             self._worldSlice      = worldSlice
             self._worldSliceDecay = np.zeros(self._worldSlice.box.size, dtype=bool)

@@ -78,7 +78,7 @@ class _ChunkSection:
 class WorldSlice:
     """Contains information on a slice of the world."""
 
-    def __init__(self, rect: Rect, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST):
+    def __init__(self, rect: Rect, dimension: Optional[str] = None, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST):
         """Initialise WorldSlice with region and heightmap."""
 
         # To protect from calling this with a Box, which can lead to very confusing bugs.
@@ -99,7 +99,7 @@ class WorldSlice:
             ((self._rect.last) >> 4) - (self._rect.offset >> 4) + 1
         )
 
-        chunkBytes = interface.getChunks(self._chunkRect.offset, self._chunkRect.size, asBytes=True, retries=retries, timeout=timeout, host=host)
+        chunkBytes = interface.getChunks(self._chunkRect.offset, self._chunkRect.size, dimension=dimension, asBytes=True, retries=retries, timeout=timeout, host=host)
         chunkBuffer = BytesIO(chunkBytes)
 
         self._nbt = nbt.NBTFile(buffer=chunkBuffer)
