@@ -24,18 +24,18 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 
 setup(
-    name=get_metadata("title"),
-    version=get_metadata("version"),
-    description=get_metadata("description"),
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url=get_metadata("url"),
-    author=get_metadata("author"),
-    author_email=get_metadata("author_email"),
-    maintainer=get_metadata("maintainer"),
-    maintainer_email=get_metadata("maintainer_email"),
-    license=get_metadata("license"),
-    packages=["gdpc"], # Note: subpackages must be listed explicitly
+    name                          = get_metadata("title"),
+    version                       = get_metadata("version"),
+    description                   = get_metadata("description"),
+    long_description              = long_description,
+    long_description_content_type = "text/markdown",
+    url                           = get_metadata("url"),
+    author                        = get_metadata("author"),
+    author_email                  = get_metadata("author_email"),
+    maintainer                    = get_metadata("maintainer"),
+    maintainer_email              = get_metadata("maintainer_email"),
+    license                       = get_metadata("license"),
+    packages = ["gdpc"], # Note: subpackages must be listed explicitly
     install_requires=[
         "matplotlib",
         "more-itertools",
@@ -62,10 +62,10 @@ setup(
     ],
     keywords="GDMC, generative design, Minecraft, HTTP, development",
     project_urls={
-        "Bug Reports": "https://github.com/avdstaaij/gdpc/issues",
-        "Official Competition": "https://gendesignmc.engineering.nyu.edu",
-        "Chat about it on Discord": "https://discord.gg/V9MW65bD",
-        "Source": "https://github.com/avdstaaij/gdpc",
+        "Bug Reports":              "https://github.com/avdstaaij/gdpc/issues",
+        "Official Competition":     "https://gendesignmc.engineering.nyu.edu",
+        "Chat about it on Discord": "https://discord.gg/YwpPCRQWND",
+        "Source":                   "https://github.com/avdstaaij/gdpc",
     },
     zip_safe=False
 )
