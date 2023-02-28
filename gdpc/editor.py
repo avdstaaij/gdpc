@@ -269,30 +269,38 @@ class Editor:
         return view
 
 
-    def runCommand(self, command: str, syncWithBuffer=False):
+    def runCommand(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False):
         """Executes one or multiple Minecraft commands (separated by newlines).\n
         The leading "/" must be omitted.\n
         If buffering is enabled and <syncWithBuffer>=True, the command is deferred until after the
         next buffer flush.\n
-        The command is executed from the perspective self.transform, as far as this is possible.
-        Its excecution position is set to self.transform.offset, and its execution rotation is set
-        to self.transform.rotation (self.transform.flip is ignored).
-        For the effect that this has on passed coordinates, see
+        If <position> is provided, the command's execution position is set to <position>, where
+        <position> is interpreted as local to self.transform.
+        This means that, for example, the position "~ ~ ~" in the command will correspond to
+        <position>. Note however that any rotation or flip performed by self.transform is NOT
+        reflected in the command's execution context! This means that the use of local coordinate
+        offsets (e.g. "^1 ^2 ^3") is in general not safe.
+        For more details about relative and local command coordinates, see
         https://minecraft.fandom.com/wiki/Coordinates#Commands"""
-        self.runCommandGlobal(
-            "\n".join(
-                f"execute positioned {' '.join(str(c) for c in self.transform.translation)} rotated {self.transform.rotation * 90} 0 run {cmd}"
-                for cmd in command.splitlines()
-            ),
-            syncWithBuffer=syncWithBuffer
-        )
+        if position is not None:
+            position = self.transform * position
+        self.runCommandGlobal(command, position, syncWithBuffer)
 
 
-    def runCommandGlobal(self, command: str, syncWithBuffer=False):
+    def runCommandGlobal(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False):
         """Executes one or multiple Minecraft commands (separated by newlines), ignoring self.transform.\n
         The leading "/" must be omitted.\n
         If buffering is enabled and <syncWithBuffer>=True, the command is deferred until after the
-        next buffer flush."""
+        next buffer flush.\n
+        If <position> is provided, the command's execution position is set to <position>, ignoring
+        self.transform.
+        This means that, for example, the position "~ ~ ~" in the command will correspond to
+        <position>.
+        For more details about relative and local command coordinates, see
+        https://minecraft.fandom.com/wiki/Coordinates#Commands"""
+        if position is not None:
+            command = f"execute positioned {' '.join(str(c) for c in position)} run {command}"
+
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
             return

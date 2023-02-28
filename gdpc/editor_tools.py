@@ -110,20 +110,18 @@ def placeContainerBlock(
         if len(item) == 2:
             item = list(item)
             item.append(1)
-        editor.runCommandGlobal(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item[1]} {item[2]}", syncWithBuffer=True)
+        editor.runCommandGlobal(f"item replace block ~ ~ ~ container.{index} with {item[1]} {item[2]}", position=globalPosition, syncWithBuffer=True)
 
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1):
     """Sets the item at <itemPosition> in the container block at <position> to the item with id <item>."""
-    globalPosition = editor.transform * position
-
-    blockId = editor.getBlockGlobal(globalPosition).id
+    blockId = editor.getBlock(position).id
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(blockId)
     if inventorySize is None:
         raise ValueError(f'The block at {tuple(position)} is "{blockId}", which is not a known container block.')
 
     index = positionToInventoryIndex(itemPosition, inventorySize)
-    editor.runCommandGlobal(f"item replace block {' '.join(str(c) for c in globalPosition)} container.{index} with {item} {amount}", syncWithBuffer=True)
+    editor.runCommand(f"item replace block ~ ~ ~ container.{index} with {item} {amount}", position=position, syncWithBuffer=True)
 
 
 def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike):
