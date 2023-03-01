@@ -256,3 +256,9 @@ system.
 
 - Lots of bugs have been fixed, though no doubt many new ones have been
   introduced as well. ;)
+
+
+# Older versions
+
+For older versions, see
+https://github.com/nikigawlik/gdmc_http_client_python/releases
