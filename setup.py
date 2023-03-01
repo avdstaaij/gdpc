@@ -62,10 +62,11 @@ setup(
     ],
     keywords="GDMC, generative design, Minecraft, HTTP, development",
     project_urls={
-        "Bug Reports":              "https://github.com/avdstaaij/gdpc/issues",
-        "Official Competition":     "https://gendesignmc.engineering.nyu.edu",
-        "Chat about it on Discord": "https://discord.gg/YwpPCRQWND",
-        "Source":                   "https://github.com/avdstaaij/gdpc",
+        "Bug Reports":                  "https://github.com/avdstaaij/gdpc/issues",
+        "Changelog":                    "https://github.com/avdstaaij/gdpc/blob/master/CHANGELOG.md",
+        "Official Competition Website": "https://gendesignmc.engineering.nyu.edu",
+        "Chat about it on Discord":     "https://discord.gg/YwpPCRQWND",
+        "Source":                       "https://github.com/avdstaaij/gdpc",
     },
     zip_safe=False
 )
