@@ -1,4 +1,4 @@
-# 6.0.0
+# 6.0.0 (Transformative Update)
 
 Starting from this version, GDPC will use
 [semantic versioning](https://semver.org/).
