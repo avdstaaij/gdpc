@@ -8,6 +8,23 @@ You need to be playing in a Minecraft world with the mod installed to use the fr
 The latest version of GDPC is compatible with GDMC-HTTP versions **>=1.0.0, <2.0.0**.
 
 
+## Quick example
+
+```python
+from gdpc import Editor, Block, geometry
+
+editor = Editor(buffering=True)
+
+# Get a block
+block = editor.getBlock((0,48,0))
+
+# Place a block
+editor.placeBlock((0,80,0), Block("stone"))
+
+# Build a cube
+geometry.placeCuboid(editor, (0,80,2), (2,82,4), Block("oak_planks"))
+```
+
 ## What's the difference between GDMC, GDMC-HTTP and GDPC?
 
 These abbreviations are all very similar, but stand for different things.
