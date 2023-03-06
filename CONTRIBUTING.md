@@ -21,6 +21,8 @@ If you're new to GitHub pull requests, here's a very basic guide:
 3. Commit your code on the feature branch.
 4. Open a pull request for your feature branch. If you've recently committed code to it, there should be a button for this in the main GDPC repository. You can also use the *Contribute -> Open pull request* button in your fork. Direct the pull request to GDPC's `dev` branch by clicking on the *base: master* button and choosing the `dev` branch.
 
+To test your additions, you may want to run code that imports from `gdpc` (like the examples). To make `gdpc` "point" to your local version (instead of the latest published version), you can install your local version in *editable mode*: `pip install -e .`. Note that this will replace the version of `gdpc` in your current environment, so it is recommended to use some kind of virtual environment when doing this. Using `pip install -r requirements-dev` will install fixed versions of all dependencies, install gdpc in editable mode, and install some additional packages that are only needed for development.
+
 
 ## Discussion
 
