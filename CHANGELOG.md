@@ -1,5 +1,7 @@
 # 6.0.1
 
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
+
 **Fixes:**
 - Set `scikit-image` minimum version to `0.19.0`.
 
