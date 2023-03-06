@@ -1,3 +1,9 @@
+# 6.0.1
+
+**Fixes:**
+- Set `scikit-image` minimum version to `0.19.0`.
+
+
 # 6.0.0 (Transformative Update)
 
 Starting from this version, GDPC will use
