@@ -3,3 +3,6 @@
 # Install gdpc itself in editable mode, so that it can be found by the tests
 # and the examples
 -e .
+
+build==0.10.0
+twine==4.0.2
