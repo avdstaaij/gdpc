@@ -663,7 +663,7 @@ class Box:
         pointArray = np.array(points)
         minPoint = np.min(pointArray, axis=0)
         maxPoint = np.max(pointArray, axis=0)
-        return Rect(minPoint, maxPoint - minPoint + 1)
+        return Box(minPoint, maxPoint - minPoint + 1)
 
     def toRect(self):
         """Returns this Box's XZ-plane as a Rect"""
