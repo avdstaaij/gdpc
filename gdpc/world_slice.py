@@ -289,7 +289,7 @@ class WorldSlice:
 
     def getBiome(self, position: Vec3iLike):
         """Returns the namespaced id of the biome at local <position>.\n
-        If <position> is contained in this WorldSlice, returns an empty string.\n
+        If <position> is not contained in this WorldSlice, returns an empty string.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
         biome of <position>'s group."""
         return self.getBiomeGlobal(ivec3(*position) + addY(self._rect.offset))
@@ -297,7 +297,7 @@ class WorldSlice:
 
     def getBiomeCountsInChunkGlobal(self, position: Vec3iLike):
         """Returns a dict of biomes in the same chunk as the global <position>.\n
-        If <position> is contained in this WorldSlice, returns None.\n
+        If <position> is not contained in this WorldSlice, returns None.\n
         Minecraft stores biomes in groups of 4x4x4 blocks. The returned dict maps the namespaced id
         of a biome to the number of groups with that biome in the chunk."""
         chunkSection = self._getChunkSectionGlobal(position)
@@ -312,7 +312,7 @@ class WorldSlice:
 
     def getBiomeCountsInChunk(self, position: Vec3iLike):
         """Returns a dict of biomes in the same chunk as the local <position>.\n
-        If <position> is contained in this WorldSlice, returns None.\n
+        If <position> is not contained in this WorldSlice, returns None.\n
         Minecraft stores biomes in groups of 4x4x4 blocks. The returned dict maps the namespaced id
         of a biome to the number of groups with that biome in the chunk."""
         return self.getBiomeCountsInChunkGlobal(ivec3(*position) + addY(self._rect.offset))
@@ -320,12 +320,12 @@ class WorldSlice:
 
     def getPrimaryBiomeInChunkGlobal(self, position: Vec3iLike):
         """Returns the most prevalent biome in the same chunk as the global <position>.\n
-        If <position> is contained in this WorldSlice, returns None."""
+        If <position> is not contained in this WorldSlice, returns None."""
         foundBiomes = self.getBiomeCountsInChunkGlobal(position)
         biome: str = max(foundBiomes.keys(), key=foundBiomes.get)
         return biome
 
     def getPrimaryBiomeInChunk(self, position: Vec3iLike):
         """Returns the most prevalent biome in the same chunk as the local <position>.\n
-        If <position> is contained in this WorldSlice, returns None."""
+        If <position> is not contained in this WorldSlice, returns None."""
         return self.getPrimaryBiomeInChunkGlobal(ivec3(*position) + addY(self._rect.offset))
