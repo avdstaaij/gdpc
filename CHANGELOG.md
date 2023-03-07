@@ -1,3 +1,12 @@
+# 6.0.2
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
+
+**Fixes:**
+- Added missing "not"s to some WorldSlice docstrings.
+- Fixed some broken `Box` functions.
+
+
 # 6.0.1
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
