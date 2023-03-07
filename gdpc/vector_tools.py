@@ -631,7 +631,7 @@ class Box:
 
     def dilated(self, dilation: int = 1):
         """Returns a copy of this Box, morphologically dilated by [dilation]"""
-        return Rect(self._offset - dilation, self._size + dilation*2)
+        return Box(self._offset - dilation, self._size + dilation*2)
 
     def erode(self, erosion: int = 1):
         """Morphologically erodes this box by [erosion]"""
