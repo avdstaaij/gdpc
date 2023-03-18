@@ -1075,6 +1075,23 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, 
         yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
 
 
+def sphere(center: Vec3iLike, radius: int, hollow: bool = False):
+    """Yields the points of a sphere centered around 
+    <center> with a radius of <radius>"""
+    x0, y0, z0 = center  # Unpack the center coordinates
+    center = np.array(center)
+    points = []
+    for x in range(x0 - radius, x0 + radius + 1):
+        for y in range(y0 - radius, y0 + radius + 1):
+            for z in range(z0 - radius, z0 + radius + 1):
+                point = np.array((x, y, z))
+                dist = np.linalg.norm(point - center)
+
+                if (not hollow and dist < radius) or (hollow and dist < radius and dist >= radius - 1):
+                    points.append((x, y, z))
+    return points
+
+
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
     """Yields the neighbors of [point] within [bounding_rect].\n
     Useful for pathfinding."""

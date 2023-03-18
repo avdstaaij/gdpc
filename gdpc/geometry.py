@@ -3,7 +3,7 @@
 
 from typing import Optional, Sequence, Union, List, Iterable
 
-from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D
+from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D, sphere
 from .block import Block, transformedBlockOrPalette
 from .editor import Editor
 
@@ -127,3 +127,14 @@ def placeFittingCylinder(
     corner2 = editor.transform * corner2
     block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
     editor.placeBlockGlobal(fittingCylinder(corner1, corner2, axis, tube, hollow), block, replace)
+
+def placeSphere(
+    editor: Editor,
+    center: Vec3iLike,
+    radius: int,
+    block: Union[Block, Sequence[Block]],
+    hollow: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):
+    """Place a spherical shape centered on xyz with radius"""
+    editor.placeBlockGlobal(sphere(center, radius, hollow), block, replace)
