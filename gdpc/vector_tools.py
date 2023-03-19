@@ -1075,9 +1075,36 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, 
         yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
 
 
-def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_thickness: int = 1) -> list[Vec3iLike]:
+def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_thickness: int = 1):
     """Yields the points of an ellipsoid centered around 
     <center> with radii <radii>."""
+
+    def are_points_in_line(center: Vec3iLike, point: Vec3iLike):
+        """Checks if two 3D points are the same on 2 or more axis"""
+        count = 0
+        for i in range(3):
+            if point[i] == center[i]:
+                count += 1
+        return count >= 2
+    
+    def generate_octants(center: Vec3iLike, point: Vec3iLike):
+        """Generates octants for a point around a center"""
+        x0, y0, z0 = center
+        x, y, z = point
+        dx, dy, dz = x - x0, y - y0, z - z0
+
+        octants = [
+            ivec3(x0 + dx, y0 + dy, z0 + dz),
+            ivec3(x0 - dx, y0 + dy, z0 + dz),
+            ivec3(x0 + dx, y0 - dy, z0 + dz),
+            ivec3(x0 - dx, y0 - dy, z0 + dz),
+            ivec3(x0 + dx, y0 + dy, z0 - dz),
+            ivec3(x0 - dx, y0 + dy, z0 - dz),
+            ivec3(x0 + dx, y0 - dy, z0 - dz),
+            ivec3(x0 - dx, y0 - dy, z0 - dz),
+        ]
+
+        return octants
 
     # Extract the x, y, and z coordinates of the center point
     x0, y0, z0 = center
@@ -1086,38 +1113,25 @@ def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_th
     # Compute the inner radii of the hollow ellipsoid (only valid if hollow is True)
     inner_a, inner_b, inner_c = a - wall_thickness, b - wall_thickness, c - wall_thickness
 
-    # Initialize an empty list to store the coordinates of the ellipsoid
-    points = []
-
-    def point_in_line_with_center(center: Vec3iLike, point: Vec3iLike):
-        count = 0
-        for i in range(3):
-            if point[i] == center[i]:
-                count += 1
-        return count >= 2
-
     # Loop over all points within the bounding box of the ellipsoid
-    for x in range(x0 - a, x0 + a + 1):
-        for y in range(y0 - b, y0 + b + 1):
-            for z in range(z0 - c, z0 + c + 1):
+    for x in range(x0, x0 + a + 1):
+        for y in range(y0, y0 + b + 1):
+            for z in range(z0, z0 + c + 1):
 
                 # Compute the ellipsoid equation for the current point
                 e_val = ((x - x0) ** 2 / a ** 2) + ((y - y0) ** 2 / b ** 2) + ((z - z0) ** 2 / c ** 2)
                 # Check if it is in-line with the center point
-                in_line_with_center = point_in_line_with_center(center, (x, y, z))
+                in_line_with_center = are_points_in_line(center, (x, y, z))
 
-                # If the point satisfies the ellipsoid equation, add it to the list of coordinates
+                # If the point satisfies the ellipsoid equation, yield it for all octants
                 if e_val <= 1 and (not in_line_with_center or e_val < 1):
                     if hollow:
                         # If the ellipsoid is hollow, compute the inner ellipsoid equation for the current point
                         inner_e_val = ((x - x0) ** 2 / inner_a ** 2) + ((y - y0) ** 2 / inner_b ** 2) + ((z - z0) ** 2 / inner_c ** 2)
-                        
                         if inner_e_val > 1 or (in_line_with_center and inner_e_val == 1):
-                            points.append((x, y, z))
+                            yield from generate_octants(center, ivec3(x, y, z))
                     else:
-                        points.append((x, y, z))
-
-    return points
+                        yield from generate_octants(center, ivec3(x, y, z))
 
 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1):

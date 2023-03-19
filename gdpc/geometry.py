@@ -138,7 +138,7 @@ def placeSphere(
     replace: Optional[Union[str, List[str]]] = None
 ):
     """Place a spherical shape centered on xyz with radius"""
-    editor.placeBlockGlobal(ellipsoid(center, (radius, radius, radius), hollow), block, replace)
+    editor.placeBlock(ellipsoid(center, (radius, radius, radius), hollow), block, replace)
 
 
 def placeEllipsoid(
@@ -150,4 +150,4 @@ def placeEllipsoid(
     replace: Optional[Union[str, List[str]]] = None
 ):
     """Place a ellipsoid shape centered on xyz with radii"""
-    editor.placeBlockGlobal(ellipsoid(center, radii, hollow), block, replace)
+    editor.placeBlock(ellipsoid(center, radii, hollow), block, replace)
