@@ -1,10 +1,16 @@
+# 6.0.3
+
+**Fixes:**
+- Fixed a bug when constructing a `Model` without blocks. (Thanks [Phobos97](https://github.com/Phobos97)!)
+- Fixed off-by-one in `Rect`/`Box` `.corners`.
+
 # 6.0.2
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
 
 **Fixes:**
 - Added missing "not"s to some WorldSlice docstrings.
-- Fixed some broken `Box` functions.
+- Fixed some broken `Box` functions. (Thanks [MTTVDN](https://github.com/MTTVDN)!)
 
 
 # 6.0.1
