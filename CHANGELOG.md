@@ -1,8 +1,11 @@
 # 6.0.3
 
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
+
 **Fixes:**
 - Fixed a bug when constructing a `Model` without blocks. (Thanks [Phobos97](https://github.com/Phobos97)!)
 - Fixed off-by-one in `Rect`/`Box` `.corners`.
+
 
 # 6.0.2
 
