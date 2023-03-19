@@ -408,7 +408,7 @@ class Rect:
         """Yields this Rect's corner points"""
         return (
             self._offset + sum(subset)
-            for subset in powerset([ivec2(self._size.x, 0), ivec2(0, self._size.y)])
+            for subset in powerset([ivec2(self._size.x-1, 0), ivec2(0, self._size.y-1)])
         )
 
     def contains(self, vec: Vec2iLike):
@@ -587,7 +587,7 @@ class Box:
         """Yields this Box's corner points"""
         return [
             self._offset + sum(subset)
-            for subset in powerset([ivec3(self._size.x, 0, 0), ivec3(0, self._size.y, 0), ivec3(0, 0, self._size.z)])
+            for subset in powerset([ivec3(self._size.x-1, 0, 0), ivec3(0, self._size.y-1, 0), ivec3(0, 0, self._size.z-1)])
         ]
 
     def contains(self, vec: Vec3iLike):
