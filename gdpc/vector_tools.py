@@ -1075,20 +1075,48 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, 
         yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
 
 
-def sphere(center: Vec3iLike, radius: int, hollow: bool = False):
-    """Yields the points of a sphere centered around 
-    <center> with a radius of <radius>"""
-    x0, y0, z0 = center  # Unpack the center coordinates
-    center = np.array(center)
-    points = []
-    for x in range(x0 - radius, x0 + radius + 1):
-        for y in range(y0 - radius, y0 + radius + 1):
-            for z in range(z0 - radius, z0 + radius + 1):
-                point = np.array((x, y, z))
-                dist = np.linalg.norm(point - center)
+def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_thickness: int = 1) -> list[Vec3iLike]:
+    """Yields the points of an ellipsoid centered around 
+    <center> with radii <radii>."""
 
-                if (not hollow and dist < radius) or (hollow and dist < radius and dist >= radius - 1):
-                    points.append((x, y, z))
+    # Extract the x, y, and z coordinates of the center point
+    x0, y0, z0 = center
+    # Extract the radii of the ellipsoid along the x, y, and z axes
+    a, b, c = radii
+    # Compute the inner radii of the hollow ellipsoid (only valid if hollow is True)
+    inner_a, inner_b, inner_c = a - wall_thickness, b - wall_thickness, c - wall_thickness
+
+    # Initialize an empty list to store the coordinates of the ellipsoid
+    points = []
+
+    def point_in_line_with_center(center: Vec3iLike, point: Vec3iLike):
+        count = 0
+        for i in range(3):
+            if point[i] == center[i]:
+                count += 1
+        return count >= 2
+
+    # Loop over all points within the bounding box of the ellipsoid
+    for x in range(x0 - a, x0 + a + 1):
+        for y in range(y0 - b, y0 + b + 1):
+            for z in range(z0 - c, z0 + c + 1):
+
+                # Compute the ellipsoid equation for the current point
+                e_val = ((x - x0) ** 2 / a ** 2) + ((y - y0) ** 2 / b ** 2) + ((z - z0) ** 2 / c ** 2)
+                # Check if it is in-line with the center point
+                in_line_with_center = point_in_line_with_center(center, (x, y, z))
+
+                # If the point satisfies the ellipsoid equation, add it to the list of coordinates
+                if e_val <= 1 and (not in_line_with_center or e_val < 1):
+                    if hollow:
+                        # If the ellipsoid is hollow, compute the inner ellipsoid equation for the current point
+                        inner_e_val = ((x - x0) ** 2 / inner_a ** 2) + ((y - y0) ** 2 / inner_b ** 2) + ((z - z0) ** 2 / inner_c ** 2)
+                        
+                        if inner_e_val > 1 or (in_line_with_center and inner_e_val == 1):
+                            points.append((x, y, z))
+                    else:
+                        points.append((x, y, z))
+
     return points
 
 
