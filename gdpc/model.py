@@ -21,8 +21,8 @@ class Model:
     def __init__(self, size: Vec3iLike, blocks: Optional[List[Optional[Block]]] = None):
         """Constructs a Model of size [size], optionally filled with [blocks]."""
         self._size = ivec3(*size)
+        volume = self._size.x * self._size.y * self._size.z
         if blocks is not None:
-            volume = self._size.x * self._size.y * self._size.z
             if len(blocks) != volume:
                 raise ValueError("The number of blocks should be equal to size[0] * size[1] * size[2]")
             self._blocks = copy(blocks)
