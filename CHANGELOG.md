@@ -1,3 +1,14 @@
+# 6.1.0
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
+
+**Additions:**
+- Added sphere and ellipsoid functions to `vector_tools` and `geometry`. (Thanks [cmoyates](https://github.com/cmoyates)!)
+
+**Fixes:**
+- Fixed in-buffer block overwrites not going to the end of the buffer, which could sometimes cause incorrect behavior.
+
+
 # 6.0.3
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
