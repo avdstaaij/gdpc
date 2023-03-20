@@ -478,6 +478,7 @@ class Editor:
         Returns whether placement succeeded."""
         if len(self._buffer) >= self.bufferLimit:
             self.flushBuffer()
+        self._buffer.pop(position, None) # Ensure the new block is added at the *end* of the buffer.
         self._buffer[position] = block
         return True
 
