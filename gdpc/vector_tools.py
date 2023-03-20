@@ -1186,6 +1186,282 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False):
     center = (corner1_ + corner2_) // 2
     return sphere(center, diameter, hollow)
 
+def archRound2D(
+    corner1: Vec3iLike,
+    corner2: Vec3iLike,
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+):
+    """Yields the points for the largest 2D round arch that fits between <corner1> and <corner2>."""
+
+    # Verify inputs
+    assert 0 <= spanAxis <= 2, "spanAxis must be 0, 1 or 2"
+    assert 0 <= riseAxis <= 2, "riseAxis must be 0, 1 or 2"
+    assert spanAxis != riseAxis, "spanAxis and riseAxis must be different"
+
+    # Convert corners to ivec3
+    corner1 = ivec3(*corner1)
+    corner2 = ivec3(*corner2)
+
+    # Get depth axis
+    depthAxis = 3 - spanAxis - riseAxis
+
+    # Verify that the arch is 2D
+    assert corner1[depthAxis] == corner2[depthAxis]
+
+    # Get span and rise
+    span = abs(corner1[spanAxis] - corner2[spanAxis])
+    rise = abs(corner1[riseAxis] - corner2[riseAxis])
+    # Get half of the span
+    halfSpan = span // 2
+
+    # Get the position on the span and rise axes for the center point
+    centerSpan = min(corner1[spanAxis], corner2[spanAxis]) + halfSpan
+    centerRise = max(corner1[riseAxis], corner2[riseAxis]) if inverted else min(corner1[riseAxis], corner2[riseAxis])
+
+    # Sett the current span and rise for the beginning of the calculation
+    currentSpan = 0
+    currentRise = rise
+
+    # Initial decision parameter of region 1
+    d1 = (rise * rise) - (halfSpan * halfSpan * rise) + (0.25 * halfSpan * halfSpan)
+    dSpan = 2 * rise * rise * currentSpan
+    dRise = 2 * halfSpan * halfSpan * currentRise
+
+    # Set up variables to correct for the arches being inverted or having even spans
+    inverter = -1 if inverted else 1
+    evenCorrection = 1 if span % 2 == 1 else 0
+
+    # For region 1
+    while dSpan < dRise:
+
+        # Appending points based on 2-way symmetry
+        point = [0, 0, 0]
+        point[riseAxis] = currentRise * inverter + centerRise
+        point[depthAxis] = corner1[depthAxis]
+        point[spanAxis] = currentSpan + centerSpan + evenCorrection
+        yield ivec3(point)
+        point[spanAxis] = -currentSpan + centerSpan
+        yield ivec3(point)
+
+        # Checking and updating value of
+        # decision parameter based on algorithm
+        if d1 < 0:
+            currentSpan += 1
+            dSpan = dSpan + (2 * rise * rise)
+            d1 = d1 + dSpan + (rise * rise)
+        else:
+            currentSpan += 1
+            currentRise -= 1
+            dSpan = dSpan + (2 * rise * rise)
+            dRise = dRise - (2 * halfSpan * halfSpan)
+            d1 = d1 + dSpan - dRise + (rise * rise)
+
+    # Decision parameter of region 2
+    d2 = (
+        ((rise * rise) * ((currentSpan + 0.5) * (currentSpan + 0.5)))
+        + ((halfSpan * halfSpan) * ((currentRise - 1) * (currentRise - 1)))
+        - (halfSpan * halfSpan * rise * rise)
+    )
+
+    # Plotting points of region 2
+    while currentRise >= 0:
+
+        # Appending points based on 2-way symmetry
+        point = [0, 0, 0]
+        point[riseAxis] = currentRise * inverter + centerRise
+        point[depthAxis] = corner1[depthAxis]
+        point[spanAxis] = currentSpan + centerSpan + evenCorrection
+        yield ivec3(point)
+        point[spanAxis] = -currentSpan + centerSpan
+        yield ivec3(point)
+
+        # Checking and updating parameter
+        # value based on algorithm
+        if d2 > 0:
+            currentRise -= 1
+            dRise = dRise - (2 * halfSpan * halfSpan)
+            d2 = d2 + (halfSpan * halfSpan) - dRise
+        else:
+            currentRise -= 1
+            currentSpan += 1
+            dSpan = dSpan + (2 * rise * rise)
+            dRise = dRise - (2 * halfSpan * halfSpan)
+            d2 = d2 + dSpan - dRise + (halfSpan * halfSpan)
+
+def archRound3D(
+    corner1: Vec3iLike,
+    corner2: Vec3iLike,
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+):
+    """Yields the points for the largest 3D round arch that fits between <corner1> and <corner2>."""
+
+    # Convert the corners to ivec3
+    corner1 = ivec3(*corner1)
+    corner2 = ivec3(*corner2)
+
+    # Get the depth axis, difference in depth, and min depth
+    depthAxis = 3 - spanAxis - riseAxis
+    depth = abs(corner1[depthAxis] - corner2[depthAxis])
+    minDepth = min(corner1[depthAxis], corner2[depthAxis])
+
+    # Set up a temp corner2 at the depth of corner1
+    tempCorner2 = [0,0,0]
+    tempCorner2[spanAxis] = corner2[spanAxis]
+    tempCorner2[riseAxis] = corner2[riseAxis]
+    tempCorner2[depthAxis] = corner1[depthAxis]
+
+    # Get the points for the 2D arch
+    points2D = archRound2D(corner1, tempCorner2, spanAxis, riseAxis, inverted)
+
+    # For each of the points in the 2D arch
+    for point2D in points2D:
+        # For each int in the difference of depth
+        for i in range(depth + 1):
+            # Yield a point with the 2D span and rise, but at the new depth
+            point = [0,0,0]
+            point[spanAxis] = point2D[spanAxis]
+            point[riseAxis] = point2D[riseAxis]
+            point[depthAxis] = i + minDepth
+            yield ivec3(point)
+
+def archParabolic2D(
+    corner1: Tuple[int, int],
+    corner2: Tuple[int, int],
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+):
+    """Yields the points for the largest 2D parabolic arch that fits between <corner1> and <corner2>."""
+
+    # Verify inputs
+    assert 0 <= spanAxis <= 2, "spanAxis must be 0, 1 or 2"
+    assert 0 <= riseAxis <= 2, "riseAxis must be 0, 1 or 2"
+    assert spanAxis != riseAxis, "spanAxis and riseAxis must be different"
+
+    # Convert the corners to ivec3
+    corner1 = ivec3(*corner1)
+    corner2 = ivec3(*corner2)
+
+    # Get the depth axis
+    depthAxis = 3 - spanAxis - riseAxis
+
+    # Verify that the arch is 2D
+    assert corner1[depthAxis] == corner2[depthAxis]
+
+    # Get the span
+    span = abs(corner1[spanAxis] - corner2[spanAxis])
+
+    # Get the position on the span and rise axes for the vertex of the parabola
+    vertexSpan = math.ceil(min(corner1[spanAxis], corner2[spanAxis]) + span / 2)
+    vertexRise = min(corner1[riseAxis], corner2[riseAxis]) if inverted else max(corner1[riseAxis], corner2[riseAxis])
+
+    # Get the cutoffs for the span and rise axes
+    spanCutoff = max(corner1[spanAxis], corner2[spanAxis])
+    riseCutoff = max(corner1[riseAxis], corner2[riseAxis]) if inverted else min(corner1[riseAxis], corner2[riseAxis])
+
+    # Calculate "a" for use in the parabolic equation
+    a = (
+        (riseCutoff / ((corner1[spanAxis] - vertexSpan) * (corner1[spanAxis] - corner2[spanAxis]))) + 
+        (riseCutoff / ((corner2[spanAxis] - vertexSpan) * (corner2[spanAxis] - corner1[spanAxis]))) + 
+        (vertexRise / ((vertexSpan - corner1[spanAxis]) * (vertexSpan - corner2[spanAxis])))
+    )
+
+    # Based on the parabolic equation: y = a(x - h)^2 + k solving for y
+    def getRiseDelta(initRise: int, span: int, a: float, h: int, k: int):
+        temp = span - h
+        temp = temp * temp 
+        temp = temp * a
+        temp = temp + k
+        return abs(initRise - temp)
+
+    # Based on the parabolic equation: y = a(x - h)^2 + k solving for x
+    def getSpanDelta(initSpan: int, rise: int, a: float, h: int, k: int):
+        temp = rise - k
+        temp = temp / a
+        temp = math.sqrt(temp)
+        temp = temp + h
+        return abs(initSpan - temp)
+    
+    # Set up a list to contain points from the span pass
+    spanPassPoints = []
+    # Set up variables to correct for the arches being inverted or having even spans
+    inverter = -1 if inverted else 1
+    evenCorrection = 1 if span % 2 == 1 else 0
+
+    # Starting at the vertex on the span axis and increasing until the cutoff
+    tempSpan = vertexSpan
+    while (spanCutoff - tempSpan) >= 0:
+        # Yield 2 points (reflected) at the appropriate rise
+        dRise = math.floor(getRiseDelta(vertexRise, tempSpan, a, vertexSpan, vertexRise))
+        point = [0, 0, 0]
+        point[riseAxis] = vertexRise - (dRise * inverter)
+        point[depthAxis] = corner1[depthAxis]
+        point[spanAxis] = tempSpan
+        yield ivec3(point)
+        spanPassPoints.append(point)
+        point[spanAxis] = vertexSpan - (tempSpan - vertexSpan) - evenCorrection
+        yield ivec3(point)
+        spanPassPoints.append(point)
+        tempSpan += 1
+
+    # Starting at the vertex on the rise axis and incrementing until the cutoff
+    tempRise = vertexRise
+    riseStep = int(abs(riseCutoff - vertexRise) / (riseCutoff - vertexRise))
+    while riseStep * (riseCutoff - tempRise) >= 0:
+        # If the point wasn't already found in the span pass
+        if not any(point[riseAxis] == tempRise for point in spanPassPoints):
+            # Yield 2 points (reflected) at the appropriate span
+            dSpan = math.floor(getSpanDelta(vertexSpan, tempRise, a, vertexSpan, vertexRise))
+            point = [0, 0, 0]
+            point[riseAxis] = tempRise
+            point[depthAxis] = corner1[depthAxis]
+            point[spanAxis] = vertexSpan + dSpan
+            yield ivec3(point)
+            point[spanAxis] = vertexSpan - dSpan - evenCorrection
+            yield ivec3(point)
+        tempRise += riseStep
+
+def archParabolic3D(
+    corner1: Vec3iLike,
+    corner2: Vec3iLike,
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+):
+    """Yields the points for the largest 2D parabolic arch that fits between <corner1> and <corner2>."""
+
+    # Convert the corners to ivec3
+    corner1 = ivec3(*corner1)
+    corner2 = ivec3(*corner2)
+
+    # Get the depth axis, difference in depth, and min depth
+    depthAxis = 3 - spanAxis - riseAxis
+    depth = abs(corner1[depthAxis] - corner2[depthAxis])
+    minDepth = min(corner1[depthAxis], corner2[depthAxis])
+
+    # Set up a temp corner2 at the depth of corner1
+    tempCorner2 = [0,0,0]
+    tempCorner2[spanAxis] = corner2[spanAxis]
+    tempCorner2[riseAxis] = corner2[riseAxis]
+    tempCorner2[depthAxis] = corner1[depthAxis]
+
+    # Get the points for the 2D arch
+    points2D = archParabolic2D(corner1, tempCorner2, spanAxis, riseAxis, inverted)
+
+    # For each of the points in the 2D arch
+    for point2D in points2D:
+        # For each int in the difference of depth
+        for i in range(depth + 1):
+            # Yield a point with the 2D span and rise, but at the new depth
+            point = [0,0,0]
+            point[spanAxis] = point2D[spanAxis]
+            point[riseAxis] = point2D[riseAxis]
+            point[depthAxis] = i + minDepth
+            yield ivec3(point)
 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
     """Yields the neighbors of [point] within [bounding_rect].\n

@@ -3,7 +3,7 @@
 
 from typing import Optional, Sequence, Union, List, Iterable
 
-from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, fittingEllipsoid, fittingSphere, line3D, lineSequence3D, ellipsoid
+from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, fittingEllipsoid, fittingSphere, line3D, lineSequence3D, ellipsoid, archRound2D, archRound3D, archParabolic2D, archParabolic3D
 from .block import Block, transformedBlockOrPalette
 from .editor import Editor
 
@@ -181,3 +181,67 @@ def placeFittingEllipsoid(
     corner2 = editor.transform * corner2
     block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
     editor.placeBlockGlobal(fittingEllipsoid(corner1, corner2, hollow), block, replace)
+
+def placeArchRound2D(
+    editor: Editor,
+    corner1: Vec3iLike, corner2: Vec3iLike,
+    block: Union[Block, Sequence[Block]],
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):  
+    """Place blocks in the shape of the largest 2D round arch that fits between <corner1> and <corner2>."""
+    # Transform only the key points instead of all points
+    corner1 = editor.transform * corner1
+    corner2 = editor.transform * corner2
+    block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal(archRound2D(corner1, corner2, spanAxis, riseAxis, inverted), block, replace)
+
+def placeArchRound3D(
+    editor: Editor,
+    corner1: Vec3iLike, corner2: Vec3iLike,
+    block: Union[Block, Sequence[Block]],
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):  
+    """Place blocks in the shape of the largest 3D round arch that fits between <corner1> and <corner2>."""
+    # Transform only the key points instead of all points
+    corner1 = editor.transform * corner1
+    corner2 = editor.transform * corner2
+    block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal(archRound3D(corner1, corner2, spanAxis, riseAxis, inverted), block, replace)
+
+def placeArchParabolic2D(
+    editor: Editor,
+    corner1: Vec3iLike, corner2: Vec3iLike,
+    block: Union[Block, Sequence[Block]],
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):  
+    """Place blocks in the shape of the largest 2D parabolic arch that fits between <corner1> and <corner2>."""
+    # Transform only the key points instead of all points
+    corner1 = editor.transform * corner1
+    corner2 = editor.transform * corner2
+    block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal(archParabolic2D(corner1, corner2, spanAxis, riseAxis, inverted), block, replace)
+
+def placeArchRound3D(
+    editor: Editor,
+    corner1: Vec3iLike, corner2: Vec3iLike,
+    block: Union[Block, Sequence[Block]],
+    spanAxis: int = 0,
+    riseAxis: int = 1,
+    inverted: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):  
+    """Place blocks in the shape of the largest 3D parabolic arch that fits between <corner1> and <corner2>."""
+    # Transform only the key points instead of all points
+    corner1 = editor.transform * corner1
+    corner2 = editor.transform * corner2
+    block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal(archParabolic3D(corner1, corner2, spanAxis, riseAxis, inverted), block, replace)
