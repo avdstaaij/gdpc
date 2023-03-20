@@ -3,7 +3,7 @@
 
 from typing import Optional, Sequence, Union, List, Iterable
 
-from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, line3D, lineSequence3D, ellipsoid
+from .vector_tools import Vec2iLike, Vec3iLike, Rect, Box, cylinder, fittingCylinder, fittingEllipsoid, fittingSphere, line3D, lineSequence3D, ellipsoid
 from .block import Block, transformedBlockOrPalette
 from .editor import Editor
 
@@ -141,6 +141,21 @@ def placeSphere(
     editor.placeBlock(ellipsoid(center, (diameter, diameter, diameter), hollow), block, replace)
 
 
+def placeFittingSphere(
+    editor: Editor,
+    corner1: Vec3iLike, corner2: Vec3iLike,
+    block: Union[Block, Sequence[Block]],
+    hollow: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):
+    """Place blocks in the shape of the largest sphere that fits between <corner1> and <corner2>."""
+    # Transform only the key points instead of all points
+    corner1 = editor.transform * corner1
+    corner2 = editor.transform * corner2
+    block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal(fittingSphere(corner1, corner2, hollow), block, replace)
+
+
 def placeEllipsoid(
     editor: Editor,
     center: Vec3iLike,
@@ -151,3 +166,18 @@ def placeEllipsoid(
 ):
     """Place blocks in the shape of an ellipsoid with the specified properties."""
     editor.placeBlock(ellipsoid(center, diameters, hollow), block, replace)
+
+
+def placeFittingEllipsoid(
+    editor: Editor,
+    corner1: Vec3iLike, corner2: Vec3iLike,
+    block: Union[Block, Sequence[Block]],
+    hollow: bool = False,
+    replace: Optional[Union[str, List[str]]] = None
+):
+    """Place blocks in the shape of the largest ellipsoid that fits between <corner1> and <corner2>."""
+    # Transform only the key points instead of all points
+    corner1 = editor.transform * corner1
+    corner2 = editor.transform * corner2
+    block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
+    editor.placeBlockGlobal(fittingEllipsoid(corner1, corner2, hollow), block, replace)

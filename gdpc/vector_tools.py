@@ -926,10 +926,10 @@ def circle(center: Vec2iLike, diameter: int, filled=False):
 
 def fittingCircle(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
     """Yields the points of the largest circle that fits between <corner1> and <corner2>.\n
-    The circle is centered in the larger axis."""
-    _corner1, _corner2 = orderedCorners2D(corner1, corner2)
-    diameter = min(_corner2.x - _corner1.x, _corner2.y - _corner1.y) + 1
-    return circle((_corner1 + _corner2) // 2, diameter, filled)
+    The circle will be centered in the larger axis."""
+    corner1_, corner2_ = orderedCorners2D(corner1, corner2)
+    diameter = min(corner2_ - corner1_) + 1
+    return circle((corner1_ + corner2_) // 2, diameter, filled)
 
 
 def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False):
@@ -1162,6 +1162,29 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False):
                     # If a point is part of the shell, yield it for all octants
                     if shell:
                         yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
+
+
+def fittingEllipsoid(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False):
+    """Yields the points of the largest ellipsoid that fits between <corner1> and <corner2>."""
+    corner1_, corner2_ = orderedCorners3D(corner1, corner2)
+    diameters = corner2_ - corner1_ + 1
+    center = (corner1_ + corner2_) // 2
+    return ellipsoid(center, diameters, hollow)
+
+
+def sphere(center: Vec3iLike, diameter: int, hollow: bool = False):
+    """Yields the points of a sphere centered on <center> with diameter <diameter>.\n
+    If <diameter> is even, <center> will be the lower center point in every axis."""
+    return ellipsoid(center, (diameter, diameter, diameter), hollow)
+
+
+def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False):
+    """Yields the points of the largest sphere that fits between <corner1> and <corner2>.\n
+    The circle will be centered in the non-minimum axes."""
+    corner1_, corner2_ = orderedCorners3D(corner1, corner2)
+    diameter = min(corner2_ - corner1_) + 1
+    center = (corner1_ + corner2_) // 2
+    return sphere(center, diameter, hollow)
 
 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
