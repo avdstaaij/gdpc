@@ -1022,7 +1022,7 @@ def fittingEllipse(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
 
 def cylinder(baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: int, axis=1, tube=False, hollow=False):
     """Yields the points from the specified cylinder.\n
-    If <diameter> is even, <center> will be the bottom left center point.\n
+    If a <diameter> is even, <center> will be the lower center point in that axis.\n
     <tube> has precedence over <hollow>."""
 
     diameters:  ivec2 = ivec2(diameters) if isinstance(diameters, int) else ivec2(*diameters)
@@ -1076,8 +1076,8 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, 
 
 
 def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False):
-    """Yields the points of an ellipsoid centered around
-    <center> with radii <radii>."""
+    """Yields the points of an ellipsoid centered on <center> with diameters <diameters>.\n
+    If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis."""
 
     # Convert the center and diameters to ivec3
     center: ivec3 = ivec3(*center)
@@ -1143,22 +1143,22 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False):
                     else:
                         yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
 
-    # If the ellipsoid should be hollow 
+    # If the ellipsoid should be hollow
     if hollow:
         # Iterate through every point in the array, except the outer faces
         for x in range(solid_points.shape[0] - 1):
             for y in range(solid_points.shape[1] - 1):
                 for z in range(solid_points.shape[2] - 1):
 
-                    # A point is considered part of the "shell" if it meets the following conditions: (Thanks to @Jan on discord)
-                    # It is part of the solid ellipsoid
-                    # At least one of it's adjacent points isn't (we only have to check 3/6 because of octants)
+                    # A point is considered part of the "shell" if it meets the following conditions: (Thanks to @Jandhi#5234 on discord)
+                    # - It is part of the solid ellipsoid
+                    # - At least one of it's adjacent points isn't (we only have to check 3/6 because of octants)
                     shell = solid_points[x, y, z] and (
                         not solid_points[x + 1, y, z] or
                         not solid_points[x, y + 1, z] or
                         not solid_points[x, y, z + 1]
                     )
-                    
+
                     # If a point is part of the shell, yield it for all octants
                     if shell:
                         yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))

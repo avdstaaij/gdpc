@@ -110,7 +110,7 @@ def placeCylinder(
     axis=1, tube=False, hollow=False,
     replace: Optional[Union[str, List[str]]] = None
 ):
-    """Place a cylindric shape centered on xyz with height and radius."""
+    """Place blocks in the shape of a cylinder with the specified properties."""
     editor.placeBlock(cylinder(baseCenter, diameters, length, axis, tube, hollow), block, replace)
 
 
@@ -121,7 +121,7 @@ def placeFittingCylinder(
     axis=1, tube=False, hollow=False,
     replace: Optional[Union[str, List[str]]] = None
 ):
-    """Place a cylindric shape that fills the entire region."""
+    """Place blocks in the shape of the largest cylinder that fits between <corner1> and <corner2>."""
     # Transform only the key points instead of all points
     corner1 = editor.transform * corner1
     corner2 = editor.transform * corner2
@@ -137,7 +137,7 @@ def placeSphere(
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
 ):
-    """Place a spherical shape centered on xyz with radius"""
+    """Places blocks in the shape of a sphere with the specified properties."""
     editor.placeBlock(ellipsoid(center, (diameter, diameter, diameter), hollow), block, replace)
 
 
@@ -149,5 +149,5 @@ def placeEllipsoid(
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
 ):
-    """Place a ellipsoid shape centered on xyz with diameters"""
+    """Place blocks in the shape of an ellipsoid with the specified properties."""
     editor.placeBlock(ellipsoid(center, diameters, hollow), block, replace)
