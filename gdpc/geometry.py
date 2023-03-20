@@ -132,22 +132,22 @@ def placeFittingCylinder(
 def placeSphere(
     editor: Editor,
     center: Vec3iLike,
-    radius: int,
+    diameter: int,
     block: Union[Block, Sequence[Block]],
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
 ):
     """Place a spherical shape centered on xyz with radius"""
-    editor.placeBlock(ellipsoid(center, (radius, radius, radius), hollow), block, replace)
+    editor.placeBlock(ellipsoid(center, (diameter, diameter, diameter), hollow), block, replace)
 
 
 def placeEllipsoid(
     editor: Editor,
     center: Vec3iLike,
-    radii: Vec3iLike,
+    diameters: Vec3iLike,
     block: Union[Block, Sequence[Block]],
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
 ):
-    """Place a ellipsoid shape centered on xyz with radii"""
-    editor.placeBlock(ellipsoid(center, radii, hollow), block, replace)
+    """Place a ellipsoid shape centered on xyz with diameters"""
+    editor.placeBlock(ellipsoid(center, diameters, hollow), block, replace)

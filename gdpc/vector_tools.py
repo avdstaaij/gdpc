@@ -1075,9 +1075,16 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, 
         yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
 
 
-def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_thickness: int = 1):
-    """Yields the points of an ellipsoid centered around 
+def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False):
+    """Yields the points of an ellipsoid centered around
     <center> with radii <radii>."""
+
+    # Convert the center and diameters to ivec3
+    center: ivec3 = ivec3(*center)
+    diameters: ivec3 = ivec3(*diameters)
+
+    # Calculate the correction
+    e = 1 - (diameters % 2)
 
     def are_points_in_line(center: Vec3iLike, point: Vec3iLike):
         """Checks if two 3D points are the same on 2 or more axis"""
@@ -1086,7 +1093,7 @@ def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_th
             if point[i] == center[i]:
                 count += 1
         return count >= 2
-    
+
     def generate_octants(center: Vec3iLike, point: Vec3iLike):
         """Generates octants for a point around a center"""
         x0, y0, z0 = center
@@ -1094,14 +1101,14 @@ def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_th
         dx, dy, dz = x - x0, y - y0, z - z0
 
         octants = [
-            ivec3(x0 + dx, y0 + dy, z0 + dz),
-            ivec3(x0 - dx, y0 + dy, z0 + dz),
-            ivec3(x0 + dx, y0 - dy, z0 + dz),
-            ivec3(x0 - dx, y0 - dy, z0 + dz),
-            ivec3(x0 + dx, y0 + dy, z0 - dz),
-            ivec3(x0 - dx, y0 + dy, z0 - dz),
-            ivec3(x0 + dx, y0 - dy, z0 - dz),
-            ivec3(x0 - dx, y0 - dy, z0 - dz),
+            ivec3(x0 + e.x + dx, y0 + e.y + dy, z0 + e.z + dz),
+            ivec3(x0       - dx, y0 + e.y + dy, z0 + e.z + dz),
+            ivec3(x0 + e.x + dx, y0       - dy, z0 + e.z + dz),
+            ivec3(x0       - dx, y0       - dy, z0 + e.z + dz),
+            ivec3(x0 + e.x + dx, y0 + e.y + dy, z0       - dz),
+            ivec3(x0       - dx, y0 + e.y + dy, z0       - dz),
+            ivec3(x0 + e.x + dx, y0       - dy, z0       - dz),
+            ivec3(x0       - dx, y0       - dy, z0       - dz),
         ]
 
         return octants
@@ -1109,29 +1116,52 @@ def ellipsoid(center: Vec3iLike, radii: Vec3iLike, hollow: bool = False, wall_th
     # Extract the x, y, and z coordinates of the center point
     x0, y0, z0 = center
     # Extract the radii of the ellipsoid along the x, y, and z axes
-    a, b, c = radii
-    # Compute the inner radii of the hollow ellipsoid (only valid if hollow is True)
-    inner_a, inner_b, inner_c = a - wall_thickness, b - wall_thickness, c - wall_thickness
+    rx, ry, rz = ((diameters) // 2) + (1 - e)
+
+    solid_points = np.zeros((rx + 2, ry + 2, rz + 2), dtype=bool)
 
     # Loop over all points within the bounding box of the ellipsoid
-    for x in range(x0, x0 + a + 1):
-        for y in range(y0, y0 + b + 1):
-            for z in range(z0, z0 + c + 1):
+    for x in range(solid_points.shape[0]):
+        for y in range(solid_points.shape[1]):
+            for z in range(solid_points.shape[2]):
 
                 # Compute the ellipsoid equation for the current point
-                e_val = ((x - x0) ** 2 / a ** 2) + ((y - y0) ** 2 / b ** 2) + ((z - z0) ** 2 / c ** 2)
+                e_val = (
+                    (x ** 2 / rx**2)
+                    + (y ** 2 / ry**2)
+                    + (z ** 2 / rz**2)
+                )
                 # Check if it is in-line with the center point
-                in_line_with_center = are_points_in_line(center, (x, y, z))
+                in_line_with_center = are_points_in_line(center, (x + x0, y + y0, z + z0))
 
-                # If the point satisfies the ellipsoid equation, yield it for all octants
+                # If the point satisfies the ellipsoid equation
                 if e_val <= 1 and (not in_line_with_center or e_val < 1):
+                    # If it should be hollow, add the point to the point array
                     if hollow:
-                        # If the ellipsoid is hollow, compute the inner ellipsoid equation for the current point
-                        inner_e_val = ((x - x0) ** 2 / inner_a ** 2) + ((y - y0) ** 2 / inner_b ** 2) + ((z - z0) ** 2 / inner_c ** 2)
-                        if inner_e_val > 1 or (in_line_with_center and inner_e_val == 1):
-                            yield from generate_octants(center, ivec3(x, y, z))
+                        solid_points[x, y, z] = True
+                    # Otherwise, yield it for all octants
                     else:
-                        yield from generate_octants(center, ivec3(x, y, z))
+                        yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
+
+    # If the ellipsoid should be hollow 
+    if hollow:
+        # Iterate through every point in the array, except the outer faces
+        for x in range(solid_points.shape[0] - 1):
+            for y in range(solid_points.shape[1] - 1):
+                for z in range(solid_points.shape[2] - 1):
+
+                    # A point is considered part of the "shell" if it meets the following conditions: (Thanks to @Jan on discord)
+                    # It is part of the solid ellipsoid
+                    # At least one of it's adjacent points isn't (we only have to check 3/6 because of octants)
+                    shell = solid_points[x, y, z] and (
+                        not solid_points[x + 1, y, z] or
+                        not solid_points[x, y + 1, z] or
+                        not solid_points[x, y, z + 1]
+                    )
+                    
+                    # If a point is part of the shell, yield it for all octants
+                    if shell:
+                        yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
 
 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1):
