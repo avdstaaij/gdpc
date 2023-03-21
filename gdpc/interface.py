@@ -266,6 +266,35 @@ def placeStructure(structureFile, position: ivec3, mirror: Optional[str] = None,
     return response.json()
 
 
+def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+    """Generate NBT structure file from an area in the world.
+
+    Returns a string of bytes which can be saved into an .nbt file which can be placed using tools such as the
+    POST /structure endpoint in GDMC-HTTP or the in-game minecraft:structure_block.
+
+    Setting the <includeEntities> to True will attach all entities present in the given area at the moment of calling
+    getStructure to the resulting file. Meaning that saving a house in a Minecraft village will include the NPC
+    living inside it. Note that when placing this structure using GDMC-HTTP, the includeEntities parameter needs to
+    be set to True for these entities to be placed into the world together with the blocks making up the structure.
+    """
+    url = f"{host}/structure"
+    x, y, z = position
+    dx, dy, dz = size
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'dx': dx,
+        'dy': dy,
+        'dz': dz,
+        'dimension': dimension,
+        'entities': includeEntities,
+    }
+
+    response = _request(method="GET", url=url, params=parameters, retries=retries, timeout=timeout)
+    return response.content
+
+
 def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the Minecraft version as a string."""
     return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text
