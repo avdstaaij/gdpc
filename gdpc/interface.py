@@ -230,6 +230,36 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
+def placeStructure(structureFile, position: ivec3, mirror: Optional[str] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+    """Places an NBT structure file into the world.
+    """
+    url = f"{host}/structure"
+    x, y, z = position
+    mirror = mirror if mirror == 'x' or mirror == 'z' else None
+    rotate = (rotate % 4) if isinstance(rotate, int) else None
+    pivotX, pivotY, pivotZ = (None, None, None) if pivot is None else pivot
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'mirror': mirror,
+        'rotate': rotate,
+        'pivotx': pivotX,
+        'pivoty': pivotY,
+        'pivotz': pivotZ,
+        'dimension': dimension,
+        'entities': includeEntities,
+    }
+    if customFlags != "":
+        parameters['customFlags'] = customFlags
+    else:
+        parameters['doBlockUpdates'] = doBlockUpdates
+        parameters['spawnDrops'] = spawnDrops
+
+    response = _request(method="POST", url=url, data=structureFile, params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
 def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the Minecraft version as a string."""
     return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text
