@@ -232,6 +232,12 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
 
 def placeStructure(structureFile, position: ivec3, mirror: Optional[str] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places an NBT structure file into the world.
+
+    <structureFile> a string of bytes derived from an .nbt file. These files can be generated in various ways, such
+    as using the in-game minecraft:structure_block or the GET /structure endpoint in GDMC-HTTP.
+
+    This endpoint has a large number of parameters, where only <structureFile> and <position> are required.
+    See the GDMC HTTP API documentation for more information about these parameters.
     """
     url = f"{host}/structure"
     x, y, z = position
