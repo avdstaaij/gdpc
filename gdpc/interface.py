@@ -230,7 +230,7 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
-def placeStructure(structureFile, position: ivec3, mirror: Optional[str] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeStructure(structureFile, position: Vec3iLike, mirror: Optional[str] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places an NBT structure file into the world.
 
     <structureFile> a string of bytes derived from an .nbt file. These files can be generated in various ways, such
