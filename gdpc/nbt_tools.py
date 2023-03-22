@@ -1,6 +1,5 @@
 """Utilities for working with Minecraft's NBT and SNBT formats"""
-
-
+from pathlib import Path
 from nbt import nbt
 
 
@@ -31,3 +30,57 @@ def nbtToSnbt(tag: nbt.TAG) -> str:
     if isinstance(tag, nbt.TAG_String):
         return repr(tag.value)
     raise TypeError(f"Unrecognized tag type: {type(tag)}")
+
+
+def openNBTFile(
+    filePath: Path | str = None
+):
+    """Opens stored NBT file and returns it as a file object."""
+    if isinstance(filePath, str):
+        filePath = Path(filePath)
+
+    if not filePath.name.endswith('.nbt'):
+        filePath = filePath.with_suffix('.nbt')
+
+    return open(filePath, 'rb')
+
+
+def createByteStringFromNBTFile(
+    filePath: Path | str = None
+):
+    """Get string of bytes derived from stored NBT file."""
+    fileObject = openNBTFile(filePath)
+    rawBytes = fileObject.read()
+    fileObject.close()
+    return rawBytes
+
+
+def createNBTObjectFromNBTFile(
+    filePath: Path | str = None
+):
+    """Create NBT object from stored NBT file."""
+    fileObject = openNBTFile(filePath)
+    return nbt.NBTFile(fileobj=fileObject)
+
+
+def saveNBTFile(
+    filePath: Path | str = None,
+    fileContent: bytes | nbt.NBTFile = b''
+):
+    if isinstance(filePath, str):
+        filePath = Path(filePath)
+    elif filePath is None or not isinstance(filePath, Path):
+        raise TypeError(f"Not a valid path: {filePath}")
+    if not filePath.parent.exists():
+        raise FileNotFoundError(f"Save location does not exist: {filePath.parent}")
+
+    if not filePath.name.endswith('.nbt'):
+        filePath = filePath.with_suffix('.nbt')
+
+    with open(filePath, 'wb') as file:
+        if isinstance(fileContent, bytes):
+            file.write(fileContent)
+            file.close()
+        elif isinstance(fileContent, nbt.NBTFile):
+            fileContent.write_file(fileobj=file)
+        print(f"File saved to: {filePath}")
