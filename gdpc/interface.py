@@ -266,7 +266,7 @@ def placeStructure(structureFile, position: Vec3iLike, mirror: Optional[str] = N
     return response.json()
 
 
-def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST):
     """Generate NBT structure file from an area in the world.
 
     Returns a string of bytes which can be saved into an .nbt file which can be placed using tools such as the
@@ -290,8 +290,9 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
         'dimension': dimension,
         'entities': includeEntities,
     }
+    headers = {'Accept-Encoding': 'gzip'} if returnCompressed is True else None
 
-    response = _request(method="GET", url=url, params=parameters, retries=retries, timeout=timeout)
+    response = _request(method="GET", url=url, params=parameters, headers=headers, retries=retries, timeout=timeout)
     return response.content
 
 
