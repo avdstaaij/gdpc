@@ -846,6 +846,23 @@ BLOCKS = ORES | MINERAL_BLOCKS | SOILS | STONES | FLUIDS | LIQUID_BASED \
 INVENTORY_BLOCKS = {"minecraft:barrel",
                     "minecraft:hopper", } | CHESTS | SHULKER_BOXES
 
+# artificial blocks groupings
+ARTIFICIAL_WOODS = STRIPPED_TRUNKS | BARKED_WOODS
+ARTIFICIAL_DIRTS = {"minecraft:dirt_path", "minecraft:farmland", }
+ARTIFICIAL_PLANTS = FARMLAND_CROPS | FLOWER_POTS | {"minecraft:carved_pumpkin", }
+
+ARTIFICIAL_BUILDING_BLOCKS = STRUCTURE_BLOCKS | ARTIFICIAL_WOODS | SLIMELIKES | MINERAL_BLOCKS \
+                             | INFESTED_STONE_BRICKS | {"minecraft:polished_basalt", }
+
+ARTIFICIAL_CLIMBABLE = {"minecraft:ladder", "minecraft:scaffolding", }
+ARTIFICIAL_LIGHTS = {"minecraft:end_rod", "minecraft:jack_o_lantern", "minecraft:sea_lantern", }\
+                    | TORCHES | LANTERNS
+ARTIFICIAL_INTERACTABLE_BLOCKS = INTERACTABLE_BLOCKS - BEE_NESTS
+ARTIFICIAL_UTILITY_BLOCKS = ARTIFICIAL_INTERACTABLE_BLOCKS | ARTIFICIAL_LIGHTS | RAILS | REDSTONE | ARTIFICIAL_CLIMBABLE\
+                            | ARTIFICIAL_PLANTS | ARTIFICIAL_DIRTS
+
+ARTIFICIAL = ARTIFICIAL_BUILDING_BLOCKS | ARTIFICIAL_UTILITY_BLOCKS | CREATIVE_ONLY
+
 # ================================================= grouped by structure
 # underwater
 COLD_OCEAN_RUIN_BLOCKS = {"minecraft:gravel", "minecraft:sand",
