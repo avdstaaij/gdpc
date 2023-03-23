@@ -1264,7 +1264,7 @@ NETHER_FORTRESS_BLOCKS = {"minecraft:nether_bricks",
                           "minecraft:soul_sand", "minecraft:nether_wart",
                           "minecraft:chest", "minecraft:spawner", } \
                          | LAVAS
-BASTION_REMNANT_BLOCKS = {"minecraft:bgold_block",
+BASTION_REMNANT_BLOCKS = {"minecraft:gold_block",
                           "minecraft:blackstone",
                           "minecraft:blackstone_slab",
                           "minecraft:blackstone_stairs",
