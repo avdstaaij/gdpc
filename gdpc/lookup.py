@@ -156,6 +156,7 @@ REDSTONE_COLORS = {
 # alternative terms that directly correlate with a dye color
 CORAL_SHADES = {"tube": "blue", "brain": "pink", "bubble": "purple",
                 "fire": "red", "horn": "yellow", "dead": "grey"}
+NATURAL_TERRACOTTA_COLORS = {"white", "orange", "yellow", "light_gray", "brown", "red"}
 
 # TERMINOLOGY
 # words used to describe categorically similar types
@@ -317,6 +318,7 @@ INFESTED = variate(STONE_TYPES, "infested", isPrefix=True) \
            | INFESTED_STONE_BRICKS
 RAW_SANDSTONES = variate(SAND_TYPES, "sandstone")
 TERRACOTTAS = variate({None, } | set(DYE_COLORS), "terracotta")
+NATURAL_TERRACOTTAS = variate({None, } | set(NATURAL_TERRACOTTA_COLORS), "terracotta")
 OVERWORLD_STONES = {"minecraft:stone", } | IGNEOUS | OBSIDIAN_BLOCKS \
                    | COBBLESTONES | INFESTED | RAW_SANDSTONES | TERRACOTTAS
 
@@ -851,8 +853,9 @@ ARTIFICIAL_WOODS = STRIPPED_TRUNKS | BARKED_WOODS
 ARTIFICIAL_DIRTS = {"minecraft:dirt_path", "minecraft:farmland", }
 ARTIFICIAL_PLANTS = FARMLAND_CROPS | FLOWER_POTS | {"minecraft:carved_pumpkin", }
 
-ARTIFICIAL_BUILDING_BLOCKS = STRUCTURE_BLOCKS | ARTIFICIAL_WOODS | SLIMELIKES | MINERAL_BLOCKS \
-                             | INFESTED_STONE_BRICKS | {"minecraft:polished_basalt", }
+ARTIFICIAL_BUILDING_BLOCKS = (STRUCTURE_BLOCKS | ARTIFICIAL_WOODS | SLIMELIKES | MINERAL_BLOCKS
+                             | INFESTED_STONE_BRICKS | {"minecraft:polished_basalt", })\
+                             - ({"minecraft:red_sandstone", "minecraft:sandstone"} - NATURAL_TERRACOTTAS)
 
 ARTIFICIAL_CLIMBABLE = {"minecraft:ladder", "minecraft:scaffolding", }
 ARTIFICIAL_LIGHTS = {"minecraft:end_rod", "minecraft:jack_o_lantern", "minecraft:sea_lantern", }\
