@@ -964,14 +964,14 @@ PLAINS_VILLAGE_ARMORER_HOUSE = {"minecraft:cobblestone_stairs", "minecraft:cobbl
                                 "minecraft:brick", "minecraft:oak_stairs", "minecraft:oak_log", "minecraft:oak_slab"}
 PLAINS_VILLAGE_BIG_HOUSE = {"minecraft:cobblestone_stairs", "minecraft:white_bed", "minecraft:torch", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:oak_door", "minecraft:oak_planks", "minecraft:chest", "minecraft:oak_log"}
 PLAINS_VILLAGE_BUTCHER_SHOP = {"minecraft:cobblestone_wall", "minecraft:smooth_stone_slab", "minecraft:torch", "minecraft:cobblestone", "minecraft:dirt", "minecraft:glass_pane", "minecraft:hay_block", "minecraft:grass_block", "minecraft:oak_door",
-                               "minecraft:oak_pressure_plate", "minecraft:oak_stairs", "minecraft:oak_fence", "minecraft:smoker", "minecraft:oak_planks", "minecraft:oak_log", "potted_dandelion"}
+                               "minecraft:oak_pressure_plate", "minecraft:oak_stairs", "minecraft:oak_fence", "minecraft:smoker", "minecraft:oak_planks", "minecraft:oak_log", "minecraft:potted_dandelion"}
 PLAINS_VILLAGE_CARTOGRAPHER = {"minecraft:cartography_table", "minecraft:oak_pressure_plate", "minecraft:yellow_carpet", "minecraft:oak_stairs", "minecraft:chest", "minecraft:oak_log", "minecraft:oak_slab", "minecraft:torch", "minecraft:dandelion",
                                "minecraft:oak_fence", "minecraft:dirt_path", "minecraft:oak_trapdoor", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:oak_door", "minecraft:white_carpet", "minecraft:oak_planks", "minecraft:poppy",
                                "minecraft:grass_block"}
 PLAINS_VILLAGE_FISHER_COTTAGE = {"minecraft:cobblestone_stairs", "minecraft:oak_trapdoor", "minecraft:torch", "minecraft:crafting_table", "minecraft:dirt", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:oak_door", "minecraft:oak_stairs",
                                  "minecraft:oak_fence", "minecraft:oak_planks", "minecraft:barrel", "minecraft:chest", "minecraft:oak_log", "minecraft:grass_block", "minecraft:oak_slab"} | WATERS
 PLAINS_VILLAGE_FLETCHER_HOUSE = {"minecraft:dirt_path", "minecraft:torch", "minecraft:cobblestone", "minecraft:dirt", "minecraft:glass_pane", "minecraft:fletching_table", "minecraft:oak_door", "minecraft:grass_block", "minecraft:yellow_wool",
-                                 "minecraft:oak_stairs", "minecraft:oak_fence", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:oak_log", "potted_dandelion", "minecraft:oak_slab", "minecraft:yellow_carpet"}
+                                 "minecraft:oak_stairs", "minecraft:oak_fence", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:oak_log", "minecraft:potted_dandelion", "minecraft:oak_slab", "minecraft:yellow_carpet"}
 PLAINS_VILLAGE_FOUNTAIN = {"minecraft:dirt_path", "minecraft:cobblestone", "minecraft:bell", "minecraft:torch"} | WATERS
 PLAINS_VILLAGE_LAMP = {"minecraft:torch", "minecraft:stripped_oak_wood", "minecraft:oak_fence"}
 PLAINS_VILLAGE_FARM = {"minecraft:farmland", "minecraft:dirt", "minecraft:composter", "minecraft:oak_log", "minecraft:wheat", "minecraft:water"} | WATERS
@@ -1004,33 +1004,33 @@ DESERT_VILLAGE_ARMORER = {"minecraft:blast_furnace", "minecraft:torch", "minecra
                           "minecraft:smooth_sandstone_slab", "minecraft:stone_button", "minecraft:smooth_sandstone_stairs", "minecraft:granite_stairs"}
 DESERT_VILLAGE_BUTCHER_SHOP = {"minecraft:smooth_stone_slab", "minecraft:torch", "minecraft:terracotta", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:cut_sandstone", "minecraft:smooth_sandstone_slab", "minecraft:smoker",
                                "minecraft:grass_block", "minecraft:smooth_sandstone_stairs", "minecraft:sandstone_wall"}
-DESERT_VILLAGE_CARTOGRAPHER = {"minecraft:torch", "minecraft:cartography_table", "minecraft:jungle_door", "minecraft:smooth_sandstone", "potted_cactus", "minecraft:cut_sandstone", "minecraft:smooth_sandstone_slab",
+DESERT_VILLAGE_CARTOGRAPHER = {"minecraft:torch", "minecraft:cartography_table", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:potted_cactus", "minecraft:cut_sandstone", "minecraft:smooth_sandstone_slab",
                                "minecraft:smooth_sandstone_stairs"}
 DESERT_VILLAGE_FARM = {"minecraft:farmland", "minecraft:sand", "minecraft:composter", "minecraft:smooth_sandstone", "minecraft:hay_block", "minecraft:wheat", "minecraft:cut_sandstone", "minecraft:jungle_trapdoor", "minecraft:smooth_sandstone_stairs",
                        "minecraft:water"} | WATERS
-DESERT_VILLAGE_FISHER = {"minecraft:torch", "minecraft:sand", "minecraft:jungle_door", "minecraft:hay_block", "minecraft:smooth_sandstone", "potted_cactus", "minecraft:cut_sandstone", "minecraft:barrel", "potted_dead_bush",
+DESERT_VILLAGE_FISHER = {"minecraft:torch", "minecraft:sand", "minecraft:jungle_door", "minecraft:hay_block", "minecraft:smooth_sandstone", "minecraft:potted_cactus", "minecraft:cut_sandstone", "minecraft:barrel", "minecraft:potted_dead_bush",
                          "minecraft:smooth_sandstone_slab"} | WATERS
-DESERT_VILLAGE_FLETCHER_HOUSE = {"minecraft:torch", "minecraft:sand", "minecraft:fletching_table", "minecraft:jungle_door", "minecraft:smooth_sandstone", "potted_cactus", "minecraft:ladder", "minecraft:cut_sandstone",
+DESERT_VILLAGE_FLETCHER_HOUSE = {"minecraft:torch", "minecraft:sand", "minecraft:fletching_table", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:potted_cactus", "minecraft:ladder", "minecraft:cut_sandstone",
                                  "minecraft:smooth_sandstone_slab", "minecraft:smooth_sandstone_stairs", "minecraft:sandstone_wall"}
 DESERT_VILLAGE_LAMP = {"minecraft:torch", "minecraft:terracotta", "minecraft:cut_sandstone"}
-DESERT_VILLAGE_LIBRARY = {"minecraft:torch", "minecraft:sand", "minecraft:bookshelf", "minecraft:lectern", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:white_carpet", "potted_cactus", "minecraft:sandstone",
+DESERT_VILLAGE_LIBRARY = {"minecraft:torch", "minecraft:sand", "minecraft:bookshelf", "minecraft:lectern", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:white_carpet", "minecraft:potted_cactus", "minecraft:sandstone",
                           "minecraft:cut_sandstone", "minecraft:sandstone_slab", "minecraft:lime_carpet", "minecraft:smooth_sandstone_stairs"}
 DESERT_VILLAGE_MASON = {"minecraft:torch", "minecraft:sand", "minecraft:lime_terracotta", "minecraft:stonecutter", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:clay_ball", "minecraft:cut_sandstone",
                         "minecraft:smooth_sandstone_slab", "minecraft:white_glazed_terracotta", "minecraft:sandstone_wall"}
-DESERT_VILLAGE_HOUSE = {"minecraft:jungle_button", "minecraft:smooth_sandstone", "potted_cactus", "minecraft:ladder", "minecraft:sea_pickle", "potted_dead_bush", "minecraft:terracotta", "minecraft:sand", "minecraft:green_bed",
+DESERT_VILLAGE_HOUSE = {"minecraft:jungle_button", "minecraft:smooth_sandstone", "minecraft:potted_cactus", "minecraft:ladder", "minecraft:sea_pickle", "minecraft:potted_dead_bush", "minecraft:terracotta", "minecraft:sand", "minecraft:green_bed",
                         "minecraft:green_carpet", "minecraft:jungle_door", "minecraft:chest", "minecraft:smooth_sandstone_stairs", "minecraft:sandstone_stairs", "minecraft:torch", "minecraft:cyan_bed", "minecraft:sandstone",
                         "minecraft:sandstone_slab", "minecraft:cut_sandstone", "minecraft:chiseled_sandstone", "minecraft:smooth_sandstone_slab", "minecraft:sandstone_wall", "minecraft:crafting_table", "minecraft:cactus", "minecraft:lime_bed"}
 DESERT_VILLAGE_MEETING_POINT = {"minecraft:white_glazed_terracotta", "minecraft:torch", "minecraft:terracotta", "minecraft:sand", "minecraft:sandstone_wall", "minecraft:smooth_sandstone_stairs", "minecraft:smooth_sandstone", "minecraft:hay_block",
-                                "potted_cactus", "minecraft:cut_sandstone", "minecraft:sandstone_slab", "minecraft:smooth_sandstone_slab", "minecraft:bell", "minecraft:water", "potted_dead_bush"} | WATERS
-DESERT_VILLAGE_SHEPHERD_HOUSE = {"minecraft:torch", "minecraft:sand", "minecraft:loom", "minecraft:hay_block", "minecraft:jungle_door", "minecraft:smooth_sandstone", "potted_cactus", "minecraft:cut_sandstone", "minecraft:sandstone_slab",
+                                "minecraft:potted_cactus", "minecraft:cut_sandstone", "minecraft:sandstone_slab", "minecraft:smooth_sandstone_slab", "minecraft:bell", "minecraft:water", "minecraft:potted_dead_bush"} | WATERS
+DESERT_VILLAGE_SHEPHERD_HOUSE = {"minecraft:torch", "minecraft:sand", "minecraft:loom", "minecraft:hay_block", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:potted_cactus", "minecraft:cut_sandstone", "minecraft:sandstone_slab",
                                  "minecraft:sandstone_wall"} | WATERS
-DESERT_VILLAGE_TANNERY = {"minecraft:torch", "minecraft:terracotta", "minecraft:sand", "minecraft:jungle_door", "minecraft:smooth_sandstone", "potted_cactus", "minecraft:cut_sandstone", "minecraft:sandstone_slab", "minecraft:smooth_sandstone_slab",
+DESERT_VILLAGE_TANNERY = {"minecraft:torch", "minecraft:terracotta", "minecraft:sand", "minecraft:jungle_door", "minecraft:smooth_sandstone", "minecraft:potted_cactus", "minecraft:cut_sandstone", "minecraft:sandstone_slab", "minecraft:smooth_sandstone_slab",
                           "minecraft:smooth_sandstone_stairs", "minecraft:cauldron"}
-DESERT_VILLAGE_TEMPLE = {"minecraft:white_glazed_terracotta", "minecraft:torch", "minecraft:sand", "minecraft:smooth_sandstone_stairs", "minecraft:lime_glazed_terracotta", "minecraft:brewing_stand", "minecraft:smooth_sandstone", "potted_cactus",
+DESERT_VILLAGE_TEMPLE = {"minecraft:white_glazed_terracotta", "minecraft:torch", "minecraft:sand", "minecraft:smooth_sandstone_stairs", "minecraft:lime_glazed_terracotta", "minecraft:brewing_stand", "minecraft:smooth_sandstone", "minecraft:potted_cactus",
                          "minecraft:sandstone_slab", "minecraft:cut_sandstone", "minecraft:chest", "minecraft:smooth_sandstone_slab"}
 DESERT_VILLAGE_TOOL_SMITH = {"minecraft:torch", "minecraft:light_blue_glazed_terracotta", "minecraft:terracotta", "minecraft:sand", "minecraft:smooth_sandstone_stairs", "minecraft:jungle_button", "minecraft:jungle_door", "minecraft:smooth_sandstone",
-                             "potted_cactus", "minecraft:smooth_sandstone_slab", "minecraft:chest", "minecraft:smithing_table"}
-DESERT_VILLAGE_WEAPONSMITH = {"minecraft:torch", "minecraft:lava", "minecraft:furnace", "minecraft:cobblestone", "minecraft:smooth_sandstone_stairs", "minecraft:smooth_sandstone", "minecraft:grindstone", "minecraft:iron_bars", "potted_cactus",
+                             "minecraft:potted_cactus", "minecraft:smooth_sandstone_slab", "minecraft:chest", "minecraft:smithing_table"}
+DESERT_VILLAGE_WEAPONSMITH = {"minecraft:torch", "minecraft:lava", "minecraft:furnace", "minecraft:cobblestone", "minecraft:smooth_sandstone_stairs", "minecraft:smooth_sandstone", "minecraft:grindstone", "minecraft:iron_bars", "minecraft:potted_cactus",
                               "minecraft:cut_sandstone", "minecraft:sandstone_slab", "minecraft:chest", "minecraft:smooth_sandstone_slab", "minecraft:sandstone_wall"}
 DESERT_VILLAGE_BLOCKS = DESERT_VILLAGE_ANIMAL_PEN | DESERT_VILLAGE_ARMORER | DESERT_VILLAGE_BUTCHER_SHOP | DESERT_VILLAGE_CARTOGRAPHER | DESERT_VILLAGE_FARM | DESERT_VILLAGE_FISHER | DESERT_VILLAGE_FLETCHER_HOUSE | DESERT_VILLAGE_LAMP | DESERT_VILLAGE_LIBRARY | DESERT_VILLAGE_MASON | DESERT_VILLAGE_HOUSE | DESERT_VILLAGE_MEETING_POINT | DESERT_VILLAGE_SHEPHERD_HOUSE | DESERT_VILLAGE_TANNERY | DESERT_VILLAGE_TEMPLE | DESERT_VILLAGE_TOOL_SMITH | DESERT_VILLAGE_WEAPONSMITH
 SNOWY_VILLAGE_ANIMAL_PEN = {"minecraft:spruce_fence_gate", "minecraft:torch", "minecraft:stripped_spruce_log", "minecraft:dirt", "minecraft:snow_block", "minecraft:spruce_stairs", "minecraft:spruce_fence", "minecraft:snow", "minecraft:grass_block",
@@ -1092,7 +1092,7 @@ SAVANNA_VILLAGE_LIBRARY = {"minecraft:torch", "minecraft:acacia_log", "minecraft
 SAVANNA_VILLAGE_MASON = {"minecraft:torch", "minecraft:acacia_log", "minecraft:acacia_door", "minecraft:yellow_glazed_terracotta", "minecraft:stonecutter", "minecraft:acacia_stairs", "minecraft:dirt", "minecraft:glass_pane",
                          "minecraft:acacia_pressure_plate", "minecraft:acacia_planks", "minecraft:grass", "minecraft:clay_ball", "minecraft:acacia_fence", "minecraft:chest", "minecraft:grass_block"}
 SAVANNA_VILLAGE_HOUSE = {"minecraft:acacia_log", "minecraft:dirt", "minecraft:yellow_terracotta", "minecraft:acacia_planks", "minecraft:water", "minecraft:red_terracotta", "minecraft:acacia_stairs", "minecraft:orange_bed", "minecraft:acacia_slab",
-                         "minecraft:chest", "potted_dandelion", "minecraft:farmland", "minecraft:torch", "minecraft:acacia_pressure_plate", "minecraft:grass", "minecraft:brown_wall_banner", "minecraft:dirt_path", "minecraft:dirt_path",
+                         "minecraft:chest", "minecraft:potted_dandelion", "minecraft:farmland", "minecraft:torch", "minecraft:acacia_pressure_plate", "minecraft:grass", "minecraft:brown_wall_banner", "minecraft:dirt_path", "minecraft:dirt_path",
                          "minecraft:acacia_door", "minecraft:crafting_table", "minecraft:glass_pane", "minecraft:acacia_fence", "minecraft:red_bed", "minecraft:acacia_wood", "minecraft:grass_block", "minecraft:wheat", "minecraft:tall_grass",
                          "minecraft:orange_terracotta"} | WATERS
 SAVANNA_VILLAGE_MEETING_POINT = {"minecraft:dirt_path", "minecraft:torch", "minecraft:acacia_log", "minecraft:acacia_stairs", "minecraft:dirt", "minecraft:yellow_terracotta", "minecraft:grass", "minecraft:brown_wall_banner",
@@ -1130,7 +1130,7 @@ TAIGA_VILLAGE_FARM = {"minecraft:cobblestone_stairs", "minecraft:cobblestone_wal
 TAIGA_VILLAGE_LIBRARY = {"minecraft:cobblestone_wall", "minecraft:purple_carpet", "minecraft:dirt", "minecraft:large_fern", "minecraft:spruce_door", "minecraft:cobblestone_stairs", "minecraft:torch", "minecraft:bookshelf", "minecraft:lectern",
                          "minecraft:spruce_trapdoor", "minecraft:dirt_path", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:red_carpet", "minecraft:fern", "minecraft:spruce_log", "minecraft:spruce_stairs", "minecraft:poppy",
                          "minecraft:grass_block"}
-TAIGA_VILLAGE_MASONS_HOUSE = {"minecraft:cobblestone_stairs", "minecraft:torch", "potted_spruce_sapling", "minecraft:stonecutter", "minecraft:cobblestone", "minecraft:dirt", "minecraft:glass_pane", "minecraft:spruce_fence", "minecraft:spruce_log",
+TAIGA_VILLAGE_MASONS_HOUSE = {"minecraft:cobblestone_stairs", "minecraft:torch", "minecraft:potted_spruce_sapling", "minecraft:stonecutter", "minecraft:cobblestone", "minecraft:dirt", "minecraft:glass_pane", "minecraft:spruce_fence", "minecraft:spruce_log",
                               "minecraft:spruce_door", "minecraft:spruce_planks", "minecraft:spruce_trapdoor", "minecraft:grass_block"}
 TAIGA_VILLAGE_HOUSE = {"minecraft:cobblestone_wall", "minecraft:purple_bed", "minecraft:dirt", "minecraft:spruce_door", "minecraft:blue_bed", "minecraft:spruce_planks", "minecraft:chest", "minecraft:spruce_slab", "minecraft:cobblestone_stairs",
                        "minecraft:torch", "minecraft:spruce_sign", "minecraft:bookshelf", "minecraft:spruce_trapdoor", "minecraft:furnace", "minecraft:spruce_pressure_plate", "minecraft:campfire", "minecraft:dirt_path", "minecraft:crafting_table",
@@ -1142,7 +1142,7 @@ TAIGA_VILLAGE_SHEPHERDS_HOUSE = {"minecraft:cobblestone_stairs", "minecraft:dirt
 TAIGA_VILLAGE_TANNERY = {"minecraft:cobblestone_stairs", "minecraft:torch", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:poppy", "minecraft:fern", "minecraft:spruce_log", "minecraft:spruce_door", "minecraft:large_fern",
                          "minecraft:chest", "minecraft:grass_block", "minecraft:cauldron", "minecraft:spruce_trapdoor"}
 TAIGA_VILLAGE_TEMPLE = {"minecraft:cobblestone_wall", "minecraft:purple_carpet", "minecraft:dirt", "minecraft:large_fern", "minecraft:brewing_stand", "minecraft:ladder", "minecraft:spruce_door", "minecraft:spruce_planks",
-                        "minecraft:cobblestone_stairs", "minecraft:torch", "minecraft:spruce_trapdoor", "potted_poppy", "minecraft:spruce_wood", "minecraft:dirt_path", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:spruce_fence",
+                        "minecraft:cobblestone_stairs", "minecraft:torch", "minecraft:spruce_trapdoor", "minecraft:potted_poppy", "minecraft:spruce_wood", "minecraft:dirt_path", "minecraft:cobblestone", "minecraft:glass_pane", "minecraft:spruce_fence",
                         "minecraft:spruce_log", "minecraft:poppy", "minecraft:grass_block"}
 TAIGA_VILLAGE_TOOL_SMITH = {"minecraft:cobblestone_stairs", "minecraft:dirt_path", "minecraft:torch", "minecraft:cobblestone", "minecraft:dirt", "minecraft:glass_pane", "minecraft:spruce_log", "minecraft:spruce_door", "minecraft:spruce_planks",
                             "minecraft:spruce_trapdoor", "minecraft:chest", "minecraft:grass_block", "minecraft:smithing_table"}
