@@ -502,7 +502,7 @@ LIFE = OVERWORLD_LIFE | NETHER_LIFE | END_LIFE | ANIMAL_PRODUCTS
 # decoration
 WOOLS = variate(DYE_COLORS, "wool")
 CARPETS = variate(DYE_COLORS, "carpet")
-BANNERS = variate(DYE_COLORS, "banner")
+BANNERS = variate(DYE_COLORS, "banner") | variate(DYE_COLORS, "wall_banner")
 BEDS = variate(DYE_COLORS, "bed")
 
 STAINED_GLASS_BLOCKS = variate(DYE_COLORS, "stained_glass")
@@ -694,7 +694,7 @@ STRUCTURE_BLOCKS = OVERWORLD_STRUCTURE_BLOCKS | NETHER_STRUCTURE_BLOCKS \
                    | END_STRUCTURE_BLOCKS
 
 # lights
-TORCHES = variate(FIRE_TYPES, "torch")
+TORCHES = variate(FIRE_TYPES, "torch") | variate(FIRE_TYPES, "wall_torch")
 LANTERNS = variate(FIRE_TYPES, "lantern")
 BLOCK_LIGHTS = {"minecraft:glowstone", "minecraft:jack_o_lantern",
                 "minecraft:sea_lantern", }
