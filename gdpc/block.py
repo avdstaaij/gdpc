@@ -97,13 +97,11 @@ class Block:
                 block.states[str(tag.name)] = str(tag.value)
 
         if blockEntityTag is not None:
-            blockEntityTag = deepcopy(blockEntityTag)
-            del blockEntityTag["x"]
-            del blockEntityTag["y"]
-            del blockEntityTag["z"]
-            del blockEntityTag["id"]
-            del blockEntityTag["keepPacked"]
-            block.data = nbtToSnbt(blockEntityTag)
+            cleanBlockEntityTag = nbt.TAG_Compound()
+            for tag in blockEntityTag.tags:
+                if tag.name not in {"x", "y", "z", "id", "keepPacked"}:
+                    cleanBlockEntityTag.tags.append(tag)
+            block.data = nbtToSnbt(cleanBlockEntityTag)
 
         return block
 
