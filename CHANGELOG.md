@@ -1,3 +1,11 @@
+# 6.1.1
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
+
+**Fixes:**
+- Fixed `Block.fromBlockStateTag()` -- and therefore, `WorldSlice.getBlock()` -- crashing when retrieving certain block entities.
+
+
 # 6.1.0
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
