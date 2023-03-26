@@ -242,7 +242,7 @@ def placeStructure(structureFile, position: Vec3iLike, mirror: Optional[str] = N
     url = f"{host}/structure"
     x, y, z = position
     mirror = mirror if mirror == 'x' or mirror == 'z' else None
-    rotate = (rotate % 4) if isinstance(rotate, int) else None
+    rotate = (rotate % 4) if rotate else None
     pivotX, pivotY, pivotZ = (None, None, None) if pivot is None else pivot
     parameters = {
         'x': x,
