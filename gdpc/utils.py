@@ -1,9 +1,8 @@
 """Various utilities that are not specific to GDPC"""
 
-
-from typing import TypeVar, Generic, Callable, Iterable, OrderedDict
+from typing import TypeVar, Generic, Callable, Iterable, OrderedDict, Union
 import time
-import sys
+from pathlib import Path
 
 import numpy as np
 import cv2
@@ -144,3 +143,15 @@ def visualizeMaps(*arrays, title="", normalize=True):
         plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
         plt.imshow(plt_image)
     plt.show()
+
+
+def readFileBytes(
+    filePath: Union[Path, str]
+) -> bytes:
+    """Opens stored file and returns it a string of bytes."""
+    if isinstance(filePath, str):
+        filePath = Path(filePath)
+    fileObject = open(filePath, 'rb')
+    rawBytes = fileObject.read()
+    fileObject.close()
+    return rawBytes

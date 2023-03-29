@@ -230,25 +230,30 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
-def placeStructure(structureFile, position: Vec3iLike, mirror: Optional[str] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
-    """Places an NBT structure file into the world.
+def placeStructure(structureBytes, position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+    """Places a structure defined using the Minecraft structure format in the world.
 
-    <structureFile> a string of bytes derived from an .nbt file. These files can be generated in various ways, such
-    as using the in-game minecraft:structure_block or the GET /structure endpoint in GDMC-HTTP.
+    <structureBytes> should be a string of bytes in the Minecraft structure file format, the format used by the
+    in-game structure blocks. You can extract structures in this format in various ways, such as using the
+    GET /structure endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
 
-    This endpoint has a large number of parameters, where only <structureFile> and <position> are required.
-    See the GDMC HTTP API documentation for more information about these parameters.
+    See the GDMC HTTP API documentation for more information about these parameters:
+    https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#place-nbt-structure-file-post-structure
     """
     url = f"{host}/structure"
     x, y, z = position
-    mirror = mirror if mirror == 'x' or mirror == 'z' else None
+    mirrorArg = None
+    if mirror[0]:
+        mirrorArg = 'x'
+    elif mirror[1]:
+        mirrorArg = 'z'
     rotate = (rotate % 4) if rotate else None
     pivotX, pivotY, pivotZ = (None, None, None) if pivot is None else pivot
     parameters = {
         'x': x,
         'y': y,
         'z': z,
-        'mirror': mirror,
+        'mirror': mirrorArg,
         'rotate': rotate,
         'pivotx': pivotX,
         'pivoty': pivotY,
@@ -262,18 +267,19 @@ def placeStructure(structureFile, position: Vec3iLike, mirror: Optional[str] = N
         parameters['doBlockUpdates'] = doBlockUpdates
         parameters['spawnDrops'] = spawnDrops
 
-    response = _request(method="POST", url=url, data=structureFile, params=parameters, retries=retries, timeout=timeout)
+    response = _request(method="POST", url=url, data=structureBytes, params=parameters, retries=retries, timeout=timeout)
     return response.json()
 
 
 def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST):
-    """Generate NBT structure file from an area in the world.
+    """Returns the specified area in the Minecraft structure file format (an NBT byte string).
 
-    Returns a string of bytes which can be saved into an .nbt file which can be placed using tools such as the
-    POST /structure endpoint in GDMC-HTTP or the in-game minecraft:structure_block.
+    The Minecraft structure file format is the format used by the in-game structure blocks. Structures in this format
+    are commonly saved in .nbt files, and can be placed using tools such as the POST /structure endpoint of GDMC-HTTP
+    or the aforementioned in-game structure blocks.
 
     Setting the <includeEntities> to True will attach all entities present in the given area at the moment of calling
-    getStructure to the resulting file. Meaning that saving a house in a Minecraft village will include the NPC
+    getStructure to the resulting data. Meaning that saving a house in a Minecraft village will include the NPC
     living inside it. Note that when placing this structure using GDMC-HTTP, the includeEntities parameter needs to
     be set to True for these entities to be placed into the world together with the blocks making up the structure.
     """
