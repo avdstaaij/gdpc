@@ -43,7 +43,7 @@ def parseNbtFile(
     return nbt.NBTFile(fileobj=fileObject)
 
 
-def saveNbtTFile(
+def saveNbtFile(
     filePath: Union[Path, str],
     data: Union[bytes, nbt.NBTFile]
 ):
