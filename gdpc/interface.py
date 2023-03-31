@@ -245,8 +245,7 @@ def placeStructure(structureBytes, position: Vec3iLike, mirror: Optional[Vec2iLi
     rotate = (rotate % 4) if rotate else None
     mirrorArg = None
     if mirror[0] and mirror[1]:
-        mirrorArg = 'z'
-        rotate = 1
+        rotate = (rotate + 2) % 4
     elif mirror[0]:
         mirrorArg = 'x'
     elif mirror[1]:
