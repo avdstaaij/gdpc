@@ -1,6 +1,6 @@
 """Utilities for working with Minecraft's NBT and SNBT formats"""
-
-
+from typing import Union
+from pathlib import Path
 from nbt import nbt
 
 
@@ -31,3 +31,30 @@ def nbtToSnbt(tag: nbt.TAG) -> str:
     if isinstance(tag, nbt.TAG_String):
         return repr(tag.value)
     raise TypeError(f"Unrecognized tag type: {type(tag)}")
+
+
+def parseNbtFile(
+    filePath: Union[Path, str]
+):
+    """Create NBT object from stored NBT file."""
+    if isinstance(filePath, str):
+        filePath = Path(filePath)
+    fileObject = open(filePath, 'rb')
+    return nbt.NBTFile(fileobj=fileObject)
+
+
+def saveNbtFile(
+    filePath: Union[Path, str],
+    data: Union[bytes, nbt.NBTFile]
+):
+    """Save string of bytes or NBTFile object to a file."""
+    if isinstance(filePath, str):
+        filePath = Path(filePath)
+
+    with open(filePath, 'wb') as file:
+        if isinstance(data, bytes):
+            file.write(data)
+            file.close()
+        elif isinstance(data, nbt.NBTFile):
+            data.write_file(fileobj=file)
+        print(f"File saved to: {filePath}")

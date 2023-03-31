@@ -230,6 +230,80 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
+def placeStructure(structureBytes, position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+    """Places a structure defined using the Minecraft structure format in the world.
+
+    <structureBytes> should be a string of bytes in the Minecraft structure file format, the format used by the
+    in-game structure blocks. You can extract structures in this format in various ways, such as using the
+    GET /structure endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
+
+    See the GDMC HTTP API documentation for more information about these parameters:
+    https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#place-nbt-structure-file-post-structure
+    """
+    url = f"{host}/structure"
+    x, y, z = position
+    rotate = (rotate % 4) if rotate else None
+    mirrorArg = None
+    if mirror[0] and mirror[1]:
+        rotate = (rotate + 2) % 4
+    elif mirror[0]:
+        mirrorArg = 'x'
+    elif mirror[1]:
+        mirrorArg = 'z'
+    pivotX, pivotY, pivotZ = (None, None, None) if pivot is None else pivot
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'mirror': mirrorArg,
+        'rotate': rotate,
+        'pivotx': pivotX,
+        'pivoty': pivotY,
+        'pivotz': pivotZ,
+        'dimension': dimension,
+        'entities': includeEntities,
+    }
+    if customFlags != "":
+        parameters['customFlags'] = customFlags
+    else:
+        parameters['doBlockUpdates'] = doBlockUpdates
+        parameters['spawnDrops'] = spawnDrops
+
+    response = _request(method="POST", url=url, data=structureBytes, params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
+def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST):
+    """Returns the specified area in the Minecraft structure file format (an NBT byte string).
+
+    The Minecraft structure file format is the format used by the in-game structure blocks. Structures in this format
+    are commonly saved in .nbt files, and can be placed using tools such as the POST /structure endpoint of GDMC-HTTP
+    or the aforementioned in-game structure blocks.
+
+    Setting the <includeEntities> to True will attach all entities present in the given area at the moment of calling
+    getStructure to the resulting data. Meaning that saving a house in a Minecraft village will include the NPC
+    living inside it. Note that when placing this structure using GDMC-HTTP, the includeEntities parameter needs to
+    be set to True for these entities to be placed into the world together with the blocks making up the structure.
+    """
+    url = f"{host}/structure"
+    x, y, z = position
+    dx, dy, dz = size
+    parameters = {
+        'x': x,
+        'y': y,
+        'z': z,
+        'dx': dx,
+        'dy': dy,
+        'dz': dz,
+        'dimension': dimension,
+        'entities': includeEntities,
+    }
+    headers = {'Accept-Encoding': 'gzip'} if returnCompressed is True else None
+
+    response = _request(method="GET", url=url, params=parameters, headers=headers, retries=retries, timeout=timeout)
+    return response.content
+
+
 def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the Minecraft version as a string."""
     return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text
