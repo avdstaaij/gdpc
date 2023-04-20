@@ -10,8 +10,10 @@ import time
 from urllib.parse import urlparse
 import logging
 import json
+import io
 
 from glm import ivec3
+from nbt import nbt
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
@@ -230,16 +232,25 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
-def placeStructure(structureBytes, position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places a structure defined using the Minecraft structure format in the world.
 
-    <structureBytes> should be a string of bytes in the Minecraft structure file format, the format used by the
+    <structureData> should be a string of bytes in the Minecraft structure file format, the format used by the
     in-game structure blocks. You can extract structures in this format in various ways, such as using the
     GET /structure endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
+    <structureData> can also be an instance of nbt.NBTFile. Using this library has the benefit of providing ways for
+    modifying data before placing it in Minecraft.
 
     See the GDMC HTTP API documentation for more information about these parameters:
     https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#place-nbt-structure-file-post-structure
     """
+    if isinstance(structureData, nbt.NBTFile):
+        # If data is an instance of NBTFile instead of bytes, write out the bytes representing an NBT file to a buffer.
+        outputBuffer = io.BytesIO()
+        structureData.write_file(buffer=outputBuffer)
+        structureData = outputBuffer.getvalue()
+        outputBuffer.close()
+
     url = f"{host}/structure"
     x, y, z = position
     rotate = (rotate % 4) if rotate else None
@@ -273,7 +284,7 @@ def placeStructure(structureBytes, position: Vec3iLike, mirror: Optional[Vec2iLi
         parameters['doBlockUpdates'] = doBlockUpdates
         parameters['spawnDrops'] = spawnDrops
 
-    response = _request(method="POST", url=url, data=structureBytes, params=parameters, retries=retries, timeout=timeout)
+    response = _request(method="POST", url=url, data=structureData, params=parameters, retries=retries, timeout=timeout)
     return response.json()
 
 
