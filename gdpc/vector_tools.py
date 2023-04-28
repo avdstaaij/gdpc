@@ -331,6 +331,9 @@ class Rect:
         self._offset = ivec2(*offset)
         self._size   = ivec2(*size)
 
+    def __hash__(self):
+        return hash((self.offset, self.size))
+
     def __repr__(self):
         return f"Rect({tuple(self._offset)}, {tuple(self._size)})"
 
@@ -508,6 +511,9 @@ class Box:
     def __init__(self, offset: Vec3iLike = (0,0,0), size: Vec3iLike = (0,0,0)):
         self._offset = ivec3(*offset)
         self._size   = ivec3(*size)
+
+    def __hash__(self):
+        return hash((self.offset, self.size))
 
     def __repr__(self):
         return f"Box({tuple(self._offset)}, {tuple(self._size)})"
