@@ -319,6 +319,17 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
     return response.content
 
 
+def getEntities(selector: str = None, includeData: Optional[bool] = False, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+    url = f'{host}/entities'
+    parameters = {
+        'selector': selector,
+        'dimension': dimension,
+        'includeData': includeData,
+    }
+    response = _request(method='GET', url=url, params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
 def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the Minecraft version as a string."""
     return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text
