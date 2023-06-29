@@ -1,9 +1,8 @@
 """Various vector utilities"""
 
 
-from typing import Sequence, Any, Iterable, List, Optional, Set, Tuple, Union
-from abc import ABC
-from numbers import Integral
+from typing import _ProtocolMeta, Iterator, Protocol, Any, Iterable, List, Optional, Set, Tuple, Union
+from abc import ABCMeta
 from dataclasses import dataclass
 import math
 
@@ -18,45 +17,42 @@ from .utils import nonZeroSign
 
 
 # ==================================================================================================
-# VecLike ABCs
+# VecLike Protocols
 # ==================================================================================================
 
+class Vec2LikeMeta(_ProtocolMeta):
+    """Metaclass that hooks into the metaclass of the Protocol to check that the vector contains two items."""
+    def __instancecheck__(cls: ABCMeta, instance: Any) -> bool:
+        return super().__instancecheck__(instance) and len(instance) == 3
 
-class Vec2iLike(ABC, Sequence[int]):
-    """An abstract base class. A class is a Vec2iLike if it acts like a sequence of two Integrals."""
-    @classmethod
-    def __subclasshook__(cls, C):
-        try:
-            return len(C) == 2 and all(isinstance(C[i], Integral) for i in range(2))
-        except TypeError:
-            return False
+class Vec3LikeMeta(_ProtocolMeta):
+    """Metaclass that hooks into the metaclass of the Protocol to check that the vector contains three items."""
+    def __instancecheck__(cls: ABCMeta, instance: Any) -> bool:
+        return super().__instancecheck__(instance) and len(instance) == 3
 
-class Vec3iLike(ABC, Sequence[int]):
-    """An abstract base class. A class is a Vec3iLike if it acts like a sequence of three Integrals."""
-    @classmethod
-    def __subclasshook__(cls, C):
-        try:
-            return len(C) == 3 and all(isinstance(C[i], Integral) for i in range(3))
-        except TypeError:
-            return False
+class Vec2iLike(Protocol, metaclass=Vec2LikeMeta):
+    """Protocol for a vector that contains two integers."""
+    def __getitem__(self, __i: int) -> int: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[int]: ...
 
-class Vec2bLike(ABC, Sequence[bool]):
-    """An abstract base class. A class is a Vec2bLike if it acts like a sequence of two bools."""
-    @classmethod
-    def __subclasshook__(cls, C):
-        try:
-            return len(C) == 2 and all(isinstance(C[i], bool) for i in range(2))
-        except TypeError:
-            return False
+class Vec3iLike(Protocol, metaclass=Vec3LikeMeta):
+    """Protocol for a vector that contains three integers."""
+    def __getitem__(self, __i: int) -> int: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[int]: ...
 
-class Vec3bLike(ABC, Sequence[bool]):
-    """An abstract base class. A class is a Vec3bLike if it acts like a sequence of three bools."""
-    @classmethod
-    def __subclasshook__(cls, C):
-        try:
-            return len(C) == 3 and all(isinstance(C[i], bool) for i in range(3))
-        except TypeError:
-            return False
+class Vec2bLike(Protocol, metaclass=Vec2LikeMeta):
+    """Protocol for a vector that contains two bools."""
+    def __getitem__(self, __i: int) -> bool: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[bool]: ...
+
+class Vec3bLike(Protocol, metaclass=Vec3LikeMeta):
+    """Protocol for a vector that contains three bools."""
+    def __getitem__(self, __i: int) -> bool: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[bool]: ...
 
 
 # ==================================================================================================
