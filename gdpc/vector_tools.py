@@ -23,7 +23,7 @@ from .utils import nonZeroSign
 class Vec2LikeMeta(_ProtocolMeta):
     """Metaclass that hooks into the metaclass of the Protocol to check that the vector contains two items."""
     def __instancecheck__(cls: ABCMeta, instance: Any) -> bool:
-        return super().__instancecheck__(instance) and len(instance) == 3
+        return super().__instancecheck__(instance) and len(instance) == 2
 
 class Vec3LikeMeta(_ProtocolMeta):
     """Metaclass that hooks into the metaclass of the Protocol to check that the vector contains three items."""
