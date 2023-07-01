@@ -1,7 +1,7 @@
 """Various vector utilities"""
 
 
-from typing import _ProtocolMeta, Iterator, Protocol, Any, Iterable, List, Optional, Set, Tuple, Union
+from typing import _ProtocolMeta, Iterator, Protocol, Any, Iterable, List, Optional, Set, Tuple, Union, runtime_checkable
 from abc import ABCMeta
 from dataclasses import dataclass
 import math
@@ -30,24 +30,28 @@ class Vec3LikeMeta(_ProtocolMeta):
     def __instancecheck__(cls: ABCMeta, instance: Any) -> bool:
         return super().__instancecheck__(instance) and len(instance) == 3
 
+@runtime_checkable
 class Vec2iLike(Protocol, metaclass=Vec2LikeMeta):
     """Protocol for a vector that contains two integers."""
     def __getitem__(self, __i: int) -> int: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
+@runtime_checkable
 class Vec3iLike(Protocol, metaclass=Vec3LikeMeta):
     """Protocol for a vector that contains three integers."""
     def __getitem__(self, __i: int) -> int: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
+@runtime_checkable
 class Vec2bLike(Protocol, metaclass=Vec2LikeMeta):
     """Protocol for a vector that contains two bools."""
     def __getitem__(self, __i: int) -> bool: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[bool]: ...
 
+@runtime_checkable
 class Vec3bLike(Protocol, metaclass=Vec3LikeMeta):
     """Protocol for a vector that contains three bools."""
     def __getitem__(self, __i: int) -> bool: ...
