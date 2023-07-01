@@ -47,7 +47,8 @@ setup(
         "requests",
         "scikit-image >= 0.19.0",
         "scipy",
-        "termcolor"
+        "termcolor",
+        "typing_extensions"
     ],
     python_requires=">=3.7, <4",
     classifiers=[
