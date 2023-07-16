@@ -295,7 +295,7 @@ def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2i
     For example: (2, [0,2]) means that the volume is flat in the x and z axes."""
     difference = np.array(corner1) - np.array(corner2)
     flatSides = np.argwhere(difference == 0).flatten()
-    return len(corner1) - np.sum(flatSides), list(flatSides)
+    return int(len(corner1) - np.sum(flatSides)), list(flatSides)
 
 
 # ==================================================================================================
@@ -855,14 +855,16 @@ def line3D(begin: Vec3iLike, end: Vec3iLike, width: int = 1):
 
 def lineSequence2D(points: Iterable[Vec2iLike], closed=False):
     """Yields all points on the lines that connect <points>"""
-    for i in range((-1 if closed else 0), len(points)-1):
-        yield from line2D(points[i], points[i+1])
+    pointList = list(points)
+    for i in range((-1 if closed else 0), len(pointList)-1):
+        yield from line2D(pointList[i], pointList[i+1])
 
 
 def lineSequence3D(points: Iterable[Vec3iLike], closed=False):
     """Yields all points on the lines that connect <points>"""
-    for i in range((-1 if closed else 0), len(points)-1):
-        yield from line3D(points[i], points[i+1])
+    pointList = list(points)
+    for i in range((-1 if closed else 0), len(pointList)-1):
+        yield from line3D(pointList[i], pointList[i+1])
 
 
 def circle(center: Vec2iLike, diameter: int, filled=False):

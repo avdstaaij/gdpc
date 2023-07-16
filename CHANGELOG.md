@@ -11,6 +11,7 @@
 - Fixed certain `vector_tools` functions that accept `Iterable` arguments failing when receiving a `Set`. In particular, this fixes `circle(filled=True)` and related calls.
 - Fixed `bookData()` adding extra empty lines after full-width lines.
 - Fixed `Transform.apply()` crashing when receiving a non-`pyglm` vector.
+- Fixed `lineSequence` functions failing for non-sizable `Iterable`s.
 
 
 # 6.1.1
