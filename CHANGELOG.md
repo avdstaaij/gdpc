@@ -7,6 +7,9 @@
 - Added `interface` functions for the GDMC-HTTP `/structure` endpoint (thanks [Niels-NTG](https://github.com/Niels-NTG) and [ZeLiu1](https://github.com/ZeLiu1)!)
 - Made `Rect` and `Box` hashable (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
+**Fixes**
+- Fixed `bookData()` adding extra empty lines after full-width lines.
+
 
 # 6.1.1
 

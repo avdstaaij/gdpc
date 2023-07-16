@@ -108,6 +108,8 @@ def bookData(
         """
         return sum(lookup.ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word) - 1
 
+    SPACE_WIDTH = fontwidth(' ')
+
     def printline():
         nonlocal outputPages, toprint
         formatting = toprint[:2]
@@ -155,7 +157,17 @@ def bookData(
         for line in page:
             toprint = ""
             for word in line:
-                width = fontwidth(word + ' ')
+                if pixels_left != lookup.BOOK_PIXELS_PER_LINE:
+                    if characters_left < 1:
+                        newpage()
+                    elif SPACE_WIDTH > pixels_left:
+                        newline()
+                    else:
+                        toprint += ' '
+                        characters_left -= 1
+                        pixels_left -= SPACE_WIDTH
+
+                width = fontwidth(word)
                 if width > pixels_left:
                     if width > lookup.BOOK_PIXELS_PER_LINE:  # cut word to fit
                         original = word
@@ -174,8 +186,8 @@ def bookData(
                         newline()
                 if len(word) > characters_left:
                     newpage()
-                toprint += word + ' '
-                characters_left -= len(word) + 1
+                toprint += word
+                characters_left -= len(word)
                 pixels_left -= width
             newline()           # finish line
         newpage()               # finish page
