@@ -788,7 +788,7 @@ def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox
     containing the resulting points.\n
     <boundingBox> should contain all <points>. If not provided, it is calculated."""
     if boundingBox is None:
-        boundingBox = Rect.bounding(points)
+        boundingBox = Box.bounding(points)
 
     pointMap = np.zeros(boundingBox.size, dtype=int)
     pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 3))) - np.array(boundingBox.offset)))] = 1
