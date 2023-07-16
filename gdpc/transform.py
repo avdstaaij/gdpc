@@ -71,7 +71,7 @@ class Transform:
     def apply(self, vec: Vec3iLike):
         """Applies this transform to [vec].\n
         Equivalent to [self] * [vec]. """
-        return rotate3D(vec * flipToScale3D(self._flip), self._rotation) + self._translation
+        return rotate3D(ivec3(*vec) * flipToScale3D(self._flip), self._rotation) + self._translation
 
     def invApply(self, vec: Vec3iLike):
         """Applies the inverse of this transform to [vec].\n
@@ -141,7 +141,7 @@ class Transform:
         return self.compose(other)
 
     def __mul__(self, vec: Vec3iLike):
-        return self.apply(ivec3(*vec))
+        return self.apply(vec)
 
     def __imatmul__(self, other: 'Transform'):
         self.push(other)
