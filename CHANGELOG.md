@@ -1,3 +1,13 @@
+# In development
+
+**Breaking**
+- Changed the VecLike classes to `Protocol`s, making them play nicer with static type checkers (thanks [boerdereinar](https://github.com/boerdereinar)!). It is highly unlikely that this will affect your code.
+
+**Additions**
+- Added `interface` functions for the GDMC-HTTP `/structure` endpoint (thanks [Niels-NTG](https://github.com/Niels-NTG) and [ZeLiu1](https://github.com/ZeLiu1)!)
+- Made `Rect` and `Box` hashable (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+
+
 # 6.1.1
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
