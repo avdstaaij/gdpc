@@ -466,7 +466,7 @@ class Rect:
     @staticmethod
     def bounding(points: Iterable[Vec2iLike]):
         """Returns the smallest Rect containing all [points]"""
-        pointArray = np.array(points)
+        pointArray = np.fromiter(points, dtype=np.dtype((int, 2)))
         minPoint = np.min(pointArray, axis=0)
         maxPoint = np.max(pointArray, axis=0)
         return Rect(minPoint, maxPoint - minPoint + 1)
@@ -652,7 +652,7 @@ class Box:
     @staticmethod
     def bounding(points: Iterable[Vec3iLike]):
         """Returns the smallest Box containing all [points]"""
-        pointArray = np.array(points)
+        pointArray = np.fromiter(points, dtype=np.dtype((int, 3)))
         minPoint = np.min(pointArray, axis=0)
         maxPoint = np.max(pointArray, axis=0)
         return Box(minPoint, maxPoint - minPoint + 1)
@@ -770,7 +770,7 @@ def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRec
         boundingRect = Rect.bounding(points)
 
     pointMap = np.zeros(boundingRect.size, dtype=int)
-    pointMap[tuple(np.transpose(np.array(points) - np.array(boundingRect.offset)))] = 1
+    pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 2))) - np.array(boundingRect.offset)))] = 1
     filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec2(*seedPoint) - boundingRect.offset), 1, footprint=np.array([[0,1,0],[1,1,1],[0,1,0]]))
     if not includeInputPoints:
         filled -= pointMap
@@ -791,7 +791,7 @@ def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox
         boundingBox = Rect.bounding(points)
 
     pointMap = np.zeros(boundingBox.size, dtype=int)
-    pointMap[tuple(np.transpose(np.array(points) - np.array(boundingBox.offset)))] = 1
+    pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 3))) - np.array(boundingBox.offset)))] = 1
     filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec3(*seedPoint) - boundingBox.offset), 1, connectivity=1)
     if not includeInputPoints:
         filled -= pointMap

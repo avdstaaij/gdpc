@@ -8,6 +8,7 @@
 - Made `Rect` and `Box` hashable (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 **Fixes**
+- Fixed certain `vector_tools` functions that accept `Iterable` arguments failing when receiving a `Set`. In particular, this fixes `circle(filled=True)` and related calls.
 - Fixed `bookData()` adding extra empty lines after full-width lines.
 
 
