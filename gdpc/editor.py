@@ -281,7 +281,7 @@ class Editor:
         reflected in the command's execution context! This means that the use of local coordinate
         offsets (e.g. "^1 ^2 ^3") is in general not safe.
         For more details about relative and local command coordinates, see
-        https://minecraft.fandom.com/wiki/Coordinates#Commands"""
+        https://minecraft.wiki/Coordinates#Commands"""
         if position is not None:
             position = self.transform * position
         self.runCommandGlobal(command, position, syncWithBuffer)
@@ -297,7 +297,7 @@ class Editor:
         This means that, for example, the position "~ ~ ~" in the command will correspond to
         <position>.
         For more details about relative and local command coordinates, see
-        https://minecraft.fandom.com/wiki/Coordinates#Commands"""
+        https://minecraft.wiki/Coordinates#Commands"""
         if position is not None:
             command = f"execute positioned {' '.join(str(c) for c in position)} run {command}"
 

@@ -47,7 +47,7 @@ except BuildAreaNotSetError:
 #
 # A world slice contains all kinds of information about a slice of the world, like blocks, biomes
 # and heightmaps. All of its data is extracted directly from Minecraft's chunk format:
-# https://minecraft.fandom.com/wiki/Chunk_format. World slices take a while to load, but accessing
+# https://minecraft.wiki/Chunk_format. World slices take a while to load, but accessing
 # data from them is very fast.
 #
 # To get a world slice, you need to specify a rectangular XZ-area using a Rect object (the 2D
