@@ -83,7 +83,7 @@ LASTX, LASTY, LASTZ = BUILD_AREA.last
 # Using the start and end coordinates we are generating a world slice
 # It contains all manner of information, including heightmaps and biomes
 # For further information on what information it contains, see
-# https://minecraft.fandom.com/wiki/Chunk_format
+# https://minecraft.wiki/w/Chunk_format
 #
 # IMPORTANT: Keep in mind that a wold slice is a 'snapshot' of the world,
 # and any changes you make later on will not be reflected in the world slice

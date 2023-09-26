@@ -15,7 +15,7 @@ from . import interface
 
 
 # Chunk format information:
-# https://minecraft.fandom.com/wiki/Chunk_format
+# https://minecraft.wiki/w/Chunk_format
 
 
 class _BitArray:

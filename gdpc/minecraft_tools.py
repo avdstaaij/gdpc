@@ -91,7 +91,7 @@ def bookData(
     - `\\r`: When at start of line, align text to right side
 
     NOTE: For supported special characters see
-    https://minecraft.fandom.com/wiki/Language#Font
+    https://minecraft.wiki/w/Language#Font
     """
     pages_left      = lookup.BOOK_PAGES_PER_BOOK
     characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
