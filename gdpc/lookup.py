@@ -3,7 +3,7 @@
 NOTE: The block id categories here may not be fully up-to-date with the latest supported Minecraft
 version. Although the block categories are not officially deprecated, there is a high chance that
 they will be in the future. They will most likely be replaced with categories automatically
-constructed from Minecraft's block tags (https://minecraft.fandom.com/wiki/Tag#Block_tags), because
+constructed from Minecraft's block tags (https://minecraft.wiki/wiki/Tag#Block_tags), because
 this is more standardized and way easier to keep up-to-date.
 
 To get a complete listing of all blocks for any Minecraft version, including various properties,
@@ -73,8 +73,8 @@ def variate(
 
 
 # COLOURS
-# based on https://minecraft.fandom.com/wiki/Dye#Color_values
-#   and https://minecraft.fandom.com/wiki/Block_colors
+# based on https://minecraft.wiki/wiki/Dye#Color_values
+#   and https://minecraft.wiki/wiki/Block_colors
 DYE_COLORS = {
     "white":      "0xF9FFFE",
     "orange":     "0xF9801D",

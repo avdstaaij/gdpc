@@ -96,14 +96,14 @@ general purpose. Most of these have been renamed, however:
 Lots of new modules have been added:
 - `block`: Provides the `Block` class, more on this later.
 - `block_state_tools`: Provides tools to work with orientation-related
-  [block states](https://minecraft.fandom.com/wiki/Block_states).
+  [block states](https://minecraft.wiki/wiki/Block_states).
   This is mainly for internal use.
 - `exceptions`: Contains exception classes for GDPC.
 - `model.py`: Provides the `Model` class, which can be used to store a structure
   in memory. Future versions will add features like scanning in models from
   Minecraft.
 - `nbt_tools`: Provides some low-level tools for the
-  [NBT format](https://minecraft.fandom.com/wiki/NBT_format). This is mainly for
+  [NBT format](https://minecraft.wiki/wiki/NBT_format). This is mainly for
   internal use.
 - `transform`: Provides the `Transform` class and related utilities, more on
   this later.
@@ -136,9 +136,9 @@ strings: you place and get `Block("stone")` instead of `"stone"`.
 
 Blocks consist of three components:
 - A (namespaced) id (e.g. `minecraft:chest`).
-- Optional [block states](https://minecraft.fandom.com/wiki/Block_states)
+- Optional [block states](https://minecraft.wiki/wiki/Block_states)
   (e.g. `facing=north`).
-- Optional [block entity](https://minecraft.fandom.com/wiki/Block_entity)
+- Optional [block entity](https://minecraft.wiki/wiki/Block_entity)
   (S)NBT data (e.g. `{Items: [{Slot: 13b, id: "apple", Count: 1b}]}`).
 
 The `Block` class supports all three of these. In other words, GDPC now fully

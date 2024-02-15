@@ -78,7 +78,7 @@ placeBox(editor, platformRect.toBox(101, 10), Block("air")) # Clear some space
 #   in one of six possible directions (north, south, east, west, up, down). GDPC uses the term
 #   "block states". Note, however, that the combination (block id, block states) is sometimes also
 #   called a "BlockState". Yes, the terminology is confusing.
-#   A full list of all block states can be found at https://minecraft.fandom.com/wiki/Block_states.
+#   A full list of all block states can be found at https://minecraft.wiki/wiki/Block_states.
 #
 # - Its *block entity data*. A few blocks have particularly complex data attached to them, such as
 #   the items in a chest or the text on a sign. Minecraft stores this kind of data in a so-called
@@ -86,9 +86,9 @@ placeBox(editor, platformRect.toBox(101, 10), Block("air")) # Clear some space
 #   Binary Tag), a binary data structure. NBT also has a human-readable text representation called
 #   SNBT (Stringified NBT). The GDMC HTTP Interface and GDPC both use this SNBT format.
 #   A full list of all blocks with block entities can be found at
-#   https://minecraft.fandom.com/wiki/Block_entity.
+#   https://minecraft.wiki/wiki/Block_entity.
 #   For more information about the NBT and SNBT formats, see
-#   https://minecraft.fandom.com/wiki/NBT_format.
+#   https://minecraft.wiki/wiki/NBT_format.
 
 
 # GDPC's Block class represents a Minecraft block, consisting of a block id, optional block states
