@@ -64,7 +64,7 @@ print("World slice loaded!")
 
 # Most of worldSlice's functions have a "local" and a "global" variant. The local variant expects
 # coordinates relatve to the rect with which it was constructed, while the global variant expects
-# absolute coorndates.
+# absolute coordinates.
 
 vec = addY(buildRect.center, 30)
 print(f"Block at {vec}: {worldSlice.getBlock(vec - buildArea.offset)}")
