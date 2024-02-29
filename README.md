@@ -42,26 +42,19 @@ It provides many high-level tools that make working with the interface much simp
 
 ## Installation
 
-GDPC is available on PyPI. To install the latest stable release, type one of the following commands:
-- On Linux/MacOS: `python3 -m pip install gdpc`
-- On Windows: `py -m pip install gdpc`
+GDPC requires Python 3.7 or above. It is available on PyPI; to install, run:
+```
+python3 -m pip install gdpc
+```
+To update, run:
+```
+python3 -m pip install --upgrade gdpc
+```
+On Windows, you may need to replace `python3` with `py`.
 
-For the latest sexy-but-might-break-something prerelease, type the following instead:
-- On Linux/MacOS: `python3 -m pip install --pre gdpc`
-- On Windows: `py -m pip install --pre gdpc`
-
-To update your package, type the following:
-- On Linux/MacOS: `python3 -m pip install --upgrade gdpc`
-- On Windows: `py -m pip install --upgrade gdpc`
-
-If you would like to install the latest (pre)release version directly from GitHub, replace `gdpc` with\
+If you would like to install the latest cutting-edge development version directly from GitHub, replace `gdpc` with\
 `git+https://github.com/avdstaaij/gdpc`\
-If instead you want to install the latest cutting-edge development version, replace `gdpc` with\
-`git+https://github.com/avdstaaij/gdpc@dev`
-
-For more information on installing from GitHub (such as getting old versions) see the [pip documentation](https://pip.pypa.io/en/stable/topics/vcs-support/).
-
-If you are having trouble with dependencies, download `requirements.txt` and try running `python3 -m pip install -r requirements.txt` (or `py -m pip pip install -r requirements.txt` if you are using Windows). You **should not** use `requirements-dev.txt`!
+For more information on installing from GitHub (such as getting old versions), see the [pip documentation](https://pip.pypa.io/en/stable/topics/vcs-support/).
 
 
 ## Tutorials and examples
