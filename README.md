@@ -66,12 +66,13 @@ If you are having trouble with dependencies, download `requirements.txt` and try
 
 ## Tutorials and examples
 
-There are various [**tutorial scripts**](examples/tutorials) that will help to get you started.
+There are various [**tutorial scripts**](https://github.com/avdstaaij/gdpc/tree/latest-release/examples/tutorials) that will help to get you started.
 
 Some practical examples are also available, though they're slightly older and may not reflect the latest features:
-- [**`visualize_map.py`**](examples/visualize_map.py): Displays a map of the Minecraft world using OpenCV.
-- [**`emerald_city.py`**](examples/emerald_city.py): Demonstrates basic GDPC functionality by building a simple model of the Emerald City.
+- [**`visualize_map.py`**](https://github.com/avdstaaij/gdpc/blob/latest-release/examples/visualize_map.py): Displays a map of the Minecraft world using OpenCV.
+- [**`emerald_city.py`**](https://github.com/avdstaaij/gdpc/blob/latest-release/examples/emerald_city.py): Demonstrates basic GDPC functionality by building a simple model of the Emerald City.
 
+**Note:** the links above always point to examples for the latest release of GDPC. To view the examples for an older version, switch to the tag for that version (using the dropdown box at the top left of the file list, where it probably says "master"), and manually navigate to the examples.
 
 ## Contributing
 
