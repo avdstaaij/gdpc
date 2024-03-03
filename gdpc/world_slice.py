@@ -127,7 +127,8 @@ class WorldSlice:
             heightmapsTag = chunkTag['Heightmaps']
             for hmName in heightmapTypes:
                 hmRaw = heightmapsTag[hmName]
-                hmBitArray = _BitArray(9, 16*16, hmRaw)
+                hmBitsPerEntry = max(1, ceil(log2(self._ySize)))
+                hmBitArray = _BitArray(hmBitsPerEntry, 16*16, hmRaw)
                 heightmap = self._heightmaps[hmName]
                 for inChunkPos in loop2D(ivec2(16,16)):
                     try:
