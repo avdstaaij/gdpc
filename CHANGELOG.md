@@ -13,6 +13,7 @@
 - Fixed `Transform.apply()` failing when receiving a non-`pyglm` vector.
 - Fixed `lineSequence` functions failing for non-sizable `Iterable`s.
 - Fixed `filled3D(Array)` functions failing when a bounding box is not passed.
+- Fixed `WorldSlice` crashing when the world has a non-standard height.
 - Updated all Minecraft wiki links to use [minecraft.wiki](https://minecraft.wiki).
 
 
