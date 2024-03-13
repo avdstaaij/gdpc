@@ -126,7 +126,7 @@ class Transform:
         flip = self._flip # Flip stays unchanged
         rotation = flipRotation3D((-self._rotation + 4) % 4, flip)
         return Transform(
-            translation = - rotate3D(self._translation * flipToScale3D(self._flip), self._rotation),
+            translation = - rotate3D(self._translation * flipToScale3D(flip), rotation),
             rotation    = rotation,
             flip        = flip
         )
