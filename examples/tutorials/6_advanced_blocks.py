@@ -104,7 +104,11 @@ stairs = Block("stone_brick_stairs", {"facing": "east", "half": "top"})
 chest = Block("chest", data='{Items: [{Slot: 13b, id: "apple", Count: 1b}]}')
 
 # A sign block with the block state rotation=5 and the text "Lorem ipsum"
-sign = Block("oak_sign", {"rotation": "5"}, data="{Text1: '{\"text\": \"Lorem ipsum\"}'}")
+sign = Block(
+    "oak_sign",
+    {"rotation": "5"},
+    data="{front_text: {messages: ['{\"text\": \"\"}', '{\"text\": \"Lorem ipsum\"}', '{\"text\": \"\"}', '{\"text\": \"\"}']}}"
+)
 
 # Place the blocks on the platform
 editor.placeBlock(addY(platformRect.offset) + ivec3(3,101,1), log)
@@ -137,7 +141,7 @@ print(f"Sign:   {sign}")     # minecraft:oak_sign[rotation=5]{Text1:'{"text": "L
 
 sign2 = signBlock(
     "spruce", wall=False, rotation=3,
-    line2="Lorem ipsum", line3="dolor sit amet", color="orange", isGlowing=True
+    frontLine2="Lorem ipsum", frontLine3="dolor sit amet", frontColor="orange", frontIsGlowing=True
 )
 editor.placeBlock(addY(platformRect.offset) + ivec3(1,101,3), sign2)
 

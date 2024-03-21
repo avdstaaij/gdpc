@@ -1,6 +1,10 @@
 # In development
 
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+
 **Breaking**
+- GDPC now assumes Minecraft 1.20.2 in places where the Minecraft version matters (see the change below).
+- Updated `signData()`, `signBlock()` and `placeSign()` to the Minecraft 1.20 format, which supports text on both sides of signs. The parameter names have changed, but the positions of the original parameters have not.
 - Changed the VecLike classes to `Protocol`s, making them play nicer with static type checkers (thanks [boerdereinar](https://github.com/boerdereinar)!). It is highly unlikely that this will affect your code.
 
 **Additions**

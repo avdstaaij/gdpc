@@ -16,26 +16,36 @@ from .block import Block
 
 
 def signData(
-    line1: str = "",
-    line2: str = "",
-    line3: str = "",
-    line4: str = "",
-    color: str = "",
-    isGlowing: bool = False,
+    frontLine1: str = "",
+    frontLine2: str = "",
+    frontLine3: str = "",
+    frontLine4: str = "",
+    frontColor: str = "",
+    frontIsGlowing: bool = False,
+    backLine1: str = "",
+    backLine2: str = "",
+    backLine3: str = "",
+    backLine4: str = "",
+    backColor: str = "",
+    backIsGlowing: bool = False,
+    isWaxed = False
 ):
     """Returns an SNBT string with sign data"""
+
+    def sideCompound(line1: str, line2: str, line3: str, line4: str, color: str, isGlowing: bool):
+        fields: List[str] = []
+        fields.append(f'messages: [{",".join(repr(json.dumps({"text": line})) for line in [line1, line2, line3, line4])}]')
+        if color:
+            fields.append(f'Color: {repr(color)}')
+        if isGlowing:
+            fields.append('GlowingText: 1b')
+        return "{" + ",".join(fields) + "}"
+
     fields: List[str] = []
-
-    for i, line in enumerate([line1, line2, line3, line4]):
-        if line:
-            fields.append(f'Text{i+1}: {repr(json.dumps({"text": line}))}')
-
-    if color:
-        fields.append(f'Color: {repr(color)}')
-
-    if isGlowing:
-        fields.append('GlowingText: 1b')
-
+    fields.append(f"front_text: {sideCompound(frontLine1, frontLine2, frontLine3, frontLine4, frontColor, frontIsGlowing)}")
+    fields.append( f"back_text: {sideCompound(backLine1,  backLine2,  backLine3,  backLine4,  backColor,  backIsGlowing)}")
+    if isWaxed:
+        fields.append("is_waxed: 1b")
     return "{" + ",".join(fields) + "}"
 
 
@@ -212,12 +222,21 @@ def bookData(
 def signBlock(
     wood="oak", wall=False,
     facing: str = "north", rotation: Union[str,int] = "0",
-    line1="", line2="", line3="", line4="", color="", isGlowing=False
+    frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
+    backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
+    isWaxed = False
 ):
     """Returns a sign Block with the specified properties."""
     blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
     states = {"facing": facing} if wall else {"rotation": str(rotation)}
-    return Block(blockId, states, data=signData(line1, line2, line3, line4, color, isGlowing))
+    return Block(
+        blockId, states,
+        data=signData(
+            frontLine1, frontLine2, frontLine3, frontLine4, frontColor, frontIsGlowing,
+            backLine1, backLine2, backLine3, backLine4, backColor, backIsGlowing,
+            isWaxed
+        )
+    )
 
 
 def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0):

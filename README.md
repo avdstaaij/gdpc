@@ -5,7 +5,7 @@ It is designed for the [Generative Design in Minecraft Competition (GDMC)](https
 
 You need to be playing in a Minecraft world with the mod installed to use the framework.
 
-The latest version of GDPC is compatible with GDMC-HTTP versions **>=1.0.0, <2.0.0**.
+The latest version of GDPC is compatible with GDMC-HTTP versions **>=1.0.0, <2.0.0** and Minecraft **1.19.2** (see [note](#note-on-supported-minecraft-version)).
 
 
 ## Quick example
@@ -79,6 +79,20 @@ Some practical examples are also available, though they're slightly older and ma
 | [Emerald city](https://github.com/avdstaaij/gdpc/blob/latest-release/examples/emerald_city.py)   | Demonstrates basic GDPC functionality by building a simple model of the Emerald City. |
 
 **Note:** the links above always point to tutorials/examples for the latest release of GDPC. To view the examples for an older version, switch to the tag for that version (using the dropdown box at the top left of the file list, where it probably says "master"), and manually navigate to the examples.
+
+
+## Note on supported Minecraft version
+
+We list a specific compatible version of Minecraft, but most of GDPC actually supports a wide range of Minecraft versions.
+In particular, basic block getting and setting should work with any Minecraft version for which there is a compatible version of GDMC-HTTP.
+The parts of GDPC that may not be compatible with Minecraft versions other than the listed one are those that interact with "Minecraft data". These include:
+- Rotation and flipping of individual blocks.
+- Utility functions from the `minecraft_tools` and `editor_tools` modules that generate Minecraft data, such as `bookData` and `placeSign`.
+- The `WorldSlice` class and associated functions like `Editor.loadWorldSlice()`.
+
+If a breaking change needs to be made to support a newer version of Minecraft, it will always be listed as such in the [Changelog](CHANGELOG.md).
+
+We are working on fully supporting multiple versions of Minecraft simultaneously ([#99](https://github.com/avdstaaij/gdpc/issues/99)), but this probably won't be done soon.
 
 
 ## Contributing
