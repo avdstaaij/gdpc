@@ -90,8 +90,6 @@ The parts of GDPC that may not be compatible with Minecraft versions other than 
 - Utility functions from the `minecraft_tools` and `editor_tools` modules that generate Minecraft data, such as `bookData` and `placeSign`.
 - The `WorldSlice` class and associated functions like `Editor.loadWorldSlice()`.
 
-If a breaking change needs to be made to support a newer version of Minecraft, it will always be listed as such in the [Changelog](CHANGELOG.md).
-
 We are working on fully supporting multiple versions of Minecraft simultaneously ([#99](https://github.com/avdstaaij/gdpc/issues/99)), but this probably won't be done soon.
 
 
