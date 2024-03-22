@@ -5,7 +5,7 @@ It is designed for the [Generative Design in Minecraft Competition (GDMC)](https
 
 You need to be playing in a Minecraft world with the mod installed to use the framework.
 
-The latest version of GDPC is compatible with GDMC-HTTP versions **>=1.0.0, <2.0.0** and Minecraft **1.19.2** (see [note](#note-on-supported-minecraft-version)).
+The latest version of GDPC is compatible with GDMC-HTTP versions **>=1.0.0, <2.0.0** and Minecraft **1.20.2** (see [note](#note-on-supported-minecraft-version)).
 
 
 ## Quick example
