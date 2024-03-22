@@ -8,17 +8,17 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 - Changed the VecLike classes to `Protocol`s, making them play nicer with static type checkers (thanks [boerdereinar](https://github.com/boerdereinar)!). It is highly unlikely that this will affect your code.
 
 **Additions**
-- Added `interface` functions for the GDMC-HTTP `/structure` endpoint (thanks [Niels-NTG](https://github.com/Niels-NTG) and [ZeLiu1](https://github.com/ZeLiu1)!)
-- Made `Rect` and `Box` hashable (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+- Added `interface` functions for the GDMC-HTTP `/structure` endpoint. (Thanks [Niels-NTG](https://github.com/Niels-NTG) and [ZeLiu1](https://github.com/ZeLiu1)!)
+- Made `Rect` and `Box` hashable. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 **Fixes**
-- Fixed `Transform.inverted()`/`Transform.__invert__()`, which were implemented incorrectly and did not actually give the inverse in some cases.
-- Fixed certain `vector_tools` functions that accept `Iterable` arguments failing when receiving a `Set`. In particular, this fixes `circle(filled=True)` and related calls.
+- Fixed `Transform.inverted()`/`Transform.__invert__()`, which were implemented incorrectly and did not actually give the inverse in some cases. (Discovered by [xlenstra](https://github.com/xlenstra).)
+- Fixed certain `vector_tools` functions that accept `Iterable` arguments failing when receiving a `Set`. In particular, this fixes `circle(filled=True)` and related calls. (Discovered by AHumanIBelieve and ShinryuSHH on Discord.)
 - Fixed `bookData()` adding extra empty lines after full-width lines.
 - Fixed `Transform.apply()` failing when receiving a non-`pyglm` vector.
 - Fixed `lineSequence` functions failing for non-sizable `Iterable`s.
 - Fixed `filled3D(Array)` functions failing when a bounding box is not passed.
-- Fixed `WorldSlice` crashing when the world has a non-standard height.
+- Fixed `WorldSlice` crashing when the world has a non-standard height. (Discovered by MrSQ on Discord.)
 - Updated all Minecraft wiki links to use [minecraft.wiki](https://minecraft.wiki).
 
 
@@ -27,7 +27,7 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
 
 **Fixes:**
-- Fixed `Block.fromBlockStateTag()` -- and therefore, `WorldSlice.getBlock()` -- crashing when retrieving certain block entities.
+- Fixed `Block.fromBlockStateTag()` -- and therefore, `WorldSlice.getBlock()` -- crashing when retrieving certain block entities. (Discovered by [Phobos97](https://github.com/Phobos97).)
 
 
 # 6.1.0
@@ -38,7 +38,7 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.
 - Added sphere and ellipsoid functions to `vector_tools` and `geometry`. (Thanks [cmoyates](https://github.com/cmoyates)!)
 
 **Fixes:**
-- Fixed in-buffer block overwrites not going to the end of the buffer, which could sometimes cause incorrect behavior.
+- Fixed in-buffer block overwrites not going to the end of the buffer, which could sometimes cause incorrect behavior. (Discovered by [Phobos97](https://github.com/Phobos97).)
 
 
 # 6.0.3
