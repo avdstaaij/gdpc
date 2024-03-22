@@ -7,16 +7,16 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Breaking**
+**Breaking:**
 - GDPC now assumes Minecraft 1.20.2 in places where the Minecraft version matters (see the change below).
 - Updated `signData()`, `signBlock()` and `placeSign()` to the Minecraft 1.20 format, which supports text on both sides of signs. The parameter names have changed, but the positions of the original parameters have not.
 - Changed the VecLike classes to `Protocol`s, making them play nicer with static type checkers (thanks [boerdereinar](https://github.com/boerdereinar)!). It is highly unlikely that this will affect your code.
 
-**Additions**
+**Additions:**
 - Added `interface` functions for the GDMC-HTTP `/structure` endpoint. (Thanks [Niels-NTG](https://github.com/Niels-NTG) and [ZeLiu1](https://github.com/ZeLiu1)!)
 - Made `Rect` and `Box` hashable. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
-**Fixes**
+**Fixes:**
 - Fixed `Transform.inverted()`/`Transform.__invert__()`, which were implemented incorrectly and did not actually give the inverse in some cases. (Discovered by [xlenstra](https://github.com/xlenstra).)
 - Fixed certain `vector_tools` functions that accept `Iterable` arguments failing when receiving a `Set`. In particular, this fixes `circle(filled=True)` and related calls. (Discovered by AHumanIBelieve and ShinryuSHH on Discord.)
 - Fixed `bookData()` adding extra empty lines after full-width lines.
