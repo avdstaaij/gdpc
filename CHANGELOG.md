@@ -2,6 +2,11 @@
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
+
+# 7.1.0
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+
 **Additions**
 - Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players` (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
