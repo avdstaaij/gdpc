@@ -3,7 +3,7 @@ from setuptools import setup
 
 
 SCRIPT_DIR         = os.path.abspath(os.path.dirname(__file__))
-METADATA_FILE_PATH = os.path.join(SCRIPT_DIR, "gdpc/__init__.py")
+METADATA_FILE_PATH = os.path.join(SCRIPT_DIR, "src/gdpc/__init__.py")
 
 
 # Based on https://github.com/pypa/pip/blob/9aa422da16e11b8e56d3597f34551f983ba9fbfd/setup.py
@@ -36,6 +36,7 @@ setup(
     maintainer_email              = get_metadata("maintainer_email"),
     license                       = get_metadata("license"),
     packages = ["gdpc"], # Note: subpackages must be listed explicitly
+    package_dir={"": "src"},
     install_requires=[
         "matplotlib",
         "more-itertools",
