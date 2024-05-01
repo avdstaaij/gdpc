@@ -11,14 +11,19 @@ plugins:
         - scripts/generate_reference.py
   - literate-nav:
       nav_file: SUMMARY.md
+  - autorefs:
   - mkdocstrings:
       default_handler: python
       handlers:
         python:
           options:
+            heading_level: 3
+            show_root_heading: False
             show_source: false
             members_order: source
             group_by_category: false
             show_if_no_docstring: True
+            show_signature_annotations: True
+            separate_signature: True
             signature_crossrefs: True
             modernize_annotations: True
