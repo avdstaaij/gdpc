@@ -1,8 +1,3 @@
-.. GDPC documentation master file, created by
-   sphinx-quickstart on Wed Mar 13 17:14:43 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to GDPC's documentation!
 ================================
 
@@ -10,7 +5,7 @@ Welcome to GDPC's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   api
+   test
 
 
 Indices and tables
@@ -18,4 +13,11 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
+
+
+.. autosummary::
+   :toctree: api
+   :template: autosummary/module-template.rst
+   :recursive:
+
+   gdpc
