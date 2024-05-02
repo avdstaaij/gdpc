@@ -1,6 +1,7 @@
 """Provides wrappers for the endpoints of the GDMC HTTP interface.
 
-It is recommended to use the higher-level `editor.Editor` class instead.
+These functions are quite low-level. It is recommended to use the higher-level
+:class:`.editor.Editor` class instead.
 """
 
 
@@ -25,6 +26,7 @@ from . import exceptions
 
 
 DEFAULT_HOST = "http://localhost:9000"
+"""Default host"""
 
 
 logger = logging.getLogger(__name__)
@@ -62,7 +64,7 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
 def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the blocks in the specified region.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (position, block)-tuples.
 
@@ -90,7 +92,7 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
 def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns the biomes in the specified region.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (position, biome id)-tuples.
 
@@ -116,12 +118,12 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
 def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places blocks in the world.
 
-    Each element of <blocks> should be a tuple (position, block). Empty blocks (blocks without an
+    Each element of ``blocks`` should be a tuple (position, block). Empty blocks (blocks without an
     id) are not allowed.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-    The <doBlockUpdates>, <spawnDrops> and <customFlags> parameters control block update
+    The ``doBlockUpdates``, ``spawnDrops`` and ``customFlags`` parameters control block update
     behavior. See the GDMC HTTP API documentation for more info.
 
     Returns a list of (success, result)-tuples, one for each block. If a block placement was
@@ -162,7 +164,7 @@ def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout
 
     The leading "/" must be omitted.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (success, result)-tuples, one for each command. If a command was succesful,
     result is its return value (if any). Otherwise, it is the error message.
@@ -208,11 +210,11 @@ def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
 def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST):
     """Returns raw chunk data.
 
-    <position> specifies the position in chunk coordinates, and <size> specifies how many chunks
+    ``position`` specifies the position in chunk coordinates, and ``size`` specifies how many chunks
     to get in each axis (default 1).
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-    If <asBytes> is True, returns raw binary data. Otherwise, returns a human-readable
+    If ``asBytes`` is True, returns raw binary data. Otherwise, returns a human-readable
     representation.
 
     On error, returns the error message instead.
@@ -235,10 +237,10 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
 def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
     """Places a structure defined using the Minecraft structure format in the world.
 
-    <structureData> should be a string of bytes in the Minecraft structure file format, the format used by the
+    ``structureData`` should be a string of bytes in the Minecraft structure file format, the format used by the
     in-game structure blocks. You can extract structures in this format in various ways, such as using the
     GET /structure endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
-    <structureData> can also be an instance of nbt.NBTFile. Using this library has the benefit of providing ways for
+    ``structureData`` can also be an instance of nbt.NBTFile. Using this library has the benefit of providing ways for
     modifying data before placing it in Minecraft.
 
     See the GDMC HTTP API documentation for more information about these parameters:
@@ -295,7 +297,7 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
     are commonly saved in .nbt files, and can be placed using tools such as the POST /structure endpoint of GDMC-HTTP
     or the aforementioned in-game structure blocks.
 
-    Setting the <includeEntities> to True will attach all entities present in the given area at the moment of calling
+    Setting the ``includeEntities`` to True will attach all entities present in the given area at the moment of calling
     getStructure to the resulting data. Meaning that saving a house in a Minecraft village will include the NPC
     living inside it. Note that when placing this structure using GDMC-HTTP, the includeEntities parameter needs to
     be set to True for these entities to be placed into the world together with the blocks making up the structure.

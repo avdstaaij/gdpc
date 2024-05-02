@@ -1,8 +1,4 @@
-"""
-The Generative Design Python Client (GDPC) is a Python-based framework for the
-Minecraft GDMC HTTP Interface mod.
-It was created for use in the Generative Design in Minecraft Competition (GDMC).
-"""
+""""""
 
 __title__            = "gdpc"
 __description__      = "The Generative Design Python Client (GDPC) is a Python-based interface for the Minecraft GDMC HTTP Interface mod.\nIt was created for use in the Generative Design in Minecraft Competition (GDMC)."

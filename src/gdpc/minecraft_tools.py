@@ -1,4 +1,4 @@
-"""Provides various Minecraft-related utility functions."""
+"""Provides various Minecraft-related utilities that do not require an :class:`.Editor`."""
 
 
 from typing import Any, Optional, Union, List
@@ -30,7 +30,7 @@ def signData(
     backIsGlowing: bool = False,
     isWaxed = False
 ):
-    """Returns an SNBT string with sign data"""
+    """Returns an SNBT string with sign data."""
 
     def sideCompound(line1: str, line2: str, line3: str, line4: str, color: str, isGlowing: bool):
         fields: List[str] = []
@@ -50,9 +50,9 @@ def signData(
 
 
 def lecternData(bookData: Optional[str], page: int = 0):
-    """Returns an SNBT string with lectern data\n
-    <bookData> should be an SNBT string defining a book.
-    You can use bookData() to create such a string.
+    """Returns an SNBT string with lectern data.\n
+    ``bookData`` should be an SNBT string defining a book.
+    You can use :func:`.bookData` to create such a string.
     """
     if bookData is None:
         return ""
@@ -69,36 +69,34 @@ def bookData(
     r"""Returns an SNBT string with written book data
 
     The following special characters can be used to format the book:
-    - `\n`: New line
-    - `\f`: Form/page break
 
-    - `§0`: Black text
-    - `§1`: Dark blue text
-    - `§2`: Dark green text
-    - `§3`: Dark aqua text
-    - `§4`: Dark red text
-    - `§5`: Dark purple text
-    - `§6`: Gold text
-    - `§7`: Gray text
-    - `§8`: Dark gray text
-    - `§9`: Blue text
-    - `§a`: Green text
-    - `§b`: Aqua text
-    - `§c`: Red text
-    - `§d`: Light purple text
-    - `§e`: Yellow text
-    - `§f`: White text
-
-    - `§k`: Obfuscated text
-    - `§l`: **Bold** text
-    - `§m`: ~~Strikethrough~~ text
-    - `§n`: __Underline__ text
-    - `§o`: *Italic* text
-    - `§r`: Reset text formatting
-
-    - `\\\\s`: When at start of page, print page as string directly
-    - `\\c`: When at start of line, align text to center
-    - `\\r`: When at start of line, align text to right side
+    - ``\n``: New line
+    - ``\f``: Form/page break
+    - ``§0``: Black text
+    - ``§1``: Dark blue text
+    - ``§2``: Dark green text
+    - ``§3``: Dark aqua text
+    - ``§4``: Dark red text
+    - ``§5``: Dark purple text
+    - ``§6``: Gold text
+    - ``§7``: Gray text
+    - ``§8``: Dark gray text
+    - ``§9``: Blue text
+    - ``§a``: Green text
+    - ``§b``: Aqua text
+    - ``§c``: Red text
+    - ``§d``: Light purple text
+    - ``§e``: Yellow text
+    - ``§f``: White text
+    - ``§k``: Obfuscated text
+    - ``§l``: **Bold** text
+    - ``§m``: ~~Strikethrough~~ text
+    - ``§n``: __Underline__ text
+    - ``§o``: *Italic* text
+    - ``§r``: Reset text formatting
+    - ``\\\\s``: When at start of page, print page as string directly
+    - ``\\c``: When at start of line, align text to center
+    - ``\\r``: When at start of line, align text to right side
 
     NOTE: For supported special characters see
     https://minecraft.wiki/Language#Font
@@ -254,14 +252,14 @@ def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: in
 
 
 def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike):
-    """Returns the flat index of the slot at <position> in an inventory of size <inventorySize>."""
+    """Returns the flat index of the slot at ``position`` in an inventory of size ``inventorySize``."""
     if not Rect(size=inventorySize).contains(position):
         raise ValueError(f"{position} is not between (0, 0) and {tuple(inventorySize)}!")
     return position[0] + position[1] * inventorySize[0]
 
 
 def getObtrusiveness(block: Block):
-    """Returns the percieved obtrusiveness of the given <block>.\n
+    """Returns the percieved obtrusiveness of the given ``block``.\n
     Returns a numeric weight from 0 (invisible) to 4 (opaque)."""
     if not block.id:
         return 0

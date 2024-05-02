@@ -1,4 +1,8 @@
-"""Utilities for working with orientation-related block states"""
+"""Utilities for working with orientation-related block states.
+
+You most likely don't need to use this module directly: block transformations are already handled
+by the :class:`.Block` class.
+"""
 
 
 from glm import ivec3, bvec3
@@ -12,8 +16,13 @@ from .vector_tools import Vec3iLike, Vec3bLike
 
 
 AXIS_VALUES     = ("x", "y", "z")
+"""The possible values for the "axis" block state"""
+
 FACING_VALUES   = ("up", "down", "north", "east", "south", "west")
+"""The possible values for the "facing" block state"""
+
 ROTATION_VALUES = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
+"""The possible values for the "rotation" block state"""
 
 
 # ==================================================================================================
@@ -28,7 +37,7 @@ __FACING_TO_ROTATION = {
     "east":  "12",
 }
 def facingToRotation(facing: str):
-    """Converts <facing> to the corresponding "rotation" block state string"""
+    """Converts ``facing`` to the corresponding "rotation" block state string"""
     return __FACING_TO_ROTATION[facing]
 
 
@@ -51,7 +60,7 @@ __ROTATION_TO_FACING = {
     "15": "south",
 }
 def rotationToFacing(rotation: str):
-    """Converts <rotation> to the nearest corresponding "facing" block state string"""
+    """Converts ``rotation`` to the nearest corresponding "facing" block state string"""
     return __ROTATION_TO_FACING[rotation]
 
 
@@ -70,7 +79,7 @@ __VECTOR_TO_AXIS = {
     (0,0,1): "z",
 }
 def vectorToAxis(vec: Vec3iLike):
-    """Returns the "axis" block state string corresponding to the direction vector [vec]"""
+    """Returns the "axis" block state string corresponding to the direction vector ``vec``"""
     v = (
         vec[0] != 0,
         vec[1] != 0,
@@ -88,7 +97,7 @@ __AXIS_TO_VECTOR = {
     "z": ivec3(0,0,1),
 }
 def axisToVector(axis: str):
-    """Returns the direction vector corresponding to the "axis" block state string [axis]"""
+    """Returns the direction vector corresponding to the "axis" block state string ``axis``"""
     return __AXIS_TO_VECTOR[axis]
 
 
@@ -105,7 +114,7 @@ __VECTOR_TO_FACING = {
     ( 1, 0, 0): "east",
 }
 def vectorToFacing(vec: Vec3iLike):
-    """Returns the "facing" block state string corresponding to the direction vector [vec]"""
+    """Returns the "facing" block state string corresponding to the direction vector ``vec``"""
     v = (
         -1 if vec[0] < 0 else 1 if vec[0] > 0 else 0,
         -1 if vec[1] < 0 else 1 if vec[1] > 0 else 0,
@@ -126,7 +135,7 @@ __FACING_TO_VECTOR = {
     "east":  ivec3( 1, 0, 0),
 }
 def facingToVector(facing: str):
-    """Returns the direction vector corresponding to the "facing" block state string [facing]"""
+    """Returns the direction vector corresponding to the "facing" block state string ``facing``"""
     return __FACING_TO_VECTOR[facing]
 
 
@@ -138,7 +147,7 @@ def facingToVector(facing: str):
 
 
 def rotationToVector(rotation: str):
-    """Returns the axis-aligned direction vector corresponding to <rotation>"""
+    """Returns the axis-aligned direction vector corresponding to ``rotation``"""
     return facingToVector(rotationToFacing(rotation))
 
 
@@ -218,9 +227,10 @@ def invertFacing(facing: str):
 
 def rotateRotation(blockStateRotation: str, rotation: int):
     """Returns the rotated "rotation" block state string.\n
-    Yes, this is confusing. <blockStateRotation> denotes a value of the "rotation" block state, as
-    used by e.g. signs. <rotation> denotes a rotation as used by GDPC's transformation system, so one
-    of {0,1,2,3}. This function name is consistent with the other block state rotation functions."""
+    Yes, this is confusing. ``blockStateRotation`` denotes a value of the "rotation" block state, as
+    used by e.g. signs. ``rotation`` denotes a rotation as used by GDPC's transformation system, so
+    one of {0,1,2,3}. This function name is consistent with the other block state rotation
+    functions."""
     return str((int(blockStateRotation) + 4*rotation) % 16)
 
 

@@ -1,5 +1,7 @@
-"""Provides the Model class"""
+"""Provides the :class:`.Model` class, which can store a model of Minecraft blocks."""
 
+
+from __future__ import annotations
 
 from typing import Union, Optional, List, Dict
 from copy import copy
@@ -19,7 +21,7 @@ class Model:
     """
 
     def __init__(self, size: Vec3iLike, blocks: Optional[List[Optional[Block]]] = None):
-        """Constructs a Model of size [size], optionally filled with [blocks]."""
+        """Constructs a Model of size ``size``, optionally filled with ``blocks``."""
         self._size = ivec3(*size)
         volume = self._size.x * self._size.y * self._size.z
         if blocks is not None:
@@ -42,11 +44,11 @@ class Model:
 
 
     def getBlock(self, position: Vec3iLike):
-        """Returns the block at [vec]"""
+        """Returns the block at ``vec``"""
         return self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]]
 
     def setBlock(self, position: Vec3iLike, block: Optional[Block]):
-        """Sets the block at [vec] to [block]"""
+        """Sets the block at ``vec`` to ``block``"""
         self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]] = block
 
 

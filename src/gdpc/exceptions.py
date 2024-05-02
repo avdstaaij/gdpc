@@ -1,4 +1,4 @@
-"""Exceptions used by GDPC"""
+"""Contains exceptions used by GDPC"""
 
 
 class InterfaceError(RuntimeError):

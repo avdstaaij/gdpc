@@ -1,7 +1,9 @@
-"""Provides various utilities that require an Editor."""
+"""Provides various utilities that require an :class:`.Editor`."""
 
 
 from typing import Optional, Iterable, Set, Tuple, Union
+import sys
+import inspect
 import random
 
 import numpy as np
@@ -16,8 +18,8 @@ from .editor import Editor
 
 
 def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike):
-    """Sets <editor>'s build area to a box of <size> centered on the player, and returns it.\n
-    The build area is always in **global coordinates**; <editor>.transform is ignored."""
+    """Sets ``editor``'s build area to a box of ``size`` centered on the player, and returns it.\n
+    The build area is always in **global coordinates**; ``editor.transform`` is ignored."""
     # -1 to correct for offset from player position
     radius = (ivec3(*size) - 1) // 2
     editor.runCommandGlobal(
@@ -35,7 +37,7 @@ def flood_search_3D(
     depth=256
 ):
     """Return a list of coordinates with blocks that fulfill the search.\n
-    Activating caching is *highly* recommended."""
+    Activating caching (:attr:`.Editor.caching`) is *highly* recommended."""
     def flood_search_3D_recursive(point: ivec3, result: Set[ivec3], visited: Set[ivec3], depth_: int):
         if point in visited:
             return
@@ -66,8 +68,8 @@ def placeSign(
     isWaxed = False
 ):
     """Places a sign with the specified properties.\n
-    If <wall> is True, <facing> is used. Otherwise, <rotation> is used.
-    If the used property is None, a least obstructed direction will be used."""
+    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
+    If the used property is ``None``, a least obstructed direction will be used."""
     if wall and facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     elif not wall and rotation is None:
@@ -82,9 +84,9 @@ def placeSign(
 
 def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
     """Place a lectern with the specified properties.\n
-    If <facing> is None, a least obstructed facing direction will be used.\n
-    <bookData> should be an SNBT string defining a book.
-    You can use minecraft_tools.bookData() to create such a string."""
+    If ``facing`` is None, a least obstructed facing direction will be used.\n
+    ``bookData`` should be an SNBT string defining a book.
+    You can use :func:`.minecraft_tools.bookData` to create such a string."""
     if facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     editor.placeBlock(position, lecternBlock(facing, bookData, page))
@@ -98,7 +100,7 @@ def placeContainerBlock(
     replace=True
 ):
     """Place a container block with the specified items in the world.\n
-    <items> should be a sequence of (position, item, [amount,])-tuples."""
+    ``items`` should be a sequence of (position, item, [amount,])-tuples."""
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
     if inventorySize is None:
         raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
@@ -121,7 +123,7 @@ def placeContainerBlock(
 
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1):
-    """Sets the item at <itemPosition> in the container block at <position> to the item with id <item>."""
+    """Sets the item at ``itemPosition`` in the container block at ``position`` to the item with id ``item``."""
     blockId = editor.getBlock(position).id
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(blockId)
     if inventorySize is None:

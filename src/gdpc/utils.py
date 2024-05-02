@@ -1,4 +1,4 @@
-"""Various utilities that are not specific to GDPC"""
+"""Various generic utilities"""
 
 from typing import TypeVar, Generic, Callable, Iterable, OrderedDict, Union
 import time
@@ -15,35 +15,35 @@ VT = TypeVar("VT")
 
 
 def sign(x) -> int:
-    """Returns the sign of [x]"""
+    """Returns the sign of ``x``"""
     return (x > 0) - (x < 0)
 
 
 def nonZeroSign(x) -> int:
-    """Returns the sign of [x], except that non_zero_sign(0) == 1"""
+    """Returns the sign of ``x``, except that ``nonZeroSign(0) == 1``"""
     return 1 if x >= 0 else -1
 
 
 def clamp(x: T, minimum: T, maximum: T) -> T:
-    """Clamps [x] to the range [minimum, maximum]"""
+    """Clamps ``x`` to the range [``minimum``, ``maximum``]"""
     return max(minimum, min(maximum, x))
 
 
 def eagerAll(iterable: Iterable):
-    """Like all(), but always evaluates every element"""
+    """Like ``all()``, but always evaluates every element"""
     results = [result for result in iterable]
     return all(results)
 
 def eagerAny(iterable: Iterable):
-    """Like any(), but always evaluates every element"""
+    """Like ``any()``, but always evaluates every element"""
     results = [result for result in iterable]
     return any(results)
 
 
 # Based on https://stackoverflow.com/a/21032099
 def normalized(a, order=2, axis=-1):
-    """Normalizes [a] using the L[order] norm.\n
-    If [axis] is specified, normalizes along that axis."""
+    """Normalizes ``a`` using the L<order> norm.\n
+    If ``axis`` is specified, normalizes along that axis."""
     norm = np.atleast_1d(np.linalg.norm(a, order, axis))
     norm[norm==0] = 1
     return a / np.expand_dims(norm, axis)
@@ -56,10 +56,10 @@ def withRetries(
     onRetry:       Callable[[Exception, int], None] = lambda *_: time.sleep(1),
     reRaise:       bool                             = True
 ):
-    """Retries <function> up to <retries> times if an exception occurs.\n
-    Before retrying, calls <onRetry>(last exception, remaining retries).
+    """Retries ``function`` up to ``retries`` times if an exception occurs.\n
+    Before retrying, calls onRetry(last exception, remaining retries).
     The default callback sleeps for one second.\n
-    If the retries have ran out and <reRaise> is True, the last exception is re-raised."""
+    If the retries have ran out and ``reRaise`` is ``True``, the last exception is re-raised."""
     while True:
         try:
             return function()
@@ -73,7 +73,7 @@ def withRetries(
 
 
 def isIterable(value):
-    """Determine whether <value> is iterable."""
+    """Determine whether ``value`` is iterable."""
     try:
         _ = iter(value)
         return True
@@ -82,7 +82,7 @@ def isIterable(value):
 
 
 def isSequence(value):
-    """Determine whether <value> is a sequence."""
+    """Determine whether ``value`` is a sequence."""
     try:
         _ = value[0]
         return True
@@ -93,7 +93,7 @@ def isSequence(value):
 class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
     """Dict ordered from least to most recently looked-up key\n
 
-    Unless maxSize is 0, the dict size is limited to maxSize by evicting the least recently
+    Unless ``maxSize`` is 0, the dict size is limited to ``maxSize`` by evicting the least recently
     looked-up key when full.
     """
     # Based on

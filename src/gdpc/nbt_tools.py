@@ -1,4 +1,6 @@
 """Utilities for working with Minecraft's NBT and SNBT formats"""
+
+
 from typing import Union
 from pathlib import Path
 from nbt import nbt

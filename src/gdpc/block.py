@@ -1,4 +1,4 @@
-"""Provides the Block class"""
+"""Provides the :class:`.Block` class, which represents a Minecraft block."""
 
 
 from typing import Any, Union, Optional, Dict, Sequence
@@ -18,14 +18,15 @@ from .block_state_tools import transformAxis, transformFacing, transformRotation
 class Block:
     """A Minecraft block.
 
-    Block states can be stored in .states, and block entity data can be stored in .data as an SNBT
-    string.
+    Block states can be stored in :attr:`.states`, and block entity data can be stored in
+    :attr:`.data` as an SNBT string.
 
-    If .id is an empty string or None, the block represents "nothing". Placing such a block has no
-    effect. This is opposed to blocks of air, which do replace existing blocks. Nothing-blocks can
-    be useful in block palettes.
+    If :attr:`.id` is an empty string or None, the block represents "nothing". Placing such a block
+    has no effect. This is opposed to blocks of air, which do replace existing blocks.
+    Nothing-blocks can be useful in block palettes.
 
     The transform methods modify a number of orientation-related block states. These are:
+
     - axis
     - facing
     - rotation
@@ -38,9 +39,9 @@ class Block:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
 
-    id:     Optional[str]  = "minecraft:stone"
-    states: Dict[str, str] = field(default_factory=dict)
-    data:   Optional[str]  = None
+    id:     Optional[str]  = "minecraft:stone" #: Block ID
+    states: Dict[str, str] = field(default_factory=dict) #: Block states
+    data:   Optional[str]  = None #: Block entity data
 
 
     def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()):
@@ -89,7 +90,7 @@ class Block:
     @staticmethod
     def fromBlockStateTag(blockStateTag: nbt.TAG_Compound, blockEntityTag: Optional[nbt.TAG_Compound] = None):
         """Parses a block state compound tag (as found in chunk palettes) into a Block.\n
-        If <blockEntityTag> is provided, it is parsed into the Block's .data attribute."""
+        If ``blockEntityTag`` is provided, it is parsed into the Block's :attr:`.data` attribute."""
         block = Block(str(blockStateTag["Name"]))
 
         if "Properties" in blockStateTag:
