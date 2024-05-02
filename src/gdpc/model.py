@@ -20,7 +20,7 @@ class Model:
     transformations.
     """
 
-    def __init__(self, size: Vec3iLike, blocks: Optional[List[Optional[Block]]] = None):
+    def __init__(self, size: Vec3iLike, blocks: Optional[List[Optional[Block]]] = None) -> None:
         """Constructs a Model of size ``size``, optionally filled with ``blocks``."""
         self._size = ivec3(*size)
         volume = self._size.x * self._size.y * self._size.z
@@ -33,7 +33,7 @@ class Model:
 
 
     @property
-    def size(self):
+    def size(self) -> ivec3:
         """This Model's size"""
         return copy(self._size)
 
@@ -43,11 +43,11 @@ class Model:
         return copy(self._blocks) # Allows block modification, but not resizing
 
 
-    def getBlock(self, position: Vec3iLike):
+    def getBlock(self, position: Vec3iLike) -> Optional[Block]:
         """Returns the block at ``vec``"""
         return self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]]
 
-    def setBlock(self, position: Vec3iLike, block: Optional[Block]):
+    def setBlock(self, position: Vec3iLike, block: Optional[Block]) -> None:
         """Sets the block at ``vec`` to ``block``"""
         self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]] = block
 
@@ -58,7 +58,7 @@ class Model:
         transformLike:  Optional[TransformLike]         = None,
         substitutions:  Optional[Dict[str, str]]        = None,
         replace:        Optional[Union[str, List[str]]] = None
-    ):
+    ) -> None:
         """Builds the model.
 
         Use [substitutions] to build the model with certain blocks types replaced by others.

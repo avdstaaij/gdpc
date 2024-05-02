@@ -29,12 +29,12 @@ def clamp(x: T, minimum: T, maximum: T) -> T:
     return max(minimum, min(maximum, x))
 
 
-def eagerAll(iterable: Iterable):
+def eagerAll(iterable: Iterable) -> bool:
     """Like ``all()``, but always evaluates every element"""
     results = [result for result in iterable]
     return all(results)
 
-def eagerAny(iterable: Iterable):
+def eagerAny(iterable: Iterable) -> bool:
     """Like ``any()``, but always evaluates every element"""
     results = [result for result in iterable]
     return any(results)
@@ -55,7 +55,7 @@ def withRetries(
     retries:       int                              = 1,
     onRetry:       Callable[[Exception, int], None] = lambda *_: time.sleep(1),
     reRaise:       bool                             = True
-):
+) -> Union[T, None]:
     """Retries ``function`` up to ``retries`` times if an exception occurs.\n
     Before retrying, calls onRetry(last exception, remaining retries).
     The default callback sleeps for one second.\n
@@ -72,7 +72,7 @@ def withRetries(
             retries -= 1
 
 
-def isIterable(value):
+def isIterable(value) -> bool:
     """Determine whether ``value`` is iterable."""
     try:
         _ = iter(value)
@@ -81,7 +81,7 @@ def isIterable(value):
         return False
 
 
-def isSequence(value):
+def isSequence(value) -> bool:
     """Determine whether ``value`` is a sequence."""
     try:
         _ = value[0]
@@ -106,23 +106,23 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
     # inherited __repr__ from OrderedDict is sufficient
 
     @property
-    def maxSize(self):
+    def maxSize(self) -> int:
         return self._maxSize
 
     @maxSize.setter
-    def maxSize(self, value: int):
+    def maxSize(self, value: int) -> None:
         self._maxSize = value
         if self._maxSize > 0:
             while len(self) > self.maxSize:
                 oldest = next(iter(self))
                 del self[oldest]
 
-    def __getitem__(self, key: KT):
+    def __getitem__(self, key: KT) -> VT:
         value = super().__getitem__(key)
         self.move_to_end(key)
         return value
 
-    def __setitem__(self, key: KT, value: VT):
+    def __setitem__(self, key: KT, value: VT) -> None:
         if key in self:
             self.move_to_end(key)
         super().__setitem__(key, value)
@@ -131,7 +131,7 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
             del self[oldest]
 
 
-def visualizeMaps(*arrays, title="", normalize=True):
+def visualizeMaps(*arrays, title="", normalize=True) -> None:
     """Visualizes one or multiple 2D numpy arrays."""
     for array in arrays:
         if normalize:

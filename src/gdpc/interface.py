@@ -32,7 +32,7 @@ DEFAULT_HOST = "http://localhost:9000"
 logger = logging.getLogger(__name__)
 
 
-def _onRequestRetry(e: Exception, retriesLeft: int):
+def _onRequestRetry(e: Exception, retriesLeft: int) -> None:
     logger.warning(
         "HTTP request failed!\n"
         "Request exception:\n"
@@ -43,7 +43,7 @@ def _onRequestRetry(e: Exception, retriesLeft: int):
     time.sleep(3)
 
 
-def _request(method: str, url: str, *args, retries: int, **kwargs):
+def _request(method: str, url: str, *args, retries: int, **kwargs) -> requests.Response:
     try:
         response = withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry)
     except RequestConnectionError as e:
@@ -61,7 +61,7 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
     return response
 
 
-def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
+def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[ivec3, Block]]:
     """Returns the blocks in the specified region.
 
     ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
@@ -89,7 +89,7 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data") if b.get("data") != "{}" else None)) for b in blockDicts]
 
 
-def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[ivec3, str]]:
     """Returns the biomes in the specified region.
 
     ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
@@ -115,7 +115,7 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     return [(ivec3(b["x"], b["y"], b["z"]), str(b["id"])) for b in biomeDicts]
 
 
-def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[bool, Union[int, str]]]:
     """Places blocks in the world.
 
     Each element of ``blocks`` should be a tuple (position, block). Empty blocks (blocks without an
@@ -159,7 +159,7 @@ def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[s
     return result
 
 
-def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[bool, Optional[str]]]:
     """Executes one or multiple Minecraft commands (separated by newlines).
 
     The leading "/" must be omitted.
@@ -175,14 +175,12 @@ def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout
     return result
 
 
-def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
+def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST) -> Box:
     """Retrieves the build area that was specified with /setbuildarea in-game.
 
-    Fails if the build area was not specified yet.
+    Raises a :exc:`.BuildAreaNotSetError` if the build area was not specified yet.
 
-    Returns (success, result).
     If a build area was specified, result is the box describing the build area.
-    Otherwise, result is the error message string.
     """
     response = _request("GET", f"{host}/buildarea", retries=retries, timeout=timeout)
 
@@ -207,7 +205,7 @@ def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
     return Box.between(fromPoint, toPoint)
 
 
-def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST):
+def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST) -> Union[str, bytes]:
     """Returns raw chunk data.
 
     ``position`` specifies the position in chunk coordinates, and ``size`` specifies how many chunks
@@ -234,7 +232,7 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
-def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST) -> None:
     """Places a structure defined using the Minecraft structure format in the world.
 
     ``structureData`` should be a string of bytes in the Minecraft structure file format, the format used by the
@@ -290,7 +288,7 @@ def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike
     return response.json()
 
 
-def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST):
+def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST) -> bytes:
     """Returns the specified area in the Minecraft structure file format (an NBT byte string).
 
     The Minecraft structure file format is the format used by the in-game structure blocks. Structures in this format
@@ -321,7 +319,7 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
     return response.content
 
 
-def getEntities(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getEntities(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> Any:
     url = f'{host}/entities'
     parameters = {
         'selector': selector,
@@ -332,7 +330,7 @@ def getEntities(selector: Optional[str] = None, includeData: bool = True, dimens
     return response.json()
 
 
-def getPlayers(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getPlayers(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> Any:
     url = f'{host}/players'
     parameters = {
         'selector': selector,
@@ -343,6 +341,6 @@ def getPlayers(selector: Optional[str] = None, includeData: bool = True, dimensi
     return response.json()
 
 
-def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
+def getVersion(retries=0, timeout=None, host=DEFAULT_HOST) -> str:
     """Returns the Minecraft version as a string."""
     return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text

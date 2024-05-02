@@ -36,7 +36,7 @@ __FACING_TO_ROTATION = {
     "north": "8",
     "east":  "12",
 }
-def facingToRotation(facing: str):
+def facingToRotation(facing: str) -> str:
     """Converts ``facing`` to the corresponding "rotation" block state string"""
     return __FACING_TO_ROTATION[facing]
 
@@ -59,7 +59,7 @@ __ROTATION_TO_FACING = {
     "14": "east",
     "15": "south",
 }
-def rotationToFacing(rotation: str):
+def rotationToFacing(rotation: str) -> str:
     """Converts ``rotation`` to the nearest corresponding "facing" block state string"""
     return __ROTATION_TO_FACING[rotation]
 
@@ -78,7 +78,7 @@ __VECTOR_TO_AXIS = {
     (0,1,0): "y",
     (0,0,1): "z",
 }
-def vectorToAxis(vec: Vec3iLike):
+def vectorToAxis(vec: Vec3iLike) -> str:
     """Returns the "axis" block state string corresponding to the direction vector ``vec``"""
     v = (
         vec[0] != 0,
@@ -96,7 +96,7 @@ __AXIS_TO_VECTOR = {
     "y": ivec3(0,1,0),
     "z": ivec3(0,0,1),
 }
-def axisToVector(axis: str):
+def axisToVector(axis: str) -> ivec3:
     """Returns the direction vector corresponding to the "axis" block state string ``axis``"""
     return __AXIS_TO_VECTOR[axis]
 
@@ -113,7 +113,7 @@ __VECTOR_TO_FACING = {
     (-1, 0, 0): "west",
     ( 1, 0, 0): "east",
 }
-def vectorToFacing(vec: Vec3iLike):
+def vectorToFacing(vec: Vec3iLike) -> str:
     """Returns the "facing" block state string corresponding to the direction vector ``vec``"""
     v = (
         -1 if vec[0] < 0 else 1 if vec[0] > 0 else 0,
@@ -134,7 +134,7 @@ __FACING_TO_VECTOR = {
     "west":  ivec3(-1, 0, 0),
     "east":  ivec3( 1, 0, 0),
 }
-def facingToVector(facing: str):
+def facingToVector(facing: str) -> ivec3:
     """Returns the direction vector corresponding to the "facing" block state string ``facing``"""
     return __FACING_TO_VECTOR[facing]
 
@@ -146,7 +146,7 @@ def facingToVector(facing: str):
 # TODO: vectorToRotation
 
 
-def rotationToVector(rotation: str):
+def rotationToVector(rotation: str) -> ivec3:
     """Returns the axis-aligned direction vector corresponding to ``rotation``"""
     return facingToVector(rotationToFacing(rotation))
 
@@ -160,7 +160,7 @@ def rotationToVector(rotation: str):
 # Axis
 
 
-def rotateAxis(axis: str, rotation: int):
+def rotateAxis(axis: str, rotation: int) -> str:
     """Returns the rotated "axis" block state string"""
     strings = ["x", "z"]
     try:
@@ -169,7 +169,7 @@ def rotateAxis(axis: str, rotation: int):
         return axis
 
 
-def transformAxis(axis: str, rotation: int = 0):
+def transformAxis(axis: str, rotation: int = 0) -> str:
     """Returns the transformed "axis" block state string"""
     # Flipping is a no-op for axis strings
     return rotateAxis(axis, rotation)
@@ -179,7 +179,7 @@ def transformAxis(axis: str, rotation: int = 0):
 # Facing
 
 
-def rotateFacing(facing: str, rotation: int):
+def rotateFacing(facing: str, rotation: int) -> str:
     """Returns the rotated "facing" block state string"""
     strings = ["north", "east", "south", "west"]
     try:
@@ -188,7 +188,7 @@ def rotateFacing(facing: str, rotation: int):
         return facing # up, down
 
 
-def flipFacing(facing: str, flip: Vec3bLike):
+def flipFacing(facing: str, flip: Vec3bLike) -> str:
     """Returns the flipped "facing" block state string"""
     if flip[0]:
         if facing == "east":  return "west"
@@ -202,7 +202,7 @@ def flipFacing(facing: str, flip: Vec3bLike):
     return facing
 
 
-def transformFacing(facing: str, rotation: int = 0, flip: Vec3bLike = bvec3()):
+def transformFacing(facing: str, rotation: int = 0, flip: Vec3bLike = bvec3()) -> str:
     """Returns the transformed "facing" block state string.\n
     Flips first, rotates second."""
     return rotateFacing(flipFacing(facing, flip), rotation)
@@ -216,7 +216,7 @@ __INVERT_FACING = {
     "west":  "east",
     "east":  "west",
 }
-def invertFacing(facing: str):
+def invertFacing(facing: str) -> str:
     """Returns the inverted "facing" block state string"""
     return __INVERT_FACING[facing]
 
@@ -225,7 +225,7 @@ def invertFacing(facing: str):
 # Rotation
 
 
-def rotateRotation(blockStateRotation: str, rotation: int):
+def rotateRotation(blockStateRotation: str, rotation: int) -> str:
     """Returns the rotated "rotation" block state string.\n
     Yes, this is confusing. ``blockStateRotation`` denotes a value of the "rotation" block state, as
     used by e.g. signs. ``rotation`` denotes a rotation as used by GDPC's transformation system, so
@@ -234,7 +234,7 @@ def rotateRotation(blockStateRotation: str, rotation: int):
     return str((int(blockStateRotation) + 4*rotation) % 16)
 
 
-def flipRotation(rotation: str, flip: Vec3bLike):
+def flipRotation(rotation: str, flip: Vec3bLike) -> str:
     """Returns the flipped "rotation" block state string"""
     rotationInt = int(rotation)
     if flip[0]:
@@ -244,7 +244,7 @@ def flipRotation(rotation: str, flip: Vec3bLike):
     return str(rotationInt)
 
 
-def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLike = bvec3()):
+def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLike = bvec3()) -> str:
     """Returns the transformed "rotation" block state string.\n
     Flips first, rotates second."""
     return rotateRotation(flipRotation(blockStateRotation, flip), rotation)

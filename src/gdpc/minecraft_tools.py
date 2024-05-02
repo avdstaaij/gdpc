@@ -29,7 +29,7 @@ def signData(
     backColor: str = "",
     backIsGlowing: bool = False,
     isWaxed = False
-):
+) -> str:
     """Returns an SNBT string with sign data."""
 
     def sideCompound(line1: str, line2: str, line3: str, line4: str, color: str, isGlowing: bool):
@@ -49,7 +49,7 @@ def signData(
     return "{" + ",".join(fields) + "}"
 
 
-def lecternData(bookData: Optional[str], page: int = 0):
+def lecternData(bookData: Optional[str], page: int = 0) -> str:
     """Returns an SNBT string with lectern data.\n
     ``bookData`` should be an SNBT string defining a book.
     You can use :func:`.bookData` to create such a string.
@@ -65,7 +65,7 @@ def bookData(
     author      = "Anonymous",
     description = "I wonder what's inside?",
     desccolor   = "gold"
-):
+) -> str:
     r"""Returns an SNBT string with written book data
 
     The following special characters can be used to format the book:
@@ -223,7 +223,7 @@ def signBlock(
     frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
     backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
     isWaxed = False
-):
+) -> Block:
     """Returns a sign Block with the specified properties."""
     blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
     states = {"facing": facing} if wall else {"rotation": str(rotation)}
@@ -237,7 +237,7 @@ def signBlock(
     )
 
 
-def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0):
+def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0) -> Block:
     """Returns a lectern Block with the specified properties."""
     return Block(
         "minecraft:lectern",
@@ -251,14 +251,14 @@ def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: in
 # ==================================================================================================
 
 
-def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike):
+def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike) -> int:
     """Returns the flat index of the slot at ``position`` in an inventory of size ``inventorySize``."""
     if not Rect(size=inventorySize).contains(position):
         raise ValueError(f"{position} is not between (0, 0) and {tuple(inventorySize)}!")
     return position[0] + position[1] * inventorySize[0]
 
 
-def getObtrusiveness(block: Block):
+def getObtrusiveness(block: Block) -> int:
     """Returns the percieved obtrusiveness of the given ``block``.\n
     Returns a numeric weight from 0 (invisible) to 4 (opaque)."""
     if not block.id:

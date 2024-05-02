@@ -44,7 +44,7 @@ class Block:
     data:   Optional[str]  = None #: Block entity data
 
 
-    def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()):
+    def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()) -> None:
         """Transforms this block.\n
         Flips first, rotates second."""
         axisState     = self.states.get("axis")
@@ -55,7 +55,7 @@ class Block:
         if rotationState is not None: self.states["rotation"] = transformRotation(rotationState, rotation, flip)
 
 
-    def transformed(self, rotation: int = 0, flip: Vec3bLike = bvec3()):
+    def transformed(self, rotation: int = 0, flip: Vec3bLike = bvec3()) -> "Block":
         """Returns a transformed copy of this block.\n
         Flips first, rotates second."""
         block = deepcopy(self)
@@ -63,19 +63,19 @@ class Block:
         return block
 
 
-    def stateString(self):
+    def stateString(self) -> str:
         """Returns a string containing the block states of this block, including the outer brackets."""
         stateString = ",".join([f"{key}={value}" for key, value in self.states.items()])
         return "" if stateString == "" else f"[{stateString}]"
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         if not self.id:
             return ""
         return self.id + self.stateString() + (self.data if self.data else "")
 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         # This is used for model dumping; it needs to return a string that eval()'s to this Block.
         # The default repr includes unnecessary default values, which make model dumps way larger
         # than they need to be.
@@ -88,7 +88,7 @@ class Block:
 
 
     @staticmethod
-    def fromBlockStateTag(blockStateTag: nbt.TAG_Compound, blockEntityTag: Optional[nbt.TAG_Compound] = None):
+    def fromBlockStateTag(blockStateTag: nbt.TAG_Compound, blockEntityTag: Optional[nbt.TAG_Compound] = None) -> "Block":
         """Parses a block state compound tag (as found in chunk palettes) into a Block.\n
         If ``blockEntityTag`` is provided, it is parsed into the Block's :attr:`.data` attribute."""
         block = Block(str(blockStateTag["Name"]))
@@ -107,7 +107,7 @@ class Block:
         return block
 
 
-def transformedBlockOrPalette(block: Union[Block, Sequence[Block]], rotation: int, flip: Vec3bLike):
+def transformedBlockOrPalette(block: Union[Block, Sequence[Block]], rotation: int, flip: Vec3bLike) -> Union[Block, Sequence[Block]]:
     """Convenience function that transforms a block or a palette of blocks."""
     if isinstance(block, Block):
         return block.transformed(rotation, flip)

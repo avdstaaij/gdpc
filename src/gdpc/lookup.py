@@ -35,7 +35,7 @@ def variate(
     isPrefix:   bool          = False,
     separator:  str           = "_",
     namespace:  Optional[str] = "minecraft",
-):
+) -> Set[str]:
     """Generates block variations.
 
     Returns a set of strings. For each variation, each extension is either appended or prepended

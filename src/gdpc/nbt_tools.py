@@ -37,7 +37,7 @@ def nbtToSnbt(tag: nbt.TAG) -> str:
 
 def parseNbtFile(
     filePath: Union[Path, str]
-):
+) -> nbt.NBTFile:
     """Create NBT object from stored NBT file."""
     if isinstance(filePath, str):
         filePath = Path(filePath)
@@ -48,7 +48,7 @@ def parseNbtFile(
 def saveNbtFile(
     filePath: Union[Path, str],
     data: Union[bytes, nbt.NBTFile]
-):
+) -> None:
     """Save string of bytes or NBTFile object to a file."""
     if isinstance(filePath, str):
         filePath = Path(filePath)

@@ -4,7 +4,7 @@ Minecraft world through the GDMC HTTP interface"""
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Union, Optional, List, Iterable
+from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator
 from numbers import Integral
 from contextlib import contextmanager
 from copy import copy, deepcopy
@@ -47,7 +47,7 @@ class Editor:
         retries               = 4,
         timeout               = None,
         host                  = interface.DEFAULT_HOST,
-    ):
+    ) -> None:
         """Constructs an Editor instance with the specified transform and settings"""
         self._retries = retries
         self._timeout = timeout
@@ -79,7 +79,7 @@ class Editor:
         self._worldSliceDecay: Optional[np.ndarray] = None
 
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleans up this Editor instance"""
         # awaits any pending buffer flush futures and shuts down the buffer flush executor
         self.multithreading = False
@@ -92,16 +92,16 @@ class Editor:
 
 
     @property
-    def transform(self):
+    def transform(self) -> Transform:
         """This editor's local coordinate transform (used for block placement and retrieval)."""
         return self._transform
 
     @transform.setter
-    def transform(self, value: Union[Transform, ivec3]):
+    def transform(self, value: TransformLike) -> None:
         self._transform = toTransform(value)
 
     @property
-    def dimension(self):
+    def dimension(self) -> Optional[str]:
         """The dimension this editor interacts with.\n
         Changing the dimension will flush the block buffer and invalidate all caches.\n
         Note that the transform is NOT reset or modified when the dimension is changed! In
@@ -110,7 +110,7 @@ class Editor:
         return self._dimension
 
     @dimension.setter
-    def dimension(self, value: Optional[str]):
+    def dimension(self, value: Optional[str]) -> None:
         if value != self._dimension:
             self.flushBuffer()
             self._cache.clear()
@@ -124,7 +124,7 @@ class Editor:
         return self._buffering
 
     @buffering.setter
-    def buffering(self, value: bool):
+    def buffering(self, value: bool) -> None:
         if self.buffering and not value:
             self.flushBuffer()
         self._buffering = value
@@ -135,36 +135,36 @@ class Editor:
         return self._bufferLimit
 
     @bufferLimit.setter
-    def bufferLimit(self, value: int):
+    def bufferLimit(self, value: int) -> None:
         self._bufferLimit = value
         if len(self._buffer) >= self.bufferLimit:
             self.flushBuffer()
 
     @property
-    def caching(self):
+    def caching(self) -> bool:
         """Whether caching placed and retrieved blocks is enabled."""
         return self._caching
 
     @caching.setter
-    def caching(self, value: bool):
+    def caching(self, value: bool) -> None:
         self._caching = value
 
     @property
-    def cacheLimit(self):
+    def cacheLimit(self) -> int:
         """Size of the block cache."""
         return self._cache.maxSize
 
     @cacheLimit.setter
-    def cacheLimit(self, value: int):
+    def cacheLimit(self, value: int) -> None:
         self._cache.maxSize = value
 
     @property
-    def multithreading(self):
+    def multithreading(self) -> bool:
         """Whether multithreaded buffer flushing is enabled."""
         return self._multithreading
 
     @multithreading.setter
-    def multithreading(self, value: bool):
+    def multithreading(self, value: bool) -> None:
         if not self._multithreading and value:
             self._bufferFlushExecutor = futures.ThreadPoolExecutor(self._multithreadingWorkers)
             if self._multithreadingWorkers > 1:
@@ -185,12 +185,12 @@ class Editor:
         self._multithreading = value
 
     @property
-    def multithreadingWorkers(self):
+    def multithreadingWorkers(self) -> int:
         """The amount of buffer flush worker threads."""
         return self._multithreadingWorkers
 
     @multithreadingWorkers.setter
-    def multithreadingWorkers(self, value: int):
+    def multithreadingWorkers(self, value: int) -> None:
         restartExecutor = self.multithreading and self._multithreadingWorkers != value
         self._multithreadingWorkers = value
         if restartExecutor:
@@ -198,54 +198,54 @@ class Editor:
             self.multithreading = True
 
     @property
-    def doBlockUpdates(self):
+    def doBlockUpdates(self) -> bool:
         """Whether placed blocks should receive a block update."""
         return self._doBlockUpdates
 
     @doBlockUpdates.setter
-    def doBlockUpdates(self, value: bool):
+    def doBlockUpdates(self, value: bool) -> None:
         if self.buffering and value != self._doBlockUpdates:
             self.flushBuffer()
         self._doBlockUpdates = value
 
     @property
-    def spawnDrops(self):
+    def spawnDrops(self) -> bool:
         """Whether overwritten blocks should drop items."""
         return self._spawnDrops
 
     @spawnDrops.setter
-    def spawnDrops(self, value: bool):
+    def spawnDrops(self, value: bool) -> None:
         if self.buffering and value != self._spawnDrops:
             self.flushBuffer()
         self._spawnDrops = value
 
     @property
-    def retries(self):
+    def retries(self) -> int:
         """The amount of retries for requests to the GDMC HTTP interface."""
         return self._retries
 
     @retries.setter
-    def retries(self, value: int):
+    def retries(self, value: int) -> None:
         self._retries = value
 
     @property
-    def timeout(self):
+    def timeout(self) -> float:
         """The timeout for requests to the GDMC HTTP interface (as described by the `requests package <https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts>`_)"""
         return self._timeout
 
     @timeout.setter
-    def timeout(self, value):
+    def timeout(self, value) -> None:
         self._timeout = value
 
     @property
-    def host(self):
+    def host(self) -> str:
         """The address (hostname+port) of the GDMC HTTP interface to use\n
         Changing the host will flush the buffer and invalidate all caches.\n
         Note that the transform is NOT reset or modified when the host is changed!"""
         return self._host
 
     @host.setter
-    def host(self, value: str):
+    def host(self, value: str) -> None:
         if value != self._host:
             self.flushBuffer()
             self.awaitBufferFlushes()
@@ -255,15 +255,16 @@ class Editor:
         self._host = value
 
     @property
-    def worldSlice(self):
-        """The cached WorldSlice"""
+    def worldSlice(self) -> Optional[WorldSlice]:
+        """The cached WorldSlice (see :meth:`.loadWorldSlice`)"""
         return self._worldSlice
 
     @property
-    def worldSliceDecay(self):
+    def worldSliceDecay(self) -> Optional[np.ndarray]:
         """3D boolean array indicating whether the block at the specified position in the cached
         worldSlice is still valid.\n
-        Note that the lowest Y-layer is at ``[:,0,:]``, despite Minecraft's negative Y coordinates."""
+        Note that the lowest Y-layer is at ``[:,0,:]``, despite Minecraft's negative Y coordinates.
+        If `attr:`.worldSlice` is ``None``, this property will also be ``None``."""
         if self._worldSliceDecay is None:
             return None
         view: np.ndarray = self._worldSliceDecay.view()
@@ -271,7 +272,7 @@ class Editor:
         return view
 
 
-    def runCommand(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False):
+    def runCommand(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False) -> None:
         """Executes one or multiple Minecraft commands (separated by newlines).\n
         The leading "/" must be omitted.\n
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
@@ -290,7 +291,7 @@ class Editor:
         self.runCommandGlobal(command, position, syncWithBuffer)
 
 
-    def runCommandGlobal(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False):
+    def runCommandGlobal(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False) -> None:
         """Executes one or multiple Minecraft commands (separated by newlines), ignoring :attr:`.transform`.\n
         The leading "/" must be omitted.\n
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
@@ -318,14 +319,14 @@ class Editor:
         return interface.getBuildArea(retries=self.retries, timeout=self.timeout, host=self.host)
 
 
-    def setBuildArea(self, buildArea: Box):
+    def setBuildArea(self, buildArea: Box) -> Box:
         """Sets the build area to ``buildArea``, and returns it.\n
         The build area must be given in **global coordinates**; :attr:`.transform` is ignored."""
         self.runCommandGlobal(f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}")
         return self.getBuildArea()
 
 
-    def getBlock(self, position: Vec3iLike):
+    def getBlock(self, position: Vec3iLike) -> Block:
         """Returns the block at ``position``.\n
         ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.
         The returned block's orientation is also from the perspective of :attr:`.transform`.\n
@@ -336,7 +337,7 @@ class Editor:
         return block
 
 
-    def getBlockGlobal(self, position: Vec3iLike):
+    def getBlockGlobal(self, position: Vec3iLike) -> Block:
         """Returns the block at ``position``, ignoring :attr:`.transform`.\n
         If the given coordinates are invalid, returns ``Block("minecraft:void_air")``."""
         _position = ivec3(*position)
@@ -366,14 +367,14 @@ class Editor:
         return block
 
 
-    def getBiome(self, position: Vec3iLike):
+    def getBiome(self, position: Vec3iLike) -> str:
         """Returns the biome at ``position``.\n
         ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.\n
         If the given coordinates are invalid, returns an empty string."""
         return self.getBiomeGlobal(self.transform * position)
 
 
-    def getBiomeGlobal(self, position: Vec3iLike):
+    def getBiomeGlobal(self, position: Vec3iLike) -> str:
         """Returns the biome at ``position``, ignoring :attr:`.transform`.\n
         If the given coordinates are invalid, returns an empty string."""
         if (
@@ -391,7 +392,7 @@ class Editor:
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
         block:          Union[Block, Sequence[Block]],
         replace:        Optional[Union[str, List[str]]] = None
-    ):
+    ) -> bool:
         """Places ``block`` at ``position``.\n
         ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.\n
         If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
@@ -409,7 +410,7 @@ class Editor:
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
         block:          Union[Block, Sequence[Block]],
         replace:        Optional[Union[str, Iterable[str]]] = None
-    ):
+    ) -> bool:
         """Places ``block`` at ``position``, ignoring :attr:`.transform`.\n
         If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
         In this case, buffering is temporarily enabled for better performance.\n
@@ -431,7 +432,7 @@ class Editor:
         position:       ivec3,
         block:          Union[Block, Sequence[Block]],
         replace:        Optional[Union[str, Iterable[str]]] = None
-    ):
+    ) -> bool:
         """Places ``block`` at ``position``, ignoring :attr:`.transform`.\n
         If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
@@ -466,7 +467,7 @@ class Editor:
         return True
 
 
-    def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block):
+    def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block) -> bool:
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
         result = interface.placeBlocks([(position, block)], dimension=self.dimension, doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
@@ -476,7 +477,7 @@ class Editor:
         return True
 
 
-    def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block):
+    def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block) -> bool:
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
         if len(self._buffer) >= self.bufferLimit:
@@ -486,7 +487,7 @@ class Editor:
         return True
 
 
-    def flushBuffer(self):
+    def flushBuffer(self) -> None:
         """Flushes the block placement buffer.\n
         If multithreaded buffer flushing is enabled, the worker threads can be awaited with
         :meth:`.awaitBufferFlushes`."""
@@ -534,7 +535,7 @@ class Editor:
             flush(self._buffer, self._commandBuffer)
 
 
-    def awaitBufferFlushes(self, timeout: Optional[float] = None):
+    def awaitBufferFlushes(self, timeout: Optional[float] = None) -> None:
         """Awaits all pending buffer flushes.\n
         If ``timeout`` is not ``None``, waits for at most ``timeout`` seconds.\n
         Does nothing if no buffer flushes have occured while multithreaded buffer flushing was
@@ -542,7 +543,7 @@ class Editor:
         self._bufferFlushFutures = futures.wait(self._bufferFlushFutures, timeout).not_done
 
 
-    def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache=False):
+    def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache=False) -> WorldSlice:
         """Loads the world slice for the given XZ-rectangle.\n
         The rectangle must be given in **global coordinates**; :attr:`.transform` is ignored.\n
         If ``rect`` is None, the world slice of the current build area is loaded.\n
@@ -562,26 +563,26 @@ class Editor:
         return worldSlice
 
 
-    def updateWorldSlice(self):
+    def updateWorldSlice(self) -> WorldSlice:
         """Updates the cached world slice."""
         if self._worldSlice is None:
             raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
         return self.loadWorldSlice(self._worldSlice.rect, self._worldSlice.heightmaps.keys(), cache=True)
 
 
-    def getMinecraftVersion(self):
+    def getMinecraftVersion(self) -> str:
         """Returns the Minecraft version as a string."""
         return interface.getVersion(retries=self.retries, timeout=self.timeout, host=self.host)
 
 
-    def checkConnection(self):
+    def checkConnection(self) -> None:
         """Raises an :exc:`InterfaceConnectionError` if the GDMC HTTP interface cannot be reached.\n
         Does not perform any retries."""
         interface.getVersion(retries=0, timeout=self.timeout, host=self.host)
 
 
     @contextmanager
-    def pushTransform(self, transformLike: Optional[TransformLike] = None):
+    def pushTransform(self, transformLike: Optional[TransformLike] = None) -> Generator[None, None, None]:
         """Creates a context that reverts all changes to :attr:`.transform` on exit.
         If ``transformLike`` is not ``None``, it is pushed to :attr:`.transform` on enter.
 

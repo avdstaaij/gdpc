@@ -12,7 +12,7 @@ from .block import Block, transformedBlockOrPalette
 from .editor import Editor
 
 
-def placeCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a box of ``block`` blocks from ``first`` to ``last`` (inclusive)."""
     # Transform only the key points instead of all points
     first = editor.transform * first
@@ -21,7 +21,7 @@ def placeCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[
     editor.placeBlockGlobal(Box.between(first, last).inner, block, replace)
 
 
-def placeCuboidHollow(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeCuboidHollow(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a hollow box of ``block`` blocks from ``first`` to ``last`` (inclusive)."""
     # Transform only the key points instead of all points
     first = editor.transform * first
@@ -30,7 +30,7 @@ def placeCuboidHollow(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: 
     editor.placeBlockGlobal(Box.between(first, last).shell, block, replace)
 
 
-def placeCuboidWireframe(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeCuboidWireframe(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a wireframe of ``block`` blocks from ``first`` to ``last`` (inclusive)."""
     # Transform only the key points instead of all points
     first = editor.transform * first
@@ -39,60 +39,60 @@ def placeCuboidWireframe(editor: Editor, first: Vec3iLike, last: Vec3iLike, bloc
     editor.placeBlockGlobal(Box.between(first, last).wireframe, block, replace)
 
 
-def placeBox(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeBox(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a box of ``block`` blocks."""
     if (box.size.x == 0 or box.size.y == 0 or box.size.z == 0): return
     placeCuboid(editor, box.begin, box.end - 1, block, replace)
 
 
-def placeBoxHollow(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeBoxHollow(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a hollow box of ``block`` blocks."""
     if (box.size.x == 0 or box.size.y == 0 or box.size.z == 0): return
     placeCuboidHollow(editor, box.begin, box.end - 1, block, replace)
 
 
-def placeBoxWireframe(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeBoxWireframe(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a wireframe of ``block`` blocks."""
     if (box.size.x == 0 or box.size.y == 0 or box.size.z == 0): return
     placeCuboidWireframe(editor, box.begin, box.end - 1, block, replace)
 
 
-def placeRect(editor: Editor, rect: Rect, y: int, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeRect(editor: Editor, rect: Rect, y: int, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a rectangle of blocks in the XY-plane, at height ``y``"""
     placeBox(editor, rect.toBox(y, 1), block, replace)
 
 
-def placeRectOutline(editor: Editor, rect: Rect, y: int, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None):
+def placeRectOutline(editor: Editor, rect: Rect, y: int, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places the outline of a rectangle of blocks in the XZ-plane, at height ``y``"""
     placeBoxWireframe(editor, rect.toBox(y, 1), block, replace)
 
 
-def placeCheckeredCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1: Block, block2: Block = Block(None), replace: Optional[Union[str, List[str]]] = None):
+def placeCheckeredCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1: Block, block2: Block = Block(None), replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a checker pattern of ``block1`` and ``block2`` in the box between ``first`` and ``last`` (inclusive)"""
     placeCheckeredBox(editor, Box.between(first, last), block1, block2, replace)
 
 
-def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = Block(None), replace: Optional[Union[str, List[str]]] = None):
+def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = Block(None), replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a checker pattern of ``block1`` and ``block2`` in ``box``"""
     # We loop through [box]-local positions so that the pattern start is independent of [box].offset
     for pos in Box(size=box.size).inner:
         editor.placeBlock(box.offset + pos, block1 if sum(pos) % 2 == 0 else block2, replace)
 
 
-def placeStripedCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1: Block, block2: Block = Block(None), axis: int = 0, replace: Optional[Union[str, List[str]]] = None):
+def placeStripedCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1: Block, block2: Block = Block(None), axis: int = 0, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a stripe pattern of ``block1`` and ``block2`` along ``axis`` (0, 1 or 2) in the box
     between ``first`` and ``last`` (inclusive)"""
     placeStripedBox(editor, Box.between(first, last), block1, block2, axis, replace)
 
 
-def placeStripedBox(editor: Editor, box: Box, block1: Union[Block, Sequence[Block]], block2: Union[Block, Sequence[Block]] = Block(None), axis: int = 0, replace: Optional[Union[str, List[str]]] = None):
+def placeStripedBox(editor: Editor, box: Box, block1: Union[Block, Sequence[Block]], block2: Union[Block, Sequence[Block]] = Block(None), axis: int = 0, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a stripe pattern of ``block1`` and ``block2`` along ``axis`` (0, 1 or 2) in ``box``"""
     # We loop through [box]-local positions so that the pattern start is independent of [box].offset
     for pos in Box(size=box.size).inner:
         editor.placeBlock(box.offset + pos, block1 if pos[axis] % 2 == 0 else block2, replace)
 
 
-def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], width=1, replace: Optional[Union[str, List[str]]] = None):
+def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], width=1, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a line of ``block`` blocks from ``first`` to ``last`` (inclusive).\n
     When placing axis-aligned lines, placeCuboid and placeBox are more efficient."""
     # Transform only the key points instead of all points
@@ -102,7 +102,7 @@ def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Bl
     editor.placeBlockGlobal(line3D(first, last, width), block, replace)
 
 
-def placeLineSequence(editor: Editor, points: Iterable[Vec3iLike], block: Union[Block, Sequence[Block]], closed=False, replace: Optional[Union[str, List[str]]] = None):
+def placeLineSequence(editor: Editor, points: Iterable[Vec3iLike], block: Union[Block, Sequence[Block]], closed=False, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Place lines that run from point to point."""
     editor.placeBlock(lineSequence3D(points, closed=closed), block, replace)
 
@@ -113,7 +113,7 @@ def placeCylinder(
     block: Union[Block, Sequence[Block]],
     axis=1, tube=False, hollow=False,
     replace: Optional[Union[str, List[str]]] = None
-):
+) -> None:
     """Place blocks in the shape of a cylinder with the specified properties."""
     editor.placeBlock(cylinder(baseCenter, diameters, length, axis, tube, hollow), block, replace)
 
@@ -124,7 +124,7 @@ def placeFittingCylinder(
     block: Union[Block, Sequence[Block]],
     axis=1, tube=False, hollow=False,
     replace: Optional[Union[str, List[str]]] = None
-):
+) -> None:
     """Place blocks in the shape of the largest cylinder that fits between ``corner1`` and ``corner2``."""
     # Transform only the key points instead of all points
     corner1 = editor.transform * corner1
@@ -140,7 +140,7 @@ def placeSphere(
     block: Union[Block, Sequence[Block]],
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
-):
+) -> None:
     """Places blocks in the shape of a sphere with the specified properties."""
     editor.placeBlock(ellipsoid(center, (diameter, diameter, diameter), hollow), block, replace)
 
@@ -151,7 +151,7 @@ def placeFittingSphere(
     block: Union[Block, Sequence[Block]],
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
-):
+) -> None:
     """Place blocks in the shape of the largest sphere that fits between ``corner1`` and ``corner2``."""
     # Transform only the key points instead of all points
     corner1 = editor.transform * corner1
@@ -167,7 +167,7 @@ def placeEllipsoid(
     block: Union[Block, Sequence[Block]],
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
-):
+) -> None:
     """Place blocks in the shape of an ellipsoid with the specified properties."""
     editor.placeBlock(ellipsoid(center, diameters, hollow), block, replace)
 
@@ -178,7 +178,7 @@ def placeFittingEllipsoid(
     block: Union[Block, Sequence[Block]],
     hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
-):
+) -> None:
     """Place blocks in the shape of the largest ellipsoid that fits between ``corner1`` and ``corner2``."""
     # Transform only the key points instead of all points
     corner1 = editor.transform * corner1

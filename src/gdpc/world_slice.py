@@ -7,9 +7,10 @@ from math import floor, ceil, log2
 
 from glm import ivec2, ivec3
 from nbt import nbt
+from nbt.nbt import TAG_Compound
 import numpy as np
 
-from .vector_tools import Vec3iLike, addY, loop2D, loop3D, trueMod2D, Rect
+from .vector_tools import Vec3iLike, addY, loop2D, loop3D, trueMod2D, Rect, Box
 from .block import Block
 from . import interface
 
@@ -25,7 +26,7 @@ class _BitArray:
     This class performs index mapping and bit shifting to access the data.
     """
 
-    def __init__(self, bitsPerEntry: int, logicalArraySize: int, data):
+    def __init__(self, bitsPerEntry: int, logicalArraySize: int, data) -> None:
         """Initialise a BitArray."""
         self._logicalArraySize = logicalArraySize
         self._bitsPerEntry     = bitsPerEntry
@@ -39,11 +40,11 @@ class _BitArray:
                 raise ValueError(f"Invalid data length: got {len(data)} but expected {expectedLongCount}")
             self.longArray = data
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Represents the BitArray as a constructor."""
         return f"BitArray{(self._bitsPerEntry, self._logicalArraySize, self.longArray)}"
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> int:
         """Returns the binary value stored at ``index``."""
         # If longArray size is 0, this is because the corresponding palette
         # only contains a single value.
@@ -54,7 +55,7 @@ class _BitArray:
         k = (index - longIndex * self._entriesPerLong) * self._bitsPerEntry
         return long >> k & self._maxEntryValue
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Returns the logical array size."""
         return self._logicalArraySize
 
@@ -78,7 +79,7 @@ class _ChunkSection:
 class WorldSlice:
     """Contains information on a slice of the world."""
 
-    def __init__(self, rect: Rect, dimension: Optional[str] = None, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST):
+    def __init__(self, rect: Rect, dimension: Optional[str] = None, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST) -> None:
         """Initialise WorldSlice with region and heightmap."""
 
         # To protect from calling this with a Box, which can lead to very confusing bugs.
@@ -176,48 +177,48 @@ class WorldSlice:
                     self._blockEntities[blockEntityPos] = blockEntityTag
 
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"WorldSlice{repr(self._rect)}"
 
 
     @property
-    def rect(self):
+    def rect(self) -> Rect:
         """The Rect of block coordinates this WorldSlice covers."""
         return self._rect
 
     @property
-    def chunkRect(self):
+    def chunkRect(self) -> Rect:
         """The Rect of chunk coordinates this WorldSlice covers."""
         return self._chunkRect
 
     @property
-    def yBegin(self):
+    def yBegin(self) -> int:
         """The minimum block y coordinate."""
         return self._yBegin
 
     @property
-    def yEnd(self):
+    def yEnd(self) -> int:
         """The maximum block y coordinate (exclusive); the "build height" plus one."""
         return self._yBegin + self._ySize
 
     @property
-    def ySize(self):
+    def ySize(self) -> int:
         """The amount of blocks in the Y-axis."""
         return self._ySize
 
     @property
-    def box(self):
+    def box(self) -> Box:
         """The Box of block coordinates this WorldSlice covers."""
         return self._rect.toBox(offsetY=self._yBegin, sizeY=self._ySize)
 
     @property
-    def nbt(self):
+    def nbt(self) -> nbt.NBTFile:
         """The parsed NBT data for the chunks of this WorldSlice.\n
         Its structure is described in the GDMC HTTP interface API."""
         return self._nbt
 
     @property
-    def heightmaps(self):
+    def heightmaps(self) -> Dict[str, np.ndarray]:
         """The heightmaps of this WorldSlice."""
         return self._heightmaps
 
@@ -226,17 +227,17 @@ class WorldSlice:
         """Returns the local position of the chunk section that contains the global ``blockPosition``."""
         return (ivec3(*blockPosition) >> 4) - addY(self._chunkRect.offset)
 
-    def getChunkSectionPosition(self, blockPosition: Vec3iLike):
+    def getChunkSectionPosition(self, blockPosition: Vec3iLike) -> ivec3:
         """Returns the local position of the chunk section that contains the local ``blockPosition``."""
         return self.getChunkSectionPositionGlobal(ivec3(*blockPosition) + addY(self._rect.offset))
 
 
-    def _getChunkSectionGlobal(self, blockPosition: Vec3iLike):
+    def _getChunkSectionGlobal(self, blockPosition: Vec3iLike) -> Optional[_ChunkSection]:
         """Returns the chunk section that contains the global ``blockPosition``."""
         return self._sections.get(self.getChunkSectionPositionGlobal(blockPosition))
 
 
-    def getBlockStateTagGlobal(self, position: Vec3iLike):
+    def getBlockStateTagGlobal(self, position: Vec3iLike) -> Optional[TAG_Compound]:
         """Returns the block state compound tag at global ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None."""
         chunkSection = self._getChunkSectionGlobal(position)
@@ -249,13 +250,13 @@ class WorldSlice:
         )
         return chunkSection.getBlockStateTagAtIndex(blockIndex)
 
-    def getBlockStateTag(self, position: Vec3iLike):
+    def getBlockStateTag(self, position: Vec3iLike) -> Optional[TAG_Compound]:
         """Returns the block state compound tag at local ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None."""
         return self.getBlockStateTagGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getBlockGlobal(self, position: Vec3iLike):
+    def getBlockGlobal(self, position: Vec3iLike) -> Block:
         """Returns the block at global ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns Block("minecraft:void_air")."""
         blockStateTag = self.getBlockStateTagGlobal(position)
@@ -264,13 +265,13 @@ class WorldSlice:
         blockEntityTag = self._blockEntities.get(ivec3(*position))
         return Block.fromBlockStateTag(blockStateTag, blockEntityTag)
 
-    def getBlock(self, position: Vec3iLike):
+    def getBlock(self, position: Vec3iLike) -> Block:
         """Returns the block at local ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns Block("minecraft:void_air")."""
         return self.getBlockGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getBiomeGlobal(self, position: Vec3iLike):
+    def getBiomeGlobal(self, position: Vec3iLike) -> str:
         """Returns the namespaced id of the biome at global ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns an empty string.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
@@ -288,7 +289,7 @@ class WorldSlice:
         biomeIndex = (biomePos.y << 4) | (biomePos.z << 2) | biomePos.x # pylint: disable=unsupported-binary-operation
         return str(chunkSection.getBiomeAtIndex(biomeIndex).value)
 
-    def getBiome(self, position: Vec3iLike):
+    def getBiome(self, position: Vec3iLike) -> str:
         """Returns the namespaced id of the biome at local ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns an empty string.\n
         Note that Minecraft stores biomes in groups of 4x4x4 blocks. This function returns the
@@ -296,7 +297,7 @@ class WorldSlice:
         return self.getBiomeGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getBiomeCountsInChunkGlobal(self, position: Vec3iLike):
+    def getBiomeCountsInChunkGlobal(self, position: Vec3iLike) -> Optional[Dict[str, int]]:
         """Returns a dict of biomes in the same chunk as the global ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None.\n
         Minecraft stores biomes in groups of 4x4x4 blocks. The returned dict maps the namespaced id
@@ -311,7 +312,7 @@ class WorldSlice:
             biomeCounts[biome] = biomeCounts.get(biome, 0) + 1
         return biomeCounts
 
-    def getBiomeCountsInChunk(self, position: Vec3iLike):
+    def getBiomeCountsInChunk(self, position: Vec3iLike) -> Optional[Dict[str, int]]:
         """Returns a dict of biomes in the same chunk as the local ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None.\n
         Minecraft stores biomes in groups of 4x4x4 blocks. The returned dict maps the namespaced id
@@ -319,14 +320,14 @@ class WorldSlice:
         return self.getBiomeCountsInChunkGlobal(ivec3(*position) + addY(self._rect.offset))
 
 
-    def getPrimaryBiomeInChunkGlobal(self, position: Vec3iLike):
+    def getPrimaryBiomeInChunkGlobal(self, position: Vec3iLike) -> Optional[str]:
         """Returns the most prevalent biome in the same chunk as the global ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None."""
         foundBiomes = self.getBiomeCountsInChunkGlobal(position)
         biome: str = max(foundBiomes.keys(), key=foundBiomes.get)
         return biome
 
-    def getPrimaryBiomeInChunk(self, position: Vec3iLike):
+    def getPrimaryBiomeInChunk(self, position: Vec3iLike) -> Optional[str]:
         """Returns the most prevalent biome in the same chunk as the local ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None."""
         return self.getPrimaryBiomeInChunkGlobal(ivec3(*position) + addY(self._rect.offset))
