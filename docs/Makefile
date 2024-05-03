@@ -14,7 +14,7 @@ help:
 
 .PHONY: help Makefile
 
-livehtml:
+livehtml: clean
 	sphinx-autobuild --ignore "**/source/api/*" --watch "../src/gdpc" "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # Catch-all target: route all unknown targets to Sphinx using the new
