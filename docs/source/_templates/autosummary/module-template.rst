@@ -1,4 +1,4 @@
-{{ ("API Reference" if fullname == "gdpc" else fullname | escape) | underline}}
+{{ fullname | escape | underline}}
 
 .. automodule:: {{ fullname }}
    :members:
@@ -19,5 +19,8 @@
    {% for item in modules %}
       {{ item }}
    {%- endfor %}
+
+   |
+
    {% endif %}
    {% endblock %}

@@ -38,6 +38,11 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
+rst_prolog = """
+.. role:: python(code)
+   :language: python
+"""
+
 
 # -- Autodoc -------------------------------------------------------------------
 
