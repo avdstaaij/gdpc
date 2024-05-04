@@ -1,12 +1,11 @@
 # Welcome to the GDPC documentation!
 
 ```{toctree}
-toctree::
-:maxdepth: 2
-:caption: Contents:
+:maxdepth: 1
 
 test
 api
+changelog/index
 ```
 
 # Indices and tables

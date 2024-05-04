@@ -87,7 +87,7 @@ Starting from this version, GDPC will use
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.\
 Note that the GDMC-HTTP repository has changed! It can now be found at
-https://github.com/Niels-NTG/gdmc_http_interface
+<https://github.com/Niels-NTG/gdmc_http_interface>
 
 
 ## Changes
@@ -343,4 +343,4 @@ system.
 # Older versions
 
 For older versions, see
-https://github.com/nikigawlik/gdmc_http_client_python/releases
+<https://github.com/nikigawlik/gdmc_http_client_python/releases>

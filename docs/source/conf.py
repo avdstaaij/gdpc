@@ -4,6 +4,13 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 
+import os
+import shutil
+import re
+
+SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -142,3 +149,75 @@ html_theme_options = {
     ],
     # END: social icons
 }
+
+
+# -- Changelog ---------------------------------------------------------------
+
+# Function 1: separate pages
+# Function 2: single page with downgraded headers
+
+# def generate_changelog():
+#     with open(f"{SCRIPT_DIR}/../../CHANGELOG.md", "r") as file:
+#         changelog = file.read()
+
+#     changelog_sections = re.split("^(# .*)$", changelog, flags=re.MULTILINE)
+
+#     shutil.rmtree(f"{SCRIPT_DIR}/changelog/", ignore_errors=True)
+#     os.makedirs(f"{SCRIPT_DIR}/changelog/", exist_ok=True)
+
+#     headers = []
+#     for i in range(1, len(changelog_sections), 2):
+#         header = changelog_sections[i][2:].strip().replace(" ", "-").lower()
+
+#         # It's no use to include this, since the documentation will only
+#         # update on a version release, in which case this section is always
+#         # empty.
+#         if header == "in-development":
+#             continue
+
+#         headers.append(header)
+#         with open(f"{SCRIPT_DIR}/changelog/{header}.md", "w") as file:
+#             file.write(changelog_sections[i] + changelog_sections[i+1])
+
+#     index = (
+#         "# Changelog\n" +
+#         "\n" +
+#         "```{toctree}\n" +
+#         ":maxdepth: 1\n" +
+#         "\n" +
+#         "\n".join(f"{header}.md" for header in headers) + "\n" +
+#         "```\n"
+#     )
+
+#     with open(f"{SCRIPT_DIR}/changelog/index.md", "w") as file:
+#         file.write(index)
+
+def generate_changelog():
+    with open(f"{SCRIPT_DIR}/../../CHANGELOG.md", "r") as file:
+        changelog = file.read()
+
+    # Cut off "In Development" section
+    # It's no use to include it, since the documentation will only
+    # update on a version release, in which case the section is always
+    # empty.
+    lines = changelog.splitlines()
+    for i, line in enumerate(lines[1:]):
+        if line.startswith("# "):
+            break
+    changelog = "\n".join(lines[i+1:])
+
+    # "Downgrade" all headings by one level
+    changelog = (
+        "# Changelog\n" +
+        "\n" +
+        re.sub("^#", "##", changelog, flags=re.MULTILINE)
+    )
+
+    shutil.rmtree(f"{SCRIPT_DIR}/changelog/", ignore_errors=True)
+    os.makedirs(f"{SCRIPT_DIR}/changelog/", exist_ok=True)
+
+    with open(f"{SCRIPT_DIR}/changelog/index.md", "w") as file:
+        file.write(changelog)
+
+
+generate_changelog()
