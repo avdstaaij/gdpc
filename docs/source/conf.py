@@ -86,14 +86,14 @@ html_theme_options = {
         # "navigation.tabs",
         # "toc.integrate",
         # "navigation.sections",
-        # "navigation.instant",
+        "navigation.instant",
         # "header.autohide",
         # "navigation.top",
-        # "navigation.tracking",
+        "navigation.tracking",
         # "search.highlight",
         # "search.share",
         "toc.follow",
-        "toc.sticky",
+        # "toc.sticky",
         "content.tabs.link",
         "announce.dismiss",
     ],
@@ -145,10 +145,18 @@ html_theme_options = {
         {
             "icon": "fontawesome/brands/python",
             "link": "https://pypi.org/project/gdpc/",
+            "name": "GDPC on PyPI",
+        },
+        {
+            "icon": "fontawesome/brands/discord",
+            "link": "https://discord.gg/YwpPCRQWND",
+            "name": "GDMC Discord server",
         },
     ],
     # END: social icons
 }
+html_static_path = ["_static"]
+html_css_files = ["styles.css"]
 
 
 # -- Changelog ---------------------------------------------------------------
@@ -218,6 +226,5 @@ def generate_changelog():
 
     with open(f"{SCRIPT_DIR}/changelog/index.md", "w") as file:
         file.write(changelog)
-
 
 generate_changelog()

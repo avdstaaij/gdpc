@@ -1,5 +1,4 @@
 sphinx
-sphinx-toolbox
 sphinx-autobuild
 myst-parser
-furo
+sphinx-immaterial
