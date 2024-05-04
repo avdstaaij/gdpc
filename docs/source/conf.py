@@ -38,7 +38,7 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autodoc",
     # "sphinx.ext.viewcode",
-    # "sphinx.ext.autosummary",
+    "sphinx.ext.autosummary",
     "myst_parser",
 ]
 
@@ -176,29 +176,16 @@ def generate_reference():
         target_name = "gdpc" if source_name == "__init__" else f"gdpc.{source_name}"
         target_names.append(target_name)
 
-        content = (
-            f"{target_name}\n" +
-            "=" * len(target_name) + "\n" +
-            "\n" +
-            f".. automodule:: {target_name}\n"
-            "   :members:\n" +
-            "   :special-members:\n" +
-            "   :undoc-members:\n" +
-            "   :exclude-members: __str__, __repr__, __eq__, __weakref__, __subclasshook__, __annotations__, __dataclass_fields__, __dataclass_params__, __dict__, __module__, __abstractmethods__, __parameters__, __protocol_attrs__\n" +
-            "\n" +
-            "   |\n"
-        )
-
-        with open(f"{SCRIPT_DIR}/api/{target_name}.rst", "w") as file:
-            file.write(content)
-
     content = (
         "API Reference\n" +
         "=============\n" +
         "This part of the documentation details every public object of GDPC.\n" +
         "\n" +
-        ".. toctree::\n" +
-        "   :maxdepth: 1\n" +
+        ".. rubric:: Modules\n" +
+        "\n" +
+        ".. autosummary::\n" +
+        "   :toctree: .\n" +
+        "   :template: autosummary/module-template.rst\n" +
         "\n" +
         "\n".join(f"   {name}" for name in target_names) + "\n"
     )
