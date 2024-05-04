@@ -37,8 +37,8 @@ author = 'avdstaaij'
 extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autodoc",
-    #"sphinx.ext.viewcode",
-    "sphinx.ext.autosummary",
+    # "sphinx.ext.viewcode",
+    # "sphinx.ext.autosummary",
     "myst_parser",
 ]
 
@@ -157,6 +157,56 @@ html_theme_options = {
 }
 html_static_path = ["_static"]
 html_css_files = ["styles.css"]
+
+
+# -- API Reference -----------------------------------------------------------
+
+def generate_reference():
+    shutil.rmtree(f"{SCRIPT_DIR}/api/", ignore_errors=True)
+    os.makedirs(f"{SCRIPT_DIR}/api/", exist_ok=True)
+
+    # TODO: adjust this if we add subpackages
+
+    target_names = []
+    for filename in sorted(os.listdir(f"{SCRIPT_DIR}/../../src/gdpc")):
+        if filename == "__pycache__":
+            continue
+
+        source_name = filename.split(".")[0]
+        target_name = "gdpc" if source_name == "__init__" else f"gdpc.{source_name}"
+        target_names.append(target_name)
+
+        content = (
+            f"{target_name}\n" +
+            "=" * len(target_name) + "\n" +
+            "\n" +
+            f".. automodule:: {target_name}\n"
+            "   :members:\n" +
+            "   :special-members:\n" +
+            "   :undoc-members:\n" +
+            "   :exclude-members: __str__, __repr__, __eq__, __weakref__, __subclasshook__, __annotations__, __dataclass_fields__, __dataclass_params__, __dict__, __module__, __abstractmethods__, __parameters__, __protocol_attrs__\n" +
+            "\n" +
+            "   |\n"
+        )
+
+        with open(f"{SCRIPT_DIR}/api/{target_name}.rst", "w") as file:
+            file.write(content)
+
+    content = (
+        "API Reference\n" +
+        "=============\n" +
+        "This part of the documentation details every public object of GDPC.\n" +
+        "\n" +
+        ".. toctree::\n" +
+        "   :maxdepth: 1\n" +
+        "\n" +
+        "\n".join(f"   {name}" for name in target_names) + "\n"
+    )
+
+    with open(f"{SCRIPT_DIR}/api/index.rst", "w") as file:
+        file.write(content)
+
+generate_reference()
 
 
 # -- Changelog ---------------------------------------------------------------
