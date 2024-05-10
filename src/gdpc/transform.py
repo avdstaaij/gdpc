@@ -34,6 +34,7 @@ class Transform:
     _flip:        bvec3
 
     def __init__(self, translation: Vec3iLike = ivec3(), rotation: int = 0, flip: Vec3bLike = bvec3()) -> None:
+        """Constructs a Transform with the given properties."""
         self._translation = ivec3(*translation)
         self._rotation    = rotation
         self._flip        = bvec3(*flip)
@@ -91,7 +92,7 @@ class Transform:
         )
 
     def invCompose(self, other: 'Transform') -> 'Transform':
-        """Returns a transform that applies ``self``^-1 after ``other``.\n
+        """Returns a transform that applies ``~self`` after ``other``.\n
         Faster version of ``~self @ other``."""
         return Transform(
             translation = self.invApply(other._translation),
@@ -154,13 +155,13 @@ class Transform:
 
     def __imatmul__(self, other: 'Transform') -> 'Transform':
         """Adds the effect of ``other`` to this transform.\n
-        Equivalent to ``self @= other``"""
+        Equivalent to ``self.push(other)``"""
         self.push(other)
         return self
 
     def __invert__(self) -> 'Transform':
         """Returns the inversion of this transform.\n
-        Equivalent to ``~self``."""
+        Equivalent to ``self.inverted()``."""
         return self.inverted()
 
 
@@ -192,7 +193,7 @@ def toTransform(transformLike: TransformLike) -> Transform:
 
 def rotatedBoxTransform(box: Box, rotation: int) -> Transform:
     """Returns a transform that maps the box ``((0,0,0), size)`` to ``box`` under ``rotation``,
-    where ``size == vector_tools.rotateSize3D(box.size, rotation)``."""
+    where :python:`size == vector_tools.rotateSize3D(box.size, rotation)`."""
     return Transform(
         translation = box.offset + ivec3(
             box.size.x - 1 if rotation in [1, 2] else 0,

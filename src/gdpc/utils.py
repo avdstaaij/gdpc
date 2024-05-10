@@ -57,7 +57,7 @@ def withRetries(
     reRaise:       bool                             = True
 ) -> Union[T, None]:
     """Retries ``function`` up to ``retries`` times if an exception occurs.\n
-    Before retrying, calls onRetry(last exception, remaining retries).
+    Before retrying, calls ``onRetry(<last exception>, <remaining retries>)``.
     The default callback sleeps for one second.\n
     If the retries have ran out and ``reRaise`` is ``True``, the last exception is re-raised."""
     while True:

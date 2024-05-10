@@ -1,4 +1,4 @@
-"""Provides various utilities that require an :class:`.Editor`."""
+"""Provides various Minecraft-related utilities that require an :class:`.Editor`."""
 
 
 from typing import Optional, Iterable, Set, Tuple, Union, List

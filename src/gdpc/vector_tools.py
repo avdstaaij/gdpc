@@ -1,4 +1,14 @@
-"""Various vector utilities"""
+"""Various vector utilities.
+
+
+This module contains, roughly in order:
+
+- Protocols for vector-like classes.
+- Helpful vector constants.
+- General vector utilities.
+- The :class:`.Rect` and :class:`.Box` classes.
+- Generators for various geometrical shapes.
+"""
 
 
 from typing import Iterator, Any, Iterable, List, Optional, Set, Tuple, Union, Generator
@@ -21,25 +31,33 @@ from .utils import nonZeroSign
 # ==================================================================================================
 
 class Vec2iLike(Protocol):
-    """Protocol for a vector that contains two integers."""
+    """Protocol for a vector that contains two integers.\n
+    A class is a Vec2iLike if it contains two integers, which can be accessed
+    with both indexing and iteration."""
     def __getitem__(self, __i: int) -> int: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
 class Vec3iLike(Protocol):
-    """Protocol for a vector that contains three integers."""
+    """Protocol for a vector that contains three integers.\n
+    A class is a Vec3iLike if it contains three integers, which can be accessed
+    with both indexing and iteration."""
     def __getitem__(self, __i: int) -> int: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
 class Vec2bLike(Protocol):
-    """Protocol for a vector that contains two bools."""
+    """Protocol for a vector that contains two bools.\n
+    A class is a Vec2iLike if it contains two bools, which can be accessed
+    with both indexing and iteration."""
     def __getitem__(self, __i: int) -> bool: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[bool]: ...
 
 class Vec3bLike(Protocol):
-    """Protocol for a vector that contains three bools."""
+    """Protocol for a vector that contains three bools.\n
+    A class is a Vec3iLike if it contains three bools, which can be accessed
+    with both indexing and iteration."""
     def __getitem__(self, __i: int) -> bool: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[bool]: ...
@@ -376,7 +394,7 @@ class Rect:
 
     @property
     def center(self) -> ivec2:
-        """Equivalent to .middle"""
+        """Equivalent to :attr:`.middle`"""
         return self.middle
 
     @property
@@ -430,6 +448,8 @@ class Rect:
     def translated(self, translation: Union[Vec2iLike, int]) -> 'Rect':
         """Returns a copy of this Rect, translated by ``translation``"""
         return Rect(self._offset + ivec2(*translation), self._size)
+
+    # TODO: transformed()?
 
     def dilate(self, dilation: int = 1) -> None:
         """Morphologically dilates this rect by ``dilation``"""
@@ -618,6 +638,8 @@ class Box:
         """Returns a copy of this Box, translated by ``translation``"""
         return Box(self._offset + ivec3(*translation), self._size)
 
+    # TODO: transformed()?
+
     def dilate(self, dilation: int = 1) -> None:
         """Morphologically dilates this box by ``dilation``"""
         self._offset -= dilation
@@ -636,7 +658,7 @@ class Box:
         return self.dilated(-erosion)
 
     def centeredSubBoxOffset(self, size: Vec3iLike) -> ivec3:
-        """Returns an offset such that Box(offset, ``size``).middle == self.middle"""
+        """Returns an offset such that ``Box(offset, size).middle == self.middle``"""
         difference = self._size - ivec3(*size)
         return self._offset + difference/2
 

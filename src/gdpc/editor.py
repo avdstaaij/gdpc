@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class Editor:
-    """Provides a high-level functions to interact with the Minecraft world through the GDMC HTTP
+    """Provides high-level functions to interact with the Minecraft world through the GDMC HTTP
     interface.
 
     Stores various settings, resources, buffers and caches related to block placement, and a
@@ -80,7 +80,7 @@ class Editor:
 
 
     def __del__(self) -> None:
-        """Cleans up this Editor instance"""
+        """Cleans up this Editor instance."""
         # awaits any pending buffer flush futures and shuts down the buffer flush executor
         self.multithreading = False
         # Flush any remaining blocks in the buffer.
@@ -230,7 +230,7 @@ class Editor:
 
     @property
     def timeout(self) -> float:
-        """The timeout for requests to the GDMC HTTP interface (as described by the `requests package <https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts>`_)"""
+        """The timeout for requests to the GDMC HTTP interface (as described by the `requests package <https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts>`_)."""
         return self._timeout
 
     @timeout.setter
@@ -239,7 +239,7 @@ class Editor:
 
     @property
     def host(self) -> str:
-        """The address (hostname+port) of the GDMC HTTP interface to use\n
+        """The address (hostname+port) of the GDMC HTTP interface to use.\n
         Changing the host will flush the buffer and invalidate all caches.\n
         Note that the transform is NOT reset or modified when the host is changed!"""
         return self._host
@@ -256,7 +256,7 @@ class Editor:
 
     @property
     def worldSlice(self) -> Optional[WorldSlice]:
-        """The cached WorldSlice (see :meth:`.loadWorldSlice`)"""
+        """The cached WorldSlice (see :meth:`.loadWorldSlice`)."""
         return self._worldSlice
 
     @property
@@ -264,7 +264,7 @@ class Editor:
         """3D boolean array indicating whether the block at the specified position in the cached
         worldSlice is still valid.\n
         Note that the lowest Y-layer is at ``[:,0,:]``, despite Minecraft's negative Y coordinates.
-        If `attr:`.worldSlice` is ``None``, this property will also be ``None``."""
+        If :attr:`.worldSlice` is ``None``, this property will also be ``None``."""
         if self._worldSliceDecay is None:
             return None
         view: np.ndarray = self._worldSliceDecay.view()
@@ -295,7 +295,8 @@ class Editor:
         """Executes one or multiple Minecraft commands (separated by newlines), ignoring :attr:`.transform`.\n
         The leading "/" must be omitted.\n
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
-        after the next buffer flush.\n
+        after the next buffer flush. This can be useful if the command depends on possibly buffered
+        block changes.\n
         If ``position`` is provided, the command's execution position is set to ``position``,
         ignoring :attr:`.transform`.
         This means that, for example, the position "~ ~ ~" in the command will correspond to

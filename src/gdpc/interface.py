@@ -1,4 +1,4 @@
-"""Provides wrappers for the endpoints of the GDMC HTTP interface.
+"""Provides direct wrappers for the endpoints of the GDMC HTTP interface.
 
 These functions are quite low-level. It is recommended to use the higher-level
 :class:`.editor.Editor` class instead.
@@ -34,11 +34,8 @@ logger = logging.getLogger(__name__)
 
 def _onRequestRetry(e: Exception, retriesLeft: int) -> None:
     logger.warning(
-        "HTTP request failed!\n"
-        "Request exception:\n"
-        "%s\n"
-        "I'll retry in a bit (%i retries left).",
-        e, retriesLeft
+        "HTTP request failed! I'll retry in a bit (%i retries left).",
+        retriesLeft
     )
     time.sleep(3)
 

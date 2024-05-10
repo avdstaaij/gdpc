@@ -21,8 +21,7 @@ __title__            = "gdpc"
 #: Package description.
 #:
 #: :meta hide-value:
-__description__      = "The Generative Design Python Client (GDPC) is a Python-based interface for the Minecraft GDMC HTTP Interface mod.\nIt was created for use in the Generative Design in Minecraft Competition (GDMC)."
-"""Package description\n\n :meta hide-value:"""
+__description__      = "GDPC (Generative Design Python Client) is a Python framework for use in conjunction with the GDMC-HTTP mod for Minecraft Java edition. It is designed for the Generative Design in Minecraft Competition (GDMC)."
 
 #: Package URL.
 #:
