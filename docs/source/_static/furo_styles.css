@@ -1,7 +1,0 @@
-/* defaults: https://github.com/pradyunsg/furo/blob/main/src/furo/assets/styles/variables/_fonts.scss */
-body {
-	--toc-font-size: var(--font-size--small);
-	--toc-title-font-size: var(--font-size--small);
-	--toc-spacing-horizontal: 0.5rem;
-	--toc-item-spacing-horizontal: 0.7rem;
-}

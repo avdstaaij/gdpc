@@ -70,13 +70,7 @@ autodoc_type_aliases = {"TransformLike": "TransformLike"}
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-# html_theme = "furo"
-# html_static_path = ['_static']
-# html_css_files = ["furo_styles.css"]
-
-# html_theme = "pydata_sphinx_theme"
-
-extensions += ["sphinx_immaterial"]
+extensions += ["sphinx_immaterial", "sphinx_immaterial.kbd_keys"]
 html_theme = "sphinx_immaterial"
 html_theme_options = {
     "icon": {

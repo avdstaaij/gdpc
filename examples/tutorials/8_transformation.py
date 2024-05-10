@@ -228,7 +228,7 @@ with editor.pushTransform((5,100,13)):
 # need to be rotated or flipped as well. Certain blocks, such as stairs, have an orientation that
 # needs to be modified. These orientations are usually stored in block states.
 #
-# GDPC's transformation system can can automatically deal with most of these orientated blocks.
+# GDPC's transformation system can automatically deal with most of these oriented blocks.
 
 # Build the staircase at "(9,100,1)", but rotated. Notice how the stairs blocks are rotated as well.
 with editor.pushTransform(Transform((9,100,1+2), rotation=3)):
