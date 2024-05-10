@@ -37,6 +37,7 @@ author = 'avdstaaij'
 extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     # "sphinx.ext.viewcode",
     "sphinx.ext.autosummary",
     "myst_parser",
@@ -49,6 +50,13 @@ rst_prolog = """
 .. role:: python(code)
    :language: python
 """
+
+intersphinx_mapping = {
+    "python":   ("https://docs.python.org/3", None),
+    "numpy":    ("https://numpy.org/doc/stable/", None),
+    "scipy":    ("https://docs.scipy.org/doc/scipy/", None),
+    "requests": ("https://requests.readthedocs.io/en/latest/", None),
+}
 
 
 # -- Autodoc -------------------------------------------------------------------
