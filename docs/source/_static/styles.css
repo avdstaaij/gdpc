@@ -7,11 +7,26 @@
 html {
 	.md-typeset {
 		/* Default: 1.6 */
-		/* line-height: 1.55; */
+		line-height: 1.55;
 
 		p {
 			/* Default: 1em */
-			/* margin-block: 1.1em; */
-		};
+			margin-block: 1.1em;
+		}
+
+		h4 {
+			font-size: 1.1em;
+		}
+
+		img {
+			&.align-left {
+				float: left;
+				margin-right: 1em;
+			}
+			&.align-right {
+				float: right;
+				margin-left: 1em;
+			}
+		}
 	}
 }
