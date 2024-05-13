@@ -66,7 +66,8 @@ setup(
     project_urls={
         "Bug Reports":                  "https://github.com/avdstaaij/gdpc/issues",
         "Changelog":                    "https://github.com/avdstaaij/gdpc/blob/master/CHANGELOG.md",
-        "Official Competition Website": "https://gendesignmc.engineering.nyu.edu",
+        # "Official Competition Website": "https://gendesignmc.engineering.nyu.edu",
+        "Official Competition wiki":    "https://gendesignmc.wikidot.com/start",
         "Chat about it on Discord":     "https://discord.gg/YwpPCRQWND",
         "Source":                       "https://github.com/avdstaaij/gdpc",
     },
