@@ -3,9 +3,9 @@
 ## Introduction
 
 This tutorial will go through the step-by-step process of building a house with
-GDPC, explaining various components of GDPC as they come along. The house will
-be built on flat ground in a general area that can be specified in-game, and
-will have some rudimentary randomization.
+GDPC. It will pass over most of the main components of the library, explaining
+them as they come along. The house will be built on the ground at a spot that
+can be specified in-game, and will have some simple randomization.
 
 
 ## Preparing a world
@@ -27,9 +27,9 @@ Nearly every GDPC program will begin with creating an {class}`.Editor` object.
 This object will serve as the main point of communication between GDPC and the
 GDMC-HTTP mod, and therefore, the Minecraft world.
 
-We will enable the Editor's buffering mode by setting {python}`buffering = True`. This
-will cause the Editor to collect batches of block changes before sending them
-all to the GDMC-HTTP interface at once. This significantly improves
+We will enable the Editor's buffering mode by setting {python}`buffering = True`.
+This will cause the Editor to collect batches of block changes before sending
+them all to the GDMC-HTTP interface at once. This significantly improves
 performance, and is highly recommended in all cases where it does not matter
 that the world changes are staggered.
 
@@ -224,14 +224,14 @@ a block's block states is to press {keys}`F3` and look at it. The block ID and
 block states will be shown at the bottom right, below "Targeted Block".
 
 ```{figure} ../images/f3-block.png
-:width: 600
+:width: 34em
 :align: center
 
 Block info shown by the {keys}`F3` view. We've higlighted the block ID in
 red and the block states in yellow.
 ```
 
-In GDPC, you can specify the block states of a {class}`.Block` instance by
+In GDPC, you can specify the block states of a {class}`.Block` instance bye
 passing a dict as the second parameter:
 
 ```python
@@ -248,7 +248,7 @@ roof will be diagonal. We'll also move the house one block over in the X and Z
 directions to make space for some overhang.
 
 ```{code-block} python
-:emphasize-lines: 9-10, 19-37
+:emphasize-lines: 9-10, 19-30
 
 from gdpc import Editor, Block
 from gdpc.geometry import placeCuboid, placeCuboidHollow
@@ -277,13 +277,6 @@ for dx in range(1, 4):
     rightBlock = Block("oak_stairs", {"facing": "west"})
     placeCuboid(editor, (x+2-dx, yy, z-1), (x+2-dx, yy, z+5), leftBlock)
     placeCuboid(editor, (x+2+dx, yy, z-1), (x+2+dx, yy, z+5), rightBlock)
-
-    # Add upside-down accent blocks
-    leftBlock  = Block("oak_stairs", {"facing": "west", "half": "top"})
-    rightBlock = Block("oak_stairs", {"facing": "east", "half": "top"})
-    for zz in [z-1, z+5]:
-        editor.placeBlock((x+2-dx+1, yy, zz), leftBlock)
-        editor.placeBlock((x+2+dx-1, yy, zz), rightBlock)
 
 # build the top row of the roof
 placeCuboid(editor, (x+2, y+5, z-1), (x+2, y+5, z+5), Block("oak_planks"))
@@ -325,11 +318,12 @@ editor.loadWorldSlice(cache=True)
 # (...)
 ```
 
-The heightmaps are available as a dictionary of 2D numpy arrays, with `[0,0]`
-indicating the height at the start of WorldSlice (in our case, the build area).
-We'll use the "MOTION_BLOCKING_NO_LEAVES" heightmap, which stores the heights
-of the highest blocks that block motion or contain a fluid but which are not
-leaves. That's usually what we consider "the ground" (tree trunks are an
+The heightmaps are available as a dictionary of 2D
+[numpy](https://numpy.org/doc/stable/) arrays indexed with (X,Z)-coordinates,
+with `[0,0]` indicating the height at the start of WorldSlice (in our case, the
+build area). We'll use the "MOTION_BLOCKING_NO_LEAVES" heightmap, which stores
+the heights of the highest blocks that block motion or contain a fluid but which
+are not leaves. That's usually what we consider "the ground" (tree trunks are an
 exception).
 
 ```{code-block} python
@@ -346,9 +340,9 @@ heightmap = editor.worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 # (...)
 ```
 
-We'll place the house such that the midpoint is flush with the ground. The heightmap
-values actually contain the Y-level of one block _above_ the highest one, so
-we subtract one from the value.
+We'll place the house such that the midpoint is flush with the ground. The
+heightmap values actually contain the Y-level of one block _above_ the highest
+one, so we subtract one from the value.
 
 ```{code-block} python
 :emphasize-lines: 8-12, 17
@@ -381,19 +375,10 @@ placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
 # Build roof: loop through distance from the middle
 for dx in range(1, 4):
     yy = y + 6 - dx
-
-    # Build row of stairs blocks
     leftBlock  = Block("oak_stairs", {"facing": "east"})
     rightBlock = Block("oak_stairs", {"facing": "west"})
     placeCuboid(editor, (x+2-dx, yy, z-1), (x+2-dx, yy, z+5), leftBlock)
     placeCuboid(editor, (x+2+dx, yy, z-1), (x+2+dx, yy, z+5), rightBlock)
-
-    # Add upside-down accent blocks
-    leftBlock  = Block("oak_stairs", {"facing": "west", "half": "top"})
-    rightBlock = Block("oak_stairs", {"facing": "east", "half": "top"})
-    for zz in [z-1, z+5]:
-        editor.placeBlock((x+2-dx+1, yy, zz), leftBlock)
-        editor.placeBlock((x+2+dx-1, yy, zz), rightBlock)
 
 # build the top row of the roof
 placeCuboid(editor, (x+2, y+5, z-1), (x+2, y+5, z+5), Block("oak_planks"))
@@ -421,7 +406,7 @@ function to randomly set `height` and `depth` variables within a set range, and
 replace some of our hardcoded values with them:
 
 ```{code-block} python
-:emphasize-lines: 1, 20-21, 24, 27-28, 32, 37-38, 44-45, 48-49
+:emphasize-lines: 1, 20-21, 24, 27-28, 32, 37-38, 41-42
 
 from random import randint
 from gdpc import Editor, Block
@@ -462,12 +447,76 @@ for dx in range(1, 4):
     placeCuboid(editor, (x+2-dx, yy, z-1), (x+2-dx, yy, z+depth+1), leftBlock)
     placeCuboid(editor, (x+2+dx, yy, z-1), (x+2+dx, yy, z+depth+1), rightBlock)
 
-    # Add upside-down accent blocks
-    leftBlock  = Block("oak_stairs", {"facing": "west", "half": "top"})
-    rightBlock = Block("oak_stairs", {"facing": "east", "half": "top"})
-    for zz in [z-1, z+5]:
-        editor.placeBlock((x+2-dx+1, yy, zz), leftBlock)
-        editor.placeBlock((x+2+dx-1, yy, zz), rightBlock)
+# build the top row of the roof
+yy = y + height + 1
+placeCuboid(editor, (x+2, yy, z-1), (x+2, yy, z+depth+1), Block("oak_planks"))
+```
+
+
+As for the materials, we'll randomize them in two ways: for the walls, we'll
+randomly pick from a few options using Python's {func}`random.choice` function.
+For the floor, we'll use another feature of GDPC: random block palettes. We can
+pass a *list* of blocks instead of a single one to any block-placing function,
+and GDPC will automatically sample the palette randomly. This can be useful for
+achieving a more "rugged" look.
+
+```{code-block} python
+:emphasize-lines: 1, 23-37, 43-44
+
+from random import randint, choice
+from gdpc import Editor, Block
+from gdpc.geometry import placeCuboid, placeCuboidHollow
+
+editor = Editor(buffering=True)
+
+buildArea = editor.getBuildArea()
+
+# Load world slice of the build area
+editor.loadWorldSlice(cache=True)
+
+# Get heightmap
+heightmap = editor.worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
+
+x = buildArea.offset.x + 1
+z = buildArea.offset.z + 1
+
+y = heightmap[3,3] - 1
+
+height = randint(3, 7)
+depth  = randint(3, 10)
+
+# Random floor palette
+floorPalette = [
+    Block("stone_bricks"),
+    Block("cracked_stone_bricks"),
+    Block("cobblestone"),
+]
+
+# Choose wall material
+wallBlock = choice([
+    Block("oak_planks"),
+    Block("spruce_planks"),
+    Block("white_terracotta"),
+    Block("green_terracotta"),
+])
+print(f"Chosen wall block: {wallBlock}")
+
+# Clear out the area
+placeCuboid(editor, (x, y, z), (x+4, y+height+2, z+depth), Block("air"))
+
+# Build main shape
+placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), wallBlock)
+placeCuboid(editor, (x, y, z), (x+4, y, z+depth), floorPalette)
+
+# Build roof: loop through distance from the middle
+for dx in range(1, 4):
+    yy = y + height + 2 - dx
+
+    # Build row of stairs blocks
+    leftBlock  = Block("oak_stairs", {"facing": "east"})
+    rightBlock = Block("oak_stairs", {"facing": "west"})
+    placeCuboid(editor, (x+2-dx, yy, z-1), (x+2-dx, yy, z+depth+1), leftBlock)
+    placeCuboid(editor, (x+2+dx, yy, z-1), (x+2+dx, yy, z+depth+1), rightBlock)
 
 # build the top row of the roof
 yy = y + height + 1
@@ -475,20 +524,183 @@ placeCuboid(editor, (x+2, yy, z-1), (x+2, yy, z+depth+1), Block("oak_planks"))
 ```
 
 
-As for the materials, we'll randomize them in two ways
-
-
-
-
 
 ## Finishing touches
 
 
-- Door (multi-block object)
-- Foundation (replace param)
+It's time to put in some finishing touches. First, we'll add a door so we can
+actually enter the house. For multi-block objects such as doors and beds, you
+only need to place one block and the entire object will get placed. We'll also
+make an adjustment to put the door at the ground level instead of the house
+midpoint.
+
+```{code-block} python
+:emphasize-lines: 3, 7-12
+
+(...)
+
+y = heightmap[3,1] - 1
+
+(...)
+
+# Add a door
+doorBlock = Block("oak_door", {"facing": "north", "hinge": "left"})
+editor.placeBlock((x+2, y+1, z), doorBlock)
+
+# Clear some space for the door
+placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
+```
+
+
+Next, we'll extend the floor of the house so it integrates better on uneven
+terrain. An easy and often sufficient method is to just extend it a set amount
+of blocks downward.
+% A more accurate way would be to use a heightmap to place only the needed
+% blocks. We'll use yet another method, GDPC's replacement feature. It allows us
+% to specify specific blocks to replace -- in this case, air.
+
+```{code-block} python
+:emphasize-lines: 5
+
+(...)
+
+# Build main shape
+placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), wallBlock)
+placeCuboid(editor, (x, y, z), (x+4, y-5, z+depth), floorPalette)
+
+(...)
+```
+
+Finally, we'll add some upside-down stairs blocks to the front and back of the
+roof to make it look just a little nicer.
+
+```{code-block} python
+:emphasize-lines: 13-18
+
+(...)
+
+# Build roof: loop through distance from the middle
+for dx in range(1, 4):
+    yy = y + height + 2 - dx
+
+    # Build row of stairs blocks
+    leftBlock  = Block("oak_stairs", {"facing": "east"})
+    rightBlock = Block("oak_stairs", {"facing": "west"})
+    placeCuboid(editor, (x+2-dx, yy, z-1), (x+2-dx, yy, z+depth+1), leftBlock)
+    placeCuboid(editor, (x+2+dx, yy, z-1), (x+2+dx, yy, z+depth+1), rightBlock)
+
+    # Add upside-down accent blocks
+    leftBlock  = Block("oak_stairs", {"facing": "west", "half": "top"})
+    rightBlock = Block("oak_stairs", {"facing": "east", "half": "top"})
+    for zz in [z-1, z+depth+1]:
+        editor.placeBlock((x+2-dx+1, yy, zz), leftBlock)
+        editor.placeBlock((x+2+dx-1, yy, zz), rightBlock)
+
+(...)
+```
+
+All together:
+
+```{code-block} python
+:emphasize-lines: 18, 44, 56-61, 67-72
+
+from random import randint, choice
+from gdpc import Editor, Block
+from gdpc.geometry import placeCuboid, placeCuboidHollow
+
+editor = Editor(buffering=True)
+
+buildArea = editor.getBuildArea()
+
+# Load world slice of the build area
+editor.loadWorldSlice(cache=True)
+
+# Get heightmap
+heightmap = editor.worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
+
+x = buildArea.offset.x + 1
+z = buildArea.offset.z + 1
+
+y = heightmap[3,1] - 1
+
+height = randint(3, 7)
+depth  = randint(3, 10)
+
+# Random floor palette
+floorPalette = [
+    Block("stone_bricks"),
+    Block("cracked_stone_bricks"),
+    Block("cobblestone"),
+]
+
+# Choose wall material
+wallBlock = choice([
+    Block("oak_planks"),
+    Block("spruce_planks"),
+    Block("white_terracotta"),
+    Block("green_terracotta"),
+])
+print(f"Chosen wall block: {wallBlock}")
+
+# Clear out the area
+placeCuboid(editor, (x, y, z), (x+4, y+height+2, z+depth), Block("air"))
+
+# Build main shape
+placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), wallBlock)
+placeCuboid(editor, (x, y, z), (x+4, y-5, z+depth), floorPalette)
+
+# Build roof: loop through distance from the middle
+for dx in range(1, 4):
+    yy = y + height + 2 - dx
+
+    # Build row of stairs blocks
+    leftBlock  = Block("oak_stairs", {"facing": "east"})
+    rightBlock = Block("oak_stairs", {"facing": "west"})
+    placeCuboid(editor, (x+2-dx, yy, z-1), (x+2-dx, yy, z+depth+1), leftBlock)
+    placeCuboid(editor, (x+2+dx, yy, z-1), (x+2+dx, yy, z+depth+1), rightBlock)
+
+    # Add upside-down accent blocks
+    leftBlock  = Block("oak_stairs", {"facing": "west", "half": "top"})
+    rightBlock = Block("oak_stairs", {"facing": "east", "half": "top"})
+    for zz in [z-1, z+depth+1]:
+        editor.placeBlock((x+2-dx+1, yy, zz), leftBlock)
+        editor.placeBlock((x+2+dx-1, yy, zz), rightBlock)
+
+# build the top row of the roof
+yy = y + height + 1
+placeCuboid(editor, (x+2, yy, z-1), (x+2, yy, z+depth+1), Block("oak_planks"))
+
+# Add a door
+doorBlock = Block("oak_door", {"facing": "north", "hinge": "left"})
+editor.placeBlock((x+2, y+1, z), doorBlock)
+
+# Clear some space for the door
+placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
+```
+
+Of course, there's lots more that we could do, such as windows, lighting and
+furniture, but we'll leave that as an exercise to the reader :).
 
 
 ## Bonus: placing multiple houses
 
 
+We've now finished the code for generating a single house, but there's one more
+thing we will look at: placing multiple of them. GDPC has a very powerful,
+though also complex, system for applying building logic at different locations:
+the *transformation system*.
+
+The transformation system allows you to "transform" your frame of reference
+for placing blocks, so that you can always build using local coordinates instead
+of global ones. The idea is based on the use of transformation matrices in
+3D graphics APIs.
+The system allows you to not only translate, but also rotate and flip your frame
+of reference. And importantly, blocks that have an orientation (such as stairs
+blocks) will get appropriately transformed as well!
+
 - Transformation system
+
+
+## Further reading
+
+...
