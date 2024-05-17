@@ -67,7 +67,8 @@ def placeSign(
 ) -> None:
     """Places a sign with the specified properties.\n
     If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
-    If the used property is ``None``, a least obstructed direction will be used."""
+    If the used property is ``None``, a least obstructed direction will be used.\n
+    See also: :func:`.minecraft_tools.signData`, :func:`.minecraft_tools.signBlock`."""
     if wall and facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     elif not wall and rotation is None:
@@ -84,7 +85,8 @@ def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = No
     """Place a lectern with the specified properties.\n
     If ``facing`` is None, a least obstructed facing direction will be used.\n
     ``bookData`` should be an SNBT string defining a book.
-    You can use :func:`.minecraft_tools.bookData` to create such a string."""
+    You can use :func:`.minecraft_tools.bookData` to create such a string.\n
+    See also: :func:`.minecraft_tools.lecternData`, :func:`.minecraft_tools.lecternBlock`."""
     if facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     editor.placeBlock(position, lecternBlock(facing, bookData, page))

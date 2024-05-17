@@ -30,7 +30,8 @@ def signData(
     backIsGlowing: bool = False,
     isWaxed = False
 ) -> str:
-    """Returns an SNBT string with sign data."""
+    """Returns an SNBT string with sign data.\n
+    See also: :func:`.signBlock`, :func:`.editor_tools.placeSign`."""
 
     def sideCompound(line1: str, line2: str, line3: str, line4: str, color: str, isGlowing: bool):
         fields: List[str] = []
@@ -52,8 +53,8 @@ def signData(
 def lecternData(bookData: Optional[str], page: int = 0) -> str:
     """Returns an SNBT string with lectern data.\n
     ``bookData`` should be an SNBT string defining a book.
-    You can use :func:`.bookData` to create such a string.
-    """
+    You can use :func:`.bookData` to create such a string.\n
+    See also: :func:`.lecternBlock`, :func:`.editor_tools.placeLectern`."""
     if bookData is None:
         return ""
     return f'{{Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}, Page: {page}}}}}'
@@ -224,7 +225,8 @@ def signBlock(
     backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
     isWaxed = False
 ) -> Block:
-    """Returns a sign Block with the specified properties."""
+    """Returns a sign Block with the specified properties.\n
+    See also: :func:`.signData`, :func:`.editor_tools.placeSign`."""
     blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
     states = {"facing": facing} if wall else {"rotation": str(rotation)}
     return Block(
@@ -238,7 +240,10 @@ def signBlock(
 
 
 def lecternBlock(facing: str = "north", bookData: Optional[str] = None, page: int = 0) -> Block:
-    """Returns a lectern Block with the specified properties."""
+    """Returns a lectern Block with the specified properties.\n
+    ``bookData`` should be an SNBT string defining a book.
+    You can use :func:`.bookData` to create such a string.\n
+    See also: :func:`.lecternData`, :func:`.editor_tools.placeLectern`."""
     return Block(
         "minecraft:lectern",
         {"facing": facing, "has_book": ("false" if bookData is None else "true")},
