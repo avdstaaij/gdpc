@@ -192,7 +192,7 @@ def perpendicular(vec: Vec2iLike):
 
 
 def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
-    """Returns [vec], rotated by [rotation]"""
+    """Returns [vec], rotated clockwise by [rotation] quarters."""
     if rotation == 0:
         return ivec2(*vec)
     if rotation == 1:
@@ -205,13 +205,13 @@ def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
 
 
 def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
-    """Returns [vec], rotated in the XZ-plane by [rotation]"""
+    """Returns [vec], rotated clockwise in the XZ-plane by [rotation] quarters."""
     return addY(rotate2D(dropY(vec), rotation), vec[1])
 
 
 def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
     """
-    Rotate a 2D vector by a specified number of degrees.
+    Rotate a 2D vector clockwise by a specified number of degrees.
 
     Args:
         vec: The 2D vector to rotate.
@@ -241,7 +241,7 @@ def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
 
 def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
     """
-    Rotate a 3D vector by a specified number of degrees through the Y axis.
+    Rotate a 3D vector clockwise by a specified number of degrees through the Y axis.
 
     Args:
         vec: The 3D vector to rotate.
