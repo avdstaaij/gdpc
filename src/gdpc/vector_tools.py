@@ -209,6 +209,40 @@ def rotate3D(vec: Vec3iLike, rotation: int):
     return addY(rotate2D(dropY(vec), rotation), vec[1])
 
 
+def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
+    """
+    Rotate a 2D vector by a specified number of degrees.
+
+    Args:
+        vec: The 2D vector to rotate.
+        degrees: The number of degrees to rotate the vector by. Only ±90°-rotations and their multiples are valid.
+
+    Returns:
+        The rotated 2D vector.
+
+    Raises:
+        ValueError: If degrees is not a multiple of 90.
+
+    Examples:
+        vec = ivec2(0, 1)
+        rotated_vec = rotate2Ddeg(vec, -90)  # result is ivec2(1, -1)
+    """
+
+    if degrees % 90 != 0:
+        raise ValueError("Only ±90°-rotations and their multiples are valid!")
+
+    rotation = (degrees // 90) % 4  # Convert to quarter-turns
+
+    if rotation < 0:
+        rotation += 4  # Invert negative turns
+
+    return rotate2D(vec, rotation)
+
+
+def rotate3Ddeg(vec: Vec3iLike, degrees: int):
+    return addY(rotate2Ddeg(dropY(vec), degrees), vec[1])
+
+
 def flipRotation2D(rotation: int, flip: Vec2bLike):
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
     after <rotation>."""
@@ -225,7 +259,7 @@ def flipRotation3D(rotation: int, flip: Vec3bLike):
 def rotateSize2D(size: Vec2iLike, rotation: int):
     """Returns the effective size of a rect of size [size] that has been rotated in the XZ-plane by
     [rotation]."""
-    return ivec2(size[1], size[0]) if rotation in [1, 3] else size
+    return ivec2(size[1], size[0]) if rotation in {1, 3} else size
 
 
 def rotateSize3D(size: Vec3iLike, rotation: int):
@@ -1000,9 +1034,7 @@ def _lineArray(
         array = np.zeros([array_width] * len(begin), dtype=int)
         array[tuple(np.transpose(points - minPoint + width))] = 1
 
-        # dilate map (make it thick)
-        if width > 1:
-            array = ndimage.binary_dilation(array, iterations=width - 1)
+        array = ndimage.binary_dilation(array, iterations=width - 1)
 
         # rebuild point array from map
         points = np.argwhere(array) + minPoint - width
@@ -1055,7 +1087,7 @@ def circle(center: Vec2iLike, diameter: int, filled=False):
 
     if diameter == 0:
         empty: List[ivec2] = []
-        return (point for point in empty)
+        return iter(empty)
 
     e = 1 - (diameter % 2)  # for even centers
     points: Set[ivec2] = set()
@@ -1094,7 +1126,7 @@ def circle(center: Vec2iLike, diameter: int, filled=False):
         return filled2D(
             points, center, Rect(center - radius, ivec2(diameter, diameter))
         )
-    return (point for point in points)
+    return iter(points)
 
 
 def fittingCircle(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
@@ -1191,7 +1223,7 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False):
             dy = dy - (2 * rx * rx)
             d2 = d2 + dx - dy + (rx * rx)
 
-    return (point for point in points)
+    return iter(points)
 
 
 def fittingEllipse(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
@@ -1220,7 +1252,7 @@ def cylinder(
 
     if diameters.x == 0 or diameters.y == 0 or length == 0:
         empty: List[ivec3] = []
-        return (point for point in empty)
+        return iter(empty)
 
     corner1 = baseCenter - addDimension((diameters - IDENTITY_2D) / 2, axis, 0)
     corner2 = corner1 + addDimension(diameters - IDENTITY_2D, axis, length - 1)
