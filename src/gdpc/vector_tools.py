@@ -1249,3 +1249,4 @@ def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stri
     if right and down and front: yield ivec3(point[0] + stride, point[1] - stride, point[2] + stride)
     if right and up   and back:  yield ivec3(point[0] + stride, point[1] + stride, point[2] - stride)
     if right and up   and front: yield ivec3(point[0] + stride, point[1] + stride, point[2] + stride)
+
