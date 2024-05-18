@@ -191,7 +191,7 @@ def perpendicular(vec: Vec2iLike):
     return ivec2(vec[1], -vec[0])
 
 
-def rotate2D(vec: Vec2iLike, rotation: int):
+def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
     """Returns [vec], rotated by [rotation]"""
     if rotation == 0:
         return ivec2(*vec)
@@ -204,7 +204,7 @@ def rotate2D(vec: Vec2iLike, rotation: int):
     raise ValueError("Rotation must be in {0,1,2,3}")
 
 
-def rotate3D(vec: Vec3iLike, rotation: int):
+def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
     """Returns [vec], rotated in the XZ-plane by [rotation]"""
     return addY(rotate2D(dropY(vec), rotation), vec[1])
 
@@ -225,7 +225,7 @@ def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
 
     Examples:
         vec = ivec2(0, 1)
-        rotated_vec = rotate2Ddeg(vec, -90)  # result is ivec2(1, -1)
+        rotated_vec = rotate2Ddeg(vec, -90)
     """
 
     if degrees % 90 != 0:
@@ -239,7 +239,24 @@ def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
     return rotate2D(vec, rotation)
 
 
-def rotate3Ddeg(vec: Vec3iLike, degrees: int):
+def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
+    """
+    Rotate a 3D vector by a specified number of degrees through the Y axis.
+
+    Args:
+        vec: The 3D vector to rotate.
+        degrees: The number of degrees to rotate the vector by through the Y axis. Only ±90°-rotations and their multiples are valid.
+
+    Returns:
+        The rotated 3D vector.
+
+    Raises:
+        ValueError: If degrees is not a multiple of 90.
+
+    Examples:
+        vec = ivec3(0, 1)
+        rotated_vec = rotate3Ddeg(vec, -90)
+    """
     return addY(rotate2Ddeg(dropY(vec), degrees), vec[1])
 
 
