@@ -227,10 +227,10 @@ def invertFacing(facing: str) -> str:
 
 def rotateRotation(blockStateRotation: str, rotation: int) -> str:
     """Returns the rotated "rotation" block state string.\n
-    Yes, this is confusing. ``blockStateRotation`` denotes a value of the "rotation" block state, as
-    used by e.g. signs. ``rotation`` denotes a rotation as used by GDPC's transformation system, so
-    one of {0,1,2,3}. This function name is consistent with the other block state rotation
-    functions."""
+    Yes, this name is confusing. ``blockStateRotation`` denotes a value of the "rotation" block
+    state, as used by e.g. signs. ``rotation`` denotes a rotation as used by GDPC's transformation
+    system, so one of {0,1,2,3}. This function name is consistent with the other block state
+    rotation functions."""
     return str((int(blockStateRotation) + 4*rotation) % 16)
 
 

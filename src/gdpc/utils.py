@@ -1,4 +1,4 @@
-"""Various generic utilities"""
+"""Various generic utilities."""
 
 from typing import TypeVar, Generic, Callable, Iterable, OrderedDict, Union
 import time

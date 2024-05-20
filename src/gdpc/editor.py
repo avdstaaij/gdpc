@@ -1,5 +1,5 @@
 """Provides the :class:`.Editor` class, which provides high-level functions to interact with the
-Minecraft world through the GDMC HTTP interface"""
+Minecraft world through the GDMC HTTP interface."""
 
 
 from __future__ import annotations

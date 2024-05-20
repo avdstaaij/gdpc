@@ -14,4 +14,4 @@ class InterfaceInternalError(InterfaceError):
 
 
 class BuildAreaNotSetError(InterfaceError):
-    """Attempted to retieve the build area while it was not set"""
+    """Attempted to retrieve the build area while it was not set"""

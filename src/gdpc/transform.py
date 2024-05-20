@@ -178,8 +178,10 @@ being interpreted as a translation."""
 def toTransform(transformLike: TransformLike) -> Transform:
     """Converts ``transformLike`` to a :class:`.Transform`, interpreting a vector as a translation.
 
+    This function is mainly for internal use in GDPC, but may also be useful in user programs.
+
     Functions that take a Transform parameter are very often called with just a translation.
-    By taking a transformLike pararameter instead and using this converter, calling such a
+    By taking a TransformLike pararameter instead and using this converter, calling such a
     function with just a translation becomes slightly easier. This does however cost a bit
     of performance (for an ``isinstance`` call).
     """
