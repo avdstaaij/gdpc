@@ -10,7 +10,9 @@ The section of the documentation gives an overview of GDPC's main features.
 :maxdepth: 1
 :titlesonly:
 
-blocks
+overview
 vectors
+blocks
+
 transformation
 ```

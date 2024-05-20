@@ -1,6 +1,6 @@
 # Welcome to GDPC's documentation!
 
-## Summary
+## Introduction
 
 GDPC (Generative Design Python Client) is a Python framework for the [GDMC HTTP Interface mod](https://github.com/Niels-NTG/gdmc_http_interface) for Minecraft Java edition.
 

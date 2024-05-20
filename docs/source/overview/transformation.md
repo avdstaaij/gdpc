@@ -7,7 +7,7 @@ however also one of its more complex features.
 
 The transformation system allows you to "transform" your frame of reference
 for placing blocks, so that you can always build using local coordinates instead
-of global ones. The idea is based on the use of transformation matrices in
+of global ones. The concept is based on the use of transformation matrices in
 3D graphics APIs.
 
 If you're programming, say, a house function, you could just always build the

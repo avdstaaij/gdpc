@@ -2,51 +2,111 @@
 
 ## Introduction
 
-This tutorial will go through the step-by-step process of building a house with
-GDPC. It will pass over most of the main components of the library, explaining
-them as they come along. The house will be built on the ground at a spot that
-can be specified in-game, and will have some simple randomization.
+This tutorial will go through the step-by-step process of building a house in
+Minecraft with GDPC. It will pass over most of the main components of the
+library, explaining them as they come along. The house will be built on the
+ground at a spot that can be specified in-game, and will have some simple
+randomization.
 
 
 ## Preparing a world
 
 First, we'll create a Minecraft world to build in. Any world will do, but the
-following settings may help:
+following settings are recommended for this tutorial:
 
 - **Game Mode:** Creative.
 - **Difficulty:** Peaceful.
 - **Allow Cheats:** ON.
-- **More world options / World Type:** Single Biome.\
+- **World / World Type:** Single Biome.\
   By default, this will create a plains-only world, which is quite useful for
   testing.
 
 
-## The Editor object
+## Editing the world with code
 
-Nearly every GDPC program will begin with creating an {class}`.Editor` object.
-This object will serve as the main point of communication between GDPC and the
-GDMC-HTTP mod, and therefore, the Minecraft world.
+<!-- ### Placing a block -->
 
-We will enable the Editor's buffering mode by setting {python}`buffering = True`.
-This will cause the Editor to collect batches of block changes before sending
-them all to the GDMC-HTTP interface at once. This significantly improves
-performance, and is highly recommended in all cases where it does not matter
-that the world changes are staggered.
+Now, we'll make a change to world using GDPC. We'll start by placing a single
+block in the air, close to the world spawn.
+
+The first thing to do is to create an {class}`.Editor` object. Nearly every GDPC
+program will involve such an object -- it serves as the main point of
+communication between GDPC and the GDMC-HTTP mod, and therefore, the world.
+
+Once we have an `Editor` object, we can place blocks
+with {meth}`.Editor.placeBlock`.
+This function has two required arguments: the (X,Y,Z)-coordinates to place a
+block at (a 3D vector) and the block to place (a {class}`.Block` object).
+
+In Minecraft, the Y-coordinate indicates height, with sea level at Y=62. We'll
+place a block at (X=0, Y=128, Z=0) -- right above the world spawn (X=0, Z=0) and
+high enough to not be inside a mountain.
 
 ```{code-block} python
 
 from gdpc import Editor, Block
 
-editor = Editor(buffering=True)
+editor = Editor()
+
+editor.placeBlock((0,128,0), Block("red_concrete"))
 ```
+
+```{important}
+Make sure you have a world open with the
+[GDMC HTTP Interface mod](https://github.com/Niels-NTG/gdmc_http_interface)
+installed! (See [Installation](installation.md).)
+If you don't, GDPC will raise an {exc}`.InterfaceConnectionError`.
+```
+
+```{note}
+In GDPC, anything that "acts like a vector" will work for vector parameters.
+This includes things like tuples, lists and numpy arrays. Whenever
+GDPC *returns* a vector, it will always be a
+[PyGLM](https://github.com/Zuzu-Typ/PyGLM) vector object, which has useful
+`.x` `.y` `.z` attributes and some other features.
+For more info, see [Vectors](../overview/vectors.md).
+```
+
+If you run this program and all goes well, a block of red concrete should appear
+at (X=0, Y=128, Z=0). You can teleport on top of it with the following in-game
+command:
+
+```
+/tp 0 129 0
+```
+
+<!-- ### Getting a block
+
+It's also possible to retrieve blocks from the world (though we won't need it
+for this tutorial). For this, there's {meth}`.Editor.getBlock`. As an example,
+we'll retrieve the block we just placed.
+
+```{code-block} python
+:emphasize-lines: 7-8
+
+from gdpc import Editor, Block
+
+editor = Editor()
+
+editor.placeBlock((0,128,0), Block("red_concrete"))
+
+block = editor.getBlock((0,128,0))
+print(block) # minecraft:red_concrete
+``` -->
+
 
 
 ## Working with the build area
 
-The GDMC HTTP interface includes a concept called the *build area*. This is a 3D
-box that can be set with a command in-game and then retrieved from code. It's a
-convenient way to control where your program operates, and the standard way of
-doing so in the GDMC competition. We'll be using it as well.
+The previous snippet placed a block at a hardcoded location, but for our house,
+we'll eventually want a way to place it at any location of our choosing.
+We could set up command-line arguments for our program, but there's a more
+convenient way: using the GDMC HTTP interface's *build area* feature.
+
+The build area is a 3D box that can be set with a command in-game and then
+retrieved with code. It's meant for specifying the bounds in which your
+program should operate, and it is the standard way of doing so in the GDMC
+competition.
 
 ```{note}
 In GDPC, the build area is merely a suggestion: its bounds are not enforced. It
@@ -66,7 +126,7 @@ Set the build area to a 64x256x64 box starting at our current (X,Z)-position and
 spanning from Y=0 to Y=255 with the following command:
 
 ```
-/setbuildarea ~ 0 ~ ~64 255 ~64
+/setbuildarea ~ 0 ~ ~63 255 ~63
 ```
 
 ```{image} ../images/setbuildarea-example.png
@@ -79,54 +139,67 @@ the chat is open.
 ```
 
 We can now retrieve the specified build area in our program with
-{meth}`Editor.getBuildArea`. This function returns the build area as a
-{class}`Box` object, which is a simple wrapper around an offset and a size.
+{meth}`.Editor.getBuildArea`. This function returns the build area as a
+{class}`.Box` object, which is a wrapper around an offset (position) and
+a size (both 3D vectors).
 
 ```{code-block} python
-:emphasize-lines: 5-6
-
 from gdpc import Editor, Block
 
-editor = Editor(buffering=True)
+editor = Editor()
 
 buildArea = editor.getBuildArea()
 print(buildArea)
 ```
 
-If you run the program, it should print the box you just specified in-game.
+If you run the program, it should print the offset and size of the box you just
+specified in-game.
 
 
 ## Building the floor
 
-For now, we'll build the house up in the air (Y=100) -- We'll look at finding
-the ground later. We'll start with a floor of stone bricks:
+Now that we know where to build, we can get started on the actual house. We'll
+build it in the northwest corner of the build area.
+For now, we'll have it float in the air (Y=128) -- We'll look at finding the
+ground later. We'll start with a 5x5 floor of stone bricks:
 
 ```{code-block} python
 :emphasize-lines: 7-11
 
 from gdpc import Editor, Block
 
-editor = Editor(buffering=True)
+editor = Editor()
 
 buildArea = editor.getBuildArea()
 
-y = 100
+y = 128
 
 for x in range(buildArea.offset.x, buildArea.offset.x + 5):
     for z in range(buildArea.offset.z, buildArea.offset.z + 5):
         editor.placeBlock((x, y, z), Block("stone_bricks"))
 ```
 
-The {meth}`.Editor.placeBlock` function takes two mandatory arguments: the
-position where to place a block (a 3D vector) and the block to place
-(a {class}`.gdpc.Block` object).
+Since we're now placing more than one block, we will also enable the Editor's
+buffering mode by constructing it with {python}`buffering = True`.
+This will cause the Editor to buffer all block changes and send them to the
+GDMC-HTTP interface in large batches. This significantly improves performance,
+and is highly recommended in all cases where it does not matter that the world
+changes are staggered.
 
-```{note}
-In GDPC, anything that "acts like a vector" will work for vector parameters. If
-GDPC *returns* a vector, it will always be a
-[PyGLM](https://github.com/Zuzu-Typ/PyGLM) vector object, which has useful
-`.x` `.y` `.z` attributes.
-For more info, see [Vectors](../overview/vectors.md).
+```{code-block} python
+:emphasize-lines: 3
+
+from gdpc import Editor, Block
+
+editor = Editor(buffering=True)
+
+buildArea = editor.getBuildArea()
+
+y = 128
+
+for x in range(buildArea.offset.x, buildArea.offset.x + 5):
+    for z in range(buildArea.offset.z, buildArea.offset.z + 5):
+        editor.placeBlock((x, y, z), Block("stone_bricks"))
 ```
 
 
@@ -148,40 +221,36 @@ editor = Editor(buffering=True)
 
 buildArea = editor.getBuildArea()
 
-y = 100
+y = 128
 x = buildArea.offset.x
 z = buildArea.offset.z
 
 placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
 ```
 
-## Clearing the area
-
-Before we go further, we'll add some code to clear out the area around our
-house.
-To "remove" blocks in the world, you can place `Block("air")` on top of
-them:
+Sidenote: we can use another helper, {func}`.placeRectOutline`, to visualize the
+(X,Z)-rectangle of the build area. We won't include this in any further
+examples, but if you're ever confused about where the build area is, you can it
+in.
 
 ```{code-block} python
-:emphasize-lines: 12-13
+:emphasize-lines: 2,8
 
 from gdpc import Editor, Block
-from gdpc.geometry import placeCuboid
+from gdpc.geometry import placeCuboid, placeRectOutline
 
 editor = Editor(buffering=True)
 
 buildArea = editor.getBuildArea()
 
-y = 100
+placeRectOutline(editor, buildArea.toRect(), 140, Block("red_concrete"))
+
+y = 128
 x = buildArea.offset.x
 z = buildArea.offset.z
 
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+6, z+4), Block("air"))
-
 placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
 ```
-
 
 ## Building the main shape
 
@@ -190,7 +259,7 @@ a hollow box with {func}`.geometry.placeCuboidHollow` and then overwrite
 the floor with `placeCuboid()`.
 
 ```{code-block} python
-:emphasize-lines: 2, 15-17
+:emphasize-lines: 2, 12-14
 
 from gdpc import Editor, Block
 from gdpc.geometry import placeCuboid, placeCuboidHollow
@@ -199,12 +268,9 @@ editor = Editor(buffering=True)
 
 buildArea = editor.getBuildArea()
 
-y = 100
+y = 128
 x = buildArea.offset.x
 z = buildArea.offset.z
-
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+6, z+4), Block("air"))
 
 # Build main shape
 placeCuboidHollow(editor, (x, y, z), (x+4, y+4, z+4), Block("oak_planks"))
@@ -243,12 +309,12 @@ Blocks can also have a third property called *block entity data*, which we won't
 go into here. For more info, see [Blocks](../overview/blocks.md).
 ```
 
-Now, let's build the roof. This one will be a little more complicated, since the
-roof will be diagonal. We'll also move the house one block over in the X and Z
-directions to make space for some overhang.
+Now, let's build the roof. This step will be a little more complicated, since
+the roof will be diagonal. We'll also move the house one block over in the
+X and Z directions to make space for some overhang.
 
 ```{code-block} python
-:emphasize-lines: 9-10, 19-30
+:emphasize-lines: 9-10, 16-27
 
 from gdpc import Editor, Block
 from gdpc.geometry import placeCuboid, placeCuboidHollow
@@ -257,12 +323,9 @@ editor = Editor(buffering=True)
 
 buildArea = editor.getBuildArea()
 
-y = 100
+y = 128
 x = buildArea.offset.x + 1
 z = buildArea.offset.z + 1
-
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+6, z+4), Block("air"))
 
 # Build main shape
 placeCuboidHollow(editor, (x, y, z), (x+4, y+4, z+4), Block("oak_planks"))
@@ -365,9 +428,6 @@ z = buildArea.offset.z + 1
 
 y = heightmap[3,3] - 1
 
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+6, z+4), Block("air"))
-
 # Build main shape
 placeCuboidHollow(editor, (x, y, z), (x+4, y+4, z+4), Block("oak_planks"))
 placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
@@ -406,7 +466,7 @@ function to randomly set `height` and `depth` variables within a set range, and
 replace some of our hardcoded values with them:
 
 ```{code-block} python
-:emphasize-lines: 1, 20-21, 24, 27-28, 32, 37-38, 41-42
+:emphasize-lines: 1, 20-21, 24-25, 29, 34-35, 38-39
 
 from random import randint
 from gdpc import Editor, Block
@@ -429,9 +489,6 @@ y = heightmap[3,3] - 1
 
 height = randint(3, 7)
 depth  = randint(3, 10)
-
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+height+2, z+depth), Block("air"))
 
 # Build main shape
 placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), Block("oak_planks"))
@@ -461,7 +518,7 @@ and GDPC will automatically sample the palette randomly. This can be useful for
 achieving a more "rugged" look.
 
 ```{code-block} python
-:emphasize-lines: 1, 23-37, 43-44
+:emphasize-lines: 1, 23-37, 40-41
 
 from random import randint, choice
 from gdpc import Editor, Block
@@ -501,9 +558,6 @@ wallBlock = choice([
 ])
 print(f"Chosen wall block: {wallBlock}")
 
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+height+2, z+depth), Block("air"))
-
 # Build main shape
 placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), wallBlock)
 placeCuboid(editor, (x, y, z), (x+4, y, z+depth), floorPalette)
@@ -524,9 +578,7 @@ placeCuboid(editor, (x+2, yy, z-1), (x+2, yy, z+depth+1), Block("oak_planks"))
 ```
 
 
-
 ## Finishing touches
-
 
 It's time to put in some finishing touches. First, we'll add a door so we can
 actually enter the house. For multi-block objects such as doors and beds, you
@@ -535,7 +587,7 @@ make an adjustment to put the door at the ground level instead of the house
 midpoint.
 
 ```{code-block} python
-:emphasize-lines: 3, 7-12
+:emphasize-lines: 3, 7-9
 
 (...)
 
@@ -546,18 +598,43 @@ y = heightmap[3,1] - 1
 # Add a door
 doorBlock = Block("oak_door", {"facing": "north", "hinge": "left"})
 editor.placeBlock((x+2, y+1, z), doorBlock)
-
-# Clear some space for the door
-placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
 ```
 
+One problem with the door is that it can occasionally get obstructed by the
+surrounding blocks. Furthermore, now that you can enter the house, you may
+notice that it can occasionally have some blocks from the original terrain
+inside of it. To fix these issues, we'll add some code to clear out the inside
+of our house and the area in front of the door.
+
+To "remove" blocks in the world, you can place `Block("air")` on top of
+them:
+
+```{code-block} python
+:emphasize-lines: 6, 14-15
+
+(...)
+
+# Build main shape
+placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), wallBlock)
+placeCuboid(editor, (x, y, z), (x+4, y, z+depth), floorPalette)
+placeCuboid(editor, (x+1, y+1, z+1), (x+3, y+height-1, z+3), Block("air"))
+
+(...)
+
+# Add a door
+doorBlock = Block("oak_door", {"facing": "north", "hinge": "left"})
+editor.placeBlock((x+2, y+1, z), doorBlock)
+
+# Clear some space in front of the door
+placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
+```
 
 Next, we'll extend the floor of the house so it integrates better on uneven
 terrain. An easy and often sufficient method is to just extend it a set amount
 of blocks downward.
-% A more accurate way would be to use a heightmap to place only the needed
-% blocks. We'll use yet another method, GDPC's replacement feature. It allows us
-% to specify specific blocks to replace -- in this case, air.
+<!-- A more accurate way would be to use a heightmap to place only the needed
+blocks. We'll use yet another method, GDPC's replacement feature. It allows us
+to specify specific blocks to replace -- in this case, air. -->
 
 ```{code-block} python
 :emphasize-lines: 5
@@ -602,7 +679,7 @@ for dx in range(1, 4):
 All together:
 
 ```{code-block} python
-:emphasize-lines: 18, 44, 56-61, 67-72
+:emphasize-lines: 18, 41-42, 54-59, 65-70
 
 from random import randint, choice
 from gdpc import Editor, Block
@@ -642,12 +719,10 @@ wallBlock = choice([
 ])
 print(f"Chosen wall block: {wallBlock}")
 
-# Clear out the area
-placeCuboid(editor, (x, y, z), (x+4, y+height+2, z+depth), Block("air"))
-
 # Build main shape
 placeCuboidHollow(editor, (x, y, z), (x+4, y+height, z+depth), wallBlock)
 placeCuboid(editor, (x, y, z), (x+4, y-5, z+depth), floorPalette)
+placeCuboid(editor, (x+1, y+1, z+1), (x+3, y+height-1, z+3), Block("air"))
 
 # Build roof: loop through distance from the middle
 for dx in range(1, 4):
@@ -674,7 +749,7 @@ placeCuboid(editor, (x+2, yy, z-1), (x+2, yy, z+depth+1), Block("oak_planks"))
 doorBlock = Block("oak_door", {"facing": "north", "hinge": "left"})
 editor.placeBlock((x+2, y+1, z), doorBlock)
 
-# Clear some space for the door
+# Clear some space in front of the door
 placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
 ```
 
@@ -686,19 +761,38 @@ furniture, but we'll leave that as an exercise to the reader :).
 
 
 We've now finished the code for generating a single house, but there's one more
-thing we will look at: placing multiple of them. GDPC has a very powerful,
-though also complex, system for applying building logic at different locations:
-the *transformation system*.
+thing we will look at: placing multiple of them. GDPC has a very powerful
+feature for applying building logic at different locations: the
+*transformation system*.
 
 The transformation system allows you to "transform" your frame of reference
 for placing blocks, so that you can always build using local coordinates instead
-of global ones. The idea is based on the use of transformation matrices in
+of global ones. The concept is based on the use of transformation matrices in
+3D graphics APIs.
+
+First, we'll use the transformation system to set the start of the build area
+
+
+
+
+
+
+
+
+
+The transformation system allows you to "transform" your frame of reference
+for placing blocks, so that you can always build using local coordinates instead
+of global ones. The concept is based on the use of transformation matrices in
 3D graphics APIs.
 The system allows you to not only translate, but also rotate and flip your frame
 of reference. And importantly, blocks that have an orientation (such as stairs
 blocks) will get appropriately transformed as well!
 
-- Transformation system
+Transformations are represented by the {class}`Transform` class, which consists
+of three components: a translation vector, a rotation and a flip vector. The
+`Editor` class has a {attr}`~.Editor.transform` property that represents that
+editor's frame of reference. It is applied to all block placement
+and retrieval positions.
 
 
 ## Further reading

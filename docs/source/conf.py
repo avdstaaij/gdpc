@@ -58,6 +58,12 @@ intersphinx_mapping = {
     "requests": ("https://requests.readthedocs.io/en/latest/", None),
 }
 
+myst_enable_extensions = [
+    "amsmath",
+    "deflist",
+    "smartquotes"
+]
+
 
 # -- Autodoc -------------------------------------------------------------------
 
