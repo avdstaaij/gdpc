@@ -55,7 +55,6 @@ class Vec3bLike(Protocol):
 # ==================================================================================================
 # Constants
 # ==================================================================================================
-# WARNING: Default coordinate systems are LEFT-HANDED!
 
 # ==== 2D values ====
 IDENTITY_2D = ivec2(1, 1)
@@ -76,7 +75,7 @@ SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D
 
 CARDINALS_2D: Set[ivec2] = {NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}
 INTERCARDINALS_2D: Set[ivec2] = {NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}
-CARDINALS_W_DIAGONALS_2D: Set[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
+CARDINALS_AND_DIAGONALS_2D: Set[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
 
 # ==== 3D values ====
 IDENTITY_3D = ivec3(1, 1, 1)
@@ -105,19 +104,21 @@ SOUTHEAST_3D: ivec3 = SOUTH_3D + EAST_3D
 
 CARDINALS_3D: Set[ivec3] = {NORTH_3D, SOUTH_3D, EAST_3D, WEST_3D}
 INTERCARDINALS_3D: Set[ivec3] = {NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_3D, SOUTHWEST_3D}
-CARDINALS_W_DIAGONALS_3D: Set[ivec3] = CARDINALS_3D | INTERCARDINALS_3D
+CARDINALS_AND_DIAGONALS_3D: Set[ivec3] = CARDINALS_3D | INTERCARDINALS_3D
 
 DIRECTIONS_3D: Set[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D}
 ORTH_DIAGONALS_3D: Set[ivec3] = INTERCARDINALS_3D | {
     verticality + cardinal
     for verticality, cardinal in iter.product((UP_3D, DOWN_3D), CARDINALS_3D)
 }
-DIRECTIONS_W_ORTH_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_3D | ORTH_DIAGONALS_3D
+DIRECTIONS_AND_ORTH_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_3D | ORTH_DIAGONALS_3D
 CORNERS_3D: Set[ivec3] = {
     verticality + cardinal
     for verticality, cardinal in iter.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 }
-DIRECTIONS_W_ALL_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_W_ORTH_DIAGONALS_3D | CORNERS_3D
+DIRECTIONS_AND_ALL_DIAGONALS_3D: Set[ivec3] = (
+    DIRECTIONS_AND_ORTH_DIAGONALS_3D | CORNERS_3D
+)
 
 # ==== aliases ====
 # NOTE: These are for backward compatibility
