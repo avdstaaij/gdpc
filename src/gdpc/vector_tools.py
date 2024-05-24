@@ -1144,8 +1144,7 @@ def fittingCircle(corner1: Vec2iLike, corner2: Vec2iLike, filled=False):
 
 def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False):
     """Yields the points of the specified ellipse.\n
-    If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis.
-    """
+    If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis."""
 
     # Modified version 'inspired' by chandan_jnu from
     # https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
@@ -1166,17 +1165,13 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False):
 
     def fourpoints(x, y) -> None:
         points.add(center + ivec2(e.x + x, e.y + y))
-        points.add(center + ivec2(0 - x, e.y + y))
-        points.add(center + ivec2(e.x + x, 0 - y))
-        points.add(center + ivec2(0 - x, 0 - y))
+        points.add(center + ivec2(    - x, e.y + y))
+        points.add(center + ivec2(e.x + x,     - y))
+        points.add(center + ivec2(    - x,     - y))
 
         if filled:
-            points.update(
-                line2D(center + ivec2(0 - x, e.y + y), center + ivec2(e.x + x, e.y + y))
-            )
-            points.update(
-                line2D(center + ivec2(0 - x, 0 - y), center + ivec2(e.x + x, 0 - y))
-            )
+            points.update(line2D(center + ivec2(-x, e.y + y), center + ivec2(e.x + x, e.y + y)))
+            points.update(line2D(center + ivec2(-x,     - y), center + ivec2(e.x + x,     - y)))
 
     rx, ry = (diameters - IDENTITY_2D) // 2
 
@@ -1309,14 +1304,15 @@ def fittingCylinder(
         direction[axis] = 1
         yield from (point + (hn - h0) * direction for point in basePoints)
         yield from (
-            point + i * direction for i in range(1, hn - h0) for point in bodyPoints
+            point + i * direction
+            for i in range(1, hn - h0)
+            for point in bodyPoints
         )
 
 
 def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> Generator[ivec3, Any, None]:
-    """Yields the points of an ellipsoid centered on <center> with diameters <diameters>.\n
-    If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis.
-    """
+    """Yields the points of an ellipsoid centered on <center> with diameters <diameters>.
+    If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis."""
 
     # Convert the center and diameters to ivec3
     center: ivec3 = ivec3(*center)
@@ -1340,13 +1336,13 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
 
         octants: List[ivec3] = [
             ivec3(x0 + e.x + dx, y0 + e.y + dy, z0 + e.z + dz),
-            ivec3(x0 - dx, y0 + e.y + dy, z0 + e.z + dz),
-            ivec3(x0 + e.x + dx, y0 - dy, z0 + e.z + dz),
-            ivec3(x0 - dx, y0 - dy, z0 + e.z + dz),
-            ivec3(x0 + e.x + dx, y0 + e.y + dy, z0 - dz),
-            ivec3(x0 - dx, y0 + e.y + dy, z0 - dz),
-            ivec3(x0 + e.x + dx, y0 - dy, z0 - dz),
-            ivec3(x0 - dx, y0 - dy, z0 - dz),
+            ivec3(x0       - dx, y0 + e.y + dy, z0 + e.z + dz),
+            ivec3(x0 + e.x + dx, y0       - dy, z0 + e.z + dz),
+            ivec3(x0       - dx, y0       - dy, z0 + e.z + dz),
+            ivec3(x0 + e.x + dx, y0 + e.y + dy, z0       - dz),
+            ivec3(x0       - dx, y0 + e.y + dy, z0       - dz),
+            ivec3(x0 + e.x + dx, y0       - dy, z0       - dz),
+            ivec3(x0       - dx, y0       - dy, z0       - dz),
         ]
 
         return octants
@@ -1422,23 +1418,25 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1) -> Generator[ivec2, Any, None]:
     """Yields the neighbors of [point] within [bounding_rect].\n
     Useful for pathfinding."""
+    # TODO: Replace with expressions that use new vector constants (e.g. yield stride*(LEFT+UP) + point)
+    # NOTE: This is very memory-inefficient. Consider combining conditions into trees, or iterating through vector constants.
 
     end: ivec2 = boundingRect.end
 
     left:  bool = point[0] - stride >= boundingRect.offset.x
     down:  bool = point[1] - stride >= boundingRect.offset.y
-    right: bool = point[0] + stride < end.x
-    up:    bool = point[1] + stride < end.y
+    right: bool = point[0] + stride <  end.x
+    up:    bool = point[1] + stride <  end.y
 
     if left:  yield ivec2(point[0] - stride, point[1])
-    if down:  yield ivec2(point[0], point[1] - stride)
+    if down:  yield ivec2(point[0],          point[1] - stride)
     if right: yield ivec2(point[0] + stride, point[1])
-    if up:    yield ivec2(point[0], point[1] + stride)
+    if up:    yield ivec2(point[0],          point[1] + stride)
 
     if not diagonal: return
 
-    if left and down:  yield ivec2(point[0] - stride, point[1] - stride)
-    if left and up:    yield ivec2(point[0] - stride, point[1] + stride)
+    if left  and down: yield ivec2(point[0] - stride, point[1] - stride)
+    if left  and up:   yield ivec2(point[0] - stride, point[1] + stride)
     if right and down: yield ivec2(point[0] + stride, point[1] - stride)
     if right and up:   yield ivec2(point[0] + stride, point[1] + stride)
 
@@ -1446,37 +1444,40 @@ def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, st
 def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stride: int = 1) -> Generator[ivec3, Any, None]:
     """Yields the neighbors of [point] within [bounding_box].\n
     Useful for pathfinding."""
+    # TODO: Replace with expressions that use new vector constants (e.g. yield stride*(LEFT+UP) + point)
+    # NOTE: This is very memory-inefficient. Consider combining conditions into trees, or iterating through vector constants.
 
     end: ivec3 = boundingBox.end
 
     left:  bool = point[0] - stride >= boundingBox.offset.x
     down:  bool = point[1] - stride >= boundingBox.offset.y
     back:  bool = point[2] - stride >= boundingBox.offset.z
-    right: bool = point[0] + stride < end.x
-    up:    bool = point[1] + stride < end.y
-    front: bool = point[2] + stride < end.z
+    right: bool = point[0] + stride <  end.x
+    up:    bool = point[1] + stride <  end.y
+    front: bool = point[2] + stride <  end.z
 
-    if left:  yield ivec3(point[0] - stride, point[1], point[2])
-    if down:  yield ivec3(point[0], point[1] - stride, point[2])
-    if back:  yield ivec3(point[0], point[1], point[2] - stride)
-    if right: yield ivec3(point[0] + stride, point[1], point[2])
-    if up:    yield ivec3(point[0], point[1] + stride, point[2])
-    if front: yield ivec3(point[0], point[1], point[2] + stride)
+
+    if left:  yield ivec3(point[0] - stride, point[1],          point[2])
+    if down:  yield ivec3(point[0],          point[1] - stride, point[2])
+    if back:  yield ivec3(point[0],          point[1],          point[2] - stride)
+    if right: yield ivec3(point[0] + stride, point[1],          point[2])
+    if up:    yield ivec3(point[0],          point[1] + stride, point[2])
+    if front: yield ivec3(point[0],          point[1],          point[2] + stride)
 
     if not diagonal: return
 
-    if left  and down:  yield ivec3(point[0] - stride, point[1] - stride, point[2])
-    if left  and back:  yield ivec3(point[0] - stride, point[1], point[2] - stride)
-    if left  and up:    yield ivec3(point[0] - stride, point[1] + stride, point[2])
-    if left  and front: yield ivec3(point[0] - stride, point[1], point[2] + stride)
-    if right and down:  yield ivec3(point[0] + stride, point[1] - stride, point[2])
-    if right and back:  yield ivec3(point[0] + stride, point[1], point[2] - stride)
-    if right and up:    yield ivec3(point[0] + stride, point[1] + stride, point[2])
-    if right and front: yield ivec3(point[0] + stride, point[1], point[2] + stride)
-    if down  and back:  yield ivec3(point[0], point[1] - stride, point[2] - stride)
-    if down  and front: yield ivec3(point[0], point[1] - stride, point[2] + stride)
-    if up    and back:  yield ivec3(point[0], point[1] + stride, point[2] - stride)
-    if up    and front: yield ivec3(point[0], point[1] + stride, point[2] + stride)
+    if left  and down:           yield ivec3(point[0] - stride, point[1] - stride, point[2])
+    if left  and back:           yield ivec3(point[0] - stride, point[1],          point[2] - stride)
+    if left  and up:             yield ivec3(point[0] - stride, point[1] + stride, point[2])
+    if left  and front:          yield ivec3(point[0] - stride, point[1],          point[2] + stride)
+    if right and down:           yield ivec3(point[0] + stride, point[1] - stride, point[2])
+    if right and back:           yield ivec3(point[0] + stride, point[1],          point[2] - stride)
+    if right and up:             yield ivec3(point[0] + stride, point[1] + stride, point[2])
+    if right and front:          yield ivec3(point[0] + stride, point[1],          point[2] + stride)
+    if down  and back:           yield ivec3(point[0],          point[1] - stride, point[2] - stride)
+    if down  and front:          yield ivec3(point[0],          point[1] - stride, point[2] + stride)
+    if up    and back:           yield ivec3(point[0],          point[1] + stride, point[2] - stride)
+    if up    and front:          yield ivec3(point[0],          point[1] + stride, point[2] + stride)
     if left  and down and back:  yield ivec3(point[0] - stride, point[1] - stride, point[2] - stride)
     if left  and down and front: yield ivec3(point[0] - stride, point[1] - stride, point[2] + stride)
     if left  and up   and back:  yield ivec3(point[0] - stride, point[1] + stride, point[2] - stride)
