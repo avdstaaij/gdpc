@@ -68,7 +68,6 @@ class Vec3bLike(Protocol):
 # ==================================================================================================
 
 # ==== 2D values ====
-IDENTITY_2D = ivec2(1, 1)
 
 X_2D = ivec2(1, 0)
 Y_2D = ivec2(0, 1)
@@ -87,10 +86,9 @@ SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D
 CARDINALS_2D:               Set[ivec2] = {NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}
 INTERCARDINALS_2D:          Set[ivec2] = {NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}
 CARDINALS_AND_DIAGONALS_2D: Set[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
-DIAGONALS_2D:               Set[ivec2] = INTERCARDINALS_2D
+DIAGONALS_2D              = tuple(INTERCARDINALS_2D)  # NOTE: Legacy format
 
 # ==== 3D values ====
-IDENTITY_3D = ivec3(1, 1, 1)
 
 X_3D = ivec3(1, 0, 0)
 Y_3D = ivec3(0, 1, 0)
@@ -119,19 +117,17 @@ INTERCARDINALS_3D:          Set[ivec3] = {NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_
 CARDINALS_AND_DIAGONALS_3D: Set[ivec3] = CARDINALS_3D | INTERCARDINALS_3D
 
 DIRECTIONS_3D:     Set[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D}
-ORTH_DIAGONALS_3D: Set[ivec3] = INTERCARDINALS_3D | {
+EDGE_DIAGONALS_3D: Set[ivec3] = INTERCARDINALS_3D | {
     verticality + cardinal
     for verticality, cardinal in iterproduct((UP_3D, DOWN_3D), CARDINALS_3D)
 }
-DIRECTIONS_AND_ORTH_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_3D | ORTH_DIAGONALS_3D
-CORNERS_3D:                       Set[ivec3] = {
+DIRECTIONS_AND_EDGE_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_3D | EDGE_DIAGONALS_3D
+CORNER_DIAGONALS_3D:              Set[ivec3] = {
     verticality + cardinal
     for verticality, cardinal in iterproduct((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 }
-DIRECTIONS_AND_ALL_DIAGONALS_3D: Set[ivec3] = (
-    DIRECTIONS_AND_ORTH_DIAGONALS_3D | CORNERS_3D
-)
-DIAGONALS_3D: Set[ivec3] = ORTH_DIAGONALS_3D | CORNERS_3D
+DIRECTIONS_AND_ALL_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D
+DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D)  # NOTE: Legacy format
 
 # ==== aliases ====
 # NOTE: These are for backward compatibility
@@ -146,6 +142,10 @@ UP, DOWN, EAST, WEST, SOUTH, NORTH = (
     SOUTH_3D,
     NORTH_3D,
 )
+NORTHEAST, NORTHWEST, SOUTHWEST, SOUTHEAST = NORTHEAST_3D, NORTHWEST_3D, SOUTHWEST_3D, SOUTHEAST_3D
+CARDINALS, INTERCARDINALS, CARDINALS_AND_DIAGONALS = CARDINALS_3D, INTERCARDINALS_3D, CARDINALS_AND_DIAGONALS_3D
+EDGE_DIAGONALS, CORNER_DIAGONALS, DIAGONALS = EDGE_DIAGONALS_3D, CORNER_DIAGONALS_3D, DIAGONALS_3D
+DIRECTIONS, DIRECTIONS_AND_EDGE_DIAGONALS, DIRECTIONS_AND_ALL_DIAGONALS = DIRECTIONS_3D, DIRECTIONS_AND_EDGE_DIAGONALS_3D, DIRECTIONS_AND_ALL_DIAGONALS_3D
 
 
 # ==================================================================================================
@@ -1173,7 +1173,7 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False):
             points.update(line2D(center + ivec2(-x, e.y + y), center + ivec2(e.x + x, e.y + y)))
             points.update(line2D(center + ivec2(-x,     - y), center + ivec2(e.x + x,     - y)))
 
-    rx, ry = (diameters - IDENTITY_2D) // 2
+    rx, ry = (diameters - 1) // 2
 
     x, y = 0, ry
 
@@ -1254,8 +1254,8 @@ def cylinder(
         empty: List[ivec3] = []
         return iter(empty)
 
-    corner1 = baseCenter - addDimension((diameters - IDENTITY_2D) / 2, axis, 0)
-    corner2 = corner1 + addDimension(diameters - IDENTITY_2D, axis, length - 1)
+    corner1 = baseCenter - addDimension((diameters - 1) / 2, axis, 0)
+    corner2 = corner1 + addDimension(diameters - 1, axis, length - 1)
     return fittingCylinder(corner1, corner2, axis, tube, hollow)
 
 
@@ -1319,7 +1319,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     diameters: ivec3 = ivec3(*diameters)
 
     # Calculate the correction
-    e: ivec3 = IDENTITY_3D - (diameters % 2)
+    e: ivec3 = 1 - (diameters % 2)
 
     def are_points_in_line(center: Vec3iLike, point: Vec3iLike) -> bool:
         """Checks if two 3D points are the same on 2 or more axis"""
@@ -1350,7 +1350,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     # Extract the x, y, and z coordinates of the center point
     x0, y0, z0 = center
     # Extract the radii of the ellipsoid along the x, y, and z axes
-    rx, ry, rz = ((diameters) // 2) + (IDENTITY_3D - e)
+    rx, ry, rz = ((diameters) // 2) + (1 - e)
 
     solid_points: np.ndarray[Any, np.dtype[bool]] = np.zeros((rx + 2, ry + 2, rz + 2), dtype=bool)
 
@@ -1418,71 +1418,74 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1) -> Generator[ivec2, Any, None]:
     """Yields the neighbors of [point] within [bounding_rect].\n
     Useful for pathfinding."""
-    # TODO: Replace with expressions that use new vector constants (e.g. yield stride*(LEFT+UP) + point)
-    # NOTE: This is very memory-inefficient. Consider combining conditions into trees, or iterating through vector constants.
+    # NOTE: This is very memory-inefficient. Consider combining conditions into trees, or iterating through a set of vector constants.
+
+    if type(point) is not ivec2:
+        point = ivec2(*point)
 
     end: ivec2 = boundingRect.end
 
-    left:  bool = point[0] - stride >= boundingRect.offset.x
-    down:  bool = point[1] - stride >= boundingRect.offset.y
-    right: bool = point[0] + stride <  end.x
-    up:    bool = point[1] + stride <  end.y
+    west:  bool = point[0] - stride >= boundingRect.offset.x
+    north: bool = point[1] - stride >= boundingRect.offset.y
+    east:  bool = point[0] + stride <  end.x
+    south: bool = point[1] + stride <  end.y
 
-    if left:  yield ivec2(point[0] - stride, point[1])
-    if down:  yield ivec2(point[0],          point[1] - stride)
-    if right: yield ivec2(point[0] + stride, point[1])
-    if up:    yield ivec2(point[0],          point[1] + stride)
+    if west:  yield point + stride * WEST_2D
+    if north: yield point + stride * NORTH_2D
+    if east:  yield point + stride * EAST_2D
+    if south: yield point + stride * SOUTH_2D
 
     if not diagonal: return
 
-    if left  and down: yield ivec2(point[0] - stride, point[1] - stride)
-    if left  and up:   yield ivec2(point[0] - stride, point[1] + stride)
-    if right and down: yield ivec2(point[0] + stride, point[1] - stride)
-    if right and up:   yield ivec2(point[0] + stride, point[1] + stride)
+    if west and north: yield point + stride * (WEST_2D + NORTH_2D)
+    if west and south: yield point + stride * (WEST_2D + SOUTH_2D)
+    if east and north: yield point + stride * (EAST_2D + NORTH_2D)
+    if east and south: yield point + stride * (EAST_2D + SOUTH_2D)
 
 
 def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stride: int = 1) -> Generator[ivec3, Any, None]:
     """Yields the neighbors of [point] within [bounding_box].\n
     Useful for pathfinding."""
-    # TODO: Replace with expressions that use new vector constants (e.g. yield stride*(LEFT+UP) + point)
-    # NOTE: This is very memory-inefficient. Consider combining conditions into trees, or iterating through vector constants.
+
+    if type(point) is not ivec3:
+        point = ivec3(*point)
 
     end: ivec3 = boundingBox.end
 
-    left:  bool = point[0] - stride >= boundingBox.offset.x
+    west:  bool = point[0] - stride >= boundingBox.offset.x
     down:  bool = point[1] - stride >= boundingBox.offset.y
-    back:  bool = point[2] - stride >= boundingBox.offset.z
-    right: bool = point[0] + stride <  end.x
+    north: bool = point[2] - stride >= boundingBox.offset.z
+    east:  bool = point[0] + stride <  end.x
     up:    bool = point[1] + stride <  end.y
-    front: bool = point[2] + stride <  end.z
+    south: bool = point[2] + stride <  end.z
 
 
-    if left:  yield ivec3(point[0] - stride, point[1],          point[2])
-    if down:  yield ivec3(point[0],          point[1] - stride, point[2])
-    if back:  yield ivec3(point[0],          point[1],          point[2] - stride)
-    if right: yield ivec3(point[0] + stride, point[1],          point[2])
-    if up:    yield ivec3(point[0],          point[1] + stride, point[2])
-    if front: yield ivec3(point[0],          point[1],          point[2] + stride)
+    if west:  yield point + stride * WEST_3D
+    if down:  yield point + stride * DOWN_3D
+    if north: yield point + stride * NORTH_3D
+    if east:  yield point + stride * EAST_3D
+    if up:    yield point + stride * UP_3D
+    if south: yield point + stride * SOUTH_3D
 
     if not diagonal: return
 
-    if left  and down:           yield ivec3(point[0] - stride, point[1] - stride, point[2])
-    if left  and back:           yield ivec3(point[0] - stride, point[1],          point[2] - stride)
-    if left  and up:             yield ivec3(point[0] - stride, point[1] + stride, point[2])
-    if left  and front:          yield ivec3(point[0] - stride, point[1],          point[2] + stride)
-    if right and down:           yield ivec3(point[0] + stride, point[1] - stride, point[2])
-    if right and back:           yield ivec3(point[0] + stride, point[1],          point[2] - stride)
-    if right and up:             yield ivec3(point[0] + stride, point[1] + stride, point[2])
-    if right and front:          yield ivec3(point[0] + stride, point[1],          point[2] + stride)
-    if down  and back:           yield ivec3(point[0],          point[1] - stride, point[2] - stride)
-    if down  and front:          yield ivec3(point[0],          point[1] - stride, point[2] + stride)
-    if up    and back:           yield ivec3(point[0],          point[1] + stride, point[2] - stride)
-    if up    and front:          yield ivec3(point[0],          point[1] + stride, point[2] + stride)
-    if left  and down and back:  yield ivec3(point[0] - stride, point[1] - stride, point[2] - stride)
-    if left  and down and front: yield ivec3(point[0] - stride, point[1] - stride, point[2] + stride)
-    if left  and up   and back:  yield ivec3(point[0] - stride, point[1] + stride, point[2] - stride)
-    if left  and up   and front: yield ivec3(point[0] - stride, point[1] + stride, point[2] + stride)
-    if right and down and back:  yield ivec3(point[0] + stride, point[1] - stride, point[2] - stride)
-    if right and down and front: yield ivec3(point[0] + stride, point[1] - stride, point[2] + stride)
-    if right and up   and back:  yield ivec3(point[0] + stride, point[1] + stride, point[2] - stride)
-    if right and up   and front: yield ivec3(point[0] + stride, point[1] + stride, point[2] + stride)
+    if west and down          : yield point + stride * (WEST_3D + DOWN_3D           )
+    if west and up            : yield point + stride * (WEST_3D + UP_3D             )
+    if east and down          : yield point + stride * (EAST_3D + DOWN_3D           )
+    if east and up            : yield point + stride * (EAST_3D + UP_3D             )
+    if west          and north: yield point + stride * (WEST_3D           + NORTH_3D)
+    if west          and south: yield point + stride * (WEST_3D           + SOUTH_3D)
+    if east          and north: yield point + stride * (EAST_3D           + NORTH_3D)
+    if east          and south: yield point + stride * (EAST_3D           + SOUTH_3D)
+    if          down and north: yield point + stride * (          DOWN_3D + NORTH_3D)
+    if          down and south: yield point + stride * (          DOWN_3D + SOUTH_3D)
+    if          up   and north: yield point + stride * (          UP_3D   + NORTH_3D)
+    if          up   and south: yield point + stride * (          UP_3D   + SOUTH_3D)
+    if west and down and north: yield point + stride * (WEST_3D + DOWN_3D + NORTH_3D)
+    if west and down and south: yield point + stride * (WEST_3D + DOWN_3D + SOUTH_3D)
+    if west and up   and north: yield point + stride * (WEST_3D + UP_3D   + NORTH_3D)
+    if west and up   and south: yield point + stride * (WEST_3D + UP_3D   + SOUTH_3D)
+    if east and down and north: yield point + stride * (EAST_3D + UP_3D   + NORTH_3D)
+    if east and down and south: yield point + stride * (EAST_3D + DOWN_3D + SOUTH_3D)
+    if east and up   and north: yield point + stride * (EAST_3D + UP_3D   + NORTH_3D)
+    if east and up   and south: yield point + stride * (EAST_3D + UP_3D   + SOUTH_3D)
