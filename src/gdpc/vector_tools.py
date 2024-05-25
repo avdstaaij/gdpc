@@ -131,21 +131,32 @@ DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D) 
 
 # ==== aliases ====
 # NOTE: These are for backward compatibility
-X, Y, Z = X_3D, Y_3D, Z_3D
-XY, XZ, YZ = XY_3D, XZ_3D, YZ_3D
+X: ivec3 = X_3D
+Y: ivec3 = Y_3D
+Z: ivec3 = Z_3D
+XY: ivec3 = XY_3D
+XZ: ivec3 = XZ_3D
+YZ: ivec3 = YZ_3D
 XYZ: ivec3 = XYZ_3D
-UP, DOWN, EAST, WEST, SOUTH, NORTH = (
-    UP_3D,
-    DOWN_3D,
-    EAST_3D,
-    WEST_3D,
-    SOUTH_3D,
-    NORTH_3D,
-)
-NORTHEAST, NORTHWEST, SOUTHWEST, SOUTHEAST = NORTHEAST_3D, NORTHWEST_3D, SOUTHWEST_3D, SOUTHEAST_3D
-CARDINALS, INTERCARDINALS, CARDINALS_AND_DIAGONALS = CARDINALS_3D, INTERCARDINALS_3D, CARDINALS_AND_DIAGONALS_3D
-EDGE_DIAGONALS, CORNER_DIAGONALS, DIAGONALS = EDGE_DIAGONALS_3D, CORNER_DIAGONALS_3D, DIAGONALS_3D
-DIRECTIONS, DIRECTIONS_AND_EDGE_DIAGONALS, DIRECTIONS_AND_ALL_DIAGONALS = DIRECTIONS_3D, DIRECTIONS_AND_EDGE_DIAGONALS_3D, DIRECTIONS_AND_ALL_DIAGONALS_3D
+UP : ivec3= UP_3D
+DOWN: ivec3 = DOWN_3D
+EAST: ivec3 = EAST_3D
+WEST: ivec3 = WEST_3D
+SOUTH: ivec3 = SOUTH_3D
+NORTH: ivec3 = NORTH_3D
+NORTHEAST: ivec3 = NORTHEAST_3D
+NORTHWEST: ivec3 = NORTHWEST_3D
+SOUTHWEST: ivec3 = SOUTHWEST_3D
+SOUTHEAST: ivec3 = SOUTHEAST_3D
+CARDINALS: set[ivec3] = CARDINALS_3D
+INTERCARDINALS: set[ivec3] = INTERCARDINALS_3D
+CARDINALS_AND_DIAGONALS: set[ivec3] = CARDINALS_AND_DIAGONALS_3D
+EDGE_DIAGONALS: set[ivec3] = EDGE_DIAGONALS_3D
+CORNER_DIAGONALS: set[ivec3] = CORNER_DIAGONALS_3D
+DIAGONALS: tuple = DIAGONALS_3D
+DIRECTIONS: set[ivec3] = DIRECTIONS_3D
+DIRECTIONS_AND_EDGE_DIAGONALS: set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D
+DIRECTIONS_AND_ALL_DIAGONALS: set[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D
 
 
 # ==================================================================================================
@@ -204,9 +215,9 @@ def perpendicular(vec: Vec2iLike) -> ivec2:
 def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
     """Returns [vec], rotated clockwise by [rotation] quarters."""
     if rotation == 0: return ivec2(*vec)
-    if rotation == 1: return ivec2(-vec[1], vec[0])
+    if rotation == 1: return ivec2(-vec[1],  vec[0])
     if rotation == 2: return ivec2(-vec[0], -vec[1])
-    if rotation == 3: return ivec2(vec[1], -vec[0])
+    if rotation == 3: return ivec2( vec[1], -vec[0])
     raise ValueError("Rotation must be in {0,1,2,3}")
 
 
@@ -238,9 +249,6 @@ def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
         raise ValueError("Only ±90°-rotations and their multiples are valid!")
 
     rotation: int = (degrees // 90) % 4  # Convert to quarter-turns
-
-    if rotation < 0:
-        rotation += 4  # Invert negative turns
 
     return rotate2D(vec, rotation)
 
@@ -319,7 +327,7 @@ def toAxisVector2D(vec: Vec2iLike) -> ivec2:
         return ivec2(0, nonZeroSign(vec[1]))
 
 
-def directionToRotation(direction: Vec2iLike) -> Literal[0] | Literal[1] | Literal[2] | Literal[3]:
+def directionToRotation(direction: Vec2iLike) -> Union[Literal[0], Literal[1], Literal[2], Literal[3]]:
     """Returns the rotation that rotates (0,-1) closest to [direction]"""
     vec = toAxisVector2D(direction)
     if vec[1] < 0: return 0
@@ -342,8 +350,8 @@ def length(vec: Union[Vec2iLike, Vec3iLike]) -> float:
 
 def length2(vec: Union[Vec2iLike, Vec3iLike]) -> int:
     """Returns the squared length of [vec]"""
-    if len(vec) == 2: return int(glm.length2(*vec2(*vec)))
-    if len(vec) == 3: return int(glm.length2(*vec3(*vec)))
+    if len(vec) == 2: return int(glm.length2(vec2(*vec)))
+    if len(vec) == 3: return int(glm.length2(vec3(*vec)))
     raise ValueError()
 
 
@@ -526,10 +534,10 @@ class Rect:
     def collides(self, other: "Rect") -> bool:
         """Returns whether this Rect and [other] have any overlap"""
         return (
-            self.begin.x <= other.end.x
-            and self.end.x >= other.begin.x
-            and self.begin.y <= other.end.y
-            and self.end.y >= other.begin.y
+                self.begin.x <= other.end  .x
+            and self.end  .x >= other.begin.x
+            and self.begin.y <= other.end  .y
+            and self.end  .y >= other.begin.y
         )
 
     def squaredDistanceToVec(self, vec: Vec2iLike) -> int:
@@ -597,10 +605,10 @@ class Rect:
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
         first = self.begin
         last = self.end - 1
-        yield from loop2D(ivec2(first.x, first.y), ivec2(last.x - 1, first.y) + 1)
-        yield from loop2D(ivec2(last.x, first.y), ivec2(last.x, last.y - 1) + 1)
-        yield from loop2D(ivec2(last.x, last.y), ivec2(first.x + 1, last.y) - 1)
-        yield from loop2D(ivec2(first.x, last.y), ivec2(first.x, first.y + 1) - 1)
+        yield from loop2D(ivec2(first.x, first.y), ivec2(last.x  - 1, first.y    ) + 1)
+        yield from loop2D(ivec2(last.x,  first.y), ivec2(last.x,      last.y  - 1) + 1)
+        yield from loop2D(ivec2(last.x,  last.y ), ivec2(first.x + 1, last.y     ) - 1)
+        yield from loop2D(ivec2(first.x, last.y ), ivec2(first.x,     first.y + 1) - 1)
 
 
 @dataclass()
@@ -707,7 +715,7 @@ class Box:
     def contains(self, vec: Vec3iLike) -> bool:
         """Returns whether this Box contains [vec]"""
         return (
-            self.begin.x <= vec[0] < self.end.x
+                self.begin.x <= vec[0] < self.end.x
             and self.begin.y <= vec[1] < self.end.y
             and self.begin.z <= vec[2] < self.end.z
         )
@@ -715,12 +723,12 @@ class Box:
     def collides(self, other: "Box") -> bool:
         """Returns whether this Box and [other] have any overlap"""
         return (
-            self.begin.x <= other.end.x
-            and self.end.x >= other.begin.x
-            and self.begin.y <= other.end.y
-            and self.end.y >= other.begin.y
-            and self.begin.z <= other.end.z
-            and self.end.z >= other.begin.z
+                self.begin.x <= other.end  .x
+            and self.end  .x >= other.begin.x
+            and self.begin.y <= other.end  .y
+            and self.end  .y >= other.begin.y
+            and self.begin.z <= other.end  .z
+            and self.end  .z >= other.begin.z
         )
 
     def squaredDistanceToVec(self, vec: Vec3iLike) -> int:
@@ -897,7 +905,7 @@ def boxSlice(array: np.ndarray, box: Box) -> np.ndarray[Any, Any]:
 
 def setBoxSlice(array: np.ndarray, box: Box, value: Any) -> None:
     """Sets the slice from [array] defined by [box] to [value]"""
-    array[box.begin.x : box.end.x, box.begin.y : box.end.y, box.begin.z : box.end.z] = (value)
+    array[box.begin.x : box.end.x, box.begin.y : box.end.y, box.begin.z : box.end.z] = value
 
 
 # ==================================================================================================
@@ -918,7 +926,8 @@ def loop2D(begin: Vec2iLike, end: Optional[Vec2iLike] = None) -> Generator[ivec2
 def loop3D(begin: Vec3iLike, end: Optional[Vec3iLike] = None) -> Generator[ivec3, Any, None]:
     """Yields all points between <begin> and <end> (end-exclusive).\n
     If <end> is not given, yields all points between (0,0,0) and <begin>."""
-    if end is None: begin, end = (0, 0, 0), begin
+    if end is None:
+        begin, end = (0, 0, 0), begin
 
     for x in range(begin[0], end[0], nonZeroSign(end[0] - begin[0])):
         for y in range(begin[1], end[1], nonZeroSign(end[1] - begin[1])):
@@ -945,23 +954,15 @@ def filled2DArray(
     """Fills the shape defined by <points>, starting at <seedPoint> and returns a (n,2) numpy array
     containing the resulting points.\n
     <boundingRect> should contain all <points>. If not provided, it is calculated."""
-    if boundingRect is None: boundingRect = Rect.bounding(points)
+    if boundingRect is None:
+        boundingRect = Rect.bounding(points)
 
     pointMap = np.zeros(boundingRect.size.to_tuple(), dtype=int)
     pointMap[
-        tuple(
-            np.transpose(
-                np.fromiter(points, dtype=np.dtype((int, 2))) - np.array(boundingRect.offset)
-            )
-        )
-    ] = 1
-    filled = skimage.segmentation.flood_fill(
-        pointMap,
-        tuple(ivec2(*seedPoint) - boundingRect.offset),
-        1,
-        footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]),
-    )
-    if not includeInputPoints: filled -= pointMap
+        tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 2))) - np.array(boundingRect.offset)))] = 1
+    filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec2(*seedPoint) - boundingRect.offset),1, footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
+    if not includeInputPoints:
+        filled -= pointMap
     return np.argwhere(filled) + np.array(boundingRect.offset)
 
 
@@ -988,19 +989,14 @@ def filled3DArray(
     """Fills the shape defined by <points>, starting at <seedPoint> and returns a (n,3) numpy array
     containing the resulting points.\n
     <boundingBox> should contain all <points>. If not provided, it is calculated."""
-    if boundingBox is None: boundingBox = Box.bounding(points)
+    if boundingBox is None:
+        boundingBox = Box.bounding(points)
 
     pointMap = np.zeros(boundingBox.size.to_tuple(), dtype=int)
-    pointMap[
-        tuple(
-            np.transpose(
-                np.fromiter(points, dtype=np.dtype((int, 3)))
-                - np.array(boundingBox.offset)
-            )
-        )
-    ] = 1
+    pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 3))) - np.array(boundingBox.offset)))] = 1
     filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec3(*seedPoint) - boundingBox.offset), 1, connectivity=1)
-    if not includeInputPoints: filled -= pointMap
+    if not includeInputPoints:
+        filled -= pointMap
     return np.argwhere(filled) + np.array(boundingBox.offset)
 
 
@@ -1026,9 +1022,7 @@ def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLi
     maxDelta = int(max(abs(delta)))
     if maxDelta == 0:
         return np.array([])
-    points = delta[np.newaxis, :] * np.arange(maxDelta + 1)[
-        :, np.newaxis
-    ] / maxDelta + np.array(begin)
+    points = delta[np.newaxis, :] * np.arange(maxDelta + 1)[:, np.newaxis] / maxDelta + np.array(begin)
     points = np.rint(points).astype(np.signedinteger)
 
     if width > 1:
@@ -1311,7 +1305,7 @@ def fittingCylinder(
 
 
 def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> Generator[ivec3, Any, None]:
-    """Yields the points of an ellipsoid centered on <center> with diameters <diameters>.
+    """Yields the points of an ellipsoid centered on <center> with diameters <diameters>.\n
     If <diameter>[axis] is even, <center>[axis] will be the lower center point in that axis."""
 
     # Convert the center and diameters to ivec3
@@ -1418,7 +1412,6 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1) -> Generator[ivec2, Any, None]:
     """Yields the neighbors of [point] within [bounding_rect].\n
     Useful for pathfinding."""
-    # NOTE: This is very memory-inefficient. Consider combining conditions into trees, or iterating through a set of vector constants.
 
     if type(point) is not ivec2:
         point = ivec2(*point)
