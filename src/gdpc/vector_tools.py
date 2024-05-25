@@ -127,10 +127,11 @@ CORNER_DIAGONALS_3D:              Set[ivec3] = {
     for verticality, cardinal in iterproduct((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 }
 DIRECTIONS_AND_ALL_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D
-DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D)  # NOTE: Legacy format
+# TODO: tuple() for backwards compatibility. Remove on major release.
+DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D)
 
 # ==== aliases ====
-# NOTE: These are for backward compatibility
+
 X: ivec3 = X_3D
 Y: ivec3 = Y_3D
 Z: ivec3 = Z_3D
@@ -148,15 +149,15 @@ NORTHEAST: ivec3 = NORTHEAST_3D
 NORTHWEST: ivec3 = NORTHWEST_3D
 SOUTHWEST: ivec3 = SOUTHWEST_3D
 SOUTHEAST: ivec3 = SOUTHEAST_3D
-CARDINALS: set[ivec3] = CARDINALS_3D
-INTERCARDINALS: set[ivec3] = INTERCARDINALS_3D
-CARDINALS_AND_DIAGONALS: set[ivec3] = CARDINALS_AND_DIAGONALS_3D
-EDGE_DIAGONALS: set[ivec3] = EDGE_DIAGONALS_3D
-CORNER_DIAGONALS: set[ivec3] = CORNER_DIAGONALS_3D
+CARDINALS: Set[ivec3] = CARDINALS_3D
+INTERCARDINALS: Set[ivec3] = INTERCARDINALS_3D
+CARDINALS_AND_DIAGONALS: Set[ivec3] = CARDINALS_AND_DIAGONALS_3D
+EDGE_DIAGONALS: Set[ivec3] = EDGE_DIAGONALS_3D
+CORNER_DIAGONALS: Set[ivec3] = CORNER_DIAGONALS_3D
 DIAGONALS: tuple = DIAGONALS_3D
-DIRECTIONS: set[ivec3] = DIRECTIONS_3D
-DIRECTIONS_AND_EDGE_DIAGONALS: set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D
-DIRECTIONS_AND_ALL_DIAGONALS: set[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D
+DIRECTIONS: Set[ivec3] = DIRECTIONS_3D
+DIRECTIONS_AND_EDGE_DIAGONALS: Set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D
+DIRECTIONS_AND_ALL_DIAGONALS: Set[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D
 
 
 # ==================================================================================================
@@ -379,7 +380,10 @@ def l1Distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLi
     return l1Norm(vecA - vecB)
 
 
-def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> tuple[ivec2, ivec2]:
+# End of glm wrappers.
+
+
+def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Tuple[ivec2, ivec2]:
     """Returns two corners of the rectangle defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
     return (
@@ -394,7 +398,7 @@ def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> tuple[ivec2, ive
     )
 
 
-def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> tuple[ivec3, ivec3]:
+def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Tuple[ivec3, ivec3]:
     """Returns two corners of the box defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
     return (
@@ -783,8 +787,8 @@ class Box:
     def bounding(points: Iterable[Vec3iLike]) -> "Box":
         """Returns the smallest Box containing all [points]"""
         pointArray = np.fromiter(points, dtype=np.dtype((int, 3)))
-        minPoint: int = np.min(pointArray, axis=0)
-        maxPoint: int = np.max(pointArray, axis=0)
+        minPoint: np.ndarray = np.min(pointArray, axis=0)
+        maxPoint: np.ndarray = np.max(pointArray, axis=0)
         return Box(minPoint, maxPoint - minPoint + 1)
 
     def toRect(self) -> Rect:
@@ -888,7 +892,7 @@ class Box:
         )
 
 
-def rectSlice(array: np.ndarray, rect: Rect) -> np.ndarray[Any, Any]:
+def rectSlice(array: np.ndarray, rect: Rect) -> np.ndarray:
     """Returns the slice from [array] defined by [rect]"""
     return array[rect.begin.x : rect.end.x, rect.begin.y : rect.end.y]
 
@@ -898,7 +902,7 @@ def setRectSlice(array: np.ndarray, rect: Rect, value: Any) -> None:
     array[rect.begin.x : rect.end.x, rect.begin.y : rect.end.y] = value
 
 
-def boxSlice(array: np.ndarray, box: Box) -> np.ndarray[Any, Any]:
+def boxSlice(array: np.ndarray, box: Box) -> np.ndarray:
     """Returns the slice from [array] defined by [box]"""
     return array[box.begin.x : box.end.x, box.begin.y : box.end.y, box.begin.z : box.end.z]
 
