@@ -265,6 +265,7 @@ DIAGONALS: tuple = DIAGONALS_3D
 
 
 def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
+def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
     """Returns <vec> without its <dimension>-th component"""
     if dimension == 0: return ivec2(vec[1], vec[2])
     if dimension == 1: return ivec2(vec[0], vec[2])
@@ -273,32 +274,40 @@ def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
 
 
 def addDimension(vec: Vec2iLike, dimension: int, value: int = 0) -> ivec3:
+def addDimension(vec: Vec2iLike, dimension: int, value: int = 0) -> ivec3:
     """Inserts <value> into <vec> at <dimension> and returns the resulting 3D vector"""
+    # NOTE: Should be adjusted to only support 2D -> 3D, or all ivec dimensions
     # NOTE: Should be adjusted to only support 2D -> 3D, or all ivec dimensions
     l = list(vec)
     return ivec3(*l[:dimension], value, *l[dimension:])
 
 
 def dropY(vec: Vec3iLike) -> ivec2:
+def dropY(vec: Vec3iLike) -> ivec2:
     """Returns [vec] without its y-component (i.e., projected on the XZ-plane)"""
     return ivec2(vec[0], vec[2])
 
 
+def addY(vec: Vec2iLike, y=0) -> ivec3:
 def addY(vec: Vec2iLike, y=0) -> ivec3:
     """Returns a 3D vector (vec[0], y, vec[1])"""
     return ivec3(vec[0], y, vec[1])
 
 
 def setY(vec: Vec3iLike, y=0) -> ivec3:
+def setY(vec: Vec3iLike, y=0) -> ivec3:
     """Returns [vec] with its y-component set to [y]"""
     return ivec3(vec[0], y, vec[2])
 
 
 def trueMod2D(vec: Vec2iLike, modulus: int) -> ivec2:
+def trueMod2D(vec: Vec2iLike, modulus: int) -> ivec2:
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
     return ivec2(vec[0] % modulus, vec[1] % modulus)
 
+
+def trueMod3D(vec: Vec3iLike, modulus: int) -> ivec3:
 
 def trueMod3D(vec: Vec3iLike, modulus: int) -> ivec3:
     """Returns <v> modulo <modulus>.\n
@@ -307,11 +316,14 @@ def trueMod3D(vec: Vec3iLike, modulus: int) -> ivec3:
 
 
 def perpendicular(vec: Vec2iLike) -> ivec2:
+def perpendicular(vec: Vec2iLike) -> ivec2:
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
     return ivec2(vec[1], -vec[0])
 
 
+def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
+    """Returns [vec], rotated clockwise by [rotation] quarters."""
 def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
     """Returns [vec], rotated clockwise by [rotation] quarters."""
     if rotation == 0: return ivec2(*vec)
@@ -321,6 +333,8 @@ def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
     raise ValueError("Rotation must be in {0,1,2,3}")
 
 
+def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
+    """Returns [vec], rotated clockwise in the XZ-plane by [rotation] quarters."""
 def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
     """Returns [vec], rotated clockwise in the XZ-plane by [rotation] quarters."""
     return addY(rotate2D(dropY(vec), rotation), vec[1])
@@ -375,11 +389,63 @@ def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
 
 
 def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
+def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
+    """
+    Rotate a 2D vector clockwise by a specified number of degrees.
+
+    Args:
+        vec: The 2D vector to rotate.
+        degrees: The number of degrees to rotate the vector by. Only ±90°-rotations and their multiples are valid.
+
+    Returns:
+        The rotated 2D vector.
+
+    Raises:
+        ValueError: If degrees is not a multiple of 90.
+
+    Examples:
+        vec = ivec2(0, 1)
+        rotated_vec = rotate2Ddeg(vec, -90)
+    """
+
+    if degrees % 90 != 0:
+        raise ValueError("Only ±90°-rotations and their multiples are valid!")
+
+    rotation: int = (degrees // 90) % 4  # Convert to quarter-turns
+
+    return rotate2D(vec, rotation)
+
+
+def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
+    """
+    Rotate a 3D vector clockwise by a specified number of degrees through the Y axis.
+
+    Args:
+        vec: The 3D vector to rotate.
+        degrees: The number of degrees to rotate the vector by through the Y axis. Only ±90°-rotations and their multiples are valid.
+
+    Returns:
+        The rotated 3D vector.
+
+    Raises:
+        ValueError: If degrees is not a multiple of 90.
+
+    Examples:
+        vec = ivec3(0, 1)
+        rotated_vec = rotate3Ddeg(vec, -90)
+    """
+    return addY(rotate2Ddeg(dropY(vec), degrees), vec[1])
+
+
+def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
     after <rotation>."""
     scale: ivec2 = flipToScale2D(flip)
+    scale: ivec2 = flipToScale2D(flip)
     return (rotation * scale.x * scale.y + 4) % 4
 
+
+def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
 
 def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
@@ -388,11 +454,14 @@ def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
 
 
 def rotateSize2D(size: Vec2iLike, rotation: int) -> Vec2iLike:
+def rotateSize2D(size: Vec2iLike, rotation: int) -> Vec2iLike:
     """Returns the effective size of a rect of size [size] that has been rotated in the XZ-plane by
     [rotation]."""
     return ivec2(size[1], size[0]) if rotation in {1, 3} else size
+    return ivec2(size[1], size[0]) if rotation in {1, 3} else size
 
 
+def rotateSize3D(size: Vec3iLike, rotation: int) -> ivec3:
 def rotateSize3D(size: Vec3iLike, rotation: int) -> ivec3:
     """Returns the effective size of a box of size [size] that has been rotated in the XZ-plane by
     [rotation]."""
@@ -479,7 +548,10 @@ def l1Distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLi
     return l1Norm(vecA - vecB)
 
 
-def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> tuple[ivec2, ivec2]:
+# End of glm wrappers.
+
+
+def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Tuple[ivec2, ivec2]:
     """Returns two corners of the rectangle defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
     return (
@@ -494,7 +566,7 @@ def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> tuple[ivec2, ive
     )
 
 
-def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> tuple[ivec3, ivec3]:
+def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Tuple[ivec3, ivec3]:
     """Returns two corners of the box defined by <corner1> and <corner2>, such that the first
     corner is smaller than the second corner in each axis"""
     return (
@@ -883,8 +955,8 @@ class Box:
     def bounding(points: Iterable[Vec3iLike]) -> "Box":
         """Returns the smallest Box containing all [points]"""
         pointArray = np.fromiter(points, dtype=np.dtype((int, 3)))
-        minPoint: int = np.min(pointArray, axis=0)
-        maxPoint: int = np.max(pointArray, axis=0)
+        minPoint: np.ndarray = np.min(pointArray, axis=0)
+        maxPoint: np.ndarray = np.max(pointArray, axis=0)
         return Box(minPoint, maxPoint - minPoint + 1)
 
     def toRect(self) -> Rect:
@@ -988,7 +1060,7 @@ class Box:
         )
 
 
-def rectSlice(array: np.ndarray, rect: Rect) -> np.ndarray[Any, Any]:
+def rectSlice(array: np.ndarray, rect: Rect) -> np.ndarray:
     """Returns the slice from [array] defined by [rect]"""
     return array[rect.begin.x : rect.end.x, rect.begin.y : rect.end.y]
 
@@ -998,7 +1070,7 @@ def setRectSlice(array: np.ndarray, rect: Rect, value: Any) -> None:
     array[rect.begin.x : rect.end.x, rect.begin.y : rect.end.y] = value
 
 
-def boxSlice(array: np.ndarray, box: Box) -> np.ndarray[Any, Any]:
+def boxSlice(array: np.ndarray, box: Box) -> np.ndarray:
     """Returns the slice from [array] defined by [box]"""
     return array[box.begin.x : box.end.x, box.begin.y : box.end.y, box.begin.z : box.end.z]
 

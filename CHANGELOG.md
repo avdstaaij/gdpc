@@ -3,12 +3,24 @@
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 
+# 7.2.0
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+
+**Additions**
+- Added `vector_tools.rotate2Ddeg` and `rotate3Ddeg`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+- Added many new constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+**Fixes:**
+- Added missing return type hints to many functions in `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+
 # 7.1.0
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 **Additions**
-- Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players` (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+- Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 
 # 7.0.0
