@@ -1509,7 +1509,7 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
     return sphere(center, diameter, hollow)
 
 
-def inbound_neighbors_from_vectors2D(point: ivec2, bounding_rect: Rect, vectors: Sequence[ivec2], stride: int = 1):
+def inbound_neighbors_from_vectors2D(point: ivec2, bounding_rect: Rect, vectors: Union[Sequence[ivec2], FrozenSet[ivec2]], stride: int = 1):
     for vector in vectors:
         candidate: ivec2 = point + stride * vector
         if bounding_rect.contains(candidate):
@@ -1527,7 +1527,7 @@ def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, st
     return inbound_neighbors_from_vectors2D(point, boundingRect, vectors, stride)
 
 
-def inbound_neighbors_from_vectors3D(point: ivec3, bounding_box: Box, vectors: Sequence[ivec3], stride: int = 1):
+def inbound_neighbors_from_vectors3D(point: ivec3, bounding_box: Box, vectors: Union[Sequence[ivec3], FrozenSet[ivec3]], stride: int = 1):
     for vector in vectors:
         candidate: ivec3 = point + stride * vector
         if bounding_box.contains(candidate):
