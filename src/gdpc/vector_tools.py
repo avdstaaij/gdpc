@@ -1,16 +1,18 @@
 """Various vector utilities"""
 
+import itertools
 import math
 from dataclasses import dataclass
-from itertools import product as iterproduct
 from typing import (
     Any,
+    FrozenSet,
     Generator,
     Iterable,
     Iterator,
     List,
     Literal,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -69,6 +71,18 @@ class Vec3bLike(Protocol):
 
 # ==== 2D values ====
 
+# == functions for generating constants ==
+def rotate_ordered_vectors_2D(vectors: Sequence[ivec2], n: int = 1) -> Tuple[ivec2, ...]:
+    if vectors:
+        n %= len(vectors)
+    else:
+        return ()
+    return (*vectors[n:], *vectors[0:n])
+
+# == constants ==
+
+CENTER_2D = ivec2(0, 0)
+
 X_2D = ivec2(1, 0)
 Y_2D = ivec2(0, 1)
 XY_2D: ivec2 = X_2D + Y_2D
@@ -83,12 +97,70 @@ NORTHEAST_2D: ivec2 = NORTH_2D + EAST_2D
 SOUTHEAST_2D: ivec2 = SOUTH_2D + EAST_2D
 SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D
 
-CARDINALS_2D:               Set[ivec2] = {NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}
-INTERCARDINALS_2D:          Set[ivec2] = {NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}
-CARDINALS_AND_DIAGONALS_2D: Set[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
+CARDINALS_2D:               FrozenSet[ivec2] = frozenset({NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D})
+INTERCARDINALS_2D:          FrozenSet[ivec2] = frozenset({NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D})
+CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
 DIAGONALS_2D              = tuple(INTERCARDINALS_2D)  # NOTE: Legacy format
 
+# starting East, moving clockwise
+# NOTE: Use `new_directions = collections.deque(DIRECTIONS); new_directions.rotate(n);` to start at a different point
+ORDERED_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, SOUTH_2D, WEST_2D, NORTH_2D)
+ORDERED_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (SOUTHEAST_2D, SOUTHWEST_2D, NORTHWEST_2D, NORTHEAST_2D)
+ORDERED_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_2D, ORDERED_INTERCARDINALS_2D)))
+
+# starting East, moving counterclockwise
+# NOTE: Use `new_directions = collections.deque(DIRECTIONS); new_directions.rotate(n);` to start at a different point
+ORDERED_COUNTER_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, NORTH_2D, WEST_2D, SOUTH_2D)
+ORDERED_COUNTER_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (NORTHEAST_2D, NORTHWEST_2D, SOUTHWEST_2D, SOUTHEAST_2D)
+ORDERED_COUNTER_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_COUNTER_CARDINALS_2D, ORDERED_COUNTER_INTERCARDINALS_2D)))
+
 # ==== 3D values ====
+
+# == functions for generating constants ==
+def generate_spiraloid_direction_vector_3D(
+        top_pattern:     Union[Tuple[ivec3, ...], None],
+        central_pattern: Union[Tuple[ivec3, ...], None],
+        base_pattern:    Union[Tuple[ivec3, ...], None],
+        include_up:      bool = False,
+        include_center:  bool = False,
+        include_down:    bool = False
+    ) -> Tuple[ivec3, ...]:
+    template_tuple: Tuple[ivec3 | None, ...] = (
+          UP_3D     if include_up     else None,
+        *([UP_3D   + c for c in top_pattern]  if top_pattern  else ()),
+        *(central_pattern[:len(central_pattern)//2] if central_pattern else ()),
+          CENTER_3D if include_center else None,
+        *(central_pattern[len(central_pattern)//2:] if central_pattern else ()),
+        *([DOWN_3D + c for c in base_pattern] if base_pattern else ()),
+          DOWN_3D   if include_down   else None
+    )
+    return tuple(e for e in template_tuple if e)
+
+def generate_symmetric_spiraloid_vectors_3D(
+        top_and_base_pattern: Union[Tuple[ivec3, ...], None],
+        central_pattern:      Union[Tuple[ivec3, ...], None],
+        include_up_and_down:  bool = False,
+        include_center:       bool = False,
+    ) -> Tuple[ivec3, ...]:
+    return generate_spiraloid_direction_vector_3D(
+        top_and_base_pattern,
+        central_pattern,
+        top_and_base_pattern,
+        include_up_and_down,
+        include_center,
+        include_up_and_down
+    )
+
+def rotate_ordered_vectors_3D(vectors: Sequence[ivec3], n: int = 1) -> Tuple[ivec3, ...]:
+    if vectors:
+        n %= len(vectors)
+    else:
+        return ()
+    return (*vectors[n:], *vectors[0:n])
+
+# == constants ==
+
+CENTER_3D = ivec3(0, 0, 0)
 
 X_3D = ivec3(1, 0, 0)
 Y_3D = ivec3(0, 1, 0)
@@ -112,22 +184,42 @@ NORTHWEST_3D: ivec3 = NORTH_3D + WEST_3D
 SOUTHWEST_3D: ivec3 = SOUTH_3D + WEST_3D
 SOUTHEAST_3D: ivec3 = SOUTH_3D + EAST_3D
 
-CARDINALS_3D:               Set[ivec3] = {NORTH_3D, SOUTH_3D, EAST_3D, WEST_3D}
-INTERCARDINALS_3D:          Set[ivec3] = {NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_3D, SOUTHWEST_3D}
-CARDINALS_AND_DIAGONALS_3D: Set[ivec3] = CARDINALS_3D | INTERCARDINALS_3D
+CARDINALS_3D:               FrozenSet[ivec3] = frozenset({NORTH_3D, SOUTH_3D, EAST_3D, WEST_3D})
+INTERCARDINALS_3D:          FrozenSet[ivec3] = frozenset({NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_3D, SOUTHWEST_3D})
+CARDINALS_AND_DIAGONALS_3D: FrozenSet[ivec3] = CARDINALS_3D | INTERCARDINALS_3D
 
-DIRECTIONS_3D:     Set[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D}
-EDGE_DIAGONALS_3D: Set[ivec3] = INTERCARDINALS_3D | {
+# starting East, moving clockwise
+# NOTE: Use `rotate_ordered_vectors_3D(ORDERED_..., n)` to change the starting point while maintaining the order of the sequence
+#       E.g. n=1 starts at the second point; n=-1 starts at the last point
+# NOTE: Use `reverse(rotate_ordered_vectors_3D(ORDERED_...))` to move counterclockwise from east
+#       This does not work for sequences with differing Y-values!
+#       To achieve that, transform the values for each layer first, then recombine them.
+#       E.g. `reverse(rotate_ordered_vectors_3D([UP_3D + c for c in ORDERED_CARDINALS_3D])) + reverse(rotate_ordered_vectors_3D(ORDERED_CARDINALS_3D)) + ...`
+ORDERED_CARDINALS_3D:               Tuple[ivec3, ...] = (EAST_3D, SOUTH_3D, WEST_3D, NORTH_3D)
+ORDERED_INTERCARDINALS_3D:          Tuple[ivec3, ...] = (SOUTHEAST_3D, SOUTHWEST_3D, NORTHWEST_3D, NORTHEAST_3D)
+ORDERED_CARDINALS_AND_DIAGONALS_3D: Tuple[ivec3, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_3D, ORDERED_INTERCARDINALS_3D)))
+
+DIRECTIONS_3D:     FrozenSet[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D}
+EDGE_DIAGONALS_3D: FrozenSet[ivec3] = INTERCARDINALS_3D | {
     verticality + cardinal
-    for verticality, cardinal in iterproduct((UP_3D, DOWN_3D), CARDINALS_3D)
+    for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), CARDINALS_3D)
 }
-DIRECTIONS_AND_EDGE_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_3D | EDGE_DIAGONALS_3D
-CORNER_DIAGONALS_3D:              Set[ivec3] = {
+DIRECTIONS_AND_EDGE_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_3D | EDGE_DIAGONALS_3D
+CORNER_DIAGONALS_3D:              FrozenSet[ivec3] = frozenset({
     verticality + cardinal
-    for verticality, cardinal in iterproduct((UP_3D, DOWN_3D), INTERCARDINALS_3D)
-}
-DIRECTIONS_AND_ALL_DIAGONALS_3D: Set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D
+    for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
+})
+DIRECTIONS_AND_ALL_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D
 DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D)  # NOTE: Legacy format
+
+# Moving Up to Down, clockwise starting East
+# NOTE: For other combinations, use `generate_[symmetric_]spiraloid_vectors_3D()`
+ORDERED_DIRECTIONS_3D:                    Tuple[ivec3, ...] = (UP_3D, *ORDERED_CARDINALS_3D, DOWN_3D)
+ORDERED_EDGE_DIAGONALS_3D:                Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_3D,               ORDERED_INTERCARDINALS_3D                                   )
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D: Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_3D,               ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)
+ORDERED_CORNER_DIAGONALS_3D:              Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_INTERCARDINALS_3D,          None                                                        )
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D:  Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)
+ORDERED_DIAGONALS:                        Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_INTERCARDINALS_3D                                   )
 
 # ==== aliases ====
 # NOTE: These are for backward compatibility
@@ -138,25 +230,33 @@ XY: ivec3 = XY_3D
 XZ: ivec3 = XZ_3D
 YZ: ivec3 = YZ_3D
 XYZ: ivec3 = XYZ_3D
-UP : ivec3= UP_3D
-DOWN: ivec3 = DOWN_3D
-EAST: ivec3 = EAST_3D
-WEST: ivec3 = WEST_3D
+UP :   ivec3 = UP_3D
+DOWN:  ivec3 = DOWN_3D
+EAST:  ivec3 = EAST_3D
+WEST:  ivec3 = WEST_3D
 SOUTH: ivec3 = SOUTH_3D
 NORTH: ivec3 = NORTH_3D
 NORTHEAST: ivec3 = NORTHEAST_3D
 NORTHWEST: ivec3 = NORTHWEST_3D
 SOUTHWEST: ivec3 = SOUTHWEST_3D
 SOUTHEAST: ivec3 = SOUTHEAST_3D
-CARDINALS: set[ivec3] = CARDINALS_3D
-INTERCARDINALS: set[ivec3] = INTERCARDINALS_3D
-CARDINALS_AND_DIAGONALS: set[ivec3] = CARDINALS_AND_DIAGONALS_3D
-EDGE_DIAGONALS: set[ivec3] = EDGE_DIAGONALS_3D
-CORNER_DIAGONALS: set[ivec3] = CORNER_DIAGONALS_3D
+CARDINALS:               FrozenSet[ivec3] = CARDINALS_3D
+INTERCARDINALS:          FrozenSet[ivec3] = INTERCARDINALS_3D
+CARDINALS_AND_DIAGONALS: FrozenSet[ivec3] = CARDINALS_AND_DIAGONALS_3D
+EDGE_DIAGONALS:                FrozenSet[ivec3] = EDGE_DIAGONALS_3D
+CORNER_DIAGONALS:              FrozenSet[ivec3] = CORNER_DIAGONALS_3D
+DIRECTIONS:                    FrozenSet[ivec3] = DIRECTIONS_3D
+DIRECTIONS_AND_EDGE_DIAGONALS: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D
+DIRECTIONS_AND_ALL_DIAGONALS:  FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D
+ORDERED_CARDINALS:               Tuple[ivec3, ...] = ORDERED_CARDINALS_3D
+ORDERED_INTERCARDINALS:          Tuple[ivec3, ...] = ORDERED_INTERCARDINALS_3D
+ORDERED_CARDINALS_AND_DIAGONALS: Tuple[ivec3, ...] = ORDERED_CARDINALS_AND_DIAGONALS_3D
+ORDERED_EDGE_DIAGONALS:                Tuple[ivec3, ...] = ORDERED_EDGE_DIAGONALS_3D
+ORDERED_CORNER_DIAGONALS:              Tuple[ivec3, ...] = ORDERED_CORNER_DIAGONALS_3D
+ORDERED_DIRECTIONS:                    Tuple[ivec3, ...] = ORDERED_DIRECTIONS_3D
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS: Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS:  Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D
 DIAGONALS: tuple = DIAGONALS_3D
-DIRECTIONS: set[ivec3] = DIRECTIONS_3D
-DIRECTIONS_AND_EDGE_DIAGONALS: set[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D
-DIRECTIONS_AND_ALL_DIAGONALS: set[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D
 
 
 # ==================================================================================================
@@ -1349,7 +1449,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     solid_points: np.ndarray[Any, np.dtype[bool]] = np.zeros((rx + 2, ry + 2, rz + 2), dtype=bool)
 
     # Loop over all points within the bounding box of the ellipsoid
-    for x, y, z in iterproduct(*(range(n) for n in solid_points.shape)):
+    for x, y, z in itertools.product(*(range(n) for n in solid_points.shape)):
 
         # Compute the ellipsoid equation for the current point
         e_val: float = (x**2 / rx**2) + (y**2 / ry**2) + (z**2 / rz**2)
@@ -1371,7 +1471,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     # If the ellipsoid should be hollow
     if hollow:
         # Iterate through every point in the array, except the outer faces
-        for x, y, z in iterproduct(*(range(n-1) for n in solid_points.shape)):
+        for x, y, z in itertools.product(*(range(n-1) for n in solid_points.shape)):
 
             # A point is considered part of the "shell" if it meets the following conditions: (Thanks to @Jandhi#5234 on discord)
             # - It is part of the solid ellipsoid
@@ -1409,6 +1509,13 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
     return sphere(center, diameter, hollow)
 
 
+def inbound_neighbors_from_vectors2D(point: ivec2, bounding_rect: Rect, vectors: Sequence[ivec2], stride: int = 1):
+    for vector in vectors:
+        candidate: ivec2 = point + stride * vector
+        if bounding_rect.contains(candidate):
+            yield candidate
+
+
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1) -> Generator[ivec2, Any, None]:
     """Yields the neighbors of [point] within [bounding_rect].\n
     Useful for pathfinding."""
@@ -1416,24 +1523,15 @@ def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, st
     if type(point) is not ivec2:
         point = ivec2(*point)
 
-    end: ivec2 = boundingRect.end
+    vectors: FrozenSet[ivec2] = CARDINALS_AND_DIAGONALS_2D if diagonal else CARDINALS_2D
+    return inbound_neighbors_from_vectors2D(point, boundingRect, vectors, stride)
 
-    west:  bool = point[0] - stride >= boundingRect.offset.x
-    north: bool = point[1] - stride >= boundingRect.offset.y
-    east:  bool = point[0] + stride <  end.x
-    south: bool = point[1] + stride <  end.y
 
-    if west:  yield point + stride * WEST_2D
-    if north: yield point + stride * NORTH_2D
-    if east:  yield point + stride * EAST_2D
-    if south: yield point + stride * SOUTH_2D
-
-    if not diagonal: return
-
-    if west and north: yield point + stride * (WEST_2D + NORTH_2D)
-    if west and south: yield point + stride * (WEST_2D + SOUTH_2D)
-    if east and north: yield point + stride * (EAST_2D + NORTH_2D)
-    if east and south: yield point + stride * (EAST_2D + SOUTH_2D)
+def inbound_neighbors_from_vectors3D(point: ivec3, bounding_box: Box, vectors: Sequence[ivec3], stride: int = 1):
+    for vector in vectors:
+        candidate: ivec3 = point + stride * vector
+        if bounding_box.contains(candidate):
+            yield candidate
 
 
 def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stride: int = 1) -> Generator[ivec3, Any, None]:
@@ -1443,42 +1541,5 @@ def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stri
     if type(point) is not ivec3:
         point = ivec3(*point)
 
-    end: ivec3 = boundingBox.end
-
-    west:  bool = point[0] - stride >= boundingBox.offset.x
-    down:  bool = point[1] - stride >= boundingBox.offset.y
-    north: bool = point[2] - stride >= boundingBox.offset.z
-    east:  bool = point[0] + stride <  end.x
-    up:    bool = point[1] + stride <  end.y
-    south: bool = point[2] + stride <  end.z
-
-
-    if west:  yield point + stride * WEST_3D
-    if down:  yield point + stride * DOWN_3D
-    if north: yield point + stride * NORTH_3D
-    if east:  yield point + stride * EAST_3D
-    if up:    yield point + stride * UP_3D
-    if south: yield point + stride * SOUTH_3D
-
-    if not diagonal: return
-
-    if west and down          : yield point + stride * (WEST_3D + DOWN_3D           )
-    if west and up            : yield point + stride * (WEST_3D + UP_3D             )
-    if east and down          : yield point + stride * (EAST_3D + DOWN_3D           )
-    if east and up            : yield point + stride * (EAST_3D + UP_3D             )
-    if west          and north: yield point + stride * (WEST_3D           + NORTH_3D)
-    if west          and south: yield point + stride * (WEST_3D           + SOUTH_3D)
-    if east          and north: yield point + stride * (EAST_3D           + NORTH_3D)
-    if east          and south: yield point + stride * (EAST_3D           + SOUTH_3D)
-    if          down and north: yield point + stride * (          DOWN_3D + NORTH_3D)
-    if          down and south: yield point + stride * (          DOWN_3D + SOUTH_3D)
-    if          up   and north: yield point + stride * (          UP_3D   + NORTH_3D)
-    if          up   and south: yield point + stride * (          UP_3D   + SOUTH_3D)
-    if west and down and north: yield point + stride * (WEST_3D + DOWN_3D + NORTH_3D)
-    if west and down and south: yield point + stride * (WEST_3D + DOWN_3D + SOUTH_3D)
-    if west and up   and north: yield point + stride * (WEST_3D + UP_3D   + NORTH_3D)
-    if west and up   and south: yield point + stride * (WEST_3D + UP_3D   + SOUTH_3D)
-    if east and down and north: yield point + stride * (EAST_3D + UP_3D   + NORTH_3D)
-    if east and down and south: yield point + stride * (EAST_3D + DOWN_3D + SOUTH_3D)
-    if east and up   and north: yield point + stride * (EAST_3D + UP_3D   + NORTH_3D)
-    if east and up   and south: yield point + stride * (EAST_3D + UP_3D   + SOUTH_3D)
+    vectors: FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D if diagonal else DIRECTIONS_3D
+    return inbound_neighbors_from_vectors3D(point, boundingBox, vectors, stride)
