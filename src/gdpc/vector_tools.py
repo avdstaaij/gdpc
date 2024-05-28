@@ -12,7 +12,6 @@ from typing import (
     List,
     Literal,
     Optional,
-    Sequence,
     Set,
     Tuple,
     Union,
@@ -71,17 +70,7 @@ class Vec3bLike(Protocol):
 
 # ==== 2D values ====
 
-# == functions for generating constants ==
-def rotate_ordered_vectors_2D(vectors: Sequence[ivec2], n: int = 1) -> Tuple[ivec2, ...]:
-    if vectors:
-        n %= len(vectors)
-    else:
-        return ()
-    return (*vectors[n:], *vectors[0:n])
-
 # == constants ==
-
-CENTER_2D = ivec2(0, 0)
 
 X_2D = ivec2(1, 0)
 Y_2D = ivec2(0, 1)
@@ -103,64 +92,54 @@ CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
 DIAGONALS_2D              = tuple(INTERCARDINALS_2D)  # NOTE: Legacy format
 
 # starting East, moving clockwise
-# NOTE: Use `new_directions = collections.deque(DIRECTIONS); new_directions.rotate(n);` to start at a different point
+# NOTE: Use `utils.rotate(...)` to start at a different point
 ORDERED_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, SOUTH_2D, WEST_2D, NORTH_2D)
 ORDERED_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (SOUTHEAST_2D, SOUTHWEST_2D, NORTHWEST_2D, NORTHEAST_2D)
 ORDERED_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_2D, ORDERED_INTERCARDINALS_2D)))
 
-# starting East, moving counterclockwise
-# NOTE: Use `new_directions = collections.deque(DIRECTIONS); new_directions.rotate(n);` to start at a different point
-ORDERED_COUNTER_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, NORTH_2D, WEST_2D, SOUTH_2D)
-ORDERED_COUNTER_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (NORTHEAST_2D, NORTHWEST_2D, SOUTHWEST_2D, SOUTHEAST_2D)
-ORDERED_COUNTER_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_COUNTER_CARDINALS_2D, ORDERED_COUNTER_INTERCARDINALS_2D)))
-
 # ==== 3D values ====
 
 # == functions for generating constants ==
-def generate_spiraloid_direction_vector_3D(
-        top_pattern:     Union[Tuple[ivec3, ...], None],
-        central_pattern: Union[Tuple[ivec3, ...], None],
-        base_pattern:    Union[Tuple[ivec3, ...], None],
+def _generateSpiraloidDirectionVector3D(
+        top_pattern:     Optional[Tuple[ivec3, ...]],
+        central_pattern: Optional[Tuple[ivec3, ...]],
+        base_pattern:    Optional[Tuple[ivec3, ...]],
         include_up:      bool = False,
         include_center:  bool = False,
         include_down:    bool = False
     ) -> Tuple[ivec3, ...]:
-    template_tuple: Tuple[ivec3 | None, ...] = (
-          UP_3D     if include_up     else None,
-        *([UP_3D   + c for c in top_pattern]  if top_pattern  else ()),
-        *(central_pattern[:len(central_pattern)//2] if central_pattern else ()),
-          CENTER_3D if include_center else None,
-        *(central_pattern[len(central_pattern)//2:] if central_pattern else ()),
-        *([DOWN_3D + c for c in base_pattern] if base_pattern else ()),
-          DOWN_3D   if include_down   else None
-    )
-    return tuple(e for e in template_tuple if e)
+    """Generate a set of 3D direction vectors, where patterns are provided to be combined with a top, neutral and bottom vector."""
 
-def generate_symmetric_spiraloid_vectors_3D(
-        top_and_base_pattern: Union[Tuple[ivec3, ...], None],
-        central_pattern:      Union[Tuple[ivec3, ...], None],
+    # Becomes a tuple of ivec3 or None. If desired, consists of...
+    # NOTE: The brackets and the use of None/() are particular to the way unpacking is handled
+    template_tuple: Tuple[ivec3 | None, ...] = (
+          UP_3D                                     if include_up      else None,  # ...the UP vector...
+        *([UP_3D   + c for c in top_pattern]        if top_pattern     else ()),   # ...the upward diagonal vectors...
+        *(central_pattern[:len(central_pattern)//2] if central_pattern else ()),   # ...the first half of the horizontal vectors...
+          ivec3(0, 0, 0)                            if include_center  else None,  # ...the origin...
+        *(central_pattern[len(central_pattern)//2:] if central_pattern else ()),   # ...the second half of the horizontal vectors...
+        *([DOWN_3D + c for c in base_pattern]       if base_pattern    else ()),   # ...the downward diagonal vectors...
+          DOWN_3D                                   if include_down    else None   # ...and the DOWN vector.
+    )
+    return tuple(e for e in template_tuple if e)  # Get rid of the Nones, return the rest
+
+def _generateSymmetricSpiraloidVectors3D(
+        top_and_base_pattern: Optional[Tuple[ivec3, ...]],
+        central_pattern:      Optional[Tuple[ivec3, ...]],
         include_up_and_down:  bool = False,
         include_center:       bool = False,
     ) -> Tuple[ivec3, ...]:
-    return generate_spiraloid_direction_vector_3D(
-        top_and_base_pattern,
-        central_pattern,
-        top_and_base_pattern,
-        include_up_and_down,
-        include_center,
-        include_up_and_down
+    """Generate a set of 3D direction vectors, mirrored along the XY plane."""
+    return _generateSpiraloidDirectionVector3D(
+        top_pattern     = top_and_base_pattern,
+        central_pattern = central_pattern,
+        base_pattern    = top_and_base_pattern,
+        include_up      = include_up_and_down,
+        include_center  = include_center,
+        include_down    = include_up_and_down
     )
 
-def rotate_ordered_vectors_3D(vectors: Sequence[ivec3], n: int = 1) -> Tuple[ivec3, ...]:
-    if vectors:
-        n %= len(vectors)
-    else:
-        return ()
-    return (*vectors[n:], *vectors[0:n])
-
 # == constants ==
-
-CENTER_3D = ivec3(0, 0, 0)
 
 X_3D = ivec3(1, 0, 0)
 Y_3D = ivec3(0, 1, 0)
@@ -210,19 +189,19 @@ CORNER_DIAGONALS_3D:              FrozenSet[ivec3] = frozenset({
     for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 })
 DIRECTIONS_AND_ALL_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D
+# TODO: tuple() for backwards compatibility. Remove on major release
 DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D)  # NOTE: Legacy format
 
 # Moving Up to Down, clockwise starting East
 # NOTE: For other combinations, use `generate_[symmetric_]spiraloid_vectors_3D()`
 ORDERED_DIRECTIONS_3D:                    Tuple[ivec3, ...] = (UP_3D, *ORDERED_CARDINALS_3D, DOWN_3D)
-ORDERED_EDGE_DIAGONALS_3D:                Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_3D,               ORDERED_INTERCARDINALS_3D                                   )
-ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D: Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_3D,               ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)
-ORDERED_CORNER_DIAGONALS_3D:              Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_INTERCARDINALS_3D,          None                                                        )
-ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D:  Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)
-ORDERED_DIAGONALS:                        Tuple[ivec3, ...] = generate_symmetric_spiraloid_vectors_3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_INTERCARDINALS_3D                                   )
+ORDERED_EDGE_DIAGONALS_3D:                Tuple[ivec3, ...] = _generateSymmetricSpiraloidVectors3D(ORDERED_CARDINALS_3D,               ORDERED_INTERCARDINALS_3D                                   )
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D: Tuple[ivec3, ...] = _generateSymmetricSpiraloidVectors3D(ORDERED_CARDINALS_3D,               ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)
+ORDERED_CORNER_DIAGONALS_3D:              Tuple[ivec3, ...] = _generateSymmetricSpiraloidVectors3D(ORDERED_INTERCARDINALS_3D,          None                                                        )
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D:  Tuple[ivec3, ...] = _generateSymmetricSpiraloidVectors3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)
+ORDERED_DIAGONALS:                        Tuple[ivec3, ...] = _generateSymmetricSpiraloidVectors3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_INTERCARDINALS_3D                                   )
 
 # ==== aliases ====
-# NOTE: These are for backward compatibility
 X: ivec3 = X_3D
 Y: ivec3 = Y_3D
 Z: ivec3 = Z_3D
@@ -265,65 +244,46 @@ DIAGONALS: tuple = DIAGONALS_3D
 
 
 def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
-def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
     """Returns <vec> without its <dimension>-th component"""
     if dimension == 0: return ivec2(vec[1], vec[2])
     if dimension == 1: return ivec2(vec[0], vec[2])
     if dimension == 2: return ivec2(vec[0], vec[1])
     raise ValueError(f'Invalid dimension "{dimension}"')
 
-
-def addDimension(vec: Vec2iLike, dimension: int, value: int = 0) -> ivec3:
 def addDimension(vec: Vec2iLike, dimension: int, value: int = 0) -> ivec3:
     """Inserts <value> into <vec> at <dimension> and returns the resulting 3D vector"""
-    # NOTE: Should be adjusted to only support 2D -> 3D, or all ivec dimensions
     # NOTE: Should be adjusted to only support 2D -> 3D, or all ivec dimensions
     l = list(vec)
     return ivec3(*l[:dimension], value, *l[dimension:])
 
-
-def dropY(vec: Vec3iLike) -> ivec2:
 def dropY(vec: Vec3iLike) -> ivec2:
     """Returns [vec] without its y-component (i.e., projected on the XZ-plane)"""
     return ivec2(vec[0], vec[2])
 
-
-def addY(vec: Vec2iLike, y=0) -> ivec3:
 def addY(vec: Vec2iLike, y=0) -> ivec3:
     """Returns a 3D vector (vec[0], y, vec[1])"""
     return ivec3(vec[0], y, vec[1])
 
-
-def setY(vec: Vec3iLike, y=0) -> ivec3:
 def setY(vec: Vec3iLike, y=0) -> ivec3:
     """Returns [vec] with its y-component set to [y]"""
     return ivec3(vec[0], y, vec[2])
 
-
-def trueMod2D(vec: Vec2iLike, modulus: int) -> ivec2:
 def trueMod2D(vec: Vec2iLike, modulus: int) -> ivec2:
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
     return ivec2(vec[0] % modulus, vec[1] % modulus)
-
-
-def trueMod3D(vec: Vec3iLike, modulus: int) -> ivec3:
 
 def trueMod3D(vec: Vec3iLike, modulus: int) -> ivec3:
     """Returns <v> modulo <modulus>.\n
     Negative numbers are handled just like Python's built-in integer modulo."""
     return ivec3(vec[0] % modulus, vec[1] % modulus, vec[2] % modulus)
 
-
-def perpendicular(vec: Vec2iLike) -> ivec2:
 def perpendicular(vec: Vec2iLike) -> ivec2:
     """Returns the vector perpendicular to [vec] that points to the right of [vec] and has the same
     length as [vec]."""
     return ivec2(vec[1], -vec[0])
 
 
-def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
-    """Returns [vec], rotated clockwise by [rotation] quarters."""
 def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
     """Returns [vec], rotated clockwise by [rotation] quarters."""
     if rotation == 0: return ivec2(*vec)
@@ -333,8 +293,6 @@ def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
     raise ValueError("Rotation must be in {0,1,2,3}")
 
 
-def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
-    """Returns [vec], rotated clockwise in the XZ-plane by [rotation] quarters."""
 def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
     """Returns [vec], rotated clockwise in the XZ-plane by [rotation] quarters."""
     return addY(rotate2D(dropY(vec), rotation), vec[1])
@@ -387,81 +345,23 @@ def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
     """
     return addY(rotate2Ddeg(dropY(vec), degrees), vec[1])
 
-
-def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
-def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
-    """
-    Rotate a 2D vector clockwise by a specified number of degrees.
-
-    Args:
-        vec: The 2D vector to rotate.
-        degrees: The number of degrees to rotate the vector by. Only ±90°-rotations and their multiples are valid.
-
-    Returns:
-        The rotated 2D vector.
-
-    Raises:
-        ValueError: If degrees is not a multiple of 90.
-
-    Examples:
-        vec = ivec2(0, 1)
-        rotated_vec = rotate2Ddeg(vec, -90)
-    """
-
-    if degrees % 90 != 0:
-        raise ValueError("Only ±90°-rotations and their multiples are valid!")
-
-    rotation: int = (degrees // 90) % 4  # Convert to quarter-turns
-
-    return rotate2D(vec, rotation)
-
-
-def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
-    """
-    Rotate a 3D vector clockwise by a specified number of degrees through the Y axis.
-
-    Args:
-        vec: The 3D vector to rotate.
-        degrees: The number of degrees to rotate the vector by through the Y axis. Only ±90°-rotations and their multiples are valid.
-
-    Returns:
-        The rotated 3D vector.
-
-    Raises:
-        ValueError: If degrees is not a multiple of 90.
-
-    Examples:
-        vec = ivec3(0, 1)
-        rotated_vec = rotate3Ddeg(vec, -90)
-    """
-    return addY(rotate2Ddeg(dropY(vec), degrees), vec[1])
-
-
 def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
     after <rotation>."""
     scale: ivec2 = flipToScale2D(flip)
-    scale: ivec2 = flipToScale2D(flip)
     return (rotation * scale.x * scale.y + 4) % 4
 
-
-def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
 
 def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
     """Returns rotation such that applying rotation after <flip> is equivalent to applying <flip>
     after <rotation>"""
     return flipRotation2D(rotation, dropY(flip))
 
-
-def rotateSize2D(size: Vec2iLike, rotation: int) -> Vec2iLike:
 def rotateSize2D(size: Vec2iLike, rotation: int) -> Vec2iLike:
     """Returns the effective size of a rect of size [size] that has been rotated in the XZ-plane by
     [rotation]."""
     return ivec2(size[1], size[0]) if rotation in {1, 3} else size
-    return ivec2(size[1], size[0]) if rotation in {1, 3} else size
 
-
-def rotateSize3D(size: Vec3iLike, rotation: int) -> ivec3:
 def rotateSize3D(size: Vec3iLike, rotation: int) -> ivec3:
     """Returns the effective size of a box of size [size] that has been rotated in the XZ-plane by
     [rotation]."""
@@ -1581,7 +1481,8 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
     return sphere(center, diameter, hollow)
 
 
-def inbound_neighbors_from_vectors2D(point: ivec2, bounding_rect: Rect, vectors: Union[Sequence[ivec2], FrozenSet[ivec2]], stride: int = 1):
+def _inboundNeighborsFromVectors2D(point: ivec2, bounding_rect: Rect, vectors: Iterable[ivec2], stride: int = 1) -> Generator[ivec2, Any, None]:
+    """Generate neighboring vectors within a bounding rect in the directions of vectors."""
     for vector in vectors:
         candidate: ivec2 = point + stride * vector
         if bounding_rect.contains(candidate):
@@ -1596,10 +1497,11 @@ def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, st
         point = ivec2(*point)
 
     vectors: FrozenSet[ivec2] = CARDINALS_AND_DIAGONALS_2D if diagonal else CARDINALS_2D
-    return inbound_neighbors_from_vectors2D(point, boundingRect, vectors, stride)
+    return _inboundNeighborsFromVectors2D(point, boundingRect, vectors, stride)
 
 
-def inbound_neighbors_from_vectors3D(point: ivec3, bounding_box: Box, vectors: Union[Sequence[ivec3], FrozenSet[ivec3]], stride: int = 1):
+def _inboundNeighborsFromVectors3D(point: ivec3, bounding_box: Box, vectors: Iterable[ivec3], stride: int = 1) -> Generator[ivec3, Any, None]:
+    """Generate neighboring vectors within a bounding box in the directions of vectors."""
     for vector in vectors:
         candidate: ivec3 = point + stride * vector
         if bounding_box.contains(candidate):
@@ -1614,4 +1516,4 @@ def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stri
         point = ivec3(*point)
 
     vectors: FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D if diagonal else DIRECTIONS_3D
-    return inbound_neighbors_from_vectors3D(point, boundingBox, vectors, stride)
+    return _inboundNeighborsFromVectors3D(point, boundingBox, vectors, stride)
