@@ -2,12 +2,19 @@
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
+**Additions:**
+- Added various ordered vector list constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+- Added `utils.rotateSequence`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+**Fixes:**
+- Made some previously mutable constants immutable. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
 
 # 7.2.0
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions**
+**Additions:**
 - Added `vector_tools.rotate2Ddeg` and `rotate3Ddeg`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 - Added many new constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
