@@ -92,7 +92,7 @@ CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D
 DIAGONALS_2D              = tuple(INTERCARDINALS_2D)  # NOTE: Legacy format
 
 # starting East, moving clockwise
-# NOTE: Use `utils.rotate(...)` to start at a different point
+# NOTE: Use `utils.rotateSequence(...)` to start at a different point
 ORDERED_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, SOUTH_2D, WEST_2D, NORTH_2D)
 ORDERED_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (SOUTHEAST_2D, SOUTHWEST_2D, NORTHWEST_2D, NORTHEAST_2D)
 ORDERED_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_2D, ORDERED_INTERCARDINALS_2D)))
@@ -168,12 +168,12 @@ INTERCARDINALS_3D:          FrozenSet[ivec3] = frozenset({NORTHEAST_3D, NORTHWES
 CARDINALS_AND_DIAGONALS_3D: FrozenSet[ivec3] = CARDINALS_3D | INTERCARDINALS_3D
 
 # starting East, moving clockwise
-# NOTE: Use `rotate_ordered_vectors_3D(ORDERED_..., n)` to change the starting point while maintaining the order of the sequence
+# NOTE: Use `utils.rotateSequence(ORDERED_..., n)` to change the starting point while maintaining the order of the sequence
 #       E.g. n=1 starts at the second point; n=-1 starts at the last point
-# NOTE: Use `reverse(rotate_ordered_vectors_3D(ORDERED_...))` to move counterclockwise from east
+# NOTE: Use `reverse(utils.rotateSequence(ORDERED_...))` to move counterclockwise from east
 #       This does not work for sequences with differing Y-values!
 #       To achieve that, transform the values for each layer first, then recombine them.
-#       E.g. `reverse(rotate_ordered_vectors_3D([UP_3D + c for c in ORDERED_CARDINALS_3D])) + reverse(rotate_ordered_vectors_3D(ORDERED_CARDINALS_3D)) + ...`
+#       E.g. `reverse(utils.rotateSequence([UP_3D + c for c in ORDERED_CARDINALS_3D])) + reverse(utils.rotateSequence(ORDERED_CARDINALS_3D)) + ...`
 ORDERED_CARDINALS_3D:               Tuple[ivec3, ...] = (EAST_3D, SOUTH_3D, WEST_3D, NORTH_3D)
 ORDERED_INTERCARDINALS_3D:          Tuple[ivec3, ...] = (SOUTHEAST_3D, SOUTHWEST_3D, NORTHWEST_3D, NORTHEAST_3D)
 ORDERED_CARDINALS_AND_DIAGONALS_3D: Tuple[ivec3, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_3D, ORDERED_INTERCARDINALS_3D)))
