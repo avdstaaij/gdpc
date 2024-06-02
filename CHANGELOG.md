@@ -3,6 +3,7 @@
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 **Additions:**
+- Added ZERO_2D/ZERO_3D/ZERO constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 - Added various ordered vector list constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 - Added `utils.rotateSequence`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
