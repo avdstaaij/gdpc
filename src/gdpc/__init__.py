@@ -13,7 +13,7 @@ __maintainer__       = "Arthur van der Staaij"
 __maintainer_email__ = "arthurvanderstaaij@gmail.com"
 __license__          = "MIT"
 __copyright__        = "Copyright 2022-2024 Arthur van der Staaij, Copyright 2021-2022 Blinkenlights, Copyright 2020-2021 Nils Gawlik"
-__version__          = "7.2.0"
+__version__          = "7.3.0"
 
 
 from .vector_tools import Rect, Box
