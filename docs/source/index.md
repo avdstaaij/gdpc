@@ -30,6 +30,12 @@ geometry.placeCuboid(editor, (0,80,2), (2,82,4), Block("oak_planks"))
 ## Contents
 
 ```{toctree}
+:hidden:
+
+Introduction <self>
+```
+
+```{toctree}
 :maxdepth: 1
 
 getting-started/index

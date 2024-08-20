@@ -1,3 +1,4 @@
+{#tutorial}
 # Tutorial: Building a house
 
 ## Introduction
@@ -6,7 +7,10 @@ This tutorial will go through the step-by-step process of building a house in
 Minecraft with GDPC. It will pass over most of the main components of the
 library, explaining them as they come along. The house will be built on the
 ground at a spot that can be specified in-game, and will have some simple
-randomization.
+randomized variation.
+
+The tutorial assumes basic knowledge of Python and rudimentary knowledge of
+numpy, but almost no knowledge of Minecraft (beyond how to launch it).
 
 
 ## Preparing a world
@@ -22,7 +26,7 @@ following settings are recommended for this tutorial:
   testing.
 
 
-## Editing the world with code
+## Hello block!
 
 <!-- ### Placing a block -->
 
@@ -31,12 +35,11 @@ block in the air, close to the world spawn.
 
 The first thing to do is to create an {class}`.Editor` object. Nearly every GDPC
 program will involve such an object -- it serves as the main point of
-communication between GDPC and the GDMC-HTTP mod, and therefore, the world.
-
+communication between GDPC and the Minecraft world.
 Once we have an `Editor` object, we can place blocks
 with {meth}`.Editor.placeBlock`.
 This function has two required arguments: the (X,Y,Z)-coordinates to place a
-block at (a 3D vector) and the block to place (a {class}`.Block` object).
+block at and the block to place (a {class}`.Block` object).
 
 In Minecraft, the Y-coordinate indicates height, with sea level at Y=62. We'll
 place a block at (X=0, Y=128, Z=0) -- right above the world spawn (X=0, Z=0) and
@@ -54,22 +57,23 @@ editor.placeBlock((0,128,0), Block("red_concrete"))
 ```{important}
 Make sure you have a world open with the
 [GDMC HTTP Interface mod](https://github.com/Niels-NTG/gdmc_http_interface)
-installed! (See [Installation](installation.md).)
+installed! (See [Installation](#installation).)
 If you don't, GDPC will raise an {exc}`.InterfaceConnectionError`.
 ```
 
 ```{note}
-In GDPC, anything that "acts like a vector" will work for vector parameters.
-This includes things like tuples, lists and numpy arrays. Whenever
-GDPC *returns* a vector, it will always be a
-[PyGLM](https://github.com/Zuzu-Typ/PyGLM) vector object, which has useful
-`.x` `.y` `.z` attributes and some other features.
-For more info, see [Vectors](../overview/vectors.md).
+In the snippet above, `(0,128,0)` is an example of a 3D *vector*: three numbers
+that indicate a position in space. In GDPC, any object that "behaves like a
+vector" will work for vector parameters. This includes things like tuples, lists
+and numpy arrays. Whenever GDPC *returns* a vector, it will always be a
+[PyGLM](https://github.com/Zuzu-Typ/PyGLM) vector object, which has
+`.x` `.y` `.z` attributes and some other useful features.
+For more info, see [Vectors](#vectors).
 ```
 
 If you run this program and all goes well, a block of red concrete should appear
 at (X=0, Y=128, Z=0). You can teleport on top of it with the following in-game
-command:
+command (type it in chat):
 
 ```
 /tp 0 129 0
@@ -230,8 +234,8 @@ placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
 
 Sidenote: we can use another helper, {func}`.placeRectOutline`, to visualize the
 (X,Z)-rectangle of the build area. We won't include this in any further
-examples, but if you're ever confused about where the build area is, you can it
-in.
+examples, but if you're ever confused about where the build area is, you can add
+it in.
 
 ```{code-block} python
 :emphasize-lines: 2,8
@@ -306,7 +310,7 @@ block = Block("oak_stairs", {"facing": "east", "half": "bottom"})
 
 ```{note}
 Blocks can also have a third property called *block entity data*, which we won't
-go into here. For more info, see [Blocks](../overview/blocks.md).
+go into here. For more info, see [Blocks](#advanced-blocks).
 ```
 
 Now, let's build the roof. This step will be a little more complicated, since

@@ -61,7 +61,9 @@ intersphinx_mapping = {
 myst_enable_extensions = [
     "amsmath",
     "deflist",
-    "smartquotes"
+    "smartquotes",
+    "attrs_block",
+    "attrs_inline",
 ]
 
 
@@ -142,7 +144,7 @@ html_theme_options = {
     #     },
     # ],
     # END: version_dropdown
-    "toc_title_is_page_title": False,
+    "toc_title_is_page_title": True,
     # BEGIN: social icons
     "social": [
         {

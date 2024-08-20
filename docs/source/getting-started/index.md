@@ -1,6 +1,6 @@
 # Getting started
 
-The section of the documentation serves as introduction to GDPC.
+The part of the documentation serves as introduction to GDPC.
 
 
 ```{rubric} Contents
@@ -11,6 +11,5 @@ The section of the documentation serves as introduction to GDPC.
 :titlesonly:
 
 installation
-hello_block
 tutorial_house
 ```

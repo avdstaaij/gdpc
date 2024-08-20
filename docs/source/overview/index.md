@@ -1,6 +1,11 @@
 # Overview
 
-The section of the documentation gives an overview of GDPC's main features.
+This part of the documentation gives a overview of GDPC's concepts and features
+in a topic-by-topic fashion.
+
+For a more introductory guide, see the [tutorial](#tutorial). For a complete
+listing of all public objects of GDPC, see the
+[API reference](../api/index.rst).
 
 
 ```{rubric} Contents
@@ -10,9 +15,21 @@ The section of the documentation gives an overview of GDPC's main features.
 :maxdepth: 1
 :titlesonly:
 
-overview
+basic-world-interaction
 vectors
-blocks
-
+buildarea
+advanced-blocks
 transformation
 ```
+
+<!-- - basic interaction
+- vectors
+- blocks
+- build area
+- world slice and heightmaps
+- geometry
+- editor performance
+- transformation
+- additional tools (editor_tools and minecraft_tools)
+- exceptions
+-->

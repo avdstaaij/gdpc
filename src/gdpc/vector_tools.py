@@ -149,12 +149,18 @@ def setY(vec: Vec3iLike, y=0) -> ivec3:
 
 def trueMod2D(vec: Vec2iLike, modulus: int) -> ivec2:
     """Returns ``v`` modulo ``modulus``.\n
-    Negative numbers are handled just like Python's built-in integer modulo."""
+    Some libraries (notably, pyGLM), define vector classes with a `%` operator that behaves
+    differently than Python-s built-in integer modulo when negative numbers are involved.
+    This function is a workaround for that: it always performs vector modulo in the same way as
+    Python's built-in modulo."""
     return ivec2(vec[0] % modulus, vec[1] % modulus)
 
 def trueMod3D(vec: Vec3iLike, modulus: int) -> ivec3:
     """Returns ``v`` modulo ``modulus``.\n
-    Negative numbers are handled just like Python's built-in integer modulo."""
+    Some libraries (notably, pyGLM), define vector classes with a `%` operator that behaves
+    differently than Python-s built-in integer modulo when negative numbers are involved.
+    This function is a workaround for that: it always performs vector modulo in the same way as
+    Python's built-in modulo."""
     return ivec3(vec[0] % modulus, vec[1] % modulus, vec[2] % modulus)
 
 

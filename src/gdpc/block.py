@@ -43,6 +43,19 @@ class Block:
     states: Dict[str, str] = field(default_factory=dict) #: Block states
     data:   Optional[str]  = None #: Block entity data
 
+    # We explicitly add this method instead of using @dataclass so that it looks better in the docs
+    # and we can add a docstring.
+    def __init__(
+        self,
+        id: Optional[str] = "minecraft:stone",
+        states: Optional[Dict[str, str]] = None,
+        data: Optional[str] = None
+    ) -> None:
+        """Constructs a Block instance with the given properties."""
+        self.id     = id
+        self.states = states if states is not None else {}
+        self.data   = data
+
 
     def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()) -> None:
         """Transforms this block.\n
