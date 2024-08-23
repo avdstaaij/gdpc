@@ -1,11 +1,7 @@
 {#advanced-blocks}
 # Advanced blocks
 
-This page describes how to work with Minecraft blocks that have block states or
-block entity data.
-
-
-## Background: blocks in Minecraft
+## Blocks in Minecraft
 
 Most Minecraft blocks are described fully by their namespaced ID, but some can
 have additional information attached to them. In general, a block consists of

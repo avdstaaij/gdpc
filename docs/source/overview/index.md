@@ -18,6 +18,7 @@ listing of all public objects of GDPC, see the
 basic-world-interaction
 vectors
 buildarea
+world-slice
 advanced-blocks
 transformation
 ```

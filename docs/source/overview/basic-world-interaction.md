@@ -1,8 +1,5 @@
 # Basic world interaction
 
-This page describes how to do basic world interaction with GDPC, such as getting
-and setting blocks.
-
 <!-- ## The Editor class
 
 In GDPC, All forms of world interaction go through the {class}`.Editor` class --
@@ -46,7 +43,7 @@ to functions like `Editor.placeBlock` and what functions like
 `Editor.getBlock` return. `Block` instances that represent "simple" blocks can
 be created by passing the technical ID of the block to the constructor:
 {python}`block = Block("stone")`. For more details and more complex cases, see
-[Blocks](#advanced-blocks).
+[Advanced blocks](#advanced-blocks).
 
 
 ## Setting blocks

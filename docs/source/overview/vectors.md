@@ -1,10 +1,6 @@
 {#vectors}
 # Vectors
 
-This page describes the concept of (and tools for) *vectors*, which are used
-throughout GDPC's API.
-
-
 ## Vectors in GDPC
 
 Many functions in GDPC deal with positions or directions in 2D or 3D space,
@@ -196,7 +192,7 @@ Here is an example that shows some of `Rect`'s features (`Box` works the same):
 ```python
 from gdpc.vector_tools import Rect
 
-rect = Rect((1,2), (5,5)) # offset = (1,2), size = (3,3)
+rect = Rect((1,2), (5,5)) # offset = (1,2), size = (5,5)
 
 print(rect.offset) # ivec2(1,2)
 print(rect.size)   # ivec2(5,5)
@@ -210,13 +206,13 @@ print(rect.contains((3,3))) # True
 for vec in rect.inner:
    print(vec) # ivec2(1,2), ivec2(1,3), ..., ivec2(5,6)
 
-# Create the rect between the given points
+# Create a rect with the given corners
 rect = Rect.between((1,5), (3,2))
-print(rect) # Rect((1, 2), (3, 4))
+print(rect) # Rect((1,2), (3,4))
 
 # Create a rect containing the given points
 rect = Rect.bounding([(1,1), (1,3), (2,2)])
-print(rect) # Rect((1, 1), (2, 3))
+print(rect) # Rect((1,1), (2,3))
 ```
 
 ### Shape-generating functions
@@ -228,7 +224,7 @@ generate the points of a geometric shape. For example:
 from gdpc.vector_tools import loop3D, line3D, circle
 
 # loop3D() loops over a 3D box defined by a begin and an end.
-# It's essentially a 3D variant of python's built-in `range()` function.
+# It's essentially a 3D variant of python's built-in range() function.
 for vec in loop3D((1,2,3), (5,5,5)):
    print(vec) # ivec3(1,2,3), ivec3(1,2,4), ivec3(1,3,3), ..., ivec3(4,4,4)
 
@@ -250,11 +246,11 @@ aware that Minecraft's coordinate system has some unusual properties:
    This means that, when facing towards the positive Z direction, the positive X
    direction points to the *left*, not to the right. If you use GDPC to build a
    structure while assuming that Z points forward and X points to the right,
-   this may cause the structure to be a mirrored version of what you indended.
+   this may cause the structure to be a mirrored version of what you intended.
 
 2. Minecraft performs rotations in what is normally considered the *left-handed*
    way, even though its coordinate system is right-handed. That is, things like
-   sign rotations or the `/execute rotated` command rotate from positive X
+   sign rotations or the command `/execute rotated` rotate from positive X
    towards positive Z. All GDPC functions that perform some kind of rotation,
    such as {func}`.rotate3D`, follow Minecraft's convention.
 
