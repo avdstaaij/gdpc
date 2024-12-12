@@ -1,5 +1,7 @@
 # The build area
 
+## What is it?
+
 The GDMC HTTP interface provides a utility feature called the *build area*: a 3D
 box that can be set with a command in-game and which can then be retrieved
 with code.
@@ -38,8 +40,8 @@ starting at the player's current (X,Z)-position and spanning from Y=0 to Y=255:
 
 ```{tip}
 You can re-use a previous `/setbuildarea` command by pressing {keys}`Up` while
-the chat is open. This is particularly useful for relative commands like the
-above example.
+the chat is open. This is particularly useful when using relative coordinates,
+like in the above example.
 ```
 
 

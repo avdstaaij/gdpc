@@ -3,7 +3,8 @@
 
 ## Blocks in Minecraft
 
-Most Minecraft blocks are described fully by their namespaced ID, but some can
+The previous overview pages have only used blocks that are described fully by
+their namespaced ID (e.g. `minecraft:stone`). However, some Minecraft blocks can
 have additional information attached to them. In general, a block consists of
 three components:
 
@@ -17,6 +18,10 @@ three components:
 
 
 - Optional *block states*/*block properties* [^blockstates].
+
+  [^blockstates]: GDPC uses the term "block states". Note, however, that
+  Minecraft also sometimes uses "BlockState" to refer to the *combination*
+  (block id, block states). Yes, the terminology is confusing.
 
   Block states are simple key-value properties that usually denote basic
   variations in the state of a block.
@@ -42,7 +47,6 @@ three components:
   [here](https://minecraft.wiki/w/Block_entity).
 
 
-
 You can view the namespaced ID and block states (but not the block
 entity data) of a block in-game by
 pressing {keys}`F3` and pointing at the block. They will be shown at the bottom
@@ -62,9 +66,6 @@ ID should be shown at the bottom of the tooltip:
 ```{figure} ../images/advanced-tooltip.png
 :width: 26em
 ```
-
-[^blockstates]: GDPC uses the term "block states". Note, however, that Minecraft also sometimes uses "BlockState" to refer to the *combination*
-  (block id, block states). Yes, the terminology is confusing.
 
 
 ## The GDPC Block class
@@ -144,7 +145,7 @@ from gdpc.minecraft_tools import signBlock
 sign = signBlock("oak", rotation=9, frontLine2="Lorem ipsum")
 ```
 
-In addition, the {mod}`editor.tools` module contains several functions that
+In addition, the {mod}`.editor_tools` module contains several functions that
 create a block and place it in one go. For example:
 
 ```python

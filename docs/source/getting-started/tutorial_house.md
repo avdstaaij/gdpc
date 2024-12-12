@@ -9,8 +9,8 @@ library, explaining them as they come along. The house will be built on the
 ground at a spot that can be specified in-game, and will have some simple
 randomized variation.
 
-The tutorial assumes basic knowledge of Python and rudimentary knowledge of
-numpy, but almost no knowledge of Minecraft (beyond how to launch it).
+The tutorial assumes basic knowledge of Python and numpy, but almost no
+knowledge of Minecraft (beyond how to launch it).
 
 
 ## Preparing a world
@@ -68,7 +68,7 @@ vector" will work for vector parameters. This includes things like tuples, lists
 and numpy arrays. Whenever GDPC *returns* a vector, it will always be a
 [PyGLM](https://github.com/Zuzu-Typ/PyGLM) vector object, which has
 `.x` `.y` `.z` attributes and some other useful features.
-For more info, see [Vectors](#vectors).
+For more info, see [Overview - Vectors](#vectors).
 ```
 
 If you run this program and all goes well, a block of red concrete should appear
@@ -310,7 +310,7 @@ block = Block("oak_stairs", {"facing": "east", "half": "bottom"})
 
 ```{note}
 Blocks can also have a third property called *block entity data*, which we won't
-go into here. For more info, see [Blocks](#advanced-blocks).
+go into here. For more info, see [Overview - Advanced blocks](#advanced-blocks).
 ```
 
 Now, let's build the roof. This step will be a little more complicated, since
@@ -758,7 +758,7 @@ placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
 ```
 
 Of course, there's lots more that we could do, such as windows, lighting and
-furniture, but we'll leave that as an exercise to the reader :).
+furniture, but we'll leave that as an exercise to the reader.
 
 
 ## Bonus: placing multiple houses

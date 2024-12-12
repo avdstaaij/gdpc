@@ -1,4 +1,7 @@
-{#transformation}
+{#the-transformation-system}
+
+TODO: note about using placeGlobal for performance with custom shapes
+
 # The transformation system
 
 ## Introduction

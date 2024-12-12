@@ -30,7 +30,7 @@ class Editor:
     """Provides high-level functions to interact with the Minecraft world through the GDMC HTTP
     interface.
 
-    Stores various settings, resources, buffers and caches related to block placement, and a
+    Stores various settings, resources, buffers and caches related to world interaction, and a
     transform that defines a local coordinate system.
     """
 
@@ -48,7 +48,11 @@ class Editor:
         timeout               = None,
         host                  = interface.DEFAULT_HOST,
     ) -> None:
-        """Constructs an Editor instance with the specified transform and settings"""
+        """Constructs an Editor instance with the specified transform and settings.
+
+        All settings specified here can be accessed and modified through properties with the same
+        name. For more information on each setting, see the documentation for the corresponding
+        property."""
         self._retries = retries
         self._timeout = timeout
         self._host    = host
@@ -93,7 +97,17 @@ class Editor:
 
     @property
     def transform(self) -> Transform:
-        """This editor's local coordinate transform (used for block placement and retrieval)."""
+        """This editor's local coordinate transform.
+
+        Many of ``Editor``'s methods have a ``position`` parameter. In most cases, the passed
+        position vector is interpreted as relative to the coordinate system defined by this
+        property.
+        For example, :python:`editor.placeBlock(pos, block)` would place ``block`` at
+        :python:`editor.transform * pos`.
+        Changing this property allows you to change the "point of view" of the editor.
+
+        For a more comprehensive overview of GDPC's transformation system, see
+        :ref:`here<transformation>`."""
         return self._transform
 
     @transform.setter
@@ -102,9 +116,20 @@ class Editor:
 
     @property
     def dimension(self) -> Optional[str]:
-        """The dimension this editor interacts with.\n
+        """The Minecraft dimension this editor interacts with.
+
+        Can be set to any string, though specifying an invalid dimension may cause other ``Editor``
+        methods to raise exceptions. See the documentation of the GDMC HTTP interface mod for the
+        full list of options. The following options are certainly supported:
+
+        * ``"overworld"``
+        * ``"the_nether"``
+        * ``"the_end"``
+        * ``"nether"``
+        * ``"end"``
+
         Changing the dimension will flush the block buffer and invalidate all caches.\n
-        Note that the transform is NOT reset or modified when the dimension is changed! In
+        Note that :attr:`.transform` is NOT reset or modified when the dimension is changed! In
         particular, the transform's translation (if any) is NOT adjusted for the nether's 8x smaller
         scale."""
         return self._dimension
@@ -120,7 +145,25 @@ class Editor:
 
     @property
     def buffering(self) -> bool:
-        """Whether block placement buffering is enabled."""
+        """Whether block placement buffering is enabled.
+
+        When buffering is enabled, blocks passed to :meth:`.placeBlock`/:meth:`.placeBlockGlobal`
+        are not placed immediately, but are instead added to a buffer. When the buffer is full
+        (:attr:`bufferLimit`), all blocks are then placed at once, using a single HTTP request.
+
+        The block retrieval functions (such as :meth:`.getBlock`) take the buffer into account:
+        if the buffer contains a block at the specified position, that block is returned.
+        If both buffering and caching (see :attr:`caching`) are enabled, the buffer supersedes the
+        cache for block retrieval.
+
+        Note that, if the Minecraft world is changed by something other than the buffering
+        ``Editor`` (for example, by a player on the server) after blocks have been buffered but
+        before they have been placed, then the buffered blocks may overwrite those changes.
+
+        To manually flush the buffer, call :meth:`.flushBuffer`.
+        """
+        # TODO: document that the buffer gets flushed in __del__? That method is unreliable though
+        # (#68), so we should probably fix it first rather than explain the unreliability.
         return self._buffering
 
     @buffering.setter
@@ -131,7 +174,7 @@ class Editor:
 
     @property
     def bufferLimit(self) -> int:
-        """Size of the block buffer."""
+        """Size of the block buffer (see :attr:`.buffering`)."""
         return self._bufferLimit
 
     @bufferLimit.setter
@@ -142,7 +185,20 @@ class Editor:
 
     @property
     def caching(self) -> bool:
-        """Whether caching placed and retrieved blocks is enabled."""
+        """Whether caching placed and retrieved blocks is enabled.
+
+        When caching is enabled, the last :attr:`cacheLimit` placed and retrieved blocks and their
+        positions are cached in this ``Editor`` object. If a block at a cached position is accessed
+        (such as with :meth:`.getBlock`), the block is retrieved from the cache, and no HTTP request
+        is sent.
+
+        If both buffering (see :attr:`buffering`) and caching are enabled, the buffer supersedes the
+        cache for block retrieval.
+
+        Note that, if the Minecraft world is modified by something other than the caching
+        ``Editor`` (for example, by a player on the server), the cache will not reflect those
+        changes, and retrieved blocks may be incorrect.
+        """
         return self._caching
 
     @caching.setter
@@ -151,7 +207,7 @@ class Editor:
 
     @property
     def cacheLimit(self) -> int:
-        """Size of the block cache."""
+        """Size of the block cache (see :attr:`.caching`)."""
         return self._cache.maxSize
 
     @cacheLimit.setter
@@ -199,7 +255,20 @@ class Editor:
 
     @property
     def doBlockUpdates(self) -> bool:
-        """Whether placed blocks should receive a block update."""
+        """Whether placed blocks receive a block update.
+
+        When a player places a block in Minecraft, that block and its surrounding blocks receive a
+        block update.* This triggers effects such as sand blocks falling and fences adjusting their
+        shape.
+
+        If this setting is ``True``, blocks placed with
+        :meth:`.placeBlock`/:meth:`.placeBlockGlobal` will be given a block update, just like if
+        they were placed by a player. We recommend leaving this on in most cases.
+
+        \*: The system is actually a bit more complex than this.
+        See https://minecraft.wiki/w/Block_update for the full details.
+
+        """
         return self._doBlockUpdates
 
     @doBlockUpdates.setter
@@ -210,7 +279,16 @@ class Editor:
 
     @property
     def spawnDrops(self) -> bool:
-        """Whether overwritten blocks should drop items."""
+        """Whether overwritten blocks drop items.
+
+        If ``True``, overwritten blocks drop as items (as if they were destroyed with a
+        Silk Touch* tool).
+        Blocks with an inventory (e.g. chests) will drop their inventory as well.
+
+        Note that if this is ``False`` but `:attr:`.doBlockUpdates` is ``True``, overwriting a block
+        may still cause a different block to break and drop as an item. For example, if a block with
+        a torch on its side is removed, the torch will drop.
+        """
         return self._spawnDrops
 
     @spawnDrops.setter
@@ -221,7 +299,11 @@ class Editor:
 
     @property
     def retries(self) -> int:
-        """The amount of retries for requests to the GDMC HTTP interface."""
+        """The amount of retries for requests to the GDMC HTTP interface.
+
+        If a request to the interface fails, it will be retried this many times
+        (1 + this value in total) before an exception is thrown.
+        """
         return self._retries
 
     @retries.setter
@@ -230,7 +312,11 @@ class Editor:
 
     @property
     def timeout(self) -> float:
-        """The timeout for requests to the GDMC HTTP interface (as described by the `requests package <https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts>`_)."""
+        """The timeout for requests to the GDMC HTTP interface
+
+        Behaves as described by the
+        `requests package <https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts>`_).
+        """
         return self._timeout
 
     @timeout.setter
@@ -241,7 +327,7 @@ class Editor:
     def host(self) -> str:
         """The address (hostname+port) of the GDMC HTTP interface to use.\n
         Changing the host will flush the buffer and invalidate all caches.\n
-        Note that the transform is NOT reset or modified when the host is changed!"""
+        Note that the :attr:`.transform` is NOT reset or modified when the host is changed!"""
         return self._host
 
     @host.setter
@@ -397,10 +483,10 @@ class Editor:
         """Places ``block`` at ``position``.\n
         ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.\n
         If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
-        This is slightly more efficient than calling this method in a loop.\n
+        This is more efficient than calling this method in a loop.\n
         If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
-        # Distinguising between Vec3iLike and Iterable[Vec3iLike] is... not easy.
+        # Distinguishing between Vec3iLike and Iterable[Vec3iLike] is... not easy.
         globalPosition = self.transform * position if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral) else (self.transform * pos for pos in position)
         globalBlock = transformedBlockOrPalette(block, self.transform.rotation, self.transform.flip)
         return self.placeBlockGlobal(globalPosition, globalBlock, replace)

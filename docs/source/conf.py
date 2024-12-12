@@ -88,7 +88,7 @@ html_theme_options = {
     "site_url": "https://jbms.github.io/sphinx-immaterial/",
     "repo_url": "https://github.com/avdstaaij/gdpc",
     "repo_name": "gdpc",
-    "edit_uri": "blob/main/docs",
+    "edit_uri": "blob/master/docs/source",
     "globaltoc_collapse": False,
     "features": [
         # "header.autohide",
@@ -109,16 +109,6 @@ html_theme_options = {
     ],
     "palette": [
         {
-            "media": "(prefers-color-scheme: light)",
-            "scheme": "default",
-            "primary": "blue",
-            "accent": "green",
-            "toggle": {
-                "icon": "material/weather-night",
-                "name": "Switch to dark mode",
-            },
-        },
-        {
             "media": "(prefers-color-scheme: dark)",
             "scheme": "slate",
             "primary": "blue",
@@ -128,8 +118,17 @@ html_theme_options = {
                 "name": "Switch to light mode",
             },
         },
+        {
+            "media": "(prefers-color-scheme: light)",
+            "scheme": "default",
+            "primary": "blue",
+            "accent": "green",
+            "toggle": {
+                "icon": "material/weather-night",
+                "name": "Switch to dark mode",
+            },
+        }
     ],
-    # BEGIN: version_dropdown
     # "version_dropdown": True,
     # "version_info": [
     #     {
@@ -143,9 +142,8 @@ html_theme_options = {
     #         "aliases": [],
     #     },
     # ],
-    # END: version_dropdown
     "toc_title_is_page_title": True,
-    # BEGIN: social icons
+    # Social icons
     "social": [
         {
             "icon": "fontawesome/brands/github",
@@ -163,7 +161,6 @@ html_theme_options = {
             "name": "GDMC Discord server",
         },
     ],
-    # END: social icons
 }
 html_static_path = ["_static"]
 html_css_files = ["styles.css"]

@@ -95,7 +95,7 @@ These vectors support vector math operators, which can often simplify code, and
 have handy `.x`, `.y` and `.z` attributes. PyGLM also provides many performant
 vector math functions. Refer to the
 [pyGLM documentation](https://pypi.org/project/PyGLM/) for more details.
-Here is a small example of what's possible:
+Here is a small example of the syntax:
 
 <!-- TODO: mention pyGLM vector math functions -->
 
@@ -235,6 +235,11 @@ for vec in line3D((1,2,3), (5,5,5)):
 # circle() generates the points of a 2D circle defined by a center and diameter.
 for vec in circle((5,5), 5):
    print(vec) # ivec2(7,4), ivec2(7,5), ivec2(7,6), ivec2(6,7), ...
+```
+
+```{note}
+For *building* geometrical shapes, see
+[Overview - Building shapes](#building-shapes).
 ```
 
 ## Minecraft's coordinate system

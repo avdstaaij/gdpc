@@ -1,11 +1,11 @@
 # Overview
 
-This part of the documentation gives a overview of GDPC's concepts and features
+This part of the documentation gives an overview of GDPC's concepts and features
 in a topic-by-topic fashion.
 
-For a more introductory guide, see the [tutorial](#tutorial). For a complete
-listing of all public objects of GDPC, see the
-[API reference](../api/index.rst).
+For a more results-oriented guide with a running example, see the
+[tutorial](#tutorial). For a complete listing of all public objects of GDPC, see
+the [API reference](../api/index.rst).
 
 
 ```{rubric} Contents
@@ -17,13 +17,18 @@ listing of all public objects of GDPC, see the
 
 basic-world-interaction
 vectors
-buildarea
+build-area
 world-slice
+building-shapes
 advanced-blocks
+improving-performance
 transformation
+additional-tools
+python-module-structure
 ```
 
-<!-- - basic interaction
+<!--
+- basic interaction
 - vectors
 - blocks
 - build area

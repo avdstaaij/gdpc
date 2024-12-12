@@ -6,11 +6,11 @@ For example, you can use :python:`from gdpc import Editor` instead of :python:`f
 
 The following classes are re-exported:
 
-- :class:`.Editor` (from :mod:`.editor`)
-- :class:`.WorldSlice` (from :mod:`.world_slice`)
-- :class:`.Block` (from :mod:`.block`)
-- :class:`.Transform` (from :mod:`.transform`)
-- :class:`.Rect`, :class:`.Box` (from :mod:`.vector_tools`)
+- :class:`.Editor` (from module :mod:`.gdpc.editor`)
+- :class:`.WorldSlice` (from module :mod:`.gdpc.world_slice`)
+- :class:`.Block` (from module :mod:`.gdpc.block`)
+- :class:`.Transform` (from module :mod:`.gdpc.transform`)
+- :class:`.Rect`, :class:`.Box` (from module :mod:`.gdpc.vector_tools`)
 """
 
 #: Package title.

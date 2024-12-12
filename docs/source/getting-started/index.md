@@ -1,6 +1,6 @@
 # Getting started
 
-The part of the documentation serves as introduction to GDPC.
+This part of the documentation serves as introduction to GDPC.
 
 
 ```{rubric} Contents

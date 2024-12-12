@@ -43,10 +43,10 @@ to functions like `Editor.placeBlock` and what functions like
 `Editor.getBlock` return. `Block` instances that represent "simple" blocks can
 be created by passing the technical ID of the block to the constructor:
 {python}`block = Block("stone")`. For more details and more complex cases, see
-[Advanced blocks](#advanced-blocks).
+[Overview - Advanced blocks](#advanced-blocks).
 
 
-## Setting blocks
+## Getting/setting blocks
 
 Blocks can be placed with {meth}`.Editor.placeBlock`. It has two required
 parameters: the (X,Y,Z)-coordinates to place a block at, and the
@@ -60,68 +60,43 @@ editor = Editor()
 editor.placeBlock((0,128,0), Block("red_concrete"))
 ```
 
-```{note}
-In the snippet above, `(0,128,0)` is an example of a 3D vector: three numbers
-that indicate a position in space. In GDPC, any object that "behaves like a
-vector" will work for vector parameters. This includes things like tuples, lists
-and numpy arrays.
-For more info, see [Vectors](../overview/vectors.md).
-```
-
-
-## Getting blocks
-
 Similarly, blocks can be retrieved with {meth}`.Editor.getBlock`:
 
 ```python
-from gdpc import Editor, Block
-
-editor = Editor()
-
 block = editor.getBlock((0,128,0))
 print(block) # e.g. "minecraft:red_concrete"
 ```
 
+```{note}
+In the snippets above, `(0,128,0)` is an example of a 3D vector: three numbers
+that indicate a position in space. In GDPC, any object that "behaves like a
+vector" will work for vector parameters. This includes things like tuples, lists
+and numpy arrays.
+More info will follow in [Overview - Vectors](../overview/vectors.md).
+```
 
-## Getting biomes
+
+## More basic interaction
 
 To get the biome at a position, use {meth}`.Editor.getBiome`. This will return
 the biome's namespaced ID, such as "minecraft:plains".
 
 ```python
-from gdpc import Editor, Block
-
-editor = Editor()
-
 biome = editor.getBiome((0,128,0))
 print(biome) # e.g. "minecraft:plains"
 ```
 
-
-## Running commands
-
-To run a [Minecraft command](https://minecraft.fandom.com/wiki/Commands) in the
-world, use {meth}`.Editor.runCommand()`. The leading "/" must be omitted.
+To run a [Minecraft command](https://minecraft.wiki/w/Commands) in the world,
+use {meth}`.Editor.runCommand()`. The leading "/" must be omitted.
 
 ```python
-from gdpc import Editor
-
-editor = Editor()
-
 editor.runCommand("say hello world!")
 ```
-
-
-## Getting the Minecraft version
 
 To get the Minecraft version you're interacting with, use
 {meth}`.Editor.getMinecraftVersion()`
 
 ```python
-from gdpc import Editor
-
-editor = Editor()
-
 version = editor.getMinecraftVersion()
 print(version) # e.g. "1.19.2"
 ```
