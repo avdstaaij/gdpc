@@ -764,6 +764,10 @@ furniture, but we'll leave that as an exercise to the reader.
 ## Bonus: placing multiple houses
 
 
+TODO: perhaps just cut this.
+
+
+
 We've now finished the code for generating a single house, but there's one more
 thing we will look at: placing multiple of them. GDPC has a very powerful
 feature for applying building logic at different locations: the
