@@ -17,6 +17,7 @@ from typing import (
     Union,
 )
 
+from deprecated import deprecated
 import glm
 import numpy as np
 import skimage.segmentation
@@ -541,9 +542,12 @@ class Rect:
         return f"Rect({tuple(self._offset)}, {tuple(self._size)})"
 
     def __iter__(self) -> Generator[ivec2, None, None]:
-        dx, dy = self.size.x, self.size.y
-        for x, y in itertools.product(range(dx), range(dy)):
-            yield self.begin + ivec2(x, y)
+        """Yields all points contained in this Rect"""
+        return (
+            ivec2(x, y)
+            for x in range(self.begin.x, self.end.x)
+            for y in range(self.begin.y, self.end.y)
+        )
 
     @property
     def offset(self) -> ivec2:
@@ -601,6 +605,7 @@ class Rect:
         return self.middle
 
     @property
+    @deprecated("Iterate through the Rect directly instead")
     def inner(self) -> Generator[ivec2, None, None]:
         """Yields all points contained in this Rect"""
         return (
@@ -728,9 +733,13 @@ class Box:
         return f"Box({tuple(self._offset)}, {tuple(self._size)})"
 
     def __iter__(self) -> Generator[ivec3, None, None]:
-        dx, dy, dz = self.size.x, self.size.y, self.size.z
-        for x, y in itertools.product(range(dx), range(dy), range(dz)):
-            yield self.begin + ivec3(x, y)
+        """Yields all points contained in this Box"""
+        return (
+            ivec3(x, y, z)
+            for x in range(self.begin.x, self.end.x)
+            for y in range(self.begin.y, self.end.y)
+            for z in range(self.begin.z, self.end.z)
+        )
 
     @property
     def offset(self) -> ivec3:
@@ -788,6 +797,7 @@ class Box:
         return self.middle
 
     @property
+    @deprecated("Iterate through the Box directly instead")
     def inner(self) -> Generator[ivec3, None, None]:
         """Yields all points contained in this Box"""
         return (

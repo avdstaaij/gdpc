@@ -38,6 +38,7 @@ setup(
     packages = ["gdpc"], # Note: subpackages must be listed explicitly
     package_dir={"": "src"},
     install_requires=[
+        "Deprecated",
         "matplotlib",
         "more-itertools",
         "NBT",
