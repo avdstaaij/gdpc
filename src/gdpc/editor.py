@@ -2,29 +2,70 @@
 world through the GDMC HTTP interface"""
 
 
-from typing import Dict, Sequence, Union, Optional, List, Iterable
-from numbers import Integral
+from concurrent import futures
 from contextlib import contextmanager
 from copy import copy, deepcopy
-import random
-from concurrent import futures
+from glm import ivec3
 import logging
+from numbers import Integral
+import random
+from typing import Dict, Iterable, List, Optional, Sequence, Union
+
+from typing_extensions import Protocol
 
 import numpy as np
-from glm import ivec3
 
-from .utils import eagerAll, OrderedByLookupDict
-from .vector_tools import Vec3iLike, Rect, Box, addY, dropY
-from .transform import Transform, TransformLike, toTransform
-from .block import Block, transformedBlockOrPalette
 from . import interface
+from .block import Block, BlockName, transformedBlockOrPalette
+from .model import Model
+from .transform import Transform, TransformLike, toTransform
+from .utils import OrderedByLookupDict, eagerAll
+from .vector_tools import ZERO_3D, Box, Rect, Vec3iLike, dropY
 from .world_slice import WorldSlice
 
 
 logger = logging.getLogger(__name__)
 
 
-class Editor:
+class BlockGetterMixin(Protocol):
+
+    @property
+    def size(self) -> ivec3 :...
+
+    def getBlock(self, position: Vec3iLike) -> Optional[Block]: ...
+
+    def getBlocks(self, box: Box):
+        """Returns a Model containing a cuboid of blocks, as defined by box."""
+        if box.getOriginDiagonal > self.size:
+            # FIXME: Out-of-bounds handling
+            raise NotImplementedError()
+
+        return Model(box.size, [self.getBlock(v) for v in box.inner])
+
+class BlockPlacerMixin(Protocol):
+    def placeBlock(self,
+        position:       Union[Vec3iLike, Iterable[Vec3iLike]],
+        block:          Union[Block, Sequence[Block]],
+        replace:        Optional[Union[BlockName, List[BlockName]]] = None
+    ): ...
+
+    def placeBlocks(self,
+        destination_target: Box,
+        source: BlockGetterMixin,
+        source_target: Box = None,
+    ):
+        if source_target is None:
+            source_target = Box(size=source.size)
+
+        if destination_target.size < source_target.size or source.size < source_target.getOriginDiagonal():
+            # FIXME: Out-of-bounds handling
+            raise NotImplementedError()
+
+        for source_v, destination_v in zip(source_target.inner, destination_target.inner):
+            self.placeBlock(destination_v, source.getBlock(source_v))
+
+
+class Editor(BlockGetterMixin, BlockPlacerMixin):
     """Provides a high-level functions to interact with the Minecraft world through the GDMC HTTP
     interface.
 
@@ -57,11 +98,11 @@ class Editor:
 
         self._buffering = buffering
         self._bufferLimit = bufferLimit
-        self._buffer: Dict[ivec3,Block] = {}
+        self._buffer: Dict[Vec3iLike,Block] = {}
         self._commandBuffer: List[str] = []
 
         self._caching = caching
-        self._cache = OrderedByLookupDict[ivec3,Block](cacheLimit)
+        self._cache = OrderedByLookupDict[Vec3iLike,Block](cacheLimit)
 
         self._multithreading = False
         self._multithreadingWorkers = multithreadingWorkers
@@ -88,6 +129,25 @@ class Editor:
         # actually shut down yet. For safety, the last buffer flush must be done on the main thread.
         self.flushBuffer()
 
+    @property
+    def offset(self):
+        """An alias for the Editor's translation."""
+        return self.transform.translation
+
+    @offset.setter
+    def offset(self, value: Vec3iLike):
+        self.transform.translation = value
+
+    @property
+    def size(self):
+        """An alias for the size of the build area."""
+        return self.getBuildArea().size
+
+    @size.setter
+    def size(self, size: Vec3iLike):
+        build_area = self.getBuildArea()
+        build_area.size = size
+        self.setBuildArea(build_area)
 
     @property
     def transform(self):
@@ -95,7 +155,7 @@ class Editor:
         return self._transform
 
     @transform.setter
-    def transform(self, value: Union[Transform, ivec3]):
+    def transform(self, value: Union[Transform, Vec3iLike]):
         self._transform = toTransform(value)
 
     @property
@@ -336,7 +396,7 @@ class Editor:
     def getBlockGlobal(self, position: Vec3iLike):
         """Returns the block at [position], ignoring self.transform.\n
         If the given coordinates are invalid, returns Block("minecraft:void_air")."""
-        _position = ivec3(*position)
+        _position = Vec3iLike(*position)
 
         if self.caching:
             block = self._cache.get(_position)
@@ -376,7 +436,7 @@ class Editor:
         if (
             self._worldSlice is not None and
             self._worldSlice.box.contains(position) and
-            not self._worldSliceDecay[tuple(ivec3(position) - self._worldSlice.box.offset)]
+            not self._worldSliceDecay[tuple(Vec3iLike(position) - self._worldSlice.box.offset)]
         ):
             return self._worldSlice.getBiomeGlobal(position)
 
@@ -387,7 +447,7 @@ class Editor:
         self,
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
         block:          Union[Block, Sequence[Block]],
-        replace:        Optional[Union[str, List[str]]] = None
+        replace:        Optional[Union[BlockName, List[BlockName]]] = None
     ):
         """Places <block> at <position>.\n
         <position> is interpreted as local to the coordinate system defined by self.transform.\n
@@ -405,7 +465,7 @@ class Editor:
         self,
         position:       Union[Vec3iLike, Iterable[Vec3iLike]],
         block:          Union[Block, Sequence[Block]],
-        replace:        Optional[Union[str, Iterable[str]]] = None
+        replace:        Optional[Union[BlockName, Iterable[BlockName]]] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
         If <position> is iterable (e.g. a list), <block> is placed at all positions.
@@ -418,16 +478,16 @@ class Editor:
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in position)
+        success = eagerAll(self._placeSingleBlockGlobal(Vec3iLike(*pos), block, replace) for pos in position)
         self.buffering = oldBuffering
         return success
 
 
     def _placeSingleBlockGlobal(
         self,
-        position:       ivec3,
+        position:       Vec3iLike,
         block:          Union[Block, Sequence[Block]],
-        replace:        Optional[Union[str, Iterable[str]]] = None
+        replace:        Optional[Union[BlockName, Iterable[BlockName]]] = None
     ):
         """Places <block> at <position>, ignoring self.transform.\n
         If <block> is a sequence (e.g. a list), blocks are sampled randomly.\n
@@ -435,7 +495,7 @@ class Editor:
 
         # Check replace condition
         if replace is not None:
-            if isinstance(replace, str):
+            if isinstance(replace, BlockName):
                 replace = [replace]
             if self.getBlockGlobal(position).id not in replace:
                 return True
@@ -463,7 +523,7 @@ class Editor:
         return True
 
 
-    def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block):
+    def _placeSingleBlockGlobalDirect(self, position: Vec3iLike, block: Block):
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
         result = interface.placeBlocks([(position, block)], dimension=self.dimension, doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
@@ -473,7 +533,7 @@ class Editor:
         return True
 
 
-    def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block):
+    def _placeSingleBlockGlobalBuffered(self, position: Vec3iLike, block: Block):
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
         if len(self._buffer) >= self.bufferLimit:
@@ -488,7 +548,7 @@ class Editor:
         If multithreaded buffer flushing is enabled, the worker threads can be awaited with
         awaitBufferFlushes()."""
 
-        def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
+        def flush(blockBuffer: Dict[Vec3iLike, Block], commandBuffer: List[str]):
             # Flush block buffer
             if blockBuffer:
                 response = interface.placeBlocks(blockBuffer.items(), dimension=self.dimension, doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
@@ -594,3 +654,9 @@ class Editor:
             yield
         finally:
             self.transform = originalTransform
+
+    def toBox(self):
+        return Box(self.offset, self.size)
+
+    def toModel(self):
+        return self.getBlocks(Box(ZERO_3D, self.size))

@@ -1,17 +1,18 @@
 """Provides the WorldSlice class"""
-
-from typing import Dict, Iterable, Optional
+import contextlib
 from dataclasses import dataclass
 from io import BytesIO
-from math import floor, ceil, log2
+from math import ceil, floor, log2
+from typing import Dict, Iterable, Optional
 
 from glm import ivec2, ivec3
-from nbt import nbt
 import numpy as np
+from nbt import nbt
 
-from .vector_tools import Vec3iLike, addY, loop2D, loop3D, trueMod2D, Rect
-from .block import Block
 from . import interface
+from .block import Block
+from .editor import BlockGetterMixin
+from .vector_tools import Rect, Vec3iLike, addY, loop2D, loop3D, trueMod2D
 
 
 # Chunk format information:
@@ -75,11 +76,12 @@ class _ChunkSection:
         return self.biomesPalette[self.biomesBitArray[index]]
 
 
-class WorldSlice:
+class WorldSlice(BlockGetterMixin):
     """Contains information on a slice of the world."""
 
     def __init__(self, rect: Rect, dimension: Optional[str] = None, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST):
         """Initialise WorldSlice with region and heightmap."""
+        # TODO: Really needs a refactor
 
         # To protect from calling this with a Box, which can lead to very confusing bugs.
         if not isinstance(rect, Rect):
@@ -131,20 +133,20 @@ class WorldSlice:
                 hmBitArray = _BitArray(hmBitsPerEntry, 16*16, hmRaw)
                 heightmap = self._heightmaps[hmName]
                 for inChunkPos in loop2D(ivec2(16,16)):
-                    try:
+                    with contextlib.suppress(IndexError):
                         # In the heightmap data, the lowest point is encoded as 0, while since
                         # Minecraft 1.18 the actual lowest y position is below zero. We subtract
                         # yBegin from the heightmap value to compensate for this difference.
                         hmPos = -inChunkRectOffset + chunkPos * 16 + inChunkPos # pylint: disable=invalid-unary-operand-type
                         heightmap[hmPos.x, hmPos.y] = hmBitArray[inChunkPos.y * 16 + inChunkPos.x] + self._yBegin
-                    except IndexError:
-                        pass
-
             # Read chunk sections
             for sectionTag in chunkTag['sections']:
                 y = int(sectionTag['Y'].value)
 
-                if (not ('block_states' in sectionTag) or len(sectionTag['block_states']) == 0):
+                if (
+                    'block_states' not in sectionTag
+                    or len(sectionTag['block_states']) == 0
+                ):
                     continue
 
                 blockPalette = sectionTag['block_states']['palette']
@@ -304,7 +306,7 @@ class WorldSlice:
         chunkSection = self._getChunkSectionGlobal(position)
         if chunkSection is None:
             return None
-        biomeCounts: Dict[str, int] = dict()
+        biomeCounts: Dict[str, int] = {}
         for biomePos in loop3D(ivec3(4,4,4)):
             biomeIndex = (biomePos.y << 4) | (biomePos.z << 2) | biomePos.x
             biome = str(chunkSection.getBiomeAtIndex(biomeIndex).value)

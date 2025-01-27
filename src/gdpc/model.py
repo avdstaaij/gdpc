@@ -7,11 +7,11 @@ from glm import ivec3
 
 from .vector_tools import Vec3iLike, Box
 from .transform import TransformLike
-from .editor import Editor
+from .editor import BlockGetterMixin, BlockPlacerMixin
 from .block import Block
 
 
-class Model:
+class Model(BlockGetterMixin, BlockPlacerMixin):
     """A 3D model of Minecraft blocks.
 
     Can be used to store a structure in memory, allowing it to be built under different
@@ -22,12 +22,13 @@ class Model:
         """Constructs a Model of size [size], optionally filled with [blocks]."""
         self._size = ivec3(*size)
         volume = self._size.x * self._size.y * self._size.z
-        if blocks is not None:
-            if len(blocks) != volume:
-                raise ValueError("The number of blocks should be equal to size[0] * size[1] * size[2]")
-            self._blocks = copy(blocks)
-        else:
+        if blocks is None:
             self._blocks = [None] * volume
+
+        elif len(blocks) != volume:
+            raise ValueError("The number of blocks should be equal to size[0] * size[1] * size[2]")
+        else:
+            self._blocks = copy(blocks)
 
 
     @property
@@ -45,14 +46,14 @@ class Model:
         """Returns the block at [vec]"""
         return self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]]
 
-    def setBlock(self, position: Vec3iLike, block: Optional[Block]):
+    def placeBlock(self, position: Vec3iLike, block: Optional[Block]):
         """Sets the block at [vec] to [block]"""
         self._blocks[(position[0] * self._size.y + position[1]) * self._size.z + position[2]] = block
 
 
     def build(
         self,
-        editor:         Editor,
+        editor:         BlockPlacerMixin,
         transformLike:  Optional[TransformLike]         = None,
         substitutions:  Optional[Dict[str, str]]        = None,
         replace:        Optional[Union[str, List[str]]] = None

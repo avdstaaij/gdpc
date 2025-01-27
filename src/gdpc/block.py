@@ -13,6 +13,7 @@ from .vector_tools import Vec3bLike
 from .nbt_tools import nbtToSnbt
 from .block_state_tools import transformAxis, transformFacing, transformRotation
 
+BlockName = str
 
 @dataclass
 class Block:
@@ -38,7 +39,7 @@ class Block:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
     # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
 
-    id:     Optional[str]  = "minecraft:stone"
+    id:     Optional[BlockName]  = "minecraft:stone"
     states: Dict[str, str] = field(default_factory=dict)
     data:   Optional[str]  = None
 
@@ -65,13 +66,11 @@ class Block:
     def stateString(self):
         """Returns a string containing the block states of this block, including the outer brackets."""
         stateString = ",".join([f"{key}={value}" for key, value in self.states.items()])
-        return "" if stateString == "" else f"[{stateString}]"
+        return f"[{stateString}]" if stateString else ""
 
 
     def __str__(self):
-        if not self.id:
-            return ""
-        return self.id + self.stateString() + (self.data if self.data else "")
+        return self.id + self.stateString() + (self.data or "") if self.id else ""
 
 
     def __repr__(self):

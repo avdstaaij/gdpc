@@ -515,6 +515,11 @@ def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2i
     return int(len(corner1) - np.sum(flatSides)), list(flatSides)
 
 
+def anyComponentSmaller(v1: Union[ivec2, ivec3, vec2, vec3], v2: Union[ivec2, ivec3, vec2, vec3]) -> bool:
+    """Checks if any component of v1 is smaller than the corresponding component in v2."""
+    return glm.any(glm.smallerThan(v1, v2))
+
+
 # ==================================================================================================
 # Rect and Box
 # ==================================================================================================
@@ -981,6 +986,13 @@ class Box:
             ivec3(first.x, last.y - 1, last.z) + 1,
         )
 
+    def getDiagonal(self):
+        """Returns the diagonal vector of this Box, representing its size."""
+        return self.size
+
+    def getOriginDiagonal(self):
+        """Returns the diagonal vector from the origin to the end of the box."""
+        return self.end
 
 def rectSlice(array: np.ndarray, rect: Rect) -> np.ndarray:
     """Returns the slice from [array] defined by [rect]"""
