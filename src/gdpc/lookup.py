@@ -290,13 +290,15 @@ MINERAL_BLOCKS = {"minecraft:quartz_block", "minecraft:netherite_block", } \
 # soils
 SPREADING_DIRTS = {"minecraft:mycelium", "minecraft:grass_block", }
 DIRTS = {"minecraft:coarse_dirt", "minecraft:dirt",
-         "minecraft:grass_path", "minecraft:farmland", "minecraft:podzol", } \
+         "minecraft:farmland", "minecraft:podzol", } \
         | SPREADING_DIRTS
+FERTILE_SOILS = DIRTS | {"minecraft:rooted_dirt", "minecraft:moss_block", "minecraft:mud", "minecraft:muddy_mangrove_roots"}
 SANDS = variate(SAND_TYPES, "sand")
 GRANULARS = {"minecraft:gravel", } | SANDS
 RIVERBED_SOILS = {"minecraft:dirt", "minecraft:clay",
                   "minecraft:sand", "minecraft:gravel", }
-OVERWORLD_SOILS = DIRTS | GRANULARS | RIVERBED_SOILS
+OVERWORLD_SOILS = FERTILE_SOILS | GRANULARS | RIVERBED_SOILS
+
 
 NYLIUMS = variate(FUNGUS_TYPES, "nylium")
 NETHERRACKS = {"minecraft:netherrack", } | NYLIUMS | NETHERRACK_ORES
