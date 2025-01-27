@@ -540,7 +540,7 @@ class Rect:
     def __repr__(self) -> str:
         return f"Rect({tuple(self._offset)}, {tuple(self._size)})"
 
-    def __iter__(self) -> ivec2:
+    def __iter__(self) -> Generator[ivec2, None, None]:
         dx, dy = self.size.x, self.size.y
         for x, y in itertools.product(range(dx), range(dy)):
             yield self.begin + ivec2(x, y)
@@ -727,7 +727,7 @@ class Box:
     def __repr__(self) -> str:
         return f"Box({tuple(self._offset)}, {tuple(self._size)})"
 
-    def __iter__(self) -> ivec3:
+    def __iter__(self) -> Generator[ivec3, None, None]:
         dx, dy, dz = self.size.x, self.size.y, self.size.z
         for x, y in itertools.product(range(dx), range(dy), range(dz)):
             yield self.begin + ivec3(x, y)
