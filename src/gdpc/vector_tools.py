@@ -75,6 +75,7 @@ class Vec3bLike(Protocol):
 # == constants ==
 
 
+ZERO_2D = ivec2(0, 0)
 X_2D = ivec2(1, 0)
 Y_2D = ivec2(0, 1)
 XY_2D: ivec2 = X_2D + Y_2D
@@ -121,7 +122,7 @@ def _spiraloidDirections3D(
     if include_up:     yield UP_3D                                        # ...the UP vector...
     if top_pattern:    yield from (UP_3D + c for c in top_pattern)        # ...the upward diagonal vectors...
     if center_pattern: yield from center_pattern[:len(center_pattern)//2] # ...the first half of the horizontal vectors...
-    if include_center: yield ivec3(0, 0, 0)                               # ...the origin...
+    if include_center: yield ZERO_3D                                      # ...the origin...
     if center_pattern: yield from center_pattern[len(center_pattern)//2:] # ...the second half of the horizontal vectors...
     if bottom_pattern: yield from (DOWN_3D + c for c in bottom_pattern)   # ...the downward diagonal vectors...
     if include_down:   yield DOWN_3D                                      # ...and the DOWN vector.
@@ -146,6 +147,8 @@ def _symmetricSpiraloidDirections3D(
 
 # == constants ==
 
+
+ZERO_3D = ivec3(0, 0, 0)
 
 X_3D = ivec3(1, 0, 0)
 Y_3D = ivec3(0, 1, 0)
@@ -211,6 +214,7 @@ ORDERED_DIAGONALS:                        Tuple[ivec3, ...] = tuple(_symmetricSp
 # ==== aliases ====
 
 
+ZERO: ivec3 = ZERO_3D
 X: ivec3 = X_3D
 Y: ivec3 = Y_3D
 Z: ivec3 = Z_3D
