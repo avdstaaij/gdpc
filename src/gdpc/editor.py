@@ -50,12 +50,15 @@ class BlockPlacerMixin(Protocol):
     ): ...
 
     def placeBlocks(self,
-        destination_target: Box,
         source: BlockGetterMixin,
-        source_target: Box = None,
+        destination_target: Box = None,  # if unspecified, assumes equal to source
+        source_target: Box = None,  # if unspecified, assumes equal to destination
     ):
+        if destination_target is None:
+            destination_target = Box(size=source.size)
+
         if source_target is None:
-            source_target = Box(size=source.size)
+            source_target = destination_target
 
         if destination_target.size < source_target.size or source.size < source_target.getOriginDiagonal():
             # FIXME: Out-of-bounds handling
