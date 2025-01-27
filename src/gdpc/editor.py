@@ -634,6 +634,7 @@ class Editor:
         """Loads the world slice for the given XZ-rectangle.\n
         The rectangle must be given in **global coordinates**; :attr:`.transform` is ignored.\n
         If ``rect`` is None, the world slice of the current build area is loaded.\n
+        If ``heightmapTypes`` is None, all heightmaps are loaded.\n
         If ``cache`` is ``True``, the loaded worldSlice is cached in this editor. It can then be
         accessed through :attr:`.worldSlice`.
         If a world slice was already cached, it is replaced.
@@ -651,7 +652,11 @@ class Editor:
 
 
     def updateWorldSlice(self) -> WorldSlice:
-        """Updates the cached world slice."""
+        """Updates the cached world slice.\n
+        Loads and caches new world slice for the same area and with the same heightmaps as the
+        currently cached one.
+        Raises a :exc:`RuntimeError` if no world slice is cached.
+        """
         if self._worldSlice is None:
             raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
         return self.loadWorldSlice(self._worldSlice.rect, self._worldSlice.heightmaps.keys(), cache=True)

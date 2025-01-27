@@ -49,7 +49,7 @@ geometry.placeCuboid(
 geometry.placeFittingCylinder(
     editor,
     groundCenter + ivec3(-3, -10, -10), # Corner 1
-    groundCenter + ivec3( 4,  20, -3), # Corner 2
+    groundCenter + ivec3( 4,  20,  -3), # Corner 2
     Block("lime_concrete")
 )
 
@@ -137,7 +137,7 @@ editor.placeBlock(myShape, Block("red_concrete"))
 ```
 
 ```{tip}
-To build the same shape at different locations, you could create a function that
+To build the same shape at different locations, you could write a function that
 generates the shape from a given starting point, or use GDPC's transformation
 system
 ([Overview - The transformation system](#the-transformation-system)).

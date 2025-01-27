@@ -11,7 +11,7 @@ three components:
 - Its *namespaced ID*.
 
   This is the main identifier that all blocks have, such as
-  "minecraft:stone". More information can be found
+  `minecraft:stone`. More information can be found
   [here](https://minecraft.wiki/w/Resource_location).
 
   &nbsp;
@@ -26,7 +26,7 @@ three components:
   Block states are simple key-value properties that usually denote basic
   variations in the state of a block.
   For example, a stairs block can be facing in one of four possible directions
-  (north, south, east, west).
+  (`north`, `east`, `south`, `west`).
   A full list of all block states can be found
   [here](https://minecraft.wiki/w/Block_states).
 

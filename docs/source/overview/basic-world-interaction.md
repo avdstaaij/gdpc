@@ -27,8 +27,8 @@ modules, but they can also be imported directly from the root package:
 {python}`from gdpc import Editor, Block`.
 
 The `Editor` class is the main point of communication between GDPC and
-the GDMC HTTP interface, and thus, the Minecraft world. Every form of world
-interaction goes through it. It has methods like
+the GDMC HTTP interface, and thus, the Minecraft world. Almost every form of
+world interaction goes through it. It has methods like
 `placeBlock()` and `getBlock()`,
 and it stores various settings, resources, buffers and caches related to world
 interaction.

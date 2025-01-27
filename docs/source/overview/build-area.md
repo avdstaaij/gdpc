@@ -1,3 +1,4 @@
+{#the-build-area}
 # The build area
 
 ## What is it?
