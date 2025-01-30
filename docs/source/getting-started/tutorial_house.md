@@ -10,7 +10,9 @@ ground at a spot that can be specified in-game, and will have some simple
 randomized variation.
 
 The tutorial assumes basic knowledge of Python and numpy, but almost no
-knowledge of Minecraft (beyond how to launch it).
+knowledge of Minecraft (beyond how to launch it). If anything is unclear, feel
+free to hop on the [GDMC Discord]((https://discord.gg/YwpPCRQWND)), where we'll
+be happy to clear it up for you!
 
 
 ## Preparing a world
@@ -27,8 +29,6 @@ following settings are recommended for this tutorial:
 
 
 ## Hello block!
-
-<!-- ### Placing a block -->
 
 Now, we'll make a change to world using GDPC. We'll start by placing a single
 block in the air, close to the world spawn.
@@ -79,11 +79,14 @@ command (type it in chat):
 /tp 0 129 0
 ```
 
-<!-- ### Getting a block
+```{figure} ../images/tutorial/1-hello-block.png
+:width: 300
+Your first block!
+```
 
 It's also possible to retrieve blocks from the world (though we won't need it
-for this tutorial). For this, there's {meth}`.Editor.getBlock`. As an example,
-we'll retrieve the block we just placed.
+for this tutorial). For this, there's {meth}`.Editor.getBlock`. As a quick
+example, we'll retrieve the block we just placed.
 
 ```{code-block} python
 :emphasize-lines: 7-8
@@ -95,9 +98,10 @@ editor = Editor()
 editor.placeBlock((0,128,0), Block("red_concrete"))
 
 block = editor.getBlock((0,128,0))
-print(block) # minecraft:red_concrete
-``` -->
+print(block)
+```
 
+This should print `minecraft:red_concrete`.
 
 
 ## Working with the build area
@@ -164,7 +168,7 @@ specified in-game.
 
 Now that we know where to build, we can get started on the actual house. We'll
 build it in the northwest corner of the build area.
-For now, we'll have it float in the air (Y=128) -- We'll look at finding the
+For now, we'll have it float in the air (Y=128) -- We'll look into finding the
 ground later. We'll start with a 5x5 floor of stone bricks:
 
 ```{code-block} python
@@ -204,6 +208,13 @@ y = 128
 for x in range(buildArea.offset.x, buildArea.offset.x + 5):
     for z in range(buildArea.offset.z, buildArea.offset.z + 5):
         editor.placeBlock((x, y, z), Block("stone_bricks"))
+```
+
+The result:
+
+```{figure} ../images/tutorial/2-floor.png
+:width: 450
+A small start.
 ```
 
 
@@ -281,6 +292,11 @@ placeCuboidHollow(editor, (x, y, z), (x+4, y+4, z+4), Block("oak_planks"))
 placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
 ```
 
+```{figure} ../images/tutorial/3-walls.png
+:width: 450
+Slowly getting house-shaped...
+```
+
 
 ## Adding a roof
 
@@ -301,7 +317,7 @@ Block info shown by the {keys}`F3` view. We've higlighted the block ID in
 red and the block states in yellow.
 ```
 
-In GDPC, you can specify the block states of a {class}`.Block` instance bye
+In GDPC, you can specify the block states of a {class}`.Block` instance by
 passing a dict as the second parameter:
 
 ```python
@@ -347,6 +363,11 @@ for dx in range(1, 4):
 
 # build the top row of the roof
 placeCuboid(editor, (x+2, y+5, z-1), (x+2, y+5, z+5), Block("oak_planks"))
+```
+
+```{figure} ../images/tutorial/4-roof.png
+:width: 500
+A good roof can make all the difference.
 ```
 
 
@@ -407,9 +428,10 @@ heightmap = editor.worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 # (...)
 ```
 
-We'll place the house such that the midpoint is flush with the ground. The
+We'll place the house such that its midpoint is flush with the ground. The
 heightmap values actually contain the Y-level of one block _above_ the highest
-one, so we subtract one from the value.
+one (because that's how Minecraft stores them), so we subtract one from the
+value.
 
 ```{code-block} python
 :emphasize-lines: 8-12, 17
@@ -452,6 +474,11 @@ placeCuboid(editor, (x+2, y+5, z-1), (x+2, y+5, z+5), Block("oak_planks"))
 If you've been using the same build area, now would be a good time to start
 moving and changing it between steps. Otherwise, the house will build on top of
 the previous one!
+```
+
+```{figure} ../images/tutorial/5-on-ground.png
+:width: 500
+Now it's getting \*terrain-adaptive\*.
 ```
 
 
@@ -579,6 +606,15 @@ for dx in range(1, 4):
 # build the top row of the roof
 yy = y + height + 1
 placeCuboid(editor, (x+2, yy, z-1), (x+2, yy, z+depth+1), Block("oak_planks"))
+```
+
+<!-- As you can see in the image below, adding some randomization can be a
+significant visual improvement when you place a bunch of houses close together. -->
+
+```{figure} ../images/tutorial/6-randomization.png
+:width: 100%
+A varied little town.\
+(We may have manipulated the random values to create a nice screenshot.)
 ```
 
 
@@ -757,52 +793,26 @@ editor.placeBlock((x+2, y+1, z), doorBlock)
 placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
 ```
 
+```{figure} ../images/tutorial/7-details.png
+:width: 500
+An example of the final house. We've come a long way.
+```
+
+
 Of course, there's lots more that we could do, such as windows, lighting and
 furniture, but we'll leave that as an exercise to the reader.
 
 
-## Bonus: placing multiple houses
-
-
-TODO: perhaps just cut this.
-
-
-
-We've now finished the code for generating a single house, but there's one more
-thing we will look at: placing multiple of them. GDPC has a very powerful
-feature for applying building logic at different locations: the
-*transformation system*.
-
-The transformation system allows you to "transform" your frame of reference
-for placing blocks, so that you can always build using local coordinates instead
-of global ones. The concept is based on the use of transformation matrices in
-3D graphics APIs.
-
-First, we'll use the transformation system to set the start of the build area
-
-
-
-
-
-
-
-
-
-The transformation system allows you to "transform" your frame of reference
-for placing blocks, so that you can always build using local coordinates instead
-of global ones. The concept is based on the use of transformation matrices in
-3D graphics APIs.
-The system allows you to not only translate, but also rotate and flip your frame
-of reference. And importantly, blocks that have an orientation (such as stairs
-blocks) will get appropriately transformed as well!
-
-Transformations are represented by the {class}`Transform` class, which consists
-of three components: a translation vector, a rotation and a flip vector. The
-`Editor` class has a {attr}`~.Editor.transform` property that represents that
-editor's frame of reference. It is applied to all block placement
-and retrieval positions.
-
-
 ## Further reading
 
-...
+Congratulations, you've made to the end of the tutorial! We hope it has helped
+you to understand the basics of the various components of GDPC. You could now
+get to work on your own own generative algorithms (perhaps to take part in the
+[Generative Design in Minecraft Competiton](https://gendesignmc.wikidot.com/)),
+but if you're still interested in learning more, you can also continue with the
+following parts of the documentation:
+- The [Overview](../overview/index.md) dives deeper into into all of the
+  concepts explained here, as well as introduce some more advanced concepts such
+  as [the transformation system](#the-transformation-system).
+- The [API Reference](../api/index.rst) gives detailed explanations of all
+  public objects of GDPC.
