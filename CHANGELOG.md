@@ -2,6 +2,12 @@
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
+**Additions**:
+- `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+**Deprecations**:
+- `Rect.inner` and `Box.inner` are deprecated, since the classes can now be directly iterated over.
+
 
 # 7.3.0
 
