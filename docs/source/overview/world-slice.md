@@ -1,3 +1,4 @@
+{#world-slices-and-heightmaps}
 # World slices and heightmaps
 
 ## Introduction
@@ -5,8 +6,8 @@
 The standard way to obtain information about the Minecraft world is through
 {class}`.Editor` methods like {meth}`.Editor.getBlock` and
 {meth}`.Editor.getBiome`. However, there is one alternative way to read the
-world that can be more useful depending on the circumstance: using a
-{class}`.WorldSlice` object.
+world that can be more useful depending on the circumstance: the
+{class}`.WorldSlice` class.
 
 A {class}`.WorldSlice` object is a read-only snapshot of a box-shaped "slice" of
 the world, which GDPC obtains by requesting a single large batch of raw world
@@ -30,7 +31,7 @@ World slices serve two purposes:
    {meth}`Editor.placeBlock()` calls can also take a lot of time, but methods to
    optimize those will be described later, in
    [Overview - Building shapes](#building-shapes) and
-   [Overview - Improving performance](#improving-performance).
+   [Overview - Improving Editor performance](#improving-editor-performance).
    ```
 
 2. *Heightmaps.*\
@@ -38,7 +39,7 @@ World slices serve two purposes:
    helpful when building on the world surface.
 
 
-## Getting a world slice
+## Loading a world slice
 
 There are two ways to load a world slice:
 
@@ -47,13 +48,15 @@ There are two ways to load a world slice:
 
 2. By directly constructing a `WorldSlice` object.
 
-Using {meth}`Editor.loadWorldSlice` is recommended in most cases because it has
+Using {meth}`Editor.loadWorldSlice` is recommended in most cases, because it has
 some features that direct construction doesn't have:
-it uses stored settings from the `Editor` object (such as the GDMC
-HTTP host URL) instead of taking them as parameters, it loads the build area if
-no area is specified, and it can optionally store the loaded world slice in the
-`Editor` to act as a "backing cache" for block and biome retrieval (more on this
-in a bit).
+- It uses stored settings from the `Editor` object (such as the GDMC HTTP host
+  URL) instead of taking them as parameters.
+- It loads the build area if no area is specified.
+- It can optionally store the loaded world slice in the `Editor` to act as a
+  "backing cache" for block and biome retrieval (this will be explained in
+  [Overview - Improving Editor performance](#improving-editor-performance)),
+  which also makes it available as {attr}`.Editor.worldSlice`.
 
 In both cases, the first parameter (a `Rect` object) specifies which area of the
 world to load. World slices always contain all blocks from the lowest Y-level to
@@ -69,16 +72,16 @@ editor = Editor()
 # 1. Load a WorldSlice with Editor.loadWorldSlice()
 worldSlice = editor.loadWorldSlice() # Loads the build area by default
 
-# 2. Store the WorldSlice in the Editor
-editor.loadWorldSlice(cache=True)
-# The WorldSlice will now act as a block and biome cache (explained in the next
-# section) and become available as editor.worldSlice.
-# Only one WorldSlice can be stored at a time in this way.
-
-# 3. Specify the area to load explicitly
+# 2. Specify the area to load explicitly
 buildArea = editor.getBuildArea()
 buildRect = buildArea.toRect() # Converts a 3D Box to its XZ-rect
 worldSlice = editor.loadWorldSlice(buildRect)
+
+# 3. Store the WorldSlice in the Editor
+editor.loadWorldSlice(buildRect, cache=True)
+# The WorldSlice will now act as a block and biome cache (explained later), and
+# become available as editor.worldSlice.
+# An Editor can only store one WorldSlice at a time.
 
 # 4. Construct a WorldSlice directly
 worldSlice = WorldSlice(buildRect) # Specifying the area is required in this case
@@ -87,7 +90,7 @@ worldSlice = WorldSlice(buildRect) # Specifying the area is required in this cas
 
 ## Getting blocks and biomes
 
-### Using a world slice as an Editor cache
+<!-- ### Using a world slice as an Editor cache
 
 If you load a world slice with `Editor.loadWorldSlice(cache=True)`, the
 world slice is stored in the `Editor` and will act as a block and biome cache.
@@ -133,14 +136,15 @@ blocks is available as {attr}`.Editor.worldSliceDecay`.
 
 
 
-### Using a world slice directly
+### Using a world slice directly -->
 
-The `WorldSlice` class has several functions for accessing its contents.
-
-All accessors have a "local" and a "global" variant. The local variant
-interprets coordinates as relative to the specified XZ-rect (so `(0,0,0)` is the
-first position in the slice), while the global variant interpretes coordinates
-as relative to the world origin (so `(0,0,0)` may or may not be in the slice).
+The `WorldSlice` class has several functions for accessing its contents. For
+each type of data, there is both a *local* and a *global* accessor variant. For
+example: {meth}`.WorldSlice.getBlock` and {meth}`.WorldSlice.getBlockGlobal`. The
+local variants interpret coordinates as relative to the specified XZ-rect (so
+`(0,0,0)` is the first position in the slice), while the global variants
+interpret coordinates as relative to the world origin (so `(0,0,0)` may or may
+not be in the slice).
 
 If a block or biome is requested that is not contained in the slice,
 the return value will be `Block("minecraft:void_air")` / `""` respectively.
@@ -150,19 +154,25 @@ Some examples:
 ```python
 from gdpc import Editor, Rect
 
-rect = Rect((2,2), (5,5)) # Rect with corners (2,2,2) and (6,6,6)
+rect = Rect((2,2), (5,5)) # Rect with corners (2,2) and (6,6)
 
 editor = Editor()
-editor.loadWorldSlice(rect, cache=True)
+worldSlice = editor.loadWorldSlice(rect)
 
-height = editor.worldSlice.heightmaps["WORLD_SURFACE"][3,3]
-# `height` now contains the Y-coordinate of the highest non-air block at
-# local (X,Z)=(3,3) / global (X,Z)=(5,5).
+# Get the block and biome at local (X,Z)=(3,64,3) / global (X,Z)=(5,64,5).
+block = worldSlice.getBlock((3,64,3))
+biome = worldSlice.getBiome((3,64,3))
+
+# Get the block and biome at global (X,Z)=(3,64,3) / local (X,Z)=(1,64,1).
+block = worldSlice.getBlockGlobal((3,64,3))
+biome = worldSlice.getBiomeGlobal((3,64,3))
+
+# Get Block("minecraft:void_air"), since this position is not in the slice.
+block = worldSlice.getBlock((6,64,6))
 ```
 
 There are more accessors besides the ones for blocks and biomes. Refer to the
 [API Reference](../api/gdpc.world_slice) for the full list.
-
 
 
 ## Getting and using heightmaps
@@ -172,13 +182,13 @@ Minecraft internally keeps track of several
 Y-height at each XZ-location, for various definitions of "height".
 At the time of writing, there are four types:
 
-- WORLD_SURFACE\
+- `WORLD_SURFACE`\
   Heights of the top non-air blocks.
-- MOTION_BLOCKING\
+- `MOTION_BLOCKING`\
   Heights of the top blocks with a hitbox or fluid.
-- MOTION_BLOCKING_NO_LEAVES\
-  Like MOTION_BLOCKING, but ignoring leaves.
-- OCEAN_FLOOR\
+- `MOTION_BLOCKING_NO_LEAVES`\
+  Like `MOTION_BLOCKING`, but ignoring leaves.
+- `OCEAN_FLOOR`\
   Heights of the top solid blocks.
 
 The `WorldSlice` class provides access to these heightmaps via
@@ -188,10 +198,24 @@ indexed with local coordinates: index `[0,0]` corresponds to the start of the
 world slice rectangle, not the world origin.
 
 ```{warning}
-The heights from the numpy arrays are actually always one higher than what the
-heightmap descriptions from the Minecraft wiki would suggest. GDPC does not
-correct for this; it simply provides the heightmaps as they are stored by
-Minecraft.
+The heightmap values are actually always one higher than what the descriptions
+from the Minecraft wiki would suggest. GDPC does not correct for this; it simply
+provides the heightmaps as they are stored by Minecraft.
+```
+
+Example of reading a value from a heightmap:
+
+```python
+from gdpc import Editor, Rect
+
+rect = Rect((2,2), (5,5)) # Rect with corners (2,2,2) and (6,6,6)
+
+editor = Editor()
+worldSlice = editor.loadWorldSlice(rect)
+
+height = worldSlice.heightmaps["WORLD_SURFACE"][3,3]
+# `height` now contains the Y-coordinate of the highest non-air block (plus 1)
+# at local (X,Z)=(3,3) / global (X,Z)=(5,5).
 ```
 
 ```{note}
@@ -205,44 +229,29 @@ requesting heightmaps, so a direct heightmap reading function may be added to
 GDPC in the future.
 ```
 
-Example of reading a value from a heightmap:
-
-```python
-from gdpc import Editor
-
-rect = Rect((2,2,2), (5,5,5)) # Rect with corners (2,2,2) and (6,6,6)
-
-editor = Editor()
-editor.loadWorldSlice(rect, cache=True)
-
-height = editor.worldSlice.heightmaps["WORLD_SURFACE"][3,3]
-# `height` now contains the Y-coordinate of the highest non-air block at
-# local (X,Z)=(3,3) / global (X,Z)=(5,5).
-```
-
 Heightmaps can be very useful when writing generative algorithms that need to
-adapt to the pre-existing terrain. The following example snippet uses heightmaps
-to build a wall around the perimeter of the build area that follows
+adapt to the pre-existing terrain. For example, the following snippet uses
+heightmaps to build a wall around the perimeter of the build area that follows
 the curvature of the ground:
 
 ```python
-from gdpc import Editor
+from gdpc import Editor, Block
 
 editor = Editor()
 buildArea = editor.getBuildArea()
 buildRect = buildArea.toRect()
-editor.loadBuildArea(buildRect)
+editor.loadWorldSlice(buildRect, cache=True)
 heightmap = editor.worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 
 # Loop through the perimiter of the build area
 for point in buildRect.outline:
     localPoint = point - buildRect.offset
 
-    # You can index a numpy array with a GLM vector by converting to a tuple
+    # You can index a numpy array with a pyGLM vector by converting to a tuple
     height = heightmap[tuple(localPoint)]
 
     for y in range(height, height + 5):
-        editor.placeBlock((point[0], height, point[1]), Block("stone_bricks"))
+        editor.placeBlock((point[0], y, point[1]), Block("stone_bricks"))
 ```
 
 Possible result:

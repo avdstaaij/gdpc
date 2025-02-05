@@ -22,21 +22,8 @@ build-area
 world-slice
 building-shapes
 advanced-blocks
-improving-performance
+improving-editor-performance
 transformation
 additional-tools
 python-module-structure
 ```
-
-<!--
-- basic interaction
-- vectors
-- blocks
-- build area
-- world slice and heightmaps
-- geometry
-- editor performance
-- transformation
-- additional tools (editor_tools and minecraft_tools)
-- exceptions
--->

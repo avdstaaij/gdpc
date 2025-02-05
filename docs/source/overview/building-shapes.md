@@ -149,7 +149,7 @@ The reason why this method of building is more efficient than repeated
 1. The blocks are placed using a single request to the GDMC HTTP interface.
    (Though you can also gain this benefit using `Editor`'s buffering mode, which
    is explained in
-   [Overview - Improving performance](#improving-performance).)
+   [Overview - Improving Editor performance](#improving-editor-performance).)
 2. Block transformation is performed only once. (Block transformation is
    explained in
    [Overview - The transformation system](#the-transformation-system).)
