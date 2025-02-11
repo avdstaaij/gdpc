@@ -11,5 +11,5 @@ This part of the documentation serves as introduction to GDPC.
 :titlesonly:
 
 installation
-tutorial_house
+tutorial-house
 ```
