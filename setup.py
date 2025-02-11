@@ -38,6 +38,7 @@ setup(
     packages = ["gdpc"], # Note: subpackages must be listed explicitly
     package_dir={"": "src"},
     install_requires=[
+        "Deprecated",
         "matplotlib",
         "more-itertools",
         "NBT",
@@ -66,7 +67,8 @@ setup(
     project_urls={
         "Bug Reports":                  "https://github.com/avdstaaij/gdpc/issues",
         "Changelog":                    "https://github.com/avdstaaij/gdpc/blob/master/CHANGELOG.md",
-        "Official Competition Website": "https://gendesignmc.engineering.nyu.edu",
+        # "Official Competition Website": "https://gendesignmc.engineering.nyu.edu",
+        "Official Competition wiki":    "https://gendesignmc.wikidot.com/start",
         "Chat about it on Discord":     "https://discord.gg/YwpPCRQWND",
         "Source":                       "https://github.com/avdstaaij/gdpc",
     },

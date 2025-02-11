@@ -1,6 +1,6 @@
 """Various generic utilities."""
 
-from typing import TypeVar, Generic, Callable, Iterable, OrderedDict, Union
+from typing import Any, Generator, Sequence, TypeVar, Generic, Callable, Iterable, OrderedDict, Union
 import time
 from pathlib import Path
 
@@ -31,12 +31,12 @@ def clamp(x: T, minimum: T, maximum: T) -> T:
 
 def eagerAll(iterable: Iterable) -> bool:
     """Like ``all()``, but always evaluates every element"""
-    results = [result for result in iterable]
+    results = list(iterable)
     return all(results)
 
 def eagerAny(iterable: Iterable) -> bool:
     """Like ``any()``, but always evaluates every element"""
-    results = [result for result in iterable]
+    results = list(iterable)
     return any(results)
 
 
@@ -151,7 +151,21 @@ def readFileBytes(
     """Opens stored file and returns it a string of bytes."""
     if isinstance(filePath, str):
         filePath = Path(filePath)
-    fileObject = open(filePath, 'rb')
-    rawBytes = fileObject.read()
-    fileObject.close()
+    with open(filePath, 'rb') as fileObject:
+        rawBytes = fileObject.read()
     return rawBytes
+
+
+def rotateSequence(sequence: Sequence, n: int = 1) -> Generator[Any, Any, None]:
+    """Rotates a sequence of elements by n positions.
+
+    Args:
+        sequence (Sequence): The sequence of elements to rotate.
+        n (int, optional):   The number of positions to rotate the sequence by. Defaults to 1.
+
+    Yields:
+        Generator[Any, Any, None]: The rotated sequence of elements.
+    """
+    if not sequence:
+        return
+    yield from (*sequence[n:], *sequence[:n])

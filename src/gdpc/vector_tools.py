@@ -11,24 +11,37 @@ This module contains, roughly in order:
 """
 
 
-from typing import Iterator, Any, Iterable, List, Optional, Set, Tuple, Union, Generator
-from typing_extensions import Protocol
-from dataclasses import dataclass
+import itertools
 import math
+from dataclasses import dataclass
+from typing import (
+    Any,
+    FrozenSet,
+    Generator,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
-from more_itertools import powerset
-import numpy as np
-from scipy import ndimage
-import skimage.segmentation
+from deprecated import deprecated
 import glm
-from glm import ivec2, ivec3, vec2, vec3, bvec2, bvec3
+import numpy as np
+import skimage.segmentation
+from glm import bvec2, bvec3, ivec2, ivec3, vec2, vec3
+from more_itertools import powerset
+from scipy import ndimage
+from typing_extensions import Protocol
 
 from .utils import nonZeroSign
-
 
 # ==================================================================================================
 # VecLike Protocols
 # ==================================================================================================
+
 
 class Vec2iLike(Protocol):
     """Protocol for a vector that contains two integers.\n
@@ -38,6 +51,7 @@ class Vec2iLike(Protocol):
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
+
 class Vec3iLike(Protocol):
     """Protocol for a vector that contains three integers.\n
     A class is a Vec3iLike if it contains three integers, which can be accessed
@@ -46,6 +60,7 @@ class Vec3iLike(Protocol):
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
+
 class Vec2bLike(Protocol):
     """Protocol for a vector that contains two bools.\n
     A class is a Vec2iLike if it contains two bools, which can be accessed
@@ -53,6 +68,7 @@ class Vec2bLike(Protocol):
     def __getitem__(self, __i: int) -> bool: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[bool]: ...
+
 
 class Vec3bLike(Protocol):
     """Protocol for a vector that contains three bools.\n
@@ -68,49 +84,187 @@ class Vec3bLike(Protocol):
 # ==================================================================================================
 
 
-UP    = ivec3( 0, 1, 0) #:
-DOWN  = ivec3( 0,-1, 0) #:
-EAST  = ivec3( 1, 0, 0) #:
-WEST  = ivec3(-1, 0, 0) #:
-NORTH = ivec3( 0, 0,-1) #:
-SOUTH = ivec3( 0, 0, 1) #:
-X     = ivec3( 1, 0, 0) #:
-Y     = ivec3( 0, 1, 0) #:
-Z     = ivec3( 0, 0, 1) #:
-XY    = ivec3( 1, 1, 0) #:
-XZ    = ivec3( 1, 0, 1) #:
-YZ    = ivec3( 0, 1, 1) #:
-XYZ   = ivec3( 1, 1, 1) #:
+# ==== 2D values ====
 
-DIAGONALS_2D = (
-    ivec2( 1,  1),
-    ivec2( 1, -1),
-    ivec2(-1,  1),
-    ivec2(-1, -1),
-) #:
 
-DIAGONALS_3D = (
-    ivec3( 1,  1,  0),
-    ivec3( 1,  0,  1),
-    ivec3( 0,  1,  1),
-    ivec3( 1, -1,  0),
-    ivec3( 1,  0, -1),
-    ivec3( 0,  1, -1),
-    ivec3(-1,  1,  0),
-    ivec3(-1,  0,  1),
-    ivec3( 0, -1,  1),
-    ivec3(-1, -1,  0),
-    ivec3(-1,  0, -1),
-    ivec3( 0, -1, -1),
-    ivec3( 1,  1,  1),
-    ivec3( 1,  1, -1),
-    ivec3( 1, -1,  1),
-    ivec3(-1,  1,  1),
-    ivec3( 1, -1, -1),
-    ivec3(-1, -1,  1),
-    ivec3(-1,  1, -1),
-    ivec3(-1, -1, -1),
-) #:
+# == constants ==
+
+
+ZERO_2D = ivec2(0, 0) #:
+X_2D = ivec2(1, 0) #:
+Y_2D = ivec2(0, 1) #:
+XY_2D: ivec2 = X_2D + Y_2D #:
+
+EAST_2D:  ivec2 = X_2D #:
+WEST_2D:  ivec2 = -EAST_2D #:
+SOUTH_2D: ivec2 = Y_2D #:
+NORTH_2D: ivec2 = -SOUTH_2D #:
+
+NORTHWEST_2D: ivec2 = NORTH_2D + WEST_2D #:
+NORTHEAST_2D: ivec2 = NORTH_2D + EAST_2D #:
+SOUTHEAST_2D: ivec2 = SOUTH_2D + EAST_2D #:
+SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D #:
+
+CARDINALS_2D:               FrozenSet[ivec2] = frozenset({NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}) #:
+INTERCARDINALS_2D:          FrozenSet[ivec2] = frozenset({NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}) #:
+CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D #:
+# NOTE: Legacy format
+DIAGONALS_2D              = tuple(INTERCARDINALS_2D) #:
+
+# starting East, moving clockwise
+# NOTE: Use `utils.rotateSequence(...)` to start at a different point
+ORDERED_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, SOUTH_2D, WEST_2D, NORTH_2D) #:
+ORDERED_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (SOUTHEAST_2D, SOUTHWEST_2D, NORTHWEST_2D, NORTHEAST_2D) #:
+ORDERED_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_2D, ORDERED_INTERCARDINALS_2D))) #:
+
+
+# ==== 3D values ====
+
+
+# == functions for generating constants ==
+
+
+def _spiraloidDirections3D(
+        top_pattern:     Optional[Tuple[ivec3, ...]],
+        center_pattern:  Optional[Tuple[ivec3, ...]],
+        bottom_pattern:  Optional[Tuple[ivec3, ...]],
+        include_up:      bool = False,
+        include_center:  bool = False,
+        include_down:    bool = False
+    ) -> Generator[ivec3, None, None]:
+    """yields 3D direction vectors of a spiraloid, where patterns can be provided to be combined with a top, center and bottom vector."""
+
+    # If desired, yields...
+    if include_up:     yield UP_3D                                        # ...the UP vector...
+    if top_pattern:    yield from (UP_3D + c for c in top_pattern)        # ...the upward diagonal vectors...
+    if center_pattern: yield from center_pattern[:len(center_pattern)//2] # ...the first half of the horizontal vectors...
+    if include_center: yield ZERO_3D                                      # ...the origin...
+    if center_pattern: yield from center_pattern[len(center_pattern)//2:] # ...the second half of the horizontal vectors...
+    if bottom_pattern: yield from (DOWN_3D + c for c in bottom_pattern)   # ...the downward diagonal vectors...
+    if include_down:   yield DOWN_3D                                      # ...and the DOWN vector.
+
+
+def _symmetricSpiraloidDirections3D(
+        top_and_bottom_pattern: Optional[Tuple[ivec3, ...]],
+        central_pattern:        Optional[Tuple[ivec3, ...]],
+        include_up_and_down:    bool = False,
+        include_center:         bool = False,
+    ) -> Generator[ivec3, None, None]:
+    """Yields 3D direction vectors of a spiraloid, mirrored across the XZ-plane."""
+    yield from _spiraloidDirections3D(
+        top_pattern     = top_and_bottom_pattern,
+        center_pattern  = central_pattern,
+        bottom_pattern  = top_and_bottom_pattern,
+        include_up      = include_up_and_down,
+        include_center  = include_center,
+        include_down    = include_up_and_down
+    )
+
+
+# == constants ==
+
+
+ZERO_3D = ivec3(0, 0, 0) #:
+
+X_3D = ivec3(1, 0, 0) #:
+Y_3D = ivec3(0, 1, 0) #:
+Z_3D = ivec3(0, 0, 1) #:
+
+XY_3D: ivec3 = X_3D + Y_3D #:
+XZ_3D: ivec3 = X_3D + Z_3D #:
+YZ_3D: ivec3 = Y_3D + Z_3D #:
+
+XYZ_3D: ivec3 = X_3D + Y_3D + Z_3D #:
+
+UP_3D:    ivec3 = Y_3D #:
+DOWN_3D:  ivec3 = -UP_3D #:
+EAST_3D:  ivec3 = X_3D #:
+WEST_3D:  ivec3 = -EAST_3D #:
+SOUTH_3D: ivec3 = Z_3D #:
+NORTH_3D: ivec3 = -SOUTH_3D #:
+
+NORTHEAST_3D: ivec3 = NORTH_3D + EAST_3D #:
+NORTHWEST_3D: ivec3 = NORTH_3D + WEST_3D #:
+SOUTHWEST_3D: ivec3 = SOUTH_3D + WEST_3D #:
+SOUTHEAST_3D: ivec3 = SOUTH_3D + EAST_3D #:
+
+CARDINALS_3D:               FrozenSet[ivec3] = frozenset({NORTH_3D, SOUTH_3D, EAST_3D, WEST_3D}) #:
+INTERCARDINALS_3D:          FrozenSet[ivec3] = frozenset({NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_3D, SOUTHWEST_3D}) #:
+CARDINALS_AND_DIAGONALS_3D: FrozenSet[ivec3] = CARDINALS_3D | INTERCARDINALS_3D #:
+
+# starting East, moving clockwise
+# NOTE: Use `utils.rotateSequence(ORDERED_..., n)` to change the starting point while maintaining the order of the sequence
+#       E.g. n=1 starts at the second point; n=-1 starts at the last point
+# NOTE: Use `reversed(utils.rotateSequence(ORDERED_...))` to move counterclockwise from east
+#       This does not work for sequences with differing Y-values!
+#       To achieve that, transform the values for each layer first, then recombine them.
+#       E.g. `reverse(utils.rotateSequence([UP_3D + c for c in ORDERED_CARDINALS_3D])) + reverse(utils.rotateSequence(ORDERED_CARDINALS_3D)) + ...`
+ORDERED_CARDINALS_3D:               Tuple[ivec3, ...] = (EAST_3D, SOUTH_3D, WEST_3D, NORTH_3D) #:
+ORDERED_INTERCARDINALS_3D:          Tuple[ivec3, ...] = (SOUTHEAST_3D, SOUTHWEST_3D, NORTHWEST_3D, NORTHEAST_3D) #:
+ORDERED_CARDINALS_AND_DIAGONALS_3D: Tuple[ivec3, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_3D, ORDERED_INTERCARDINALS_3D))) #:
+
+DIRECTIONS_3D:     FrozenSet[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D} #:
+EDGE_DIAGONALS_3D: FrozenSet[ivec3] = INTERCARDINALS_3D | {
+    verticality + cardinal
+    for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), CARDINALS_3D)
+} #:
+DIRECTIONS_AND_EDGE_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_3D | EDGE_DIAGONALS_3D #:
+CORNER_DIAGONALS_3D:              FrozenSet[ivec3] = frozenset({
+    verticality + cardinal
+    for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
+}) #:
+DIRECTIONS_AND_ALL_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
+# TODO: tuple() for backwards compatibility. Remove on major release
+DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D) #:
+
+# Moving Up to Down, clockwise starting East
+# NOTE: For other combinations, use `generate_[symmetric_]spiraloid_vectors_3D()`
+ORDERED_DIRECTIONS_3D:                    Tuple[ivec3, ...] = (UP_3D, *ORDERED_CARDINALS_3D, DOWN_3D)
+ORDERED_EDGE_DIAGONALS_3D:                Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_3D,               ORDERED_INTERCARDINALS_3D                                   )) #:
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D: Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_3D,               ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)) #:
+ORDERED_CORNER_DIAGONALS_3D:              Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_INTERCARDINALS_3D,          None                                                        )) #:
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D:  Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)) #:
+ORDERED_DIAGONALS:                        Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_INTERCARDINALS_3D                                   )) #:
+
+
+# ==== aliases ====
+
+
+ZERO: ivec3 = ZERO_3D #:
+X: ivec3 = X_3D #:
+Y: ivec3 = Y_3D #:
+Z: ivec3 = Z_3D #:
+XY: ivec3 = XY_3D #:
+XZ: ivec3 = XZ_3D #:
+YZ: ivec3 = YZ_3D #:
+XYZ: ivec3 = XYZ_3D #:
+UP :   ivec3 = UP_3D #:
+DOWN:  ivec3 = DOWN_3D #:
+EAST:  ivec3 = EAST_3D #:
+WEST:  ivec3 = WEST_3D #:
+SOUTH: ivec3 = SOUTH_3D #:
+NORTH: ivec3 = NORTH_3D #:
+NORTHEAST: ivec3 = NORTHEAST_3D #:
+NORTHWEST: ivec3 = NORTHWEST_3D #:
+SOUTHWEST: ivec3 = SOUTHWEST_3D #:
+SOUTHEAST: ivec3 = SOUTHEAST_3D #:
+CARDINALS:               FrozenSet[ivec3] = CARDINALS_3D #:
+INTERCARDINALS:          FrozenSet[ivec3] = INTERCARDINALS_3D #:
+CARDINALS_AND_DIAGONALS: FrozenSet[ivec3] = CARDINALS_AND_DIAGONALS_3D #:
+EDGE_DIAGONALS:                FrozenSet[ivec3] = EDGE_DIAGONALS_3D #:
+CORNER_DIAGONALS:              FrozenSet[ivec3] = CORNER_DIAGONALS_3D #:
+DIRECTIONS:                    FrozenSet[ivec3] = DIRECTIONS_3D #:
+DIRECTIONS_AND_EDGE_DIAGONALS: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
+DIRECTIONS_AND_ALL_DIAGONALS:  FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D #:
+ORDERED_CARDINALS:               Tuple[ivec3, ...] = ORDERED_CARDINALS_3D #:
+ORDERED_INTERCARDINALS:          Tuple[ivec3, ...] = ORDERED_INTERCARDINALS_3D #:
+ORDERED_CARDINALS_AND_DIAGONALS: Tuple[ivec3, ...] = ORDERED_CARDINALS_AND_DIAGONALS_3D #:
+ORDERED_EDGE_DIAGONALS:                Tuple[ivec3, ...] = ORDERED_EDGE_DIAGONALS_3D #:
+ORDERED_CORNER_DIAGONALS:              Tuple[ivec3, ...] = ORDERED_CORNER_DIAGONALS_3D #:
+ORDERED_DIRECTIONS:                    Tuple[ivec3, ...] = ORDERED_DIRECTIONS_3D #:
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS: Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS:  Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D #:
+DIAGONALS: tuple = DIAGONALS_3D #:
 
 
 # ==================================================================================================
@@ -182,6 +336,28 @@ def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
 def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
     """Returns ``vec``, rotated in the XZ-plane by ``rotation``"""
     return addY(rotate2D(dropY(vec), rotation), vec[1])
+
+
+def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
+    """Returns ``vec``, rotated by ``rotation`` degrees.
+
+    ``degrees`` must be a multiple of 90.
+    """
+
+    if degrees % 90 != 0:
+        raise ValueError("Only ±90°-rotations and their multiples are valid!")
+
+    rotation: int = (degrees // 90) % 4  # Convert to quarter-turns
+
+    return rotate2D(vec, rotation)
+
+
+def rotate3Ddeg(vec: Vec3iLike, degrees: int) -> ivec3:
+    """Returns ``vec``, rotated in the XZ-plane by ``rotation`` degrees.
+
+    ``degrees`` must be a multiple of 90.
+    """
+    return addY(rotate2Ddeg(dropY(vec), degrees), vec[1])
 
 
 def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
@@ -259,6 +435,7 @@ def length2(vec: Union[Vec2iLike, Vec3iLike]) -> int:
     if len(vec) == 3: return int(glm.length2(vec3(*vec)))
     raise ValueError()
 
+
 def distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]) -> float:
     """Returns the distance between ``vecA`` and ``vecB``"""
     if len(vecA) == 2 and len(vecB) == 2: return glm.distance(vec2(*vecA), vec2(*vecB))
@@ -291,7 +468,7 @@ def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Tuple[ivec2, ive
         ivec2(
             corner1[0] if corner1[0] > corner2[0] else corner2[0],
             corner1[1] if corner1[1] > corner2[1] else corner2[1],
-        )
+        ),
     )
 
 
@@ -308,7 +485,7 @@ def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Tuple[ivec3, ive
             corner1[0] if corner1[0] > corner2[0] else corner2[0],
             corner1[1] if corner1[1] > corner2[1] else corner2[1],
             corner1[2] if corner1[2] > corner2[2] else corner2[2],
-        )
+        ),
     )
 
 
@@ -318,7 +495,7 @@ def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2i
     Returns (dimensionality, list of indices of dimensions for which the volume is flat).
     For example: ``(2, [0,2])`` means that the volume is flat in the x and z axes."""
     difference = np.array(corner1) - np.array(corner2)
-    flatSides = np.argwhere(difference == 0).flatten()
+    flatSides: np.ndarray[Any, np.dtype[np.signedinteger[Any]]] = np.argwhere(difference == 0).flatten()
     return int(len(corner1) - np.sum(flatSides)), list(flatSides)
 
 
@@ -335,11 +512,11 @@ class Rect:
     """A rectangle, defined by an offset and a size"""
 
     _offset: ivec2
-    _size:   ivec2
+    _size: ivec2
 
     def __init__(self, offset: Vec2iLike = (0,0), size: Vec2iLike = (0,0)) -> None:
         self._offset = ivec2(*offset)
-        self._size   = ivec2(*size)
+        self._size = ivec2(*size)
 
     def __hash__(self) -> int:
         """Returns the hash of this Rect"""
@@ -347,6 +524,14 @@ class Rect:
 
     def __repr__(self) -> str:
         return f"Rect({tuple(self._offset)}, {tuple(self._size)})"
+
+    def __iter__(self) -> Generator[ivec2, None, None]:
+        """Yields all points contained in this Rect"""
+        return (
+            ivec2(x, y)
+            for x in range(self.begin.x, self.end.x)
+            for y in range(self.begin.y, self.end.y)
+        )
 
     @property
     def offset(self) -> ivec2:
@@ -404,6 +589,7 @@ class Rect:
         return self.middle
 
     @property
+    @deprecated("Iterate through the Rect directly instead")
     def inner(self) -> Generator[ivec2, None, None]:
         """Yields all points contained in this Rect"""
         return (
@@ -415,30 +601,31 @@ class Rect:
     @property
     def area(self) -> int:
         """This Rect's surface area"""
-        return self._size.x*self._size.y
+        return self._size.x * self._size.y
 
     @property
     def corners(self) -> Generator[ivec2, None, None]:
         """Yields this Rect's corner points"""
         return (
             self._offset + sum(subset)
-            for subset in powerset([ivec2(self._size.x-1, 0), ivec2(0, self._size.y-1)])
+            for subset in powerset(
+                [ivec2(self._size.x - 1, 0), ivec2(0, self._size.y - 1)]
+            )
         )
 
     def contains(self, vec: Vec2iLike) -> bool:
         """Returns whether this Rect contains ``vec``"""
         return (
-            self.begin.x <= vec[0] < self.end.x and
-            self.begin.y <= vec[1] < self.end.y
+            self.begin.x <= vec[0] < self.end.x and self.begin.y <= vec[1] < self.end.y
         )
 
     def collides(self, other: 'Rect') -> bool:
         """Returns whether this Rect and ``other`` have any overlap"""
         return (
-            self.begin.x <= other.end  .x and
-            self.end  .x >= other.begin.x and
-            self.begin.y <= other.end  .y and
-            self.end  .y >= other.begin.y
+                self.begin.x <= other.end  .x
+            and self.end  .x >= other.begin.x
+            and self.begin.y <= other.end  .y
+            and self.end  .y >= other.begin.y
         )
 
     def squaredDistanceToVec(self, vec: Vec2iLike) -> int:
@@ -507,11 +694,11 @@ class Rect:
         """Yields this Rect's outline points"""
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
         first = self.begin
-        last  = self.end - 1
-        yield from loop2D(ivec2(first.x, first.y), ivec2(last.x  -1, first.y   ) + 1)
-        yield from loop2D(ivec2(last.x,  first.y), ivec2(last.x,     last.y  -1) + 1)
-        yield from loop2D(ivec2(last.x,  last.y),  ivec2(first.x +1, last.y    ) - 1)
-        yield from loop2D(ivec2(first.x, last.y),  ivec2(first.x,    first.y +1) - 1)
+        last = self.end - 1
+        yield from loop2D(ivec2(first.x, first.y), ivec2(last.x  - 1, first.y    ) + 1)
+        yield from loop2D(ivec2(last.x,  first.y), ivec2(last.x,      last.y  - 1) + 1)
+        yield from loop2D(ivec2(last.x,  last.y ), ivec2(first.x + 1, last.y     ) - 1)
+        yield from loop2D(ivec2(first.x, last.y ), ivec2(first.x,     first.y + 1) - 1)
 
 
 @dataclass()
@@ -519,18 +706,27 @@ class Box:
     """A box, defined by an offset and a size"""
 
     _offset: ivec3
-    _size:   ivec3
+    _size: ivec3
 
-    def __init__(self, offset: Vec3iLike = (0,0,0), size: Vec3iLike = (0,0,0)):
+    def __init__(self, offset: Vec3iLike = (0, 0, 0), size: Vec3iLike = (0, 0, 0)) -> None:
         self._offset = ivec3(*offset)
-        self._size   = ivec3(*size)
+        self._size = ivec3(*size)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Returns the hash of this Box"""
         return hash((self.offset, self.size))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Box({tuple(self._offset)}, {tuple(self._size)})"
+
+    def __iter__(self) -> Generator[ivec3, None, None]:
+        """Yields all points contained in this Box"""
+        return (
+            ivec3(x, y, z)
+            for x in range(self.begin.x, self.end.x)
+            for y in range(self.begin.y, self.end.y)
+            for z in range(self.begin.z, self.end.z)
+        )
 
     @property
     def offset(self) -> ivec3:
@@ -588,6 +784,7 @@ class Box:
         return self.middle
 
     @property
+    @deprecated("Iterate through the Box directly instead")
     def inner(self) -> Generator[ivec3, None, None]:
         """Yields all points contained in this Box"""
         return (
@@ -600,33 +797,39 @@ class Box:
     @property
     def volume(self) -> int:
         """This Box's volume"""
-        return self._size.x*self._size.y*self._size.z
+        return self._size.x * self._size.y * self._size.z
 
     @property
-    def corners(self) -> Generator[ivec3, None, None]:
+    def corners(self) -> List[ivec3]:
         """Yields this Box's corner points"""
         return [
             self._offset + sum(subset)
-            for subset in powerset([ivec3(self._size.x-1, 0, 0), ivec3(0, self._size.y-1, 0), ivec3(0, 0, self._size.z-1)])
+            for subset in powerset(
+                [
+                    ivec3(self._size.x - 1, 0, 0),
+                    ivec3(0, self._size.y - 1, 0),
+                    ivec3(0, 0, self._size.z - 1),
+                ]
+            )
         ]
 
     def contains(self, vec: Vec3iLike) -> bool:
         """Returns whether this Box contains ``vec``"""
         return (
-            self.begin.x <= vec[0] < self.end.x and
-            self.begin.y <= vec[1] < self.end.y and
-            self.begin.z <= vec[2] < self.end.z
+                self.begin.x <= vec[0] < self.end.x
+            and self.begin.y <= vec[1] < self.end.y
+            and self.begin.z <= vec[2] < self.end.z
         )
 
     def collides(self, other: 'Box') -> bool:
         """Returns whether this Box and ``other`` have any overlap"""
         return (
-            self.begin.x <= other.end  .x and
-            self.end  .x >= other.begin.x and
-            self.begin.y <= other.end  .y and
-            self.end  .y >= other.begin.y and
-            self.begin.z <= other.end  .z and
-            self.end  .z >= other.begin.z
+                self.begin.x <= other.end  .x
+            and self.end  .x >= other.begin.x
+            and self.begin.y <= other.end  .y
+            and self.end  .y >= other.begin.y
+            and self.begin.z <= other.end  .z
+            and self.end  .z >= other.begin.z
         )
 
     def squaredDistanceToVec(self, vec: Vec3iLike) -> int:
@@ -649,7 +852,7 @@ class Box:
     def dilate(self, dilation: int = 1) -> None:
         """Morphologically dilates this box by ``dilation``"""
         self._offset -= dilation
-        self._size   += dilation*2
+        self._size += dilation * 2
 
     def dilated(self, dilation: int = 1) -> 'Box':
         """Returns a copy of this Box, morphologically dilated by ``dilation``"""
@@ -683,8 +886,8 @@ class Box:
     def bounding(points: Iterable[Vec3iLike]) -> 'Box':
         """Returns the smallest Box containing all ``points``"""
         pointArray = np.fromiter(points, dtype=np.dtype((int, 3)))
-        minPoint = np.min(pointArray, axis=0)
-        maxPoint = np.max(pointArray, axis=0)
+        minPoint: np.ndarray = np.min(pointArray, axis=0)
+        maxPoint: np.ndarray = np.max(pointArray, axis=0)
         return Box(minPoint, maxPoint - minPoint + 1)
 
     def toRect(self) -> Rect:
@@ -695,43 +898,97 @@ class Box:
     def shell(self) -> Generator[ivec3, None, None]:
         """Yields all points on this Box's surface"""
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
-        first = self.begin
-        last  = self.end - 1
+        first: ivec3 = self.begin
+        last: ivec3 = self.end - 1
         # Bottom face
-        yield from loop3D(ivec3(first.x, first.y, first.z), ivec3(last.x, first.y, last.z) + 1)
+        yield from loop3D(
+            ivec3(first.x, first.y, first.z),
+            ivec3(last.x, first.y, last.z) + 1,
+        )
         # Top face
-        yield from loop3D(ivec3(first.x, last.y, first.z), ivec3(last.x, last.y, last.z) + 1)
+        yield from loop3D(
+            ivec3(first.x, last.y, first.z),
+            ivec3(last.x, last.y, last.z) + 1,
+        )
         # Sides
         if self._size.y < 3:
             return
-        yield from loop3D(ivec3(first.x, first.y+1, first.z), ivec3(last.x -1,  last.y-1, first.z   ) + 1)
-        yield from loop3D(ivec3(last.x,  first.y+1, first.z), ivec3(last.x,     last.y-1, last.z  -1) + 1)
-        yield from loop3D(ivec3(last.x,  first.y+1, last.z ), ivec3(first.x +1, last.y+1, last.z    ) - 1)
-        yield from loop3D(ivec3(first.x, first.y+1, last.z ), ivec3(first.x,    last.y+1, first.z +1) - 1)
+        yield from loop3D(
+            ivec3(first.x, first.y + 1, first.z),
+            ivec3(last.x - 1, last.y - 1, first.z) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, first.y + 1, first.z),
+            ivec3(last.x, last.y - 1, last.z - 1) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, first.y + 1, last.z),
+            ivec3(first.x + 1, last.y + 1, last.z) - 1,
+        )
+        yield from loop3D(
+            ivec3(first.x, first.y + 1, last.z),
+            ivec3(first.x, last.y + 1, first.z + 1) - 1,
+        )
 
     @property
     def wireframe(self) -> Generator[ivec3, None, None]:
         """Yields all points on this Box's edges"""
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
-        first = self.begin
-        last  = self.end - 1
+        first: ivec3 = self.begin
+        last: ivec3 = self.end - 1
         # Bottom face
-        yield from loop3D(ivec3(first.x, first.y, first.z), ivec3(last.x -1,  first.y, first.z   ) + 1)
-        yield from loop3D(ivec3(last.x,  first.y, first.z), ivec3(last.x,     first.y, last.z  -1) + 1)
-        yield from loop3D(ivec3(last.x,  first.y, last.z ), ivec3(first.x +1, first.y, last.z    ) - 1)
-        yield from loop3D(ivec3(first.x, first.y, last.z ), ivec3(first.x,    first.y, first.z +1) - 1)
+        yield from loop3D(
+            ivec3(first.x, first.y, first.z),
+            ivec3(last.x - 1, first.y, first.z) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, first.y, first.z),
+            ivec3(last.x, first.y, last.z - 1) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, first.y, last.z),
+            ivec3(first.x + 1, first.y, last.z) - 1,
+        )
+        yield from loop3D(
+            ivec3(first.x, first.y, last.z),
+            ivec3(first.x, first.y, first.z + 1) - 1,
+        )
         # top face
-        yield from loop3D(ivec3(first.x, last.y,  first.z), ivec3(last.x -1,  last.y,  first.z   ) + 1)
-        yield from loop3D(ivec3(last.x,  last.y,  first.z), ivec3(last.x,     last.y,  last.z  -1) + 1)
-        yield from loop3D(ivec3(last.x,  last.y,  last.z ), ivec3(first.x +1, last.y,  last.z    ) - 1)
-        yield from loop3D(ivec3(first.x, last.y,  last.z ), ivec3(first.x,    last.y,  first.z +1) - 1)
+        yield from loop3D(
+            ivec3(first.x, last.y, first.z),
+            ivec3(last.x - 1, last.y, first.z) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, last.y, first.z),
+            ivec3(last.x, last.y, last.z - 1) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, last.y, last.z),
+            ivec3(first.x + 1, last.y, last.z) - 1,
+        )
+        yield from loop3D(
+            ivec3(first.x, last.y, last.z),
+            ivec3(first.x, last.y, first.z + 1) - 1,
+        )
         # sides
         if self._size.y < 3:
             return
-        yield from loop3D(ivec3(first.x, first.y+1, first.z), ivec3(first.x, last.y-1, first.z) + 1)
-        yield from loop3D(ivec3(last.x,  first.y+1, first.z), ivec3(last.x,  last.y-1, first.z) + 1)
-        yield from loop3D(ivec3(last.x,  first.y+1, last.z ), ivec3(last.x,  last.y-1, last.z ) + 1)
-        yield from loop3D(ivec3(first.x, first.y+1, last.z ), ivec3(first.x, last.y-1, last.z ) + 1)
+        yield from loop3D(
+            ivec3(first.x, first.y + 1, first.z),
+            ivec3(first.x, last.y - 1, first.z) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, first.y + 1, first.z),
+            ivec3(last.x, last.y - 1, first.z) + 1,
+        )
+        yield from loop3D(
+            ivec3(last.x, first.y + 1, last.z),
+            ivec3(last.x, last.y - 1, last.z) + 1,
+        )
+        yield from loop3D(
+            ivec3(first.x, first.y + 1, last.z),
+            ivec3(first.x, last.y - 1, last.z) + 1,
+        )
 
 
 def rectSlice(array: np.ndarray, rect: Rect) -> np.ndarray:
@@ -799,9 +1056,10 @@ def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRec
     if boundingRect is None:
         boundingRect = Rect.bounding(points)
 
-    pointMap = np.zeros(boundingRect.size, dtype=int)
-    pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 2))) - np.array(boundingRect.offset)))] = 1
-    filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec2(*seedPoint) - boundingRect.offset), 1, footprint=np.array([[0,1,0],[1,1,1],[0,1,0]]))
+    pointMap = np.zeros(boundingRect.size.to_tuple(), dtype=int)
+    pointMap[
+        tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 2))) - np.array(boundingRect.offset)))] = 1
+    filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec2(*seedPoint) - boundingRect.offset),1, footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
     if not includeInputPoints:
         filled -= pointMap
     return np.argwhere(filled) + np.array(boundingRect.offset)
@@ -820,7 +1078,7 @@ def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox
     if boundingBox is None:
         boundingBox = Box.bounding(points)
 
-    pointMap = np.zeros(boundingBox.size, dtype=int)
+    pointMap = np.zeros(boundingBox.size.to_tuple(), dtype=int)
     pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 3))) - np.array(boundingBox.offset)))] = 1
     filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec3(*seedPoint) - boundingBox.offset), 1, connectivity=1)
     if not includeInputPoints:
@@ -836,26 +1094,24 @@ def filled3D(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Opt
 
 # TODO: separate out thickening code?
 def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLike], width: int = 1) -> np.ndarray:
-    begin: np.ndarray = np.array(begin)
-    end:   np.ndarray = np.array(end)
+    begin = np.array(begin)
+    end = np.array(end)
     delta = end - begin
     maxDelta = int(max(abs(delta)))
     if maxDelta == 0:
         return np.array([])
-    points = delta[np.newaxis,:] * np.arange(maxDelta + 1)[:,np.newaxis] / maxDelta + np.array(begin)
+    points = delta[np.newaxis, :] * np.arange(maxDelta + 1)[:, np.newaxis] / maxDelta + np.array(begin)
     points = np.rint(points).astype(np.signedinteger)
 
     if width > 1:
         minPoint = np.minimum(begin, end)
 
         # convert point array to a map
-        array_width = maxDelta + width*2
-        array = np.zeros([array_width]*len(begin), dtype=int)
+        array_width: int = maxDelta + width * 2
+        array = np.zeros([array_width] * len(begin), dtype=int)
         array[tuple(np.transpose(points - minPoint + width))] = 1
 
-        # dilate map (make it thick)
-        if width > 1:
-            array = ndimage.binary_dilation(array, iterations = width - 1)
+        array = ndimage.binary_dilation(array, iterations=width - 1)
 
         # rebuild point array from map
         points = np.argwhere(array) + minPoint - width
@@ -886,15 +1142,15 @@ def line3D(begin: Vec3iLike, end: Vec3iLike, width: int = 1) -> Generator[ivec3,
 def lineSequence2D(points: Iterable[Vec2iLike], closed=False) -> Generator[ivec2, None, None]:
     """Yields all points on the lines that connect ``points``"""
     pointList = list(points)
-    for i in range((-1 if closed else 0), len(pointList)-1):
-        yield from line2D(pointList[i], pointList[i+1])
+    for i in range((-1 if closed else 0), len(pointList) - 1):
+        yield from line2D(pointList[i], pointList[i + 1])
 
 
 def lineSequence3D(points: Iterable[Vec3iLike], closed=False) -> Generator[ivec3, None, None]:
     """Yields all points on the lines that connect ``points``"""
     pointList = list(points)
-    for i in range((-1 if closed else 0), len(pointList)-1):
-        yield from line3D(pointList[i], pointList[i+1])
+    for i in range((-1 if closed else 0), len(pointList) - 1):
+        yield from line3D(pointList[i], pointList[i + 1])
 
 
 def circle(center: Vec2iLike, diameter: int, filled=False) -> Generator[ivec2, None, None]:
@@ -908,9 +1164,9 @@ def circle(center: Vec2iLike, diameter: int, filled=False) -> Generator[ivec2, N
 
     if diameter == 0:
         empty: List[ivec2] = []
-        return (point for point in empty)
+        return iter(empty)
 
-    e = 1 - (diameter % 2) # for even centers
+    e: int = 1 - (diameter % 2)  # for even centers
     points: Set[ivec2] = set()
 
     def eightPoints(x: int, y: int):
@@ -923,9 +1179,9 @@ def circle(center: Vec2iLike, diameter: int, filled=False) -> Generator[ivec2, N
         points.add(center + ivec2(e + y, 0 - x))
         points.add(center + ivec2(0 - y, 0 - x))
 
-    radius = (diameter-1) // 2
+    radius: int = (diameter - 1) // 2
     x, y = 0, radius
-    d = 3 - 2 * radius
+    d: int = 3 - 2 * radius
     eightPoints(x, y)
     while y >= x:
         # for each pixel we will
@@ -944,15 +1200,17 @@ def circle(center: Vec2iLike, diameter: int, filled=False) -> Generator[ivec2, N
         eightPoints(x, y)
 
     if filled:
-        return filled2D(points, center, Rect(center - radius, ivec2(diameter, diameter)))
-    return (point for point in points)
+        return filled2D(
+            points, center, Rect(center - radius, ivec2(diameter, diameter))
+        )
+    return iter(points)
 
 
 def fittingCircle(corner1: Vec2iLike, corner2: Vec2iLike, filled=False) -> Generator[ivec2, None, None]:
     """Yields the points of the largest circle that fits between ``corner1`` and ``corner2``.\n
     The circle will be centered in the larger axis."""
     corner1_, corner2_ = orderedCorners2D(corner1, corner2)
-    diameter = min(corner2_ - corner1_) + 1
+    diameter: int = min(corner2_ - corner1_) + 1
     return circle((corner1_ + corner2_) // 2, diameter, filled)
 
 
@@ -963,38 +1221,38 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False) -> Generator[
     # Modified version 'inspired' by chandan_jnu from
     # https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
 
-    center:    ivec2 = ivec2(*center)
+    center: ivec2 = ivec2(*center)
     diameters: ivec2 = ivec2(*diameters)
 
     if diameters.x == 0 or diameters.y == 0:
         empty: List[ivec2] = []
-        return (point for point in empty)
+        return iter(empty)
 
     if diameters.x == diameters.y:
         return circle(center, diameters.x, filled)
 
-    e = 1 - (diameters % 2)
+    e: ivec2 = 1 - (diameters % 2)
 
     points: Set[ivec2] = set()
 
-    def fourpoints(x, y):
+    def fourpoints(x, y) -> None:
         points.add(center + ivec2(e.x + x, e.y + y))
-        points.add(center + ivec2(0   - x, e.y + y))
-        points.add(center + ivec2(e.x + x, 0   - y))
-        points.add(center + ivec2(0   - x, 0   - y))
+        points.add(center + ivec2(    - x, e.y + y))
+        points.add(center + ivec2(e.x + x,     - y))
+        points.add(center + ivec2(    - x,     - y))
 
         if filled:
-            points.update(line2D(center + ivec2(0 - x, e.y + y), center + ivec2(e.x + x, e.y + y)))
-            points.update(line2D(center + ivec2(0 - x, 0   - y), center + ivec2(e.x + x, 0   - y)))
+            points.update(line2D(center + ivec2(-x, e.y + y), center + ivec2(e.x + x, e.y + y)))
+            points.update(line2D(center + ivec2(-x,     - y), center + ivec2(e.x + x,     - y)))
 
-    rx, ry = (diameters-1) // 2
+    rx, ry = (diameters - 1) // 2
 
     x, y = 0, ry
 
     # Initial decision parameter of region 1
-    d1 = ((ry * ry) - (rx * rx * ry) + (0.25 * rx * rx))
-    dx = 2 * ry * ry * x
-    dy = 2 * rx * rx * y
+    d1: float = (ry**2) - (rx**2 * ry) + (0.25 * rx**2)
+    dx: int = 2 * ry**2 * x
+    dy: int = 2 * rx**2 * y
 
     # For region 1
     while dx < dy:
@@ -1004,18 +1262,21 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False) -> Generator[
         # decision parameter based on algorithm
         if d1 < 0:
             x += 1
-            dx = dx + (2 * ry * ry)
-            d1 = d1 + dx + (ry * ry)
+            dx += (2 * ry**2)
+            d1 += dx + (ry**2)
         else:
             x += 1
             y -= 1
-            dx = dx + (2 * ry * ry)
-            dy = dy - (2 * rx * rx)
-            d1 = d1 + dx - dy + (ry * ry)
+            dx += (2 * ry**2)
+            dy -= (2 * rx**2)
+            d1 = d1 + dx - dy + (ry**2)
 
     # Decision parameter of region 2
-    d2 = (((ry * ry) * ((x + 0.5) * (x + 0.5)))
-          + ((rx * rx) * ((y - 1) * (y - 1))) - (rx * rx * ry * ry))
+    d2: float = (
+        ((ry**2) * ((x + 0.5) * (x + 0.5)))
+        + ((rx**2) * ((y - 1) * (y - 1)))
+        - (rx**2 * ry**2)
+    )
 
     # Plotting points of region 2
     while y >= 0:
@@ -1034,13 +1295,13 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False) -> Generator[
             dy = dy - (2 * rx * rx)
             d2 = d2 + dx - dy + (rx * rx)
 
-    return (point for point in points)
+    return iter(points)
 
 
 def fittingEllipse(corner1: Vec2iLike, corner2: Vec2iLike, filled=False) -> Generator[ivec2, None, None]:
     """Yields the points of the largest ellipse that fits between ``corner1`` and ``corner2``."""
     _corner1, _corner2 = orderedCorners2D(corner1, corner2)
-    diameters = (_corner2 - _corner1) + 1
+    diameters: ivec2 = (_corner2 - _corner1) + 1
     return ellipse((_corner1 + _corner2) // 2, diameters, filled)
 
 
@@ -1049,15 +1310,17 @@ def cylinder(baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: in
     If a ``diameter`` is even, ``center`` will be the lower center point in that axis.\n
     ``tube`` has precedence over ``hollow``."""
 
-    diameters:  ivec2 = ivec2(diameters) if isinstance(diameters, int) else ivec2(*diameters)
+    diameters: ivec2 = (
+        ivec2(diameters) if isinstance(diameters, int) else ivec2(*diameters)
+    )
     baseCenter: ivec3 = ivec3(*baseCenter)
 
     if diameters.x == 0 or diameters.y == 0 or length == 0:
         empty: List[ivec3] = []
-        return (point for point in empty)
+        return iter(empty)
 
-    corner1 = baseCenter - addDimension((diameters-1)/2, axis, 0)
-    corner2 = corner1 + addDimension(diameters-1, axis, length-1)
+    corner1 = baseCenter - addDimension((diameters - 1) / 2, axis, 0)
+    corner2 = corner1 + addDimension(diameters - 1, axis, length - 1)
     return fittingCylinder(corner1, corner2, axis, tube, hollow)
 
 
@@ -1072,31 +1335,42 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, 
         yield _corner1
         return
 
-    if (dimensionality == 1 or (dimensionality == 2 and flatSides[0] != axis)):
+    if dimensionality == 1 or (dimensionality == 2 and flatSides[0] != axis):
         yield from cuboid3D(_corner1, _corner2)
         return
 
-    baseCorner1 = dropDimension(_corner1, axis)
-    baseCorner2 = dropDimension(_corner2, axis)
-    h0 = _corner1[axis]
-    hn = _corner2[axis]
+    baseCorner1: ivec2 = dropDimension(_corner1, axis)
+    baseCorner2: ivec2 = dropDimension(_corner2, axis)
+    h0: int = _corner1[axis]
+    hn: int = _corner2[axis]
 
     ellipsePoints2D = list(fittingEllipse(baseCorner1, baseCorner2, filled=False))
-    ellipsePoints3D = [addDimension(point, axis, h0) for point in ellipsePoints2D]
+    ellipsePoints3D: List[ivec3] = [addDimension(point, axis, h0) for point in ellipsePoints2D]
 
-    if tube:
-        basePoints = ellipsePoints3D
-        bodyPoints = ellipsePoints3D
-    else:
-        basePoints = [addDimension(point, axis, h0) for point in filled2D(ellipsePoints2D, (baseCorner1 + baseCorner2) // 2, Rect.between(baseCorner1, baseCorner2))]
+    basePoints: List[ivec3] = ellipsePoints3D
+    bodyPoints: List[ivec3] = ellipsePoints3D
+
+    if not tube:
+        basePoints = [
+            addDimension(point, axis, h0)
+            for point in filled2D(
+                ellipsePoints2D,
+                (baseCorner1 + baseCorner2) // 2,
+                Rect.between(baseCorner1, baseCorner2),
+            )
+        ]
         bodyPoints = ellipsePoints3D if hollow else basePoints
 
     yield from basePoints
     if hn != h0:
-        direction = ivec3(0,0,0)
+        direction = ivec3(0, 0, 0)
         direction[axis] = 1
-        yield from (point + (hn - h0)*direction for point in basePoints)
-        yield from (point + i*direction for i in range(1, hn-h0) for point in bodyPoints)
+        yield from (point + (hn - h0) * direction for point in basePoints)
+        yield from (
+            point + i * direction
+            for i in range(1, hn - h0)
+            for point in bodyPoints
+        )
 
 
 def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> Generator[ivec3, None, None]:
@@ -1108,23 +1382,22 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     diameters: ivec3 = ivec3(*diameters)
 
     # Calculate the correction
-    e = 1 - (diameters % 2)
+    e: ivec3 = 1 - (diameters % 2)
 
-    def are_points_in_line(center: Vec3iLike, point: Vec3iLike):
+    def are_points_in_line(center: Vec3iLike, point: Vec3iLike) -> bool:
         """Checks if two 3D points are the same on 2 or more axis"""
         count = 0
         for i in range(3):
-            if point[i] == center[i]:
-                count += 1
+            if point[i] == center[i]: count += 1
         return count >= 2
 
-    def generate_octants(center: Vec3iLike, point: Vec3iLike):
+    def generate_octants(center: Vec3iLike, point: Vec3iLike) -> List[ivec3]:
         """Generates octants for a point around a center"""
         x0, y0, z0 = center
         x, y, z = point
         dx, dy, dz = x - x0, y - y0, z - z0
 
-        octants = [
+        octants: List[ivec3] = [
             ivec3(x0 + e.x + dx, y0 + e.y + dy, z0 + e.z + dz),
             ivec3(x0       - dx, y0 + e.y + dy, z0 + e.z + dz),
             ivec3(x0 + e.x + dx, y0       - dy, z0 + e.z + dz),
@@ -1142,57 +1415,51 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     # Extract the radii of the ellipsoid along the x, y, and z axes
     rx, ry, rz = ((diameters) // 2) + (1 - e)
 
-    solid_points = np.zeros((rx + 2, ry + 2, rz + 2), dtype=bool)
+    solid_points: np.ndarray[Any, np.dtype[bool]] = np.zeros((rx + 2, ry + 2, rz + 2), dtype=bool)
 
     # Loop over all points within the bounding box of the ellipsoid
-    for x in range(solid_points.shape[0]):
-        for y in range(solid_points.shape[1]):
-            for z in range(solid_points.shape[2]):
+    for x, y, z in itertools.product(*(range(n) for n in solid_points.shape)):
 
-                # Compute the ellipsoid equation for the current point
-                e_val = (
-                    (x ** 2 / rx**2)
-                    + (y ** 2 / ry**2)
-                    + (z ** 2 / rz**2)
+        # Compute the ellipsoid equation for the current point
+        e_val: float = (x**2 / rx**2) + (y**2 / ry**2) + (z**2 / rz**2)
+        # Check if it is in-line with the center point
+        in_line_with_center: bool = are_points_in_line(
+            center, (x + x0, y + y0, z + z0)
+        )
+
+        # If the point satisfies the ellipsoid equation
+        if e_val <= 1 and (not in_line_with_center or e_val < 1):
+            # If it should be hollow, add the point to the point array
+            if hollow: solid_points[x, y, z] = True
+            # Otherwise, yield it for all octants
+            else:
+                yield from generate_octants(
+                    center, ivec3(x + x0, y + y0, z + z0)
                 )
-                # Check if it is in-line with the center point
-                in_line_with_center = are_points_in_line(center, (x + x0, y + y0, z + z0))
-
-                # If the point satisfies the ellipsoid equation
-                if e_val <= 1 and (not in_line_with_center or e_val < 1):
-                    # If it should be hollow, add the point to the point array
-                    if hollow:
-                        solid_points[x, y, z] = True
-                    # Otherwise, yield it for all octants
-                    else:
-                        yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
 
     # If the ellipsoid should be hollow
     if hollow:
         # Iterate through every point in the array, except the outer faces
-        for x in range(solid_points.shape[0] - 1):
-            for y in range(solid_points.shape[1] - 1):
-                for z in range(solid_points.shape[2] - 1):
+        for x, y, z in itertools.product(*(range(n-1) for n in solid_points.shape)):
 
-                    # A point is considered part of the "shell" if it meets the following conditions: (Thanks to @Jandhi#5234 on discord)
-                    # - It is part of the solid ellipsoid
-                    # - At least one of it's adjacent points isn't (we only have to check 3/6 because of octants)
-                    shell = solid_points[x, y, z] and (
-                        not solid_points[x + 1, y, z] or
-                        not solid_points[x, y + 1, z] or
-                        not solid_points[x, y, z + 1]
-                    )
+            # A point is considered part of the "shell" if it meets the following conditions: (Thanks to @Jandhi#5234 on discord)
+            # - It is part of the solid ellipsoid
+            # - At least one of it's adjacent points isn't (we only have to check 3/6 because of octants)
+            shell: bool = solid_points[x, y, z] and (
+                not solid_points[x + 1, y, z]
+                or not solid_points[x, y + 1, z]
+                or not solid_points[x, y, z + 1]
+            )
 
-                    # If a point is part of the shell, yield it for all octants
-                    if shell:
-                        yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
+            # If a point is part of the shell, yield it for all octants
+            if shell: yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
 
 
 def fittingEllipsoid(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) -> Generator[ivec3, None, None]:
     """Yields the points of the largest ellipsoid that fits between ``corner1`` and ``corner2``."""
     corner1_, corner2_ = orderedCorners3D(corner1, corner2)
-    diameters = corner2_ - corner1_ + 1
-    center = (corner1_ + corner2_) // 2
+    diameters: ivec3 = corner2_ - corner1_ + 1
+    center: ivec3 = (corner1_ + corner2_) // 2
     return ellipsoid(center, diameters, hollow)
 
 
@@ -1206,76 +1473,38 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
     """Yields the points of the largest sphere that fits between ``corner1`` and ``corner2``.\n
     The circle will be centered in the non-minimum axes."""
     corner1_, corner2_ = orderedCorners3D(corner1, corner2)
-    diameter = min(corner2_ - corner1_) + 1
-    center = (corner1_ + corner2_) // 2
+    diameter: int = min(corner2_ - corner1_) + 1
+    center: ivec3 = (corner1_ + corner2_) // 2
     return sphere(center, diameter, hollow)
+
+
+def _boundedNeighborsFromVectors2D(point: ivec2, bounding_rect: Rect, vectors: Iterable[ivec2], stride: int = 1) -> Generator[ivec2, Any, None]:
+    """Generate neighboring vectors within a bounding rect in the directions of vectors."""
+    for vector in vectors:
+        candidate: ivec2 = point + stride * vector
+        if bounding_rect.contains(candidate):
+            yield candidate
 
 
 def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, stride: int = 1) -> Generator[ivec2, None, None]:
     """Yields the neighbors of ``point`` within ``bounding_rect``.\n
     Useful for pathfinding."""
+    point = ivec2(*point)
+    vectors: FrozenSet[ivec2] = CARDINALS_AND_DIAGONALS_2D if diagonal else CARDINALS_2D
+    return _boundedNeighborsFromVectors2D(point, boundingRect, vectors, stride)
 
-    end = boundingRect.end
 
-    left  = point[0] - stride >= boundingRect.offset.x
-    down  = point[1] - stride >= boundingRect.offset.y
-    right = point[0] + stride <  end.x
-    up    = point[1] + stride <  end.y
-
-    if left:   yield ivec2(point[0] - stride, point[1]         )
-    if down:   yield ivec2(point[0]         , point[1] - stride)
-    if right:  yield ivec2(point[0] + stride, point[1]         )
-    if up:     yield ivec2(point[0]         , point[1] + stride)
-
-    if not diagonal:
-        return
-
-    if left  and down: yield ivec2(point[0] - stride, point[1] - stride)
-    if left  and up:   yield ivec2(point[0] - stride, point[1] + stride)
-    if right and down: yield ivec2(point[0] + stride, point[1] - stride)
-    if right and up:   yield ivec2(point[0] + stride, point[1] + stride)
+def _boundedNeighborsFromVectors3D(point: ivec3, bounding_box: Box, vectors: Iterable[ivec3], stride: int = 1) -> Generator[ivec3, Any, None]:
+    """Generate neighboring vectors within a bounding box in the directions of vectors."""
+    for vector in vectors:
+        candidate: ivec3 = point + stride * vector
+        if bounding_box.contains(candidate):
+            yield candidate
 
 
 def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stride: int = 1) -> Generator[ivec3, None, None]:
     """Yields the neighbors of ``point`` within ``bounding_box``.\n
     Useful for pathfinding."""
-
-    end = boundingBox.end
-
-    left  = point[0] - stride >= boundingBox.offset.x
-    down  = point[1] - stride >= boundingBox.offset.y
-    back  = point[2] - stride >= boundingBox.offset.z
-    right = point[0] + stride <  end.x
-    up    = point[1] + stride <  end.y
-    front = point[2] + stride <  end.z
-
-    if left:  yield ivec3(point[0] - stride, point[1]         , point[2]         )
-    if down:  yield ivec3(point[0]         , point[1] - stride, point[2]         )
-    if back:  yield ivec3(point[0]         , point[1]         , point[2] - stride)
-    if right: yield ivec3(point[0] + stride, point[1]         , point[2]         )
-    if up:    yield ivec3(point[0]         , point[1] + stride, point[2]         )
-    if front: yield ivec3(point[0]         , point[1]         , point[2] + stride)
-
-    if not diagonal:
-        return
-
-    if left  and down:           yield ivec3(point[0] - stride, point[1] - stride, point[2]         )
-    if left  and back:           yield ivec3(point[0] - stride, point[1]         , point[2] - stride)
-    if left  and up:             yield ivec3(point[0] - stride, point[1] + stride, point[2]         )
-    if left  and front:          yield ivec3(point[0] - stride, point[1]         , point[2] + stride)
-    if right and down:           yield ivec3(point[0] + stride, point[1] - stride, point[2]         )
-    if right and back:           yield ivec3(point[0] + stride, point[1]         , point[2] - stride)
-    if right and up:             yield ivec3(point[0] + stride, point[1] + stride, point[2]         )
-    if right and front:          yield ivec3(point[0] + stride, point[1]         , point[2] + stride)
-    if down  and back:           yield ivec3(point[0]         , point[1] - stride, point[2] - stride)
-    if down  and front:          yield ivec3(point[0]         , point[1] - stride, point[2] + stride)
-    if up    and back:           yield ivec3(point[0]         , point[1] + stride, point[2] - stride)
-    if up    and front:          yield ivec3(point[0]         , point[1] + stride, point[2] + stride)
-    if left  and down and back:  yield ivec3(point[0] - stride, point[1] - stride, point[2] - stride)
-    if left  and down and front: yield ivec3(point[0] - stride, point[1] - stride, point[2] + stride)
-    if left  and up   and back:  yield ivec3(point[0] - stride, point[1] + stride, point[2] - stride)
-    if left  and up   and front: yield ivec3(point[0] - stride, point[1] + stride, point[2] + stride)
-    if right and down and back:  yield ivec3(point[0] + stride, point[1] - stride, point[2] - stride)
-    if right and down and front: yield ivec3(point[0] + stride, point[1] - stride, point[2] + stride)
-    if right and up   and back:  yield ivec3(point[0] + stride, point[1] + stride, point[2] - stride)
-    if right and up   and front: yield ivec3(point[0] + stride, point[1] + stride, point[2] + stride)
+    point = ivec3(*point)
+    vectors: FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D if diagonal else DIRECTIONS_3D
+    return _boundedNeighborsFromVectors3D(point, boundingBox, vectors, stride)

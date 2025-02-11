@@ -1,7 +1,7 @@
 # GDPC
 
 GDPC (Generative Design Python Client) is a Python framework for use in conjunction with the [GDMC-HTTP](https://github.com/Niels-NTG/gdmc_http_interface) mod for Minecraft Java edition.
-It is designed for the [Generative Design in Minecraft Competition (GDMC)](https://gendesignmc.engineering.nyu.edu).
+It is designed for the [Generative Design in Minecraft Competition (GDMC)](https://gendesignmc.wikidot.com/start).
 
 You need to be playing in a Minecraft world with the mod installed to use the framework.
 
@@ -29,7 +29,7 @@ geometry.placeCuboid(editor, (0,80,2), (2,82,4), Block("oak_planks"))
 
 These abbreviations are all very similar, but refer to different things.
 
-**GDMC:** Short for the [Generative Design in Minecraft Competition](https://gendesignmc.engineering.nyu.edu), a yearly competition for generative AI systems in Minecraft.
+**GDMC:** Short for the [Generative Design in Minecraft Competition](https://gendesignmc.wikidot.com/start), a yearly competition for generative AI systems in Minecraft.
 The challenge is to write an algorithm that creates a settlement while adapting to the pre-existing terrain. The competition also has a [Discord server](https://discord.gg/YwpPCRQWND).
 
 **GDMC-HTTP:** A [Minecraft Forge mod](https://github.com/Niels-NTG/gdmc_http_interface) that provides a HTTP interface to edit the world.

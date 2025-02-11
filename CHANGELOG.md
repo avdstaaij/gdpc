@@ -2,8 +2,37 @@
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions**
+**Additions**:
 - The transformation system now supports the `half` state of stairs blocks.
+- `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+**Deprecations**:
+- `Rect.inner` and `Box.inner` are deprecated, since the classes can now be directly iterated over.
+
+
+# 7.3.0
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+
+**Additions:**
+- Added ZERO_2D/ZERO_3D/ZERO constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+- Added various ordered vector list constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+- Added `utils.rotateSequence`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+**Fixes:**
+- Made some previously mutable constants immutable. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+
+# 7.2.0
+
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+
+**Additions:**
+- Added `vector_tools.rotate2Ddeg` and `rotate3Ddeg`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+- Added many new constants to `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
+
+**Fixes:**
+- Added missing return type hints to many functions in `vector_tools`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
 
 # 7.1.0
@@ -11,7 +40,7 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 **Additions**
-- Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players` (thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+- Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 
 # 7.0.0
