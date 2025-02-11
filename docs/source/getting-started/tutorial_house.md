@@ -11,7 +11,7 @@ randomized variation.
 
 The tutorial assumes basic knowledge of Python and numpy, but almost no
 knowledge of Minecraft (beyond how to launch it). If anything is unclear, feel
-free to hop on the [GDMC Discord]((https://discord.gg/YwpPCRQWND)), where we'll
+free to hop on the [GDMC Discord](https://discord.gg/YwpPCRQWND), where we'll
 be happy to clear it up for you!
 
 

@@ -120,9 +120,22 @@ pass them right back to GDPC.
 If you prefer to work with separate `x`, `y` and `z` variables, you can always
 "unpack" any returned pyGLM vectors:
 
-```python3
+```python
 vec = ivec3(1,2,3)
 x, y, z = vec
+```
+
+You can also convert pyGLM vectors to tuples with `tuple()`. This can be useful
+if you want to index a numpy array with a pyGLM vector or if you want a cleaner
+`print()` output.
+
+```python
+vec = ivec3(1,2,3)
+
+array = np.zeros((5,5,5))
+array[tuple(vec)] = 1 # Set array[1,2,3] to 1.
+
+print(tuple(vec)) # (1,2,3)
 ```
 
 
@@ -176,7 +189,7 @@ print(vec) # ivec2(0,-1)
 
 # toAxisVector2D() returns the axis-aligned vector closest to the given one.
 vec = toAxisVector2D((11,2))
-print(vec) # (1,0)
+print(vec) # ivec2(1,0)
 ```
 
 ### Rect and Box
@@ -203,7 +216,7 @@ print(rect.area)   # 25
 print(rect.contains((3,3))) # True
 
 # Loop through all internal points
-for vec in rect.inner:
+for vec in rect:
    print(vec) # ivec2(1,2), ivec2(1,3), ..., ivec2(5,6)
 
 # Create a rect with the given corners
@@ -242,6 +255,7 @@ For *building* geometrical shapes, see
 [Overview - Building shapes](#building-shapes).
 ```
 
+{#minecrafts-coordinate-system}
 ## Minecraft's coordinate system
 
 When working with vectors in the context of a Minecraft world, you should be

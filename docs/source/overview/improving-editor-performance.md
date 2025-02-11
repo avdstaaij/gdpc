@@ -1,5 +1,6 @@
-{#improving-editor-performance}
 # Improving Editor performance
+
+## Introduction
 
 The {class}`Editor` class has a number of features that can significantly
 improve performance, but which are disabled by default because they can

@@ -90,54 +90,6 @@ worldSlice = WorldSlice(buildRect) # Specifying the area is required in this cas
 
 ## Getting blocks and biomes
 
-<!-- ### Using a world slice as an Editor cache
-
-If you load a world slice with `Editor.loadWorldSlice(cache=True)`, the
-world slice is stored in the `Editor` and will act as a block and biome cache.
-All `Editor` methods that retrieve a block or biome, such as
-`Editor.getBlock()`, will automatically check the stored world slice first. If
-the requested block or biome is contained in it and has not been changed since
-the world slice was loaded, the `Editor` will read from the world slice instead
-of sending a HTTP request. This means that you get the performance benefits with
-almost no changes to your code!
-
-Example:
-
-```python
-from gdpc import Editor, Rect
-
-editor = Editor()
-
-# Sends a HTTP request
-block = editor.getBlock((0,0,0))
-
-rect = Rect((0,0), (100,100)) # Rectangle with corners (0,0) and (99,99).
-editor.loadWorldSlice(rect, cache=True)
-
-# No HTTP request! The block is read from the stored world slice.
-block = editor.getBlock((0,0,0))
-```
-
-If you still need direct access to the stored `WorldSlice` object (for example,
-to access its heightmaps), it is available in {attr}`.Editor.worldSlice`.
-
-To determine whether a requested block can safely be read from the stored world
-slice, `Editor` internally keeps track of which blocks have been changed since
-it was loaded. However, an important caveat is that `Editor` can only keep track
-of changes are caused by itself. If the Minecraft world is changed in some other
-way, such as by a different `Editor` object, an in-game effect such as flowing
-water or a piston, or just by a player, then the changed blocks are not marked
-as invalid and `Editor.getBlock()` may return an outdated block.
-To load an updated world slice for the same area, you can use
-{meth}`.Editor.updateWorldSlice()`.
-
-For advanced usage, the `Editor`s bookkeeping information about valid/invalid
-blocks is available as {attr}`.Editor.worldSliceDecay`.
-
-
-
-### Using a world slice directly -->
-
 The `WorldSlice` class has several functions for accessing its contents. For
 each type of data, there is both a *local* and a *global* accessor variant. For
 example: {meth}`.WorldSlice.getBlock` and {meth}`.WorldSlice.getBlockGlobal`. The

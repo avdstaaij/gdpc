@@ -1,4 +1,3 @@
-{#building-shapes}
 # Building shapes
 
 ## Introduction
@@ -103,9 +102,8 @@ for point in line3D((0,0,0), (1,3,5)):
 ```
 
 The `vector_tools` module also contains a few 2D shape generators, such as
-{func}`circle` and {func}`line2D`. For more info, see
-[Overview - Additional tools](#additional-tools)
-or the [API reference](../api/gdpc.vector_tools).
+{func}`circle` and {func}`line2D`. For more info, see the
+[API reference](../api/gdpc.vector_tools).
 
 
 ## Efficiently building custom single-block shapes
@@ -155,7 +153,7 @@ The reason why this method of building is more efficient than repeated
    [Overview - The transformation system](#the-transformation-system).)
 
 Some functions from the `geometry` module are even more efficient, because they
-transform only the shape's key points rather than all points. This is also
+transform only the shape's "key points" rather than all points. This is also
 explained in
 [Overview - The transformation system](#the-transformation-system).
 ```

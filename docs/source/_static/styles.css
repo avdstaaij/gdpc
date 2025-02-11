@@ -25,6 +25,7 @@ html {
 
 		img {
 			margin-top: 0.7ex;
+			margin: auto; /* TODO: submit this as bugfix to sphinx-immaterial? */
 			&.align-left {
 				float: left;
 				margin-right: 1em;

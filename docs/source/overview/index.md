@@ -24,6 +24,5 @@ building-shapes
 advanced-blocks
 improving-editor-performance
 transformation
-additional-tools
 python-module-structure
 ```

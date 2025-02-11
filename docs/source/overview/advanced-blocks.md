@@ -158,6 +158,14 @@ editor = Editor()
 placeSign(editor, (0,80,0), "oak", rotation=9, frontLine2="Lorem ipsum")
 ```
 
+```{note}
+The {mod}`.minecraft_tools` and {mod}`.editor_tools` modules contains various
+Minecraft-related utilities that don't fit well into any other GDPC module. The
+former contains utilities that don't read or write to the world and thus don't
+need an `Editor` object, while the latter contains utilities that do deal with
+the world an thus do need an `Editor`.
+```
+
 
 ## Randomized block palettes
 

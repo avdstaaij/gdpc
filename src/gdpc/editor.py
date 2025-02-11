@@ -107,7 +107,7 @@ class Editor:
         Changing this property allows you to change the "point of view" of the editor.
 
         For a more comprehensive overview of GDPC's transformation system, see
-        :ref:`here<transformation>`."""
+        :ref:`here<the-transformation-system>`."""
         return self._transform
 
     @transform.setter
