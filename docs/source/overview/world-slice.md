@@ -195,7 +195,7 @@ buildRect = buildArea.toRect()
 editor.loadWorldSlice(buildRect, cache=True)
 heightmap = editor.worldSlice.heightmaps["MOTION_BLOCKING_NO_LEAVES"]
 
-# Loop through the perimiter of the build area
+# Loop through the perimeter of the build area
 for point in buildRect.outline:
     localPoint = point - buildRect.offset
 

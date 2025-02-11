@@ -143,7 +143,7 @@ the cached WorldSlice for unchanged blocks.
 World slice caching does have the same side-effect as regular caching: if a
 block is changed by something other than the caching `Editor`, the block is not
 marked as invalid in the boolean array, and `Editor.getBlock()` may therefore
-return oudated blocks.
+return outdated blocks.
 
 If you load a new world slice with `Editor.loadWorldSlice(cache=True)`, the
 stored world slice is replaced and all positions are marked as valid again.

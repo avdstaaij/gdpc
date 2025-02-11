@@ -243,7 +243,7 @@ z = buildArea.offset.z
 placeCuboid(editor, (x, y, z), (x+4, y, z+4), Block("stone_bricks"))
 ```
 
-Sidenote: we can use another helper, {func}`.placeRectOutline`, to visualize the
+Side-note: we can use another helper, {func}`.placeRectOutline`, to visualize the
 (X,Z)-rectangle of the build area. We won't include this in any further
 examples, but if you're ever confused about where the build area is, you can add
 it in.
@@ -808,7 +808,7 @@ furniture, but we'll leave that as an exercise to the reader.
 Congratulations, you've made to the end of the tutorial! We hope it has helped
 you to understand the basics of the various components of GDPC. You could now
 get to work on your own own generative algorithms (perhaps to take part in the
-[Generative Design in Minecraft Competiton](https://gendesignmc.wikidot.com/)),
+[Generative Design in Minecraft Competition](https://gendesignmc.wikidot.com/)),
 but if you're still interested in learning more, you can also continue with the
 following parts of the documentation:
 - The [Overview](../overview/index.md) dives deeper into into all of the
