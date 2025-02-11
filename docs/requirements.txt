@@ -1,4 +1,0 @@
-sphinx
-sphinx-autobuild
-myst-parser
-sphinx-immaterial[keys]

@@ -1,0 +1,18 @@
+# This file contains the requirements for building the documentation. It is
+# pointed to by .readthedocs.yaml.
+#
+# The readthedocs builder reads this file with the repository root as its
+# working directory, so relative paths (such as the path to gdpc itself) should
+# be given from the repository root. Because of this, it makes sense to keep
+# this file itself in the repository root as well.
+
+sphinx==7.1.2
+sphinx-autobuild==2021.3.14
+myst-parser==3.0.1
+sphinx-immaterial[keys]==0.11.14
+
+# Install GDPC itself in editable mode.
+# This is required for the automatic API reference.
+# Ideally, we'd skip GDPC's own dependencies, but --no-deps is not yet supported
+# in requirements.txt files: https://github.com/pypa/pip/pull/10837
+-e .
