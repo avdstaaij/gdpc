@@ -1,0 +1,39 @@
+/*
+	Defaults:
+	https://github.com/jbms/sphinx-immaterial/blob/main/src/assets/stylesheets/main/layout/_base.scss
+	https://github.com/jbms/sphinx-immaterial/blob/main/src/assets/stylesheets/main/_typeset.scss
+*/
+
+html {
+	.md-typeset {
+		/* Default: 1.6 */
+		line-height: 1.55;
+
+		p {
+			/* Default: 1em */
+			margin-block: 1.1em;
+		}
+
+		h2 {
+			border-bottom: 1px solid var(--md-typeset-table-color);
+			padding-bottom: 0.15em; /* A little breathing room for the border-bottom */
+		}
+
+		h4 {
+			font-size: 1.1em;
+		}
+
+		img {
+			margin-top: 0.7ex;
+			margin: auto; /* TODO: submit this as bugfix to sphinx-immaterial? */
+			&.align-left {
+				float: left;
+				margin-right: 1em;
+			}
+			&.align-right {
+				float: right;
+				margin-left: 1em;
+			}
+		}
+	}
+}

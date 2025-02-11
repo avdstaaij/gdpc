@@ -1,11 +1,11 @@
-"""Provides various utilities that require an Editor."""
+"""Provides various Minecraft-related utilities that require an :class:`.Editor`."""
 
 
-from typing import Optional, Iterable, Set, Tuple, Union
+from typing import Optional, Iterable, Set, Tuple, Union, List
 import random
 
 import numpy as np
-from glm import ivec2, ivec3
+from glm import ivec3
 
 from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block
@@ -15,9 +15,9 @@ from . import lookup
 from .editor import Editor
 
 
-def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike):
-    """Sets <editor>'s build area to a box of <size> centered on the player, and returns it.\n
-    The build area is always in **global coordinates**; <editor>.transform is ignored."""
+def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike) -> Box:
+    """Sets ``editor``'s build area to a box of ``size`` centered on the player, and returns it.\n
+    The build area is always in **global coordinates**; ``editor.transform`` is ignored."""
     # -1 to correct for offset from player position
     radius = (ivec3(*size) - 1) // 2
     editor.runCommandGlobal(
@@ -33,9 +33,9 @@ def flood_search_3D(
     search_block_ids: Iterable[str],
     diagonal=False,
     depth=256
-):
+) -> Set[ivec3]:
     """Return a list of coordinates with blocks that fulfill the search.\n
-    Activating caching is *highly* recommended."""
+    Activating caching (:attr:`.Editor.caching`) is *highly* recommended."""
     def flood_search_3D_recursive(point: ivec3, result: Set[ivec3], visited: Set[ivec3], depth_: int):
         if point in visited:
             return
@@ -64,10 +64,11 @@ def placeSign(
     frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
     backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
     isWaxed = False
-):
+) -> None:
     """Places a sign with the specified properties.\n
-    If <wall> is True, <facing> is used. Otherwise, <rotation> is used.
-    If the used property is None, a least obstructed direction will be used."""
+    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
+    If the used property is ``None``, a least obstructed direction will be used.\n
+    See also: :func:`.minecraft_tools.signData`, :func:`.minecraft_tools.signBlock`."""
     if wall and facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     elif not wall and rotation is None:
@@ -80,11 +81,12 @@ def placeSign(
     ))
 
 
-def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0):
+def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0) -> None:
     """Place a lectern with the specified properties.\n
-    If <facing> is None, a least obstructed facing direction will be used.\n
-    <bookData> should be an SNBT string defining a book.
-    You can use minecraft_tools.bookData() to create such a string."""
+    If ``facing`` is None, a least obstructed facing direction will be used.\n
+    ``bookData`` should be an SNBT string defining a book.
+    You can use :func:`.minecraft_tools.bookData` to create such a string.\n
+    See also: :func:`.minecraft_tools.lecternData`, :func:`.minecraft_tools.lecternBlock`."""
     if facing is None:
         facing = random.choice(getOptimalFacingDirection(editor, position))
     editor.placeBlock(position, lecternBlock(facing, bookData, page))
@@ -96,9 +98,9 @@ def placeContainerBlock(
     block: Block = Block("minecraft:chest"),
     items: Optional[Iterable[Union[Tuple[Vec2iLike, str], Tuple[Vec2iLike, str, int]]]] = None,
     replace=True
-):
+) -> None:
     """Place a container block with the specified items in the world.\n
-    <items> should be a sequence of (position, item, [amount,])-tuples."""
+    ``items`` should be a sequence of (position, item, [amount,])-tuples."""
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
     if inventorySize is None:
         raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
@@ -120,8 +122,8 @@ def placeContainerBlock(
         editor.runCommandGlobal(f"item replace block ~ ~ ~ container.{index} with {item[1]} {item[2]}", position=globalPosition, syncWithBuffer=True)
 
 
-def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1):
-    """Sets the item at <itemPosition> in the container block at <position> to the item with id <item>."""
+def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1) -> None:
+    """Sets the item at ``itemPosition`` in the container block at ``position`` to the item with id ``item``."""
     blockId = editor.getBlock(position).id
     inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(blockId)
     if inventorySize is None:
@@ -131,7 +133,7 @@ def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLik
     editor.runCommand(f"item replace block ~ ~ ~ container.{index} with {item} {amount}", position=position, syncWithBuffer=True)
 
 
-def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike):
+def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike) -> List[str]:
     """Returns the least obstructed directions to have something facing (a "facing" block state value).\n
     Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second."""
     directions = ["north", "east", "south", "west"]

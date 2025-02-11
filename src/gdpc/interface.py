@@ -1,6 +1,7 @@
-"""Provides wrappers for the endpoints of the GDMC HTTP interface.
+"""Provides direct wrappers for the endpoints of the GDMC HTTP interface.
 
-It is recommended to use the higher-level `editor.Editor` class instead.
+These functions are quite low-level. It is recommended to use the higher-level
+:class:`.editor.Editor` class instead.
 """
 
 
@@ -25,23 +26,21 @@ from . import exceptions
 
 
 DEFAULT_HOST = "http://localhost:9000"
+"""Default host"""
 
 
 logger = logging.getLogger(__name__)
 
 
-def _onRequestRetry(e: Exception, retriesLeft: int):
+def _onRequestRetry(e: Exception, retriesLeft: int) -> None:
     logger.warning(
-        "HTTP request failed!\n"
-        "Request exception:\n"
-        "%s\n"
-        "I'll retry in a bit (%i retries left).",
-        e, retriesLeft
+        "HTTP request failed! I'll retry in a bit (%i retries left).",
+        retriesLeft
     )
     time.sleep(3)
 
 
-def _request(method: str, url: str, *args, retries: int, **kwargs):
+def _request(method: str, url: str, *args, retries: int, **kwargs) -> requests.Response:
     try:
         response = withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry)
     except RequestConnectionError as e:
@@ -59,10 +58,10 @@ def _request(method: str, url: str, *args, retries: int, **kwargs):
     return response
 
 
-def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST):
+def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, includeState=True, includeData=True, retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[ivec3, Block]]:
     """Returns the blocks in the specified region.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (position, block)-tuples.
 
@@ -87,10 +86,10 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     return [(ivec3(b["x"], b["y"], b["z"]), Block(b["id"], b.get("state", {}), b.get("data") if b.get("data") != "{}" else None)) for b in blockDicts]
 
 
-def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[ivec3, str]]:
     """Returns the biomes in the specified region.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (position, biome id)-tuples.
 
@@ -113,15 +112,15 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     return [(ivec3(b["x"], b["y"], b["z"]), str(b["id"])) for b in biomeDicts]
 
 
-def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[bool, Union[int, str]]]:
     """Places blocks in the world.
 
-    Each element of <blocks> should be a tuple (position, block). Empty blocks (blocks without an
+    Each element of ``blocks`` should be a tuple (position, block). Empty blocks (blocks without an
     id) are not allowed.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-    The <doBlockUpdates>, <spawnDrops> and <customFlags> parameters control block update
+    The ``doBlockUpdates``, ``spawnDrops`` and ``customFlags`` parameters control block update
     behavior. See the GDMC HTTP API documentation for more info.
 
     Returns a list of (success, result)-tuples, one for each block. If a block placement was
@@ -157,12 +156,12 @@ def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[s
     return result
 
 
-def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[bool, Optional[str]]]:
     """Executes one or multiple Minecraft commands (separated by newlines).
 
     The leading "/" must be omitted.
 
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (success, result)-tuples, one for each command. If a command was succesful,
     result is its return value (if any). Otherwise, it is the error message.
@@ -173,14 +172,12 @@ def runCommand(command: str, dimension: Optional[str] = None, retries=0, timeout
     return result
 
 
-def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
+def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST) -> Box:
     """Retrieves the build area that was specified with /setbuildarea in-game.
 
-    Fails if the build area was not specified yet.
+    Raises a :exc:`.BuildAreaNotSetError` if the build area was not specified yet.
 
-    Returns (success, result).
     If a build area was specified, result is the box describing the build area.
-    Otherwise, result is the error message string.
     """
     response = _request("GET", f"{host}/buildarea", retries=retries, timeout=timeout)
 
@@ -205,14 +202,14 @@ def getBuildArea(retries=0, timeout=None, host=DEFAULT_HOST):
     return Box.between(fromPoint, toPoint)
 
 
-def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST):
+def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: Optional[str] = None, asBytes=False, retries=0, timeout=None, host=DEFAULT_HOST) -> Union[str, bytes]:
     """Returns raw chunk data.
 
-    <position> specifies the position in chunk coordinates, and <size> specifies how many chunks
+    ``position`` specifies the position in chunk coordinates, and ``size`` specifies how many chunks
     to get in each axis (default 1).
-    <dimension> can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
+    ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
-    If <asBytes> is True, returns raw binary data. Otherwise, returns a human-readable
+    If ``asBytes`` is True, returns raw binary data. Otherwise, returns a human-readable
     representation.
 
     On error, returns the error message instead.
@@ -232,13 +229,13 @@ def getChunks(position: Vec2iLike, size: Optional[Vec2iLike] = None, dimension: 
     return response.content if asBytes else response.text
 
 
-def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST):
+def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike, mirror: Optional[Vec2iLike] = None, rotate: Optional[int] = None, pivot: Optional[Vec3iLike] = None, includeEntities: Optional[bool] = None, dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST) -> None:
     """Places a structure defined using the Minecraft structure format in the world.
 
-    <structureData> should be a string of bytes in the Minecraft structure file format, the format used by the
+    ``structureData`` should be a string of bytes in the Minecraft structure file format, the format used by the
     in-game structure blocks. You can extract structures in this format in various ways, such as using the
     GET /structure endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
-    <structureData> can also be an instance of nbt.NBTFile. Using this library has the benefit of providing ways for
+    ``structureData`` can also be an instance of nbt.NBTFile. Using this library has the benefit of providing ways for
     modifying data before placing it in Minecraft.
 
     See the GDMC HTTP API documentation for more information about these parameters:
@@ -288,14 +285,14 @@ def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike
     return response.json()
 
 
-def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST):
+def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] = None, includeEntities: Optional[bool] = None, returnCompressed: Optional[bool] = True, retries=0, timeout=None, host=DEFAULT_HOST) -> bytes:
     """Returns the specified area in the Minecraft structure file format (an NBT byte string).
 
     The Minecraft structure file format is the format used by the in-game structure blocks. Structures in this format
     are commonly saved in .nbt files, and can be placed using tools such as the POST /structure endpoint of GDMC-HTTP
     or the aforementioned in-game structure blocks.
 
-    Setting the <includeEntities> to True will attach all entities present in the given area at the moment of calling
+    Setting the ``includeEntities`` to True will attach all entities present in the given area at the moment of calling
     getStructure to the resulting data. Meaning that saving a house in a Minecraft village will include the NPC
     living inside it. Note that when placing this structure using GDMC-HTTP, the includeEntities parameter needs to
     be set to True for these entities to be placed into the world together with the blocks making up the structure.
@@ -319,7 +316,7 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
     return response.content
 
 
-def getEntities(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getEntities(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> Any:
     url = f'{host}/entities'
     parameters = {
         'selector': selector,
@@ -330,7 +327,7 @@ def getEntities(selector: Optional[str] = None, includeData: bool = True, dimens
     return response.json()
 
 
-def getPlayers(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST):
+def getPlayers(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> Any:
     url = f'{host}/players'
     parameters = {
         'selector': selector,
@@ -341,6 +338,6 @@ def getPlayers(selector: Optional[str] = None, includeData: bool = True, dimensi
     return response.json()
 
 
-def getVersion(retries=0, timeout=None, host=DEFAULT_HOST):
+def getVersion(retries=0, timeout=None, host=DEFAULT_HOST) -> str:
     """Returns the Minecraft version as a string."""
     return _request("GET", f"{host}/version", retries=retries, timeout=timeout).text

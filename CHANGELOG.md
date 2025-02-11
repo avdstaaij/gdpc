@@ -3,6 +3,7 @@
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 **Additions**:
+- The transformation system now supports the `half` state of stairs blocks.
 - `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
 **Deprecations**:
@@ -118,7 +119,7 @@ Starting from this version, GDPC will use
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0**.\
 Note that the GDMC-HTTP repository has changed! It can now be found at
-https://github.com/Niels-NTG/gdmc_http_interface
+<https://github.com/Niels-NTG/gdmc_http_interface>
 
 
 ## Changes
@@ -374,4 +375,4 @@ system.
 # Older versions
 
 For older versions, see
-https://github.com/nikigawlik/gdmc_http_client_python/releases
+<https://github.com/nikigawlik/gdmc_http_client_python/releases>
