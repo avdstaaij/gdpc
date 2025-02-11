@@ -16,13 +16,13 @@ from .vector_tools import Vec3iLike, Vec3bLike
 
 
 AXIS_VALUES     = ("x", "y", "z")
-"""The possible values for the "axis" block state"""
+"""The possible values for the "axis" block state."""
 
 FACING_VALUES   = ("up", "down", "north", "east", "south", "west")
-"""The possible values for the "facing" block state"""
+"""The possible values for the "facing" block state."""
 
 ROTATION_VALUES = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
-"""The possible values for the "rotation" block state"""
+"""The possible values for the "rotation" block state."""
 
 
 # ==================================================================================================
@@ -37,7 +37,7 @@ __FACING_TO_ROTATION = {
     "east":  "12",
 }
 def facingToRotation(facing: str) -> str:
-    """Converts ``facing`` to the corresponding "rotation" block state string"""
+    """Converts ``facing`` to the corresponding "rotation" block state string."""
     return __FACING_TO_ROTATION[facing]
 
 
@@ -60,7 +60,7 @@ __ROTATION_TO_FACING = {
     "15": "south",
 }
 def rotationToFacing(rotation: str) -> str:
-    """Converts ``rotation`` to the nearest corresponding "facing" block state string"""
+    """Converts ``rotation`` to the nearest corresponding "facing" block state string."""
     return __ROTATION_TO_FACING[rotation]
 
 
@@ -79,7 +79,7 @@ __VECTOR_TO_AXIS = {
     (0,0,1): "z",
 }
 def vectorToAxis(vec: Vec3iLike) -> str:
-    """Returns the "axis" block state string corresponding to the direction vector ``vec``"""
+    """Returns the "axis" block state string corresponding to the direction vector ``vec``."""
     v = (
         vec[0] != 0,
         vec[1] != 0,
@@ -97,7 +97,7 @@ __AXIS_TO_VECTOR = {
     "z": ivec3(0,0,1),
 }
 def axisToVector(axis: str) -> ivec3:
-    """Returns the direction vector corresponding to the "axis" block state string ``axis``"""
+    """Returns the direction vector corresponding to the "axis" block state string ``axis``."""
     return __AXIS_TO_VECTOR[axis]
 
 
@@ -114,7 +114,7 @@ __VECTOR_TO_FACING = {
     ( 1, 0, 0): "east",
 }
 def vectorToFacing(vec: Vec3iLike) -> str:
-    """Returns the "facing" block state string corresponding to the direction vector ``vec``"""
+    """Returns the "facing" block state string corresponding to the direction vector ``vec``."""
     v = (
         -1 if vec[0] < 0 else 1 if vec[0] > 0 else 0,
         -1 if vec[1] < 0 else 1 if vec[1] > 0 else 0,
@@ -135,7 +135,7 @@ __FACING_TO_VECTOR = {
     "east":  ivec3( 1, 0, 0),
 }
 def facingToVector(facing: str) -> ivec3:
-    """Returns the direction vector corresponding to the "facing" block state string ``facing``"""
+    """Returns the direction vector corresponding to the "facing" block state string ``facing``."""
     return __FACING_TO_VECTOR[facing]
 
 
@@ -147,7 +147,7 @@ def facingToVector(facing: str) -> ivec3:
 
 
 def rotationToVector(rotation: str) -> ivec3:
-    """Returns the axis-aligned direction vector corresponding to ``rotation``"""
+    """Returns the axis-aligned direction vector corresponding to ``rotation``."""
     return facingToVector(rotationToFacing(rotation))
 
 
@@ -161,7 +161,7 @@ def rotationToVector(rotation: str) -> ivec3:
 
 
 def rotateAxis(axis: str, rotation: int) -> str:
-    """Returns the rotated "axis" block state string"""
+    """Returns the rotated "axis" block state string."""
     strings = ["x", "z"]
     try:
         return strings[(strings.index(axis) + rotation) % 2]
@@ -170,7 +170,7 @@ def rotateAxis(axis: str, rotation: int) -> str:
 
 
 def transformAxis(axis: str, rotation: int = 0) -> str:
-    """Returns the transformed "axis" block state string"""
+    """Returns the transformed "axis" block state string."""
     # Flipping is a no-op for axis strings
     return rotateAxis(axis, rotation)
 
@@ -180,7 +180,7 @@ def transformAxis(axis: str, rotation: int = 0) -> str:
 
 
 def rotateFacing(facing: str, rotation: int) -> str:
-    """Returns the rotated "facing" block state string"""
+    """Returns the rotated "facing" block state string."""
     strings = ["north", "east", "south", "west"]
     try:
         return strings[(strings.index(facing) + rotation) % 4]
@@ -189,7 +189,7 @@ def rotateFacing(facing: str, rotation: int) -> str:
 
 
 def flipFacing(facing: str, flip: Vec3bLike) -> str:
-    """Returns the flipped "facing" block state string"""
+    """Returns the flipped "facing" block state string."""
     if flip[0]:
         if facing == "east":  return "west"
         if facing == "west":  return "east"
@@ -217,7 +217,7 @@ __INVERT_FACING = {
     "east":  "west",
 }
 def invertFacing(facing: str) -> str:
-    """Returns the inverted "facing" block state string"""
+    """Returns the inverted "facing" block state string."""
     return __INVERT_FACING[facing]
 
 
@@ -235,7 +235,7 @@ def rotateRotation(blockStateRotation: str, rotation: int) -> str:
 
 
 def flipRotation(rotation: str, flip: Vec3bLike) -> str:
-    """Returns the flipped "rotation" block state string"""
+    """Returns the flipped "rotation" block state string."""
     rotationInt = int(rotation)
     if flip[0]:
         rotationInt = (16 - rotationInt) % 16
@@ -248,3 +248,32 @@ def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLik
     """Returns the transformed "rotation" block state string.\n
     Flips first, rotates second."""
     return rotateRotation(flipRotation(blockStateRotation, flip), rotation)
+
+
+# --------------------------------------------------------------------------------------------------
+# Half
+
+
+# Note: We transform half="bottom"/"top" (Used by e.g. stairs), but "half" is also used for other
+# purposes, (e.g. doors can have half="lower"/"upper"). We make sure to keep those other possible
+# values unchanged.
+
+
+__INVERT_FACING = {
+    "bottom": "top",
+    "top":    "bottom",
+}
+def invertHalf(half: str) -> str:
+    """Returns the inverted "half" block state string."""
+    result = __INVERT_FACING.get(half)
+    return result if result is not None else half
+
+
+def flipHalf(half: str, flip: Vec3bLike) -> str:
+    """Returns the flipped "half" block state string."""
+    return invertHalf(half) if flip[1] else half
+
+
+def transformHalf(half: str, flip: Vec3bLike = bvec3()) -> str:
+    """Returns the transformed "half" block state string."""
+    return flipHalf(half, flip)

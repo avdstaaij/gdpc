@@ -11,7 +11,7 @@ from nbt import nbt
 
 from .vector_tools import Vec3bLike
 from .nbt_tools import nbtToSnbt
-from .block_state_tools import transformAxis, transformFacing, transformRotation
+from .block_state_tools import transformAxis, transformFacing, transformRotation, transformHalf
 
 
 @dataclass
@@ -37,7 +37,6 @@ class Block:
 
     # TODO: Known orientation-related block states that are currently not supported:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
-    # - half="bottom"/"top" (e.g. stairs) ("half" is also used for other purposes, see e.g. doors)
 
     id:     Optional[str]  = "minecraft:stone" #: Block ID
     states: Dict[str, str] = field(default_factory=dict) #: Block states
@@ -63,9 +62,11 @@ class Block:
         axisState     = self.states.get("axis")
         facingState   = self.states.get("facing")
         rotationState = self.states.get("rotation")
+        halfState     = self.states.get("half")
         if axisState     is not None: self.states["axis"]     = transformAxis    (axisState,     rotation)
         if facingState   is not None: self.states["facing"]   = transformFacing  (facingState,   rotation, flip)
         if rotationState is not None: self.states["rotation"] = transformRotation(rotationState, rotation, flip)
+        if halfState     is not None: self.states["half"]     = transformHalf    (halfState,               flip)
 
 
     def transformed(self, rotation: int = 0, flip: Vec3bLike = bvec3()) -> "Block":

@@ -2,6 +2,9 @@
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
+**Additions**
+- The transformation system now supports the `half` state of stairs blocks.
+
 
 # 7.1.0
 
