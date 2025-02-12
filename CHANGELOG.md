@@ -3,6 +3,7 @@
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 **Additions**:
+- Added an extensive [documentation website](https://gdpc.readthedocs.io)!
 - The transformation system now supports the `half` state of stairs blocks.
 - `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
