@@ -13,8 +13,8 @@ GDMC-HTTP interface, along with many high-level tools that make development much
 easier.
 
 GDPC is primarily designed for the [Generative Design in Minecraft Competition
-(GDMC)](https://gendesignmc.wikidot.com/), a yearly competition for generative
-AI systems in Minecraft where the challenge is to write an algorithm that
+(GDMC)](https://gendesignmc.wikidot.com/), a yearly competition for procedural
+generation in Minecraft where the challenge is to write an algorithm that
 creates a settlement that adapts to the pre-existing terrain. Feel free to join
 us on [Discord](https://discord.gg/YwpPCRQWND)!
 

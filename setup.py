@@ -65,6 +65,7 @@ setup(
     ],
     keywords="GDMC, generative design, Minecraft, HTTP, development",
     project_urls={
+        "Documentation":                "https://gdpc.readthedocs.io",
         "Bug Reports":                  "https://github.com/avdstaaij/gdpc/issues",
         "Changelog":                    "https://github.com/avdstaaij/gdpc/blob/master/CHANGELOG.md",
         # "Official Competition Website": "https://gendesignmc.engineering.nyu.edu",
