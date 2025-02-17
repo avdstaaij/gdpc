@@ -9,18 +9,19 @@
         - It simply requires too much maintenance; the block categories are entirely manual, so
           they had to be manually updated for each Minecraft version (which was also error-prone).
 
-    We apologize for the inconvenience. An alternative (but not drop-in replacement) to this module
-    is the excellent and well-maintained python package
-    `python-minecraft-data <https://github.com/SpockBotMC/python-minecraft-data>`_. It provides a
-    complete listing of all blocks for nearly all Minecraft versions, including various properties.
-    Furthermore, there is work within the GDMC community to create an even more complete dataset
-    that categorizes blocks by their `block tags <https://minecraft.wiki/w/Block_tags>`_, which
-    is more automatable and thus much easier to maintain.
+    We apologize for the inconvenience. A partial alternative to this module is the excellent and
+    well-maintained `minecraft-data
+    <https://github.com/PrismarineJS/minecraft-data>`_ repository. It provides a complete listing of
+    all blocks for nearly all Minecraft versions, including various properties. (There is also a
+    `python wrapper <https://github.com/SpockBotMC/python-minecraft-data>`_ for it, but it's
+    outdated.) Furthermore, there is work within the GDMC community to create an even more complete
+    dataset that categorizes blocks by their `block tags <https://minecraft.wiki/w/Block_tags>`_,
+    which is more automatable and thus much easier to maintain.
     Finally, you could also simply copy any constants that you find useful out of GDPC and into your
     own code.
 
     If you want to help the GDMC community by maintaining this module as another python package, you
-    are of course free to do so!
+    are welcome to do so!
 
 .. warning::
     The block ID categories in this file may not be fully up-to-date with the latest supported
