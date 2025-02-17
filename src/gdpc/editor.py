@@ -84,17 +84,40 @@ class Editor:
         self._worldSlice: Optional[WorldSlice] = None
         self._worldSliceDecay: Optional[np.ndarray] = None
 
-        ref = weakref.ref(self)
+        # We need to do some cleanup when the Editor gets deleted or when the program ends. In
+        # particular, we need to flush the block buffer and await any remaining buffer flush
+        # futures.
+        #
+        # The standard way to do this would be to put the cleanup code in __del__. But while this
+        # works for the editor-gets-deleted case, it does not work reliably for the program-ends
+        # case. __del__ does get called at program exit, but only when the interpreter is already
+        # half-shut-down. At that point, we can no longer send HTTP requests or schedule additional
+        # futures, so buffer flushing doesn't work anymore.
+        #
+        # One way to solve this would be to make Editor a context manager, but that would make it
+        # slightly harder to use (and it would be a breaking change). Instead, we solve it using an
+        # atexit handler. These get called early enough for buffer flushing to still work.
+        #
+        # We have to be careful about a few things:
+        # - We must use a weak reference to refer to the Editor. A normal reference would keep the
+        #   Editor alive and prevent the atexit handler from ever getting called.
+        # - We must create a new callable object for each Editor, so that when we unregister the
+        #   atexit handler, we only unregister the handler for the Editor that registered it. We
+        #   accomplish this using a lambda.
+        # - We need to store the lambda so that we can unregister it in __del__ and avoid a double
+        #   cleanup.
 
-        # Use a lambda to allow unregistering only one instance
-        self._cleanup = lambda: cleanup_at_exit(ref)
-        atexit.register(self._cleanup)
+        ref = weakref.ref(self)
+        self._clean_up_handler = lambda: _clean_up_editor_at_exit(ref)
+        atexit.register(self._clean_up_handler)
 
 
     def __del__(self) -> None:
-        """Cleans up this Editor instance"""
-        atexit.unregister(self._cleanup)
-        self.flushBuffer()
+        """Cleans up this Editor instance.\n
+        Flushes the block buffer and waits for any remaining buffer flush futures.
+        """
+        atexit.unregister(self._clean_up_handler)
+        _clean_up_editor(self)
 
 
     @property
@@ -693,9 +716,14 @@ class Editor:
         finally:
             self.transform = originalTransform
 
-# Flush buffers if the system is shutting down.
-# Do this via an atexit handler instead of the destructor because it needs
-# to run before necessary modules are torns down.
-def cleanup_at_exit(ref: weakref.ref):
-    if obj := ref():
-        obj.flushBuffer()
+
+def _clean_up_editor(editor: Editor) -> None:
+        """The real Editor destructor, called from both __del__ and the atexit handler."""
+        editor.flushBuffer()
+        editor.awaitBufferFlushes()
+
+
+def _clean_up_editor_at_exit(editor_weakref: weakref.ref):
+    editor = editor_weakref()
+    if editor is not None:
+        _clean_up_editor(editor)
