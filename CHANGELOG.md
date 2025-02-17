@@ -5,6 +5,7 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
+- Deprecated all remaining in-repository examples. They have been replaced by the new [documentation website](https://gdpc.readthedocs.io).
 
 
 # 7.4.0
