@@ -1,13 +1,127 @@
 """Provides various Minecraft-related utilities that do not require an :class:`.Editor`."""
 
 
-from typing import Any, Optional, Union, List
+from typing import Optional, Union, List
 from functools import lru_cache
 import json
+from deprecated import deprecated
 
 from .vector_tools import Vec2iLike, Rect
-from . import lookup
 from .block import Block
+
+
+# ==================================================================================================
+# Constants
+# ==================================================================================================
+
+
+# the width of ASCII characters in pixels
+# space between characters is 1
+# the widest supported Unicode character is 9 wide
+_ASCII_CHAR_TO_WIDTH = {
+    "A":  5,
+    "a":  5,
+    "B":  5,
+    "b":  5,
+    "C":  5,
+    "c":  5,
+    "D":  5,
+    "d":  5,
+    "E":  5,
+    "e":  5,
+    "F":  5,
+    "f":  4,
+    "G":  5,
+    "g":  5,
+    "H":  5,
+    "h":  5,
+    "I":  3,
+    "i":  1,
+    "J":  5,
+    "j":  5,
+    "K":  5,
+    "k":  4,
+    "L":  5,
+    "l":  2,
+    "M":  5,
+    "m":  5,
+    "N":  5,
+    "n":  5,
+    "O":  5,
+    "o":  5,
+    "P":  5,
+    "p":  5,
+    "Q":  5,
+    "q":  5,
+    "R":  5,
+    "r":  5,
+    "S":  5,
+    "s":  5,
+    "T":  5,
+    "t":  3,
+    "U":  5,
+    "u":  5,
+    "V":  5,
+    "v":  5,
+    "W":  5,
+    "w":  5,
+    "X":  5,
+    "x":  5,
+    "Y":  5,
+    "y":  5,
+    "Z":  5,
+    "z":  5,
+    "1":  5,
+    "2":  5,
+    "3":  5,
+    "4":  5,
+    "5":  5,
+    "6":  5,
+    "7":  5,
+    "8":  5,
+    "9":  5,
+    "0":  5,
+    " ":  3,
+    "!":  1,
+    "@":  6,
+    "#":  5,
+    "$":  5,
+    "£":  5,
+    "%":  5,
+    "^":  5,
+    "&":  5,
+    "*":  3,
+    "(":  3,
+    ")":  3,
+    "_":  5,
+    "-":  5,
+    "+":  5,
+    "=":  5,
+    "~":  6,
+    "[":  3,
+    "]":  3,
+    "{":  3,
+    "}":  3,
+    "|":  1,
+    "\\": 5,
+    ":":  1,
+    ";":  1,
+    '"':  3,
+    "'":  1,
+    ",":  1,
+    "<":  4,
+    ">":  4,
+    ".":  1,
+    "?":  5,
+    "/":  5,
+    "`":  2,
+}
+
+
+_BOOK_PAGES_PER_BOOK      = 100
+_BOOK_CHARACTERS_PER_PAGE = 255
+_BOOK_LINES_PER_PAGE      = 14
+_BOOK_PIXELS_PER_LINE     = 114
 
 
 # ==================================================================================================
@@ -102,10 +216,10 @@ def bookData(
     NOTE: For supported special characters see
     https://minecraft.wiki/Language#Font
     """
-    pages_left      = lookup.BOOK_PAGES_PER_BOOK
-    characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
-    lines_left      = lookup.BOOK_LINES_PER_PAGE
-    pixels_left     = lookup.BOOK_PIXELS_PER_LINE
+    pages_left      = _BOOK_PAGES_PER_BOOK
+    characters_left = _BOOK_CHARACTERS_PER_PAGE
+    lines_left      = _BOOK_LINES_PER_PAGE
+    pixels_left     = _BOOK_PIXELS_PER_LINE
     toprint = ''
 
     @lru_cache()
@@ -115,7 +229,7 @@ def bookData(
         If a letter is not found, a width of 9 is assumed
         A character spacing of 1 is automatically integrated
         """
-        return sum(lookup.ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word) - 1
+        return sum(_ASCII_CHAR_TO_WIDTH.get(letter, 9) + 1 for letter in word) - 1
 
     SPACE_WIDTH = fontwidth(' ')
 
@@ -139,15 +253,15 @@ def bookData(
             return
         characters_left -= 2
         lines_left -= 1
-        pixels_left = lookup.BOOK_PIXELS_PER_LINE
+        pixels_left = _BOOK_PIXELS_PER_LINE
         outputPages[-1] += "\n"
 
     def newpage():
         nonlocal characters_left, lines_left, pixels_left, outputPages
         printline()
-        characters_left = lookup.BOOK_CHARACTERS_PER_PAGE
-        lines_left      = lookup.BOOK_LINES_PER_PAGE
-        pixels_left     = lookup.BOOK_PIXELS_PER_LINE
+        characters_left = _BOOK_CHARACTERS_PER_PAGE
+        lines_left      = _BOOK_LINES_PER_PAGE
+        pixels_left     = _BOOK_PIXELS_PER_LINE
         outputPages.append("") # end page and start new page
 
     pages = list(text.split('\f'))
@@ -166,7 +280,7 @@ def bookData(
         for line in page:
             toprint = ""
             for word in line:
-                if pixels_left != lookup.BOOK_PIXELS_PER_LINE:
+                if pixels_left != _BOOK_PIXELS_PER_LINE:
                     if characters_left < 1:
                         newpage()
                     elif SPACE_WIDTH > pixels_left:
@@ -178,7 +292,7 @@ def bookData(
 
                 width = fontwidth(word)
                 if width > pixels_left:
-                    if width > lookup.BOOK_PIXELS_PER_LINE:  # cut word to fit
+                    if width > _BOOK_PIXELS_PER_LINE:  # cut word to fit
                         original = word
                         for letter in original:
                             charwidth = fontwidth(letter) + 1
@@ -263,9 +377,18 @@ def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike) -> i
     return position[0] + position[1] * inventorySize[0]
 
 
+@deprecated("Deprecated along with lookup.py. See the documentation for the lookup.py module for the reasons and for alternatives.")
 def getObtrusiveness(block: Block) -> int:
-    """Returns the percieved obtrusiveness of the given ``block``.\n
-    Returns a numeric weight from 0 (invisible) to 4 (opaque)."""
+    """
+    .. warning::
+        Deprecated along with :mod:`lookup.py`. See the warning at the top of
+        the :mod:`lookup.py` page for the reasons and for alternatives.
+
+    Returns the percieved obtrusiveness of the given ``block``.
+
+    Returns a numeric weight from 0 (invisible) to 4 (opaque).
+    """
+    from . import lookup # pylint: disable=import-outside-toplevel
     if not block.id:
         return 0
     if block.id in lookup.INVISIBLE:

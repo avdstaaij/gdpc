@@ -3,16 +3,20 @@
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 
+**Deprecations:**
+- Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
+
+
 # 7.4.0
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions**:
+**Additions:**:
 - Added an extensive [documentation website](https://gdpc.readthedocs.io)!
 - The transformation system now supports the `half` state of stairs blocks.
 - `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
-**Deprecations**:
+**Deprecations:**:
 - `Rect.inner` and `Box.inner` are deprecated, since the classes can now be directly iterated over.
 
 

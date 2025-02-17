@@ -5,7 +5,7 @@ from typing import Optional, Iterable, Set, Tuple, Union, List
 import random
 
 import numpy as np
-from glm import ivec3
+from glm import ivec2, ivec3
 
 from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block
@@ -13,6 +13,41 @@ from .block_state_tools import facingToRotation, facingToVector
 from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
 from . import lookup
 from .editor import Editor
+
+
+_INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
+    ivec2(9,3): {
+        'minecraft:chest',
+        'minecraft:ender_chest',
+        'minecraft:trapped_chest'
+        "minecraft:barrel",
+        'minecraft:red_shulker_box',
+        'minecraft:magenta_shulker_box',
+        'minecraft:light_gray_shulker_box',
+        'minecraft:yellow_shulker_box',
+        'minecraft:green_shulker_box',
+        'minecraft:white_shulker_box',
+        'minecraft:light_blue_shulker_box',
+        'minecraft:pink_shulker_box',
+        'minecraft:black_shulker_box',
+        'minecraft:lime_shulker_box',
+        'minecraft:purple_shulker_box',
+        'minecraft:gray_shulker_box',
+        'minecraft:cyan_shulker_box',
+        'minecraft:brown_shulker_box',
+        'minecraft:blue_shulker_box',
+        'minecraft:shulker_box',
+        'minecraft:orange_shulker_box',
+    },
+    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper", },
+    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand", },
+    ivec2(3,1): {'minecraft:blast_furnace', 'minecraft:smoker', 'minecraft:furnace'},
+}
+
+_CONTAINER_BLOCK_TO_INVENTORY_SIZE = {}
+for size, ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCKS.items():
+    for bid in ids:
+        _CONTAINER_BLOCK_TO_INVENTORY_SIZE[bid] = size
 
 
 def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike) -> Box:

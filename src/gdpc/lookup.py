@@ -1,14 +1,30 @@
 """Stores lists of various information on blocks, biomes and more.
 
-NOTE: The block id categories here may not be fully up-to-date with the latest supported Minecraft
-version. Although the block categories are not officially deprecated, there is a high chance that
-they will be in the future. They will most likely be replaced with categories automatically
-constructed from Minecraft's block tags (https://minecraft.wiki/Tag#Block_tags), because
-this is more standardized and way easier to keep up-to-date.
+.. warning::
+    **This entire module is deprecated and will be removed in a future version.**
 
-To get a complete listing of all blocks for any Minecraft version, including various properties,
-we currently recommend the `minecraft-data` package
-(https://github.com/SpockBotMC/python-minecraft-data).
+    There are multiple reasons for this:
+        - It is incompatible with our `plans <https://github.com/avdstaaij/gdpc/issues/99>`_
+          to make GDPC Minecraft-version-independent.
+        - It simply requires too much maintenance; the block categories are entirely manual, so
+          they had to be manually updated for each Minecraft version (which was also error-prone).
+
+    We apologize for the inconvenience. An alternative (but not drop-in replacement) to this module
+    is the excellent and well-maintained python package
+    `python-minecraft-data <https://github.com/SpockBotMC/python-minecraft-data>`_. It provides a
+    complete listing of all blocks for nearly all Minecraft versions, including various properties.
+    Furthermore, there is work within the GDMC community to create an even more complete dataset
+    that categorizes blocks by their `block tags <https://minecraft.wiki/w/Block_tags>`_, which
+    is more automatable and thus much easier to maintain.
+    Finally, you could also simply copy any constants that you find useful out of GDPC and into your
+    own code.
+
+    If you want to help the GDMC community by maintaining this module as another python package, you
+    are of course free to do so!
+
+.. warning::
+    The block ID categories in this file may not be fully up-to-date with the latest supported
+    Minecraft version. Since the file is deprecated, they won't be updated in the future either.
 """
 
 # Note: The "#:" comments are so Sphinx autdodoc includes the constants.
@@ -18,10 +34,19 @@ we currently recommend the `minecraft-data` package
 
 
 from typing import Dict, Iterable, Optional, Set, Union
+from warnings import warn
 
 from glm import ivec2
 
 from .utils import isIterable
+
+
+# ==================================================================================================
+# DEPRECATE WHOLE FILE
+# ==================================================================================================
+
+
+warn("The gdpc.lookup module is deprecated and will be removed in a future version. Refer to the docs for the reasons and for alternatives.", DeprecationWarning, stacklevel=2)
 
 
 # ==================================================================================================
