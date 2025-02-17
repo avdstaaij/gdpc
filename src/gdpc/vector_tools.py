@@ -591,7 +591,12 @@ class Rect:
     @property
     @deprecated("Iterate through the Rect directly instead")
     def inner(self) -> Generator[ivec2, None, None]:
-        """Yields all points contained in this Rect"""
+        """
+        .. warning ::
+            This property is deprecated. Iterate through the Rect directly instead
+            (:attr:`__iter__`).
+
+        Yields all points contained in this Rect"""
         return (
             ivec2(x, y)
             for x in range(self.begin.x, self.end.x)
@@ -786,7 +791,12 @@ class Box:
     @property
     @deprecated("Iterate through the Box directly instead")
     def inner(self) -> Generator[ivec3, None, None]:
-        """Yields all points contained in this Box"""
+        """
+        .. warning ::
+            This property is deprecated. Iterate through the Box directly instead
+            (:attr:`__iter__`).
+
+        Yields all points contained in this Box"""
         return (
             ivec3(x, y, z)
             for x in range(self.begin.x, self.end.x)
