@@ -4,6 +4,7 @@ from typing import Any, Generator, Sequence, TypeVar, Generic, Callable, Iterabl
 import time
 from pathlib import Path
 
+from deprecated import deprecated
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
@@ -131,8 +132,17 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
             del self[oldest]
 
 
+@deprecated
 def visualizeMaps(*arrays, title="", normalize=True) -> None:
-    """Visualizes one or multiple 2D numpy arrays."""
+    """
+    .. warning::
+        This function is deprecated and will be removed in a future version of GDPC.
+
+        It was only used by the now-removed ``visualize_map.py`` example, and its
+        removal will allow us to remove the OpenCV dependency.
+
+    Visualizes one or multiple 2D numpy arrays.
+    """
     for array in arrays:
         if normalize:
             array = ((array - array.min()) / (array.max() - array.min()) * 255).astype(np.uint8)
