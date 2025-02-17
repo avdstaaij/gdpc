@@ -1,10 +1,9 @@
 """Provides the :class:`.Block` class, which represents a Minecraft block."""
 
 
-from typing import Any, Union, Optional, Dict, Sequence
+from typing import Union, Optional, Dict, Sequence
 from dataclasses import dataclass, field
-from copy import copy, deepcopy
-import random
+from copy import deepcopy
 
 from glm import bvec3
 from nbt import nbt

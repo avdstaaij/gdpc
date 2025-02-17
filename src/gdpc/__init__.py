@@ -13,6 +13,7 @@ The following classes are re-exported:
 - :class:`.Rect`, :class:`.Box` (from module :mod:`.gdpc.vector_tools`)
 """
 
+
 #: Package title.
 #:
 #: :meta hide-value:
@@ -33,7 +34,6 @@ __url__              = "https://github.com/avdstaaij/gdpc"
 #: :meta hide-value:
 __author__           = "Arthur van der Staaij, Blinkenlights, Nils Gawlik"
 
-
 #: Package author emails.
 #:
 #: :meta hide-value:
@@ -43,7 +43,6 @@ __author_email__     = "arthurvanderstaaij@gmail.com, blinkenlights@pm.me, nilsg
 #:
 #: :meta hide-value:
 __maintainer__       = "Arthur van der Staaij"
-
 
 #: Package maintainer email.
 #:
@@ -59,7 +58,6 @@ __license__          = "MIT"
 #:
 #: :meta hide-value:
 __copyright__        = "Copyright 2022-2024 Arthur van der Staaij, Copyright 2021-2022 Blinkenlights, Copyright 2020-2021 Nils Gawlik"
-
 
 #: Package version
 #:

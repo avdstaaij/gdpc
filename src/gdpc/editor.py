@@ -16,7 +16,7 @@ import numpy as np
 from glm import ivec3
 
 from .utils import eagerAll, OrderedByLookupDict
-from .vector_tools import Vec3iLike, Rect, Box, addY, dropY
+from .vector_tools import Vec3iLike, Rect, Box, dropY
 from .transform import Transform, TransformLike, toTransform
 from .block import Block, transformedBlockOrPalette
 from . import interface
