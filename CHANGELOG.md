@@ -2,6 +2,8 @@
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
+**Fixes:**
+- Fixed `Editor.__del__` sometimes crashing for some users when there were blocks in the block buffer on program exit.
 
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
