@@ -27,7 +27,6 @@ from typing import (
     Union,
 )
 
-from deprecated import deprecated
 import glm
 import numpy as np
 import skimage.segmentation
@@ -589,21 +588,6 @@ class Rect:
         return self.middle
 
     @property
-    @deprecated("Iterate through the Rect directly instead")
-    def inner(self) -> Generator[ivec2, None, None]:
-        """
-        .. warning ::
-            This property is deprecated. Iterate through the Rect directly instead
-            (:attr:`__iter__`).
-
-        Yields all points contained in this Rect"""
-        return (
-            ivec2(x, y)
-            for x in range(self.begin.x, self.end.x)
-            for y in range(self.begin.y, self.end.y)
-        )
-
-    @property
     def area(self) -> int:
         """This Rect's surface area"""
         return self._size.x * self._size.y
@@ -787,22 +771,6 @@ class Box:
     def center(self) -> ivec3:
         """Equivalent to ``.middle``"""
         return self.middle
-
-    @property
-    @deprecated("Iterate through the Box directly instead")
-    def inner(self) -> Generator[ivec3, None, None]:
-        """
-        .. warning ::
-            This property is deprecated. Iterate through the Box directly instead
-            (:attr:`__iter__`).
-
-        Yields all points contained in this Box"""
-        return (
-            ivec3(x, y, z)
-            for x in range(self.begin.x, self.end.x)
-            for y in range(self.begin.y, self.end.y)
-            for z in range(self.begin.z, self.end.z)
-        )
 
     @property
     def volume(self) -> int:
