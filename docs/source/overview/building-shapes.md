@@ -7,7 +7,6 @@ GDPC provides several features for building shapes that are more convenient,
 and often more performant, than repeated {meth}`.Editor.placeBlock` calls.
 
 
-
 ## The geometry module
 
 ```{figure} ../images/geometry-example.png

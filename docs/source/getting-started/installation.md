@@ -1,6 +1,5 @@
 # Installation
 
-
 ## Prerequisites
 
 To use GDPC, you first need to install Minecraft Java edition and the

@@ -8,11 +8,6 @@ either as parameters or as return values. Rather than using separate X, Y and Z
 numbers for these purposes, GDPC uses *vectors*: single objects that describe
 a 2D or 3D point.
 
-<!--
-Although GDPC has tools for vector math, which we will describe further below,
-you do not need to know any vector math to use the library. All you need to know
-is how to pass vectors to GDPC and how it returns them. -->
-
 ### Vectors as parameters
 
 An example of a function with a vector parameter is `Editor.placeBlock()`.
@@ -20,21 +15,9 @@ Its first parameter, `position`, should be set to a single object that
 represents a 3D vector. For example, the call below places a block at
 `X=0`, `Y=80`, `Z=0`:
 
-<!-- Instead of having separate `x`, `y` and `z` parameters, it has a single
-`position` parameter that should be set to an object that represents a 3D
-vector. For example, the call below places a block at `X=0`, `Y=80`, `Z=0`: -->
-
-
-<!-- In the `Editor.placeBlock()` call below, `(0,80,0)` is an example a 3D vector.
-It describes the position `X=0`, `Y=80`, `Z=0`. -->
-
 ```python
 editor.placeBlock((0,80,0), Block("stone"))
 ```
-
-<!-- In this case, we used the Python tuple `(0,80,0)` to represent a vector.
-However, GDPC actually accepts any object that "behaves" like a vector as
-arguments to its functions. This means that the following calls all work: -->
 
 GDPC accepts any object that "behaves" like a vector as arguments to its
 functions. This means that the following calls all work:
@@ -61,7 +44,6 @@ currently four types:
 
 The exact requirements for an object `vec` to be considered a vector-like are
 as follows:
-<!-- An object `vec` has to meet the following requirements to be a vector-like: -->
 
 - Its elements must be accessible via indexing: {python}`y = vec[1]`.
 - Its elements must be accessible via iteration: {python}`for component in vec:`
@@ -96,8 +78,6 @@ have handy `.x`, `.y` and `.z` attributes. PyGLM also provides many performant
 vector math functions. Refer to the
 [pyGLM documentation](https://pypi.org/project/PyGLM/) for more details.
 Here is a small example of the syntax:
-
-<!-- TODO: mention pyGLM vector math functions -->
 
 ```python
 from glm import ivec3
