@@ -107,8 +107,7 @@ SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D #:
 CARDINALS_2D:               FrozenSet[ivec2] = frozenset({NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}) #:
 INTERCARDINALS_2D:          FrozenSet[ivec2] = frozenset({NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}) #:
 CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D #:
-# NOTE: Legacy format
-DIAGONALS_2D              = tuple(INTERCARDINALS_2D) #:
+DIAGONALS_2D              = INTERCARDINALS_2D #:
 
 # starting East, moving clockwise
 # NOTE: Use `utils.rotateSequence(...)` to start at a different point
@@ -213,8 +212,7 @@ CORNER_DIAGONALS_3D:              FrozenSet[ivec3] = frozenset({
     for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 }) #:
 DIRECTIONS_AND_ALL_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
-# TODO: tuple() for backwards compatibility. Remove on major release
-DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D) #:
+DIAGONALS_3D                   = EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
 
 # Moving Up to Down, clockwise starting East
 # NOTE: For other combinations, use `generate_[symmetric_]spiraloid_vectors_3D()`
@@ -263,7 +261,7 @@ ORDERED_CORNER_DIAGONALS:              Tuple[ivec3, ...] = ORDERED_CORNER_DIAGON
 ORDERED_DIRECTIONS:                    Tuple[ivec3, ...] = ORDERED_DIRECTIONS_3D #:
 ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS: Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
 ORDERED_DIRECTIONS_AND_ALL_DIAGONALS:  Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D #:
-DIAGONALS: tuple = DIAGONALS_3D #:
+DIAGONALS: FrozenSet[ivec3] = DIAGONALS_3D #:
 
 
 # ==================================================================================================
