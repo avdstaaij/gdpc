@@ -171,7 +171,7 @@ def lecternData(bookData: Optional[str], page: int = 0) -> str:
     See also: :func:`.lecternBlock`, :func:`.editor_tools.placeLectern`."""
     if bookData is None:
         return ""
-    return f'{{Book: {{id: "minecraft:written_book", Count: 1b, tag: {bookData}, Page: {page}}}}}'
+    return f'{{Book: {{id: "minecraft:written_book", Count: 1b, components: {bookData}, Page: {page}}}}}'
 
 
 def bookData(
@@ -179,7 +179,8 @@ def bookData(
     title       = "Chronicle",
     author      = "Anonymous",
     description = "I wonder what's inside?",
-    desccolor   = "gold"
+    desccolor   = "gold",
+    descIsItalic = True
 ) -> str:
     r"""Returns an SNBT string with written book data
 
@@ -316,13 +317,16 @@ def bookData(
         newpage()               # finish page
     del outputPages[-1] # end last page (book is complete)
 
-    loreJSON = json.dumps([{"text": description, "color": desccolor}])
+    loreJSON = json.dumps({"text": description, "color": desccolor, "italic": descIsItalic})
     pageJSON = [json.dumps({"text": p}) for p in outputPages]
     return (
         "{"
-        f'title: {repr(title)}, author: {repr(author)}, '
-        f'display:{{Lore:[{repr(loreJSON)}]}}, '
-        f'pages: [{",".join(repr(p) for p in pageJSON)}]'
+            "\"minecraft:written_book_content\": {"
+                f'title: {repr(title)}, '
+                f'author: {repr(author)}, '
+                f'pages: [{",".join(repr(p) for p in pageJSON)}]'
+            "},"
+            f'"lore": [{repr(loreJSON)}]'
         "}"
     )
 
