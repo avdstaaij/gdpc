@@ -136,6 +136,8 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
 def visualizeMaps(*arrays, title="", normalize=True) -> None:
     """
     .. warning::
+        :title: Deprecated
+
         This function is deprecated and will be removed in a future version of GDPC.
 
         It was only used by the now-removed ``visualize_map.py`` example, and its

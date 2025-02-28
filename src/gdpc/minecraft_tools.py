@@ -385,8 +385,10 @@ def positionToInventoryIndex(position: Vec2iLike, inventorySize: Vec2iLike) -> i
 def getObtrusiveness(block: Block) -> int:
     """
     .. warning::
-        Deprecated along with :mod:`lookup.py`. See the warning at the top of
-        the :mod:`lookup.py` page for the reasons and for alternatives.
+        :title: Deprecated
+
+        Deprecated along with :mod:`.lookup`. See the warning at the top of
+        the `lookup` page for the reasons and for alternatives.
 
     Returns the percieved obtrusiveness of the given ``block``.
 

@@ -1,6 +1,8 @@
 """Stores lists of various information on blocks, biomes and more.
 
 .. warning::
+    :title: Deprecated
+
     **This entire module is deprecated and will be removed in a future version.**
 
     There are multiple reasons for this:
