@@ -18,12 +18,12 @@ Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions:**:
+**Additions:**
 - Added an extensive [documentation website](https://gdpc.readthedocs.io)!
 - The transformation system now supports the `half` state of stairs blocks.
 - `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
-**Deprecations:**:
+**Deprecations:**
 - `Rect.inner` and `Box.inner` are deprecated, since the classes can now be directly iterated over.
 
 
@@ -56,7 +56,7 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions**
+**Additions:**
 - Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 
