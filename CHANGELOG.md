@@ -1,9 +1,10 @@
 # In development
 
-Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.21.4**.
+Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 
 **Breaking:**
-- Supported Minecraft version updated to Minecraft 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format.
+- Increased minimum supported GDMC-HTTP version to 1.5.1.
+- Increased supported Minecraft version to 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format.
 - Changed the following `vector_tools` constants from `Tuple`s to `FrozenSet`s: `DIAGONALS_2D`, `DIAGONALS_3D`, `DIAGONALS`.
 - Removed deprecated `Rect.inner` and `Box.inner`.
 
