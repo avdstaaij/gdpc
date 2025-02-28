@@ -1,7 +1,9 @@
 # In development
 
-Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.21.4**.
 
+**Breaking:**
+- Supported Minecraft version updated to Minecraft 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format.
 
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
