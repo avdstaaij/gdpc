@@ -1,7 +1,7 @@
 """Provides various Minecraft-related utilities that require an :class:`.Editor`."""
 
 
-from typing import Optional, Iterable, Set, Tuple, Union, List
+from typing import Optional, Iterable, Set, Tuple, Union, List, cast
 import random
 
 import numpy as np
@@ -77,7 +77,7 @@ def flood_search_3D(
 
         visited.add(point)
 
-        if editor.getBlock(point).id not in search_block_ids:
+        if cast(str, editor.getBlock(point).id) not in search_block_ids:
             return
 
         result.add(point)
@@ -104,12 +104,21 @@ def placeSign(
     If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
     If the used property is ``None``, a least obstructed direction will be used.\n
     See also: :func:`.minecraft_tools.signData`, :func:`.minecraft_tools.signBlock`."""
-    if wall and facing is None:
-        facing = random.choice(getOptimalFacingDirection(editor, position))
-    elif not wall and rotation is None:
-        rotation = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
+    if wall:
+        rotationArg = "0"
+        if facing is None:
+            facingArg = random.choice(getOptimalFacingDirection(editor, position))
+        else:
+            facingArg = facing
+    else:
+        facingArg = "north"
+        if rotation is None:
+            rotationArg = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
+        else:
+            rotationArg = rotation
+
     editor.placeBlock(position, signBlock(
-        wood, wall, facing, rotation,
+        wood, wall, facingArg, rotationArg,
         frontLine1, frontLine2, frontLine3, frontLine4, frontColor, frontIsGlowing,
         backLine1,  backLine2,  backLine3,  backLine4,  backColor,  backIsGlowing,
         isWaxed
@@ -148,13 +157,11 @@ def placeContainerBlock(
     if items is None:
         return
 
-    globalPosition = editor.transform * position
     for item in items:
         index = positionToInventoryIndex(item[0], inventorySize)
         if len(item) == 2:
-            item = list(item)
-            item.append(1)
-        editor.runCommandGlobal(f"item replace block ~ ~ ~ container.{index} with {item[1]} {item[2]}", position=globalPosition, syncWithBuffer=True)
+            item = (*item, 1)
+        editor.runCommand(f"item replace block ~ ~ ~ container.{index} with {item[1]} {item[2]}", position=position, syncWithBuffer=True)
 
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1) -> None:

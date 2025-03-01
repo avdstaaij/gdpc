@@ -344,6 +344,7 @@ def signBlock(
     isWaxed = False
 ) -> Block:
     """Returns a sign Block with the specified properties.\n
+    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
     See also: :func:`.signData`, :func:`.editor_tools.placeSign`."""
     blockId = f"minecraft:{wood}_{'wall_' if wall else ''}sign"
     states = {"facing": facing} if wall else {"rotation": str(rotation)}

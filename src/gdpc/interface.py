@@ -5,7 +5,7 @@ These functions are quite low-level. It is recommended to use the higher-level
 """
 
 
-from typing import Sequence, Tuple, Optional, List, Dict, Any, Union
+from typing import Iterable, Tuple, Optional, List, Dict, Any, Union, cast
 from functools import partial
 import time
 from urllib.parse import urlparse
@@ -42,7 +42,7 @@ def _onRequestRetry(e: Exception, retriesLeft: int) -> None:
 
 def _request(method: str, url: str, *args, retries: int, **kwargs) -> requests.Response:
     try:
-        response = withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry)
+        response = cast(requests.Response, withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry))
     except RequestConnectionError as e:
         u = urlparse(url)
         raise exceptions.InterfaceConnectionError(
@@ -112,7 +112,7 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     return [(ivec3(b["x"], b["y"], b["z"]), str(b["id"])) for b in biomeDicts]
 
 
-def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[bool, Union[int, str]]]:
+def placeBlocks(blocks: Iterable[Tuple[Vec3iLike, Block]], dimension: Optional[str] = None, doBlockUpdates=True, spawnDrops=False, customFlags: str = "", retries=0, timeout=None, host=DEFAULT_HOST) -> List[Tuple[bool, Union[int, str]]]:
     """Places blocks in the world.
 
     Each element of ``blocks`` should be a tuple (position, block). Empty blocks (blocks without an
@@ -134,7 +134,7 @@ def placeBlocks(blocks: Sequence[Tuple[Vec3iLike, Block]], dimension: Optional[s
     else:
         blockUpdateParams = {"doBlockUpdates": doBlockUpdates, "spawnDrops": spawnDrops}
 
-    parameters = {"dimension": dimension}
+    parameters: Dict[str, Any] = {"dimension": dimension}
     parameters.update(blockUpdateParams)
 
     body = (
@@ -250,7 +250,7 @@ def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike
 
     url = f"{host}/structure"
     x, y, z = position
-    rotate = (rotate % 4) if rotate else None
+    rotate = (rotate % 4) if rotate else 0
     mirrorArg = None
     if mirror is None:
         mirrorArg = None

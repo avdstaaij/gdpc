@@ -8,6 +8,16 @@ Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 - Changed the following `vector_tools` constants from `Tuple`s to `FrozenSet`s: `DIAGONALS_2D`, `DIAGONALS_3D`, `DIAGONALS`.
 - Removed deprecated `Rect.inner` and `Box.inner`.
 
+**Fixes:**
+- Added and refined various type hints.
+- Fixed `editor_tools.placeSign` sometimes creating `Block`s with incorrect block states (`rotation` for wall signs and `facing` for non-wall signs).
+- Fixed `vector_tools.rotateSize2D` sometimes returning the input value instead of an `ivec2`.
+- Fixed `vector_tools.l1Distance` crashing when passing veclikes that don't support the `-` operator.
+- Fixed `world_slice.WorldSlice.getPrimaryBiomeInChunkGlobal` crashing if you passed a position not contained in the world slice.
+- Fixed `interface.placeStructure` crashing if you passed `rotate=None` and `mirror=(True, True)`.
+- Fixed `editor.Editor.placeBlockGlobal` possibly crashing when the passed `position` is not an `ivec3` and buffering is enabled.
+- Fixed `editor.Editor.placeBlock` possibly crashing when the passed `position` is iterable, sizable and has length 3, but does not have `__getitem__`. Yeah, this one's obscure.
+
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
 - Deprecated `utils.visualizeMaps`, which was only used by `visualize_map.py`, and which is currently the only user of the OpenCV dependency.

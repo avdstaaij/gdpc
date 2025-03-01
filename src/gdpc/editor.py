@@ -4,7 +4,7 @@ Minecraft world through the GDMC HTTP interface."""
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator
+from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator, Sized, cast
 from numbers import Integral
 from contextlib import contextmanager
 from copy import copy, deepcopy
@@ -13,6 +13,7 @@ from concurrent import futures
 import logging
 
 import numpy as np
+import numpy.typing as npt
 from glm import ivec3
 
 from .utils import eagerAll, OrderedByLookupDict
@@ -36,17 +37,17 @@ class Editor:
 
     def __init__(
         self,
-        transformLike: Optional[TransformLike] = None,
-        dimension: Optional[str] = None,
-        buffering             = False,
-        bufferLimit           = 1024,
-        caching               = False,
-        cacheLimit            = 8192,
-        multithreading        = False,
-        multithreadingWorkers = 1,
-        retries               = 4,
-        timeout               = None,
-        host                  = interface.DEFAULT_HOST,
+        transformLike         : Optional[TransformLike] = None,
+        dimension             : Optional[str]           = None,
+        buffering             : bool                    = False,
+        bufferLimit           : int                     = 1024,
+        caching               : bool                    = False,
+        cacheLimit            : int                     = 8192,
+        multithreading        : bool                    = False,
+        multithreadingWorkers : int                     = 1,
+        retries               : int                     = 4,
+        timeout               : Optional[float]         = None,
+        host                  : str                     = interface.DEFAULT_HOST,
     ) -> None:
         """Constructs an Editor instance with the specified transform and settings.
 
@@ -80,7 +81,7 @@ class Editor:
         self._bufferSpawnDrops     = self._spawnDrops
 
         self._worldSlice: Optional[WorldSlice] = None
-        self._worldSliceDecay: Optional[np.ndarray] = None
+        self._worldSliceDecay: Optional[npt.NDArray[np.bool_]] = None
 
 
     def __del__(self) -> None:
@@ -311,7 +312,7 @@ class Editor:
         self._retries = value
 
     @property
-    def timeout(self) -> float:
+    def timeout(self) -> Optional[float]:
         """The timeout for requests to the GDMC HTTP interface
 
         Behaves as described by the
@@ -320,7 +321,7 @@ class Editor:
         return self._timeout
 
     @timeout.setter
-    def timeout(self, value) -> None:
+    def timeout(self, value: Optional[float]) -> None:
         self._timeout = value
 
     @property
@@ -346,14 +347,14 @@ class Editor:
         return self._worldSlice
 
     @property
-    def worldSliceDecay(self) -> Optional[np.ndarray]:
+    def worldSliceDecay(self) -> Optional[npt.NDArray[np.bool_]]:
         """3D boolean array indicating whether the block at the specified position in the cached
         worldSlice is still valid.\n
         Note that the lowest Y-layer is at ``[:,0,:]``, despite Minecraft's negative Y coordinates.
         If :attr:`.worldSlice` is ``None``, this property will also be ``None``."""
         if self._worldSliceDecay is None:
             return None
-        view: np.ndarray = self._worldSliceDecay.view()
+        view = self._worldSliceDecay.view()
         view.flags.writeable = False
         return view
 
@@ -442,7 +443,7 @@ class Editor:
         if (
             self._worldSlice is not None and
             self._worldSlice.box.contains(_position) and
-            not self._worldSliceDecay[tuple(_position - self._worldSlice.box.offset)]
+            not cast(npt.NDArray[np.bool_], self._worldSliceDecay)[tuple(_position - self._worldSlice.box.offset)]
         ):
             block = self._worldSlice.getBlockGlobal(_position)
         else:
@@ -467,7 +468,7 @@ class Editor:
         if (
             self._worldSlice is not None and
             self._worldSlice.box.contains(position) and
-            not self._worldSliceDecay[tuple(ivec3(position) - self._worldSlice.box.offset)]
+            not cast(npt.NDArray[np.bool_], self._worldSliceDecay)[tuple(ivec3(*position) - self._worldSlice.box.offset)]
         ):
             return self._worldSlice.getBiomeGlobal(position)
 
@@ -476,9 +477,9 @@ class Editor:
 
     def placeBlock(
         self,
-        position:       Union[Vec3iLike, Iterable[Vec3iLike]],
-        block:          Union[Block, Sequence[Block]],
-        replace:        Optional[Union[str, List[str]]] = None
+        position: Union[Vec3iLike, Iterable[Vec3iLike]],
+        block:    Union[Block, Sequence[Block]],
+        replace:  Optional[Union[str, List[str]]] = None
     ) -> bool:
         """Places ``block`` at ``position``.\n
         ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.\n
@@ -487,16 +488,27 @@ class Editor:
         If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
         # Distinguishing between Vec3iLike and Iterable[Vec3iLike] is... not easy.
-        globalPosition = self.transform * position if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral) else (self.transform * pos for pos in position)
+        # Perhaps we should add a differently-named function for placing multiple blocks instead.
+        # (This would be a breaking change.)
+        globalPosition = (
+            self.transform * cast(Vec3iLike, position)
+            if (
+                hasattr(position, "__len__")
+                and len(cast(Sized, position)) == 3
+                and hasattr(position, "__getitem__")
+                and isinstance(cast(Sequence, position)[0], Integral)
+            )
+            else (self.transform * pos for pos in cast(Iterable[Vec3iLike], position))
+        )
         globalBlock = transformedBlockOrPalette(block, self.transform.rotation, self.transform.flip)
         return self.placeBlockGlobal(globalPosition, globalBlock, replace)
 
 
     def placeBlockGlobal(
         self,
-        position:       Union[Vec3iLike, Iterable[Vec3iLike]],
-        block:          Union[Block, Sequence[Block]],
-        replace:        Optional[Union[str, Iterable[str]]] = None
+        position: Union[Vec3iLike, Iterable[Vec3iLike]],
+        block:    Union[Block, Sequence[Block]],
+        replace:  Optional[Union[str, Iterable[str]]] = None
     ) -> bool:
         """Places ``block`` at ``position``, ignoring :attr:`.transform`.\n
         If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
@@ -504,21 +516,26 @@ class Editor:
         If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
         Returns whether the placement succeeded fully."""
 
-        if hasattr(position, "__len__") and len(position) == 3 and isinstance(position[0], Integral):
-            return self._placeSingleBlockGlobal(position, block, replace)
+        if (
+            hasattr(position, "__len__")
+            and len(cast(Sized, position)) == 3
+            and hasattr(position, "__getitem__")
+            and isinstance(cast(Sequence, position)[0], Integral)
+        ):
+            return self._placeSingleBlockGlobal(ivec3(*cast(Vec3iLike, position)), block, replace)
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in position)
+        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in cast(Iterable[Vec3iLike], position))
         self.buffering = oldBuffering
         return success
 
 
     def _placeSingleBlockGlobal(
         self,
-        position:       ivec3,
-        block:          Union[Block, Sequence[Block]],
-        replace:        Optional[Union[str, Iterable[str]]] = None
+        position: ivec3,
+        block:    Union[Block, Sequence[Block]],
+        replace:  Optional[Union[str, Iterable[str]]] = None
     ) -> bool:
         """Places ``block`` at ``position``, ignoring :attr:`.transform`.\n
         If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
@@ -528,7 +545,7 @@ class Editor:
         if replace is not None:
             if isinstance(replace, str):
                 replace = [replace]
-            if self.getBlockGlobal(position).id not in replace:
+            if cast(str, self.getBlockGlobal(position).id) not in replace:
                 return True
 
         # Select block from palette
@@ -549,7 +566,7 @@ class Editor:
             self._cache[position] = block
 
         if self._worldSlice is not None and self._worldSlice.rect.contains(dropY(position)):
-            self._worldSliceDecay[tuple(position - self._worldSlice.box.offset)] = True
+            cast(npt.NDArray[np.bool_], self._worldSliceDecay)[tuple(position - self._worldSlice.box.offset)] = True
 
         return True
 
@@ -627,7 +644,7 @@ class Editor:
         If ``timeout`` is not ``None``, waits for at most ``timeout`` seconds.\n
         Does nothing if no buffer flushes have occured while multithreaded buffer flushing was
         enabled."""
-        self._bufferFlushFutures = futures.wait(self._bufferFlushFutures, timeout).not_done
+        self._bufferFlushFutures = list(futures.wait(self._bufferFlushFutures, timeout).not_done)
 
 
     def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache=False) -> WorldSlice:
@@ -647,7 +664,7 @@ class Editor:
         worldSlice = WorldSlice(rect, dimension=self.dimension, heightmapTypes=heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
         if cache:
             self._worldSlice      = worldSlice
-            self._worldSliceDecay = np.zeros(self._worldSlice.box.size, dtype=bool)
+            self._worldSliceDecay = np.zeros(tuple(self._worldSlice.box.size), dtype=np.bool_)
         return worldSlice
 
 
