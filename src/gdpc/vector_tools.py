@@ -1017,12 +1017,12 @@ def loop3D(begin: Vec3iLike, end: Optional[Vec3iLike] = None) -> Generator[ivec3
 
 def cuboid2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Generator[ivec2, None, None]:
     """Yields all points in the rectangle between ``corner1`` and ``corner2`` (inclusive)."""
-    return Rect.between(corner1, corner2).inner
+    yield from Rect.between(corner1, corner2)
 
 
 def cuboid3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Generator[ivec3, None, None]:
     """Yields all points in the box between ``corner1`` and ``corner2`` (inclusive)."""
-    return Box.between(corner1, corner2).inner
+    yield from Box.between(corner1, corner2)
 
 
 def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints=True) -> np.ndarray:

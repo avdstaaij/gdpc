@@ -66,7 +66,7 @@ class Model:
         if substitutions is None: substitutions = {}
 
         with editor.pushTransform(transformLike):
-            for vec in Box(size=self._size).inner:
+            for vec in Box(size=self._size):
                 block = self.getBlock(vec)
                 if block is not None:
                     blockToPlace = copy(block)

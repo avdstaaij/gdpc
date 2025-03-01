@@ -14,12 +14,12 @@ from .editor import Editor
 
 def placeCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a box of ``block`` blocks from ``first`` to ``last`` (inclusive).\n
-    To get only the points of this shape, see :func:`.loop3D`, :func:`.cuboid3D` or :attr:`.Box.inner`."""
+    To get only the points of this shape, see :func:`.loop3D`, :func:`.cuboid3D` or :meth:`.Box.__iter__`."""
     # Transform only the key points instead of all points
     first = editor.transform * first
     last = editor.transform * last
     block = transformedBlockOrPalette(block, editor.transform.rotation, editor.transform.flip)
-    editor.placeBlockGlobal(Box.between(first, last).inner, block, replace)
+    editor.placeBlockGlobal(Box.between(first, last), block, replace)
 
 
 def placeCuboidHollow(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
@@ -44,7 +44,7 @@ def placeCuboidWireframe(editor: Editor, first: Vec3iLike, last: Vec3iLike, bloc
 
 def placeBox(editor: Editor, box: Box, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a box of ``block`` blocks.\n
-    To get only the points of this shape, see :func:`.loop3D`, :func:`.cuboid3D` or :attr:`.Box.inner`."""
+    To get only the points of this shape, see :func:`.loop3D`, :func:`.cuboid3D` or :meth:`.Box.__iter__`."""
     if (box.size.x == 0 or box.size.y == 0 or box.size.z == 0): return
     placeCuboid(editor, box.begin, box.end - 1, block, replace)
 
@@ -65,7 +65,7 @@ def placeBoxWireframe(editor: Editor, box: Box, block: Union[Block, Sequence[Blo
 
 def placeRect(editor: Editor, rect: Rect, y: int, block: Union[Block, Sequence[Block]], replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a rectangle of blocks in the XY-plane, at height ``y``.\n
-    To get only the points of this shape, see :func:`.loop2D`, :func:`.cuboid2D` or :attr:`.Rect.inner` (each with :func:`.addY`)."""
+    To get only the points of this shape, see :func:`.loop2D`, :func:`.cuboid2D` or :meth:`.Rect.__iter__` (each with :func:`.addY`)."""
     placeBox(editor, rect.toBox(y, 1), block, replace)
 
 
@@ -83,7 +83,7 @@ def placeCheckeredCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, bloc
 def placeCheckeredBox(editor: Editor, box: Box, block1: Block, block2: Block = Block(None), replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a checker pattern of ``block1`` and ``block2`` in ``box``."""
     # We loop through [box]-local positions so that the pattern start is independent of [box].offset
-    for pos in Box(size=box.size).inner:
+    for pos in Box(size=box.size):
         editor.placeBlock(box.offset + pos, block1 if sum(pos) % 2 == 0 else block2, replace)
 
 
@@ -96,7 +96,7 @@ def placeStripedCuboid(editor: Editor, first: Vec3iLike, last: Vec3iLike, block1
 def placeStripedBox(editor: Editor, box: Box, block1: Union[Block, Sequence[Block]], block2: Union[Block, Sequence[Block]] = Block(None), axis: int = 0, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a stripe pattern of ``block1`` and ``block2`` along ``axis`` (0, 1 or 2) in ``box``."""
     # We loop through [box]-local positions so that the pattern start is independent of [box].offset
-    for pos in Box(size=box.size).inner:
+    for pos in Box(size=box.size):
         editor.placeBlock(box.offset + pos, block1 if pos[axis] % 2 == 0 else block2, replace)
 
 
