@@ -25,11 +25,12 @@ from typing import (
     Set,
     Tuple,
     Union,
+    cast,
 )
 
-from deprecated import deprecated
 import glm
 import numpy as np
+import numpy.typing as npt
 import skimage.segmentation
 from glm import bvec2, bvec3, ivec2, ivec3, vec2, vec3
 from more_itertools import powerset
@@ -108,8 +109,7 @@ SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D #:
 CARDINALS_2D:               FrozenSet[ivec2] = frozenset({NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}) #:
 INTERCARDINALS_2D:          FrozenSet[ivec2] = frozenset({NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}) #:
 CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D #:
-# NOTE: Legacy format
-DIAGONALS_2D              = tuple(INTERCARDINALS_2D) #:
+DIAGONALS_2D              = INTERCARDINALS_2D #:
 
 # starting East, moving clockwise
 # NOTE: Use `utils.rotateSequence(...)` to start at a different point
@@ -214,8 +214,7 @@ CORNER_DIAGONALS_3D:              FrozenSet[ivec3] = frozenset({
     for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 }) #:
 DIRECTIONS_AND_ALL_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
-# TODO: tuple() for backwards compatibility. Remove on major release
-DIAGONALS_3D                   = tuple(EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D) #:
+DIAGONALS_3D                   = EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
 
 # Moving Up to Down, clockwise starting East
 # NOTE: For other combinations, use `generate_[symmetric_]spiraloid_vectors_3D()`
@@ -264,7 +263,7 @@ ORDERED_CORNER_DIAGONALS:              Tuple[ivec3, ...] = ORDERED_CORNER_DIAGON
 ORDERED_DIRECTIONS:                    Tuple[ivec3, ...] = ORDERED_DIRECTIONS_3D #:
 ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS: Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
 ORDERED_DIRECTIONS_AND_ALL_DIAGONALS:  Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D #:
-DIAGONALS: tuple = DIAGONALS_3D #:
+DIAGONALS: FrozenSet[ivec3] = DIAGONALS_3D #:
 
 
 # ==================================================================================================
@@ -283,7 +282,8 @@ def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
 def addDimension(vec: Vec2iLike, dimension: int, value=0) -> ivec3:
     """Inserts ``value`` into ``vec`` at ``dimension`` and returns the resulting 3D vector"""
     l = list(vec)
-    return ivec3(*l[:dimension], value, *l[dimension:])
+    # The additional wrapping tuple is needed for the type checker.
+    return ivec3(*(*l[:dimension], value, *l[dimension:]))
 
 
 def dropY(vec: Vec3iLike) -> ivec2:
@@ -369,13 +369,13 @@ def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
 def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
     """Returns rotation such that applying rotation after ``flip`` is equivalent to applying ``flip``
     after ``rotation``"""
-    return flipRotation2D(rotation, dropY(flip))
+    return flipRotation2D(rotation, bvec2(*dropY(flip)))
 
 
 def rotateSize2D(size: Vec2iLike, rotation: int) -> ivec2:
     """Returns the effective size of a rect of size ``size`` that has been rotated in the XZ-plane by
     ``rotation``."""
-    return ivec2(size[1], size[0]) if rotation in [1, 3] else size
+    return ivec2(size[1], size[0]) if rotation in [1, 3] else ivec2(*size)
 
 
 def rotateSize3D(size: Vec3iLike, rotation: int) -> ivec3:
@@ -453,8 +453,14 @@ def l1Norm(vec: Union[Vec2iLike, Vec3iLike]) -> int:
     return sum(abs(n) for n in vec)
 
 def l1Distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]) -> int:
-    """Returns the L1 norm distance between ``vecA`` and ``vecB``"""
-    return l1Norm(vecA - vecB)
+    """Returns the L1 norm distance between ``vecA`` and ``vecB``.\n
+    ``vecA`` and ``vecB`` must be both ``Vec2iLike`` or both ``Vec3iLike``.
+    """
+    if len(vecA) != len(vecB): raise ValueError("vecA and vecB must have the same length")
+    if len(vecA) == 2:
+        return l1Norm(ivec2(*cast(Vec2iLike, vecA)) - ivec2(*cast(Vec2iLike, vecB)))
+    else:
+        return l1Norm(ivec3(*cast(Vec3iLike, vecA)) - ivec3(*cast(Vec3iLike, vecB)))
 
 
 def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Tuple[ivec2, ivec2]:
@@ -495,7 +501,7 @@ def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2i
     Returns (dimensionality, list of indices of dimensions for which the volume is flat).
     For example: ``(2, [0,2])`` means that the volume is flat in the x and z axes."""
     difference = np.array(corner1) - np.array(corner2)
-    flatSides: np.ndarray[Any, np.dtype[np.signedinteger[Any]]] = np.argwhere(difference == 0).flatten()
+    flatSides: npt.NDArray[np.intp] = np.argwhere(difference == 0).flatten()
     return int(len(corner1) - np.sum(flatSides)), list(flatSides)
 
 
@@ -587,16 +593,6 @@ class Rect:
     def center(self) -> ivec2:
         """Equivalent to :attr:`.middle`"""
         return self.middle
-
-    @property
-    @deprecated("Iterate through the Rect directly instead")
-    def inner(self) -> Generator[ivec2, None, None]:
-        """Yields all points contained in this Rect"""
-        return (
-            ivec2(x, y)
-            for x in range(self.begin.x, self.end.x)
-            for y in range(self.begin.y, self.end.y)
-        )
 
     @property
     def area(self) -> int:
@@ -784,17 +780,6 @@ class Box:
         return self.middle
 
     @property
-    @deprecated("Iterate through the Box directly instead")
-    def inner(self) -> Generator[ivec3, None, None]:
-        """Yields all points contained in this Box"""
-        return (
-            ivec3(x, y, z)
-            for x in range(self.begin.x, self.end.x)
-            for y in range(self.begin.y, self.end.y)
-            for z in range(self.begin.z, self.end.z)
-        )
-
-    @property
     def volume(self) -> int:
         """This Box's volume"""
         return self._size.x * self._size.y * self._size.z
@@ -885,7 +870,7 @@ class Box:
     @staticmethod
     def bounding(points: Iterable[Vec3iLike]) -> 'Box':
         """Returns the smallest Box containing all ``points``"""
-        pointArray = np.fromiter(points, dtype=np.dtype((int, 3)))
+        pointArray = np.fromiter(points, dtype=np.dtype((np.int_, 3)))
         minPoint: np.ndarray = np.min(pointArray, axis=0)
         maxPoint: np.ndarray = np.max(pointArray, axis=0)
         return Box(minPoint, maxPoint - minPoint + 1)
@@ -1041,22 +1026,22 @@ def loop3D(begin: Vec3iLike, end: Optional[Vec3iLike] = None) -> Generator[ivec3
 
 def cuboid2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Generator[ivec2, None, None]:
     """Yields all points in the rectangle between ``corner1`` and ``corner2`` (inclusive)."""
-    return Rect.between(corner1, corner2).inner
+    yield from Rect.between(corner1, corner2)
 
 
 def cuboid3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Generator[ivec3, None, None]:
     """Yields all points in the box between ``corner1`` and ``corner2`` (inclusive)."""
-    return Box.between(corner1, corner2).inner
+    yield from Box.between(corner1, corner2)
 
 
-def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints=True) -> np.ndarray:
+def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints=True) -> npt.NDArray[np.intp]:
     """Fills the shape defined by ``points``, starting at ``seedPoint`` and returns a (n,2) numpy array
     containing the resulting points.\n
     ``boundingRect`` should contain all ``points``. If not provided, it is calculated."""
     if boundingRect is None:
         boundingRect = Rect.bounding(points)
 
-    pointMap = np.zeros(boundingRect.size.to_tuple(), dtype=int)
+    pointMap = np.zeros(boundingRect.size.to_tuple(), dtype=np.int_)
     pointMap[
         tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 2))) - np.array(boundingRect.offset)))] = 1
     filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec2(*seedPoint) - boundingRect.offset),1, footprint=np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]]))
@@ -1071,14 +1056,14 @@ def filled2D(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Op
     return (ivec2(*point) for point in filled2DArray(points, seedPoint, boundingRect, includeInputPoints))
 
 
-def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Optional[Box] = None, includeInputPoints=True) -> np.ndarray:
+def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Optional[Box] = None, includeInputPoints=True) -> npt.NDArray[np.intp]:
     """Fills the shape defined by ``points``, starting at ``seedPoint`` and returns a (n,3) numpy array
     containing the resulting points.\n
     ``boundingBox`` should contain all ``points``. If not provided, it is calculated."""
     if boundingBox is None:
         boundingBox = Box.bounding(points)
 
-    pointMap = np.zeros(boundingBox.size.to_tuple(), dtype=int)
+    pointMap = np.zeros(boundingBox.size.to_tuple(), dtype=np.int_)
     pointMap[tuple(np.transpose(np.fromiter(points, dtype=np.dtype((int, 3))) - np.array(boundingBox.offset)))] = 1
     filled = skimage.segmentation.flood_fill(pointMap, tuple(ivec3(*seedPoint) - boundingBox.offset), 1, connectivity=1)
     if not includeInputPoints:
@@ -1093,7 +1078,7 @@ def filled3D(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Opt
 
 
 # TODO: separate out thickening code?
-def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLike], width: int = 1) -> np.ndarray:
+def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLike], width: int = 1) -> npt.NDArray[np.intp]:
     begin = np.array(begin)
     end = np.array(end)
     delta = end - begin
@@ -1101,7 +1086,7 @@ def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLi
     if maxDelta == 0:
         return np.array([])
     points = delta[np.newaxis, :] * np.arange(maxDelta + 1)[:, np.newaxis] / maxDelta + np.array(begin)
-    points = np.rint(points).astype(np.signedinteger)
+    points = np.rint(points).astype(np.intp)
 
     if width > 1:
         minPoint = np.minimum(begin, end)
@@ -1119,7 +1104,7 @@ def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLi
     return points
 
 
-def line2DArray(begin: Vec2iLike, end: Vec2iLike, width: int = 1) -> np.ndarray:
+def line2DArray(begin: Vec2iLike, end: Vec2iLike, width: int = 1) -> npt.NDArray[np.intp]:
     """Returns (n,2) numpy array of points on the line between ``begin`` and ``end`` (inclusive)"""
     return _lineArray(begin, end, width)
 
@@ -1129,7 +1114,7 @@ def line2D(begin: Vec2iLike, end: Vec2iLike, width: int = 1) -> Generator[ivec2,
     return (ivec2(*point) for point in _lineArray(begin, end, width))
 
 
-def line3Darray(begin: Vec3iLike, end: Vec3iLike, width: int = 1) -> np.ndarray:
+def line3Darray(begin: Vec3iLike, end: Vec3iLike, width: int = 1) -> npt.NDArray[np.intp]:
     """Returns (n,3) numpy array of points on the line between ``begin`` and ``end`` (inclusive)"""
     return _lineArray(begin, end, width)
 
@@ -1160,24 +1145,24 @@ def circle(center: Vec2iLike, diameter: int, filled=False) -> Generator[ivec2, N
     # With 'inspiration' from:
     # https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
 
-    center: ivec2 = ivec2(*center)
+    centerVec: ivec2 = ivec2(*center)
 
     if diameter == 0:
-        empty: List[ivec2] = []
-        return iter(empty)
+        return
+        yield # Unreachable, but teeds to be here so the function is recognized as a generator
 
     e: int = 1 - (diameter % 2)  # for even centers
     points: Set[ivec2] = set()
 
     def eightPoints(x: int, y: int):
-        points.add(center + ivec2(e + x, e + y))
-        points.add(center + ivec2(0 - x, e + y))
-        points.add(center + ivec2(e + x, 0 - y))
-        points.add(center + ivec2(0 - x, 0 - y))
-        points.add(center + ivec2(e + y, e + x))
-        points.add(center + ivec2(0 - y, e + x))
-        points.add(center + ivec2(e + y, 0 - x))
-        points.add(center + ivec2(0 - y, 0 - x))
+        points.add(centerVec + ivec2(e + x, e + y))
+        points.add(centerVec + ivec2(0 - x, e + y))
+        points.add(centerVec + ivec2(e + x, 0 - y))
+        points.add(centerVec + ivec2(0 - x, 0 - y))
+        points.add(centerVec + ivec2(e + y, e + x))
+        points.add(centerVec + ivec2(0 - y, e + x))
+        points.add(centerVec + ivec2(e + y, 0 - x))
+        points.add(centerVec + ivec2(0 - y, 0 - x))
 
     radius: int = (diameter - 1) // 2
     x, y = 0, radius
@@ -1200,10 +1185,11 @@ def circle(center: Vec2iLike, diameter: int, filled=False) -> Generator[ivec2, N
         eightPoints(x, y)
 
     if filled:
-        return filled2D(
-            points, center, Rect(center - radius, ivec2(diameter, diameter))
+        yield from filled2D(
+            points, centerVec, Rect(centerVec - radius, ivec2(diameter, diameter))
         )
-    return iter(points)
+        return
+    yield from points
 
 
 def fittingCircle(corner1: Vec2iLike, corner2: Vec2iLike, filled=False) -> Generator[ivec2, None, None]:
@@ -1221,31 +1207,32 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False) -> Generator[
     # Modified version 'inspired' by chandan_jnu from
     # https://www.geeksforgeeks.org/midpoint-ellipse-drawing-algorithm/
 
-    center: ivec2 = ivec2(*center)
-    diameters: ivec2 = ivec2(*diameters)
+    centerVec: ivec2 = ivec2(*center)
+    diametersVec: ivec2 = ivec2(*diameters)
 
-    if diameters.x == 0 or diameters.y == 0:
-        empty: List[ivec2] = []
-        return iter(empty)
+    if diametersVec.x == 0 or diametersVec.y == 0:
+        return
+        yield # Unreachable, but teeds to be here so the function is recognized as a generator
 
-    if diameters.x == diameters.y:
-        return circle(center, diameters.x, filled)
+    if diametersVec.x == diametersVec.y:
+        yield from circle(centerVec, diametersVec.x, filled)
+        return
 
-    e: ivec2 = 1 - (diameters % 2)
+    e: ivec2 = 1 - (diametersVec % 2)
 
     points: Set[ivec2] = set()
 
     def fourpoints(x, y) -> None:
-        points.add(center + ivec2(e.x + x, e.y + y))
-        points.add(center + ivec2(    - x, e.y + y))
-        points.add(center + ivec2(e.x + x,     - y))
-        points.add(center + ivec2(    - x,     - y))
+        points.add(centerVec + ivec2(e.x + x, e.y + y))
+        points.add(centerVec + ivec2(    - x, e.y + y))
+        points.add(centerVec + ivec2(e.x + x,     - y))
+        points.add(centerVec + ivec2(    - x,     - y))
 
         if filled:
-            points.update(line2D(center + ivec2(-x, e.y + y), center + ivec2(e.x + x, e.y + y)))
-            points.update(line2D(center + ivec2(-x,     - y), center + ivec2(e.x + x,     - y)))
+            points.update(line2D(centerVec + ivec2(-x, e.y + y), centerVec + ivec2(e.x + x, e.y + y)))
+            points.update(line2D(centerVec + ivec2(-x,     - y), centerVec + ivec2(e.x + x,     - y)))
 
-    rx, ry = (diameters - 1) // 2
+    rx, ry = (diametersVec - 1) // 2
 
     x, y = 0, ry
 
@@ -1295,7 +1282,7 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled=False) -> Generator[
             dy = dy - (2 * rx * rx)
             d2 = d2 + dx - dy + (rx * rx)
 
-    return iter(points)
+    yield from points
 
 
 def fittingEllipse(corner1: Vec2iLike, corner2: Vec2iLike, filled=False) -> Generator[ivec2, None, None]:
@@ -1310,18 +1297,18 @@ def cylinder(baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: in
     If a ``diameter`` is even, ``center`` will be the lower center point in that axis.\n
     ``tube`` has precedence over ``hollow``."""
 
-    diameters: ivec2 = (
+    diametersVec: ivec2 = (
         ivec2(diameters) if isinstance(diameters, int) else ivec2(*diameters)
     )
-    baseCenter: ivec3 = ivec3(*baseCenter)
+    baseCenterVec: ivec3 = ivec3(*baseCenter)
 
-    if diameters.x == 0 or diameters.y == 0 or length == 0:
-        empty: List[ivec3] = []
-        return iter(empty)
+    if diametersVec.x == 0 or diametersVec.y == 0 or length == 0:
+        return
+        yield # Unreachable, but teeds to be here so the function is recognized as a generator
 
-    corner1 = baseCenter - addDimension((diameters - 1) / 2, axis, 0)
-    corner2 = corner1 + addDimension(diameters - 1, axis, length - 1)
-    return fittingCylinder(corner1, corner2, axis, tube, hollow)
+    corner1 = baseCenterVec - addDimension((diametersVec - 1) / 2, axis, 0)
+    corner2 = corner1 + addDimension(diametersVec - 1, axis, length - 1)
+    yield from fittingCylinder(corner1, corner2, axis, tube, hollow)
 
 
 def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis=1, tube=False, hollow=False) -> Generator[ivec3, None, None]:
@@ -1378,11 +1365,11 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     If ``diameter[axis]`` is even, ``center[axis]`` will be the lower center point in that axis."""
 
     # Convert the center and diameters to ivec3
-    center: ivec3 = ivec3(*center)
-    diameters: ivec3 = ivec3(*diameters)
+    centerVec: ivec3 = ivec3(*center)
+    diametersVec: ivec3 = ivec3(*diameters)
 
     # Calculate the correction
-    e: ivec3 = 1 - (diameters % 2)
+    e: ivec3 = 1 - (diametersVec % 2)
 
     def are_points_in_line(center: Vec3iLike, point: Vec3iLike) -> bool:
         """Checks if two 3D points are the same on 2 or more axis"""
@@ -1411,11 +1398,11 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
         return octants
 
     # Extract the x, y, and z coordinates of the center point
-    x0, y0, z0 = center
+    x0, y0, z0 = centerVec
     # Extract the radii of the ellipsoid along the x, y, and z axes
-    rx, ry, rz = ((diameters) // 2) + (1 - e)
+    rx, ry, rz = ((diametersVec) // 2) + (1 - e)
 
-    solid_points: np.ndarray[Any, np.dtype[bool]] = np.zeros((rx + 2, ry + 2, rz + 2), dtype=bool)
+    solid_points: npt.NDArray[np.bool_] = np.zeros((rx + 2, ry + 2, rz + 2), dtype=np.bool_)
 
     # Loop over all points within the bounding box of the ellipsoid
     for x, y, z in itertools.product(*(range(n) for n in solid_points.shape)):
@@ -1424,7 +1411,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
         e_val: float = (x**2 / rx**2) + (y**2 / ry**2) + (z**2 / rz**2)
         # Check if it is in-line with the center point
         in_line_with_center: bool = are_points_in_line(
-            center, (x + x0, y + y0, z + z0)
+            centerVec, (x + x0, y + y0, z + z0)
         )
 
         # If the point satisfies the ellipsoid equation
@@ -1434,7 +1421,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
             # Otherwise, yield it for all octants
             else:
                 yield from generate_octants(
-                    center, ivec3(x + x0, y + y0, z + z0)
+                    centerVec, ivec3(x + x0, y + y0, z + z0)
                 )
 
     # If the ellipsoid should be hollow
@@ -1452,7 +1439,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
             )
 
             # If a point is part of the shell, yield it for all octants
-            if shell: yield from generate_octants(center, ivec3(x + x0, y + y0, z + z0))
+            if shell: yield from generate_octants(centerVec, ivec3(x + x0, y + y0, z + z0))
 
 
 def fittingEllipsoid(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) -> Generator[ivec3, None, None]:
@@ -1460,13 +1447,13 @@ def fittingEllipsoid(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = Fals
     corner1_, corner2_ = orderedCorners3D(corner1, corner2)
     diameters: ivec3 = corner2_ - corner1_ + 1
     center: ivec3 = (corner1_ + corner2_) // 2
-    return ellipsoid(center, diameters, hollow)
+    yield from ellipsoid(center, diameters, hollow)
 
 
 def sphere(center: Vec3iLike, diameter: int, hollow: bool = False) -> Generator[ivec3, None, None]:
     """Yields the points of a sphere centered on ``center`` with diameter ``diameter``.\n
     If ``diameter`` is even, ``center`` will be the lower center point in every axis."""
-    return ellipsoid(center, (diameter, diameter, diameter), hollow)
+    yield from ellipsoid(center, (diameter, diameter, diameter), hollow)
 
 
 def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) -> Generator[ivec3, None, None]:
@@ -1475,7 +1462,7 @@ def fittingSphere(corner1: Vec3iLike, corner2: Vec3iLike, hollow: bool = False) 
     corner1_, corner2_ = orderedCorners3D(corner1, corner2)
     diameter: int = min(corner2_ - corner1_) + 1
     center: ivec3 = (corner1_ + corner2_) // 2
-    return sphere(center, diameter, hollow)
+    yield from sphere(center, diameter, hollow)
 
 
 def _boundedNeighborsFromVectors2D(point: ivec2, bounding_rect: Rect, vectors: Iterable[ivec2], stride: int = 1) -> Generator[ivec2, Any, None]:
@@ -1491,7 +1478,7 @@ def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, st
     Useful for pathfinding."""
     point = ivec2(*point)
     vectors: FrozenSet[ivec2] = CARDINALS_AND_DIAGONALS_2D if diagonal else CARDINALS_2D
-    return _boundedNeighborsFromVectors2D(point, boundingRect, vectors, stride)
+    yield from _boundedNeighborsFromVectors2D(point, boundingRect, vectors, stride)
 
 
 def _boundedNeighborsFromVectors3D(point: ivec3, bounding_box: Box, vectors: Iterable[ivec3], stride: int = 1) -> Generator[ivec3, Any, None]:
@@ -1507,4 +1494,4 @@ def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stri
     Useful for pathfinding."""
     point = ivec3(*point)
     vectors: FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D if diagonal else DIRECTIONS_3D
-    return _boundedNeighborsFromVectors3D(point, boundingBox, vectors, stride)
+    yield from _boundedNeighborsFromVectors3D(point, boundingBox, vectors, stride)

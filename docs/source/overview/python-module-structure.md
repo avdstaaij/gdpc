@@ -1,7 +1,5 @@
 # Python module structure
 
-
-
 This page gives an overview of how GDPC is structured in terms of importable
 modules. You may find it useful when browsing the [API reference](../api/index)
 or when contributing to GDPC.
@@ -21,8 +19,6 @@ categories:
    - {mod}`.gdpc.transform`
    - {mod}`.gdpc.vector_tools`
 
-   <!-- &nbsp; -->
-
 
 2. **Additional tools.**
 
@@ -35,8 +31,6 @@ categories:
    - {mod}`.gdpc.geometry`
    - {mod}`.gdpc.lookup`
    - {mod}`.gdpc.model`
-
-   <!-- &nbsp; -->
 
 
 3. **Internal utilities.**

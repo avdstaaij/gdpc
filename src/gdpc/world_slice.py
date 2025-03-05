@@ -1,6 +1,6 @@
 """Provides the :class:`.WorldSlice` class"""
 
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, Optional, cast
 from dataclasses import dataclass
 from io import BytesIO
 from math import floor, ceil, log2
@@ -9,6 +9,7 @@ from glm import ivec2, ivec3
 from nbt import nbt
 from nbt.nbt import TAG_Compound
 import numpy as np
+import numpy.typing as npt
 
 from .vector_tools import Vec3iLike, addY, loop2D, loop3D, trueMod2D, Rect, Box
 from .block import Block
@@ -103,14 +104,14 @@ class WorldSlice:
             ((self._rect.last) >> 4) - (self._rect.offset >> 4) + 1
         )
 
-        chunkBytes = interface.getChunks(self._chunkRect.offset, self._chunkRect.size, dimension=dimension, asBytes=True, retries=retries, timeout=timeout, host=host)
+        chunkBytes = cast(bytes, interface.getChunks(self._chunkRect.offset, self._chunkRect.size, dimension=dimension, asBytes=True, retries=retries, timeout=timeout, host=host))
         chunkBuffer = BytesIO(chunkBytes)
 
         self._nbt = nbt.NBTFile(buffer=chunkBuffer)
 
-        self._heightmaps: Dict[str, np.ndarray] = {}
+        self._heightmaps: Dict[str, npt.NDArray[np.int_]] = {}
         for hmName in heightmapTypes:
-            self._heightmaps[hmName] = np.zeros(self._rect.size, dtype=int)
+            self._heightmaps[hmName] = np.zeros(tuple(self._rect.size), dtype=np.int_)
 
         self._sections: Dict[ivec3, _ChunkSection] = {}
 
@@ -221,7 +222,7 @@ class WorldSlice:
         return self._nbt
 
     @property
-    def heightmaps(self) -> Dict[str, np.ndarray]:
+    def heightmaps(self) -> Dict[str, npt.NDArray[np.int_]]:
         """The heightmaps of this WorldSlice."""
         return self._heightmaps
 
@@ -327,7 +328,9 @@ class WorldSlice:
         """Returns the most prevalent biome in the same chunk as the global ``position``.\n
         If ``position`` is not contained in this WorldSlice, returns None."""
         foundBiomes = self.getBiomeCountsInChunkGlobal(position)
-        biome: str = max(foundBiomes.keys(), key=foundBiomes.get)
+        if foundBiomes is None:
+            return None
+        biome: str = max(foundBiomes.keys(), key=foundBiomes.__getitem__)
         return biome
 
     def getPrimaryBiomeInChunk(self, position: Vec3iLike) -> Optional[str]:

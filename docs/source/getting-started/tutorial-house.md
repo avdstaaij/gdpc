@@ -672,9 +672,6 @@ placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
 Next, we'll extend the floor of the house so it integrates better on uneven
 terrain. An easy and often sufficient method is to just extend it a set amount
 of blocks downward.
-<!-- A more accurate way would be to use a heightmap to place only the needed
-blocks. We'll use yet another method, GDPC's replacement feature. It allows us
-to specify specific blocks to replace -- in this case, air. -->
 
 ```{code-block} python
 :emphasize-lines: 5
@@ -797,7 +794,6 @@ placeCuboid(editor, (x+1, y+1, z-1), (x+3, y+3, z-1), Block("air"))
 :width: 500
 An example of the final house. We've come a long way.
 ```
-
 
 Of course, there's lots more that we could do, such as windows, lighting and
 furniture, but we'll leave that as an exercise to the reader.

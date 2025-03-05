@@ -1,9 +1,26 @@
 # In development
 
-Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
+Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
+
+**Breaking:**
+- Increased minimum supported GDMC-HTTP version to 1.5.1.
+- Increased supported Minecraft version to 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+- Changed the following `vector_tools` constants from `Tuple`s to `FrozenSet`s: `DIAGONALS_2D`, `DIAGONALS_3D`, `DIAGONALS`.
+- Removed deprecated `Rect.inner` and `Box.inner`.
 
 **Fixes:**
+
 - Fixed `Editor.__del__` sometimes crashing for some users when there were blocks in the block buffer on program exit.
+- Added a `py.typed` file, which indicates that GDPC provides type hints. Some type checkers that didn't pick up GDPC's type hints before now do, most notably *Mypy*.
+- Added and refined various type hints.
+- Fixed `editor_tools.placeSign` sometimes creating `Block`s with incorrect block states (`rotation` for wall signs and `facing` for non-wall signs).
+- Fixed `vector_tools.rotateSize2D` sometimes returning the input value instead of an `ivec2`.
+- Fixed `vector_tools.l1Distance` crashing when passing veclikes that don't support the `-` operator.
+- Fixed `world_slice.WorldSlice.getPrimaryBiomeInChunkGlobal` crashing if you passed a position not contained in the world slice.
+- Fixed `interface.placeStructure` crashing if you passed `rotate=None` and `mirror=(True, True)`.
+- Fixed `editor.Editor.placeBlockGlobal` possibly crashing when the passed `position` is not an `ivec3` and buffering is enabled.
+- Fixed `editor.Editor.placeBlock` possibly crashing when the passed `position` is iterable, sizable and has length 3, but does not have `__getitem__`. Yeah, this one's obscure.
+
 
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
@@ -15,12 +32,12 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions:**:
+**Additions:**
 - Added an extensive [documentation website](https://gdpc.readthedocs.io)!
 - The transformation system now supports the `half` state of stairs blocks.
 - `Rect` and `Box` are now iterable, yielding the same values as `Rect.inner`/`Box.inner`. (Thanks [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 
-**Deprecations:**:
+**Deprecations:**
 - `Rect.inner` and `Box.inner` are deprecated, since the classes can now be directly iterated over.
 
 
@@ -53,7 +70,7 @@ Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
 Compatible with GDMC-HTTP **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
 
-**Additions**
+**Additions:**
 - Added `interface` bindings for GDMC-HTTP `GET /entities` and `GET /players`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 

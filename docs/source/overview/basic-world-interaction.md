@@ -1,23 +1,5 @@
 # Basic world interaction
 
-<!-- ## The Editor class
-
-In GDPC, All forms of world interaction go through the {class}`.Editor` class --
-it serves as the main point of communication between GDPC and the GDMC HTTP
-interface, and thus, the Minecraft world. It has methods like
-`placeBlock()` and `getBlock()`,
-and it stores various settings, resources, buffers and caches related to world
-interaction.
-
-The `Editor` class is central to most of GDPC, and as such, it is involved in
-many other documentation topics besides this one. This topic page will only
-describe its basic functionality. For more specialized features, refer to the
-corresponding topic pages or the [API reference](#editor).
-
-The `Editor` class is defined in the {mod}`gdpc.editor` module, but it can also
-be imported directly from the root package: {python}`from gdpc import Editor`. -->
-
-
 ## The Editor and Block classes
 
 The most important GDPC objects for world interaction are the {class}`.Editor`
@@ -32,11 +14,6 @@ world interaction goes through it. It has methods like
 `placeBlock()` and `getBlock()`,
 and it stores various settings, resources, buffers and caches related to world
 interaction.
-
-<!-- The `Editor` class is central to most of GDPC, and as such, it is involved in
-many other overview topics besides this one. This overview page will only
-describe its basic functionality. For more specialized features, refer to the
-corresponding overview pages or the [API reference](#editor). -->
 
 The `Block` class represents a Minecraft block, which is what you pass
 to functions like `Editor.placeBlock` and what functions like
@@ -100,8 +77,3 @@ To get the Minecraft version you're interacting with, use
 version = editor.getMinecraftVersion()
 print(version) # e.g. "1.19.2"
 ```
-
-
-<!-- ## Checking the connection to the GDMC HTTP interface
-
-... -->

@@ -1,6 +1,6 @@
 """Various generic utilities."""
 
-from typing import Any, Generator, Sequence, TypeVar, Generic, Callable, Iterable, OrderedDict, Union
+from typing import Protocol, Any, Generator, Sequence, TypeVar, Generic, Callable, Iterable, OrderedDict, Union, Type
 import time
 from pathlib import Path
 
@@ -14,6 +14,17 @@ T = TypeVar("T")
 KT = TypeVar("KT")
 VT = TypeVar("VT")
 
+class _Comparable(Protocol):
+    """Protocol for types that can be compared.\n
+    The requirements are very loose."""
+    def __eq__(self, *args, **kwargs) -> bool:
+        ...
+
+    def __lt__(self, *args, **kwargs) -> bool:
+        ...
+
+ComparableT = TypeVar("ComparableT", bound=_Comparable)
+
 
 def sign(x) -> int:
     """Returns the sign of ``x``"""
@@ -25,7 +36,7 @@ def nonZeroSign(x) -> int:
     return 1 if x >= 0 else -1
 
 
-def clamp(x: T, minimum: T, maximum: T) -> T:
+def clamp(x: ComparableT, minimum: ComparableT, maximum: ComparableT) -> ComparableT:
     """Clamps ``x`` to the range [``minimum``, ``maximum``]"""
     return max(minimum, min(maximum, x))
 
@@ -52,7 +63,7 @@ def normalized(a, order=2, axis=-1):
 
 def withRetries(
     function:      Callable[[], T],
-    exceptionType: type                             = Exception,
+    exceptionType: Type[Exception]                  = Exception,
     retries:       int                              = 1,
     onRetry:       Callable[[Exception, int], None] = lambda *_: time.sleep(1),
     reRaise:       bool                             = True
@@ -136,6 +147,8 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
 def visualizeMaps(*arrays, title="", normalize=True) -> None:
     """
     .. warning::
+        :title: Deprecated
+
         This function is deprecated and will be removed in a future version of GDPC.
 
         It was only used by the now-removed ``visualize_map.py`` example, and its

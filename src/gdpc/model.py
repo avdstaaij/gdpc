@@ -27,9 +27,9 @@ class Model:
         if blocks is not None:
             if len(blocks) != volume:
                 raise ValueError("The number of blocks should be equal to size[0] * size[1] * size[2]")
-            self._blocks = copy(blocks)
+            self._blocks: List[Optional[Block]] = copy(blocks)
         else:
-            self._blocks = [None] * volume
+            self._blocks: List[Optional[Block]] = [None] * volume
 
 
     @property
@@ -55,9 +55,9 @@ class Model:
     def build(
         self,
         editor:         Editor,
-        transformLike:  Optional[TransformLike]         = None,
-        substitutions:  Optional[Dict[str, str]]        = None,
-        replace:        Optional[Union[str, List[str]]] = None
+        transformLike:  Optional[TransformLike]            = None,
+        substitutions:  Optional[Dict[Optional[str], str]] = None,
+        replace:        Optional[Union[str, List[str]]]    = None,
     ) -> None:
         """Builds the model.
 
@@ -66,7 +66,7 @@ class Model:
         if substitutions is None: substitutions = {}
 
         with editor.pushTransform(transformLike):
-            for vec in Box(size=self._size).inner:
+            for vec in Box(size=self._size):
                 block = self.getBlock(vec)
                 if block is not None:
                     blockToPlace = copy(block)

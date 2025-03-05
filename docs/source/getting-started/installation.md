@@ -1,14 +1,12 @@
 # Installation
 
-
 ## Prerequisites
 
 To use GDPC, you first need to install Minecraft Java edition and the
 [GDMC HTTP Interface mod](https://github.com/Niels-NTG/gdmc_http_interface).
 
 The version of GDPC whose docs you're currently looking at is compatible
-with GDMC HTTP versions **>=1.0.0, <2.0.0** and Minecraft **1.20.2**.
-
+with GDMC HTTP versions **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 
 If you've correctly installed the GDMC-HTTP mod, you should be able to use
 the `/setbuildarea` command in-game:
