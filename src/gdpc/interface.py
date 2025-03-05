@@ -40,7 +40,7 @@ def _onRequestRetry(e: Exception, retriesLeft: int) -> None:
     time.sleep(3)
 
 
-def _request(method: str, url: str, *args, retries: int, **kwargs) -> requests.Response:
+def _request(method: str, url: str, *args: Any, retries: int, **kwargs: Any) -> requests.Response:
     try:
         response = cast(requests.Response, withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry))
     except RequestConnectionError as e:

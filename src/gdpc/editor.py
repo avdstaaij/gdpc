@@ -268,7 +268,6 @@ class Editor:
 
         \*: The system is actually a bit more complex than this.
         See https://minecraft.wiki/w/Block_update for the full details.
-
         """
         return self._doBlockUpdates
 

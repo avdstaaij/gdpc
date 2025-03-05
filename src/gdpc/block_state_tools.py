@@ -259,13 +259,13 @@ def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLik
 # values unchanged.
 
 
-__INVERT_FACING = {
+__INVERT_HALF = {
     "bottom": "top",
     "top":    "bottom",
 }
 def invertHalf(half: str) -> str:
     """Returns the inverted "half" block state string."""
-    result = __INVERT_FACING.get(half)
+    result = __INVERT_HALF.get(half)
     return result if result is not None else half
 
 

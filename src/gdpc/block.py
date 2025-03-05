@@ -45,7 +45,7 @@ class Block:
     # and we can add a docstring.
     def __init__(
         self,
-        id: Optional[str] = "minecraft:stone",
+        id: Optional[str] = "minecraft:stone", # pylint: disable=redefined-builtin
         states: Optional[Dict[str, str]] = None,
         data: Optional[str] = None
     ) -> None:
