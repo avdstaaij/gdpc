@@ -2,6 +2,9 @@
 
 Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 
+**Supported Python versions:**
+- GDPC now requires Python 3.8. (This is actually a bugfix: Python 3.8 was already required since GDPC 7.0.0.)
+
 **Breaking:**
 - Increased minimum supported GDMC-HTTP version to 1.5.1.
 - Increased supported Minecraft version to 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
@@ -18,6 +21,7 @@ Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 - Fixed `interface.placeStructure` crashing if you passed `rotate=None` and `mirror=(True, True)`.
 - Fixed `editor.Editor.placeBlockGlobal` possibly crashing when the passed `position` is not an `ivec3` and buffering is enabled.
 - Fixed `editor.Editor.placeBlock` possibly crashing when the passed `position` is iterable, sizable and has length 3, but does not have `__getitem__`. Yeah, this one's obscure.
+- Fixed GDPC not actually being compatible with the documented miminum Python version, by increasing the minimum Python version (see "Supported Python versions").
 
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.

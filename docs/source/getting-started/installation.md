@@ -19,7 +19,8 @@ the `/setbuildarea` command in-game:
 
 ## Installing GDPC
 
-GDPC is available on [PyPI](https://pypi.org/project/gdpc/); to install, run:
+GDPC requires Python 3.8 or above.
+It is available on [PyPI](https://pypi.org/project/gdpc/); to install, run:
 ```
 python3 -m pip install gdpc
 ```
