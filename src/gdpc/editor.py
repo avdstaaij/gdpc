@@ -108,9 +108,23 @@ class Editor:
         # - We need to store the lambda so that we can unregister it in __del__ and avoid a double
         #   cleanup.
 
-        ref = weakref.ref(self)
-        self._clean_up_handler = lambda: _clean_up_editor_at_exit(ref)
+        ref = weakref.ref(cast(Editor, self))
+        self._clean_up_handler = lambda: Editor._clean_up_at_exit(ref)
         atexit.register(self._clean_up_handler)
+
+
+    @staticmethod
+    def _clean_up(editor: Editor) -> None:
+        """The real Editor destructor, called from both __del__ and the atexit handler."""
+        editor.flushBuffer()
+        editor.awaitBufferFlushes()
+
+
+    @staticmethod
+    def _clean_up_at_exit(editor_weakref: weakref.ref[Editor]) -> None:
+        editor = editor_weakref()
+        if editor is not None:
+            Editor._clean_up(editor)
 
 
     def __del__(self) -> None:
@@ -118,7 +132,7 @@ class Editor:
         Flushes the block buffer and waits for any remaining buffer flush futures.
         """
         atexit.unregister(self._clean_up_handler)
-        _clean_up_editor(self)
+        Editor._clean_up(self)
 
 
     @property
@@ -732,15 +746,3 @@ class Editor:
             yield
         finally:
             self.transform = originalTransform
-
-
-def _clean_up_editor(editor: Editor) -> None:
-        """The real Editor destructor, called from both __del__ and the atexit handler."""
-        editor.flushBuffer()
-        editor.awaitBufferFlushes()
-
-
-def _clean_up_editor_at_exit(editor_weakref: weakref.ref):
-    editor = editor_weakref()
-    if editor is not None:
-        _clean_up_editor(editor)

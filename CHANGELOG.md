@@ -9,7 +9,6 @@ Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 - Removed deprecated `Rect.inner` and `Box.inner`.
 
 **Fixes:**
-
 - Fixed `Editor.__del__` sometimes crashing for some users when there were blocks in the block buffer on program exit.
 - Added a `py.typed` file, which indicates that GDPC provides type hints. Some type checkers that didn't pick up GDPC's type hints before now do, most notably *Mypy*.
 - Added and refined various type hints.
@@ -20,7 +19,6 @@ Compatible with GDMC-HTTP **>=1.5.1, <2.0.0** and Minecraft **1.21.4**.
 - Fixed `interface.placeStructure` crashing if you passed `rotate=None` and `mirror=(True, True)`.
 - Fixed `editor.Editor.placeBlockGlobal` possibly crashing when the passed `position` is not an `ivec3` and buffering is enabled.
 - Fixed `editor.Editor.placeBlock` possibly crashing when the passed `position` is iterable, sizable and has length 3, but does not have `__getitem__`. Yeah, this one's obscure.
-
 
 **Deprecations:**
 - Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
