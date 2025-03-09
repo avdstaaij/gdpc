@@ -2,7 +2,6 @@
 
 
 from typing import Optional, Iterable, Set, Tuple, Union, List, cast
-import random
 
 from deprecated import deprecated
 import numpy as np
