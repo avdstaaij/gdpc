@@ -13,6 +13,7 @@ import logging
 import json
 import io
 
+import numpy as np
 from glm import ivec3
 from nbt import nbt
 import requests
@@ -314,6 +315,52 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
 
     response = _request(method="GET", url=url, params=parameters, headers=headers, retries=retries, timeout=timeout)
     return response.content
+
+
+def getHeightMap(heightMapType: Optional[str] = None, blocks: Optional[Iterable[str]] = None, yBounds: Optional[str] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> np.ndarray:
+    """Returns heightmap of the given type within the current build area
+
+    This endpoint supports 4 of Minecraft's built-in height map types (https://minecraft.wiki/w/Heightmap):
+        - 'WORLD_SURFACE'
+            - Height of surface ignoring air blocks.
+        - 'OCEAN_FLOOR'
+            - Height surface ignoring air, water and lava.
+        - 'MOTION_BLOCKING'
+            - Height of surface ignoring blocks that have no movement collision (air, flowers, ferns, etc.)
+              except for water and lava.
+        - 'MOTION_BLOCKING_NO_LEAVES'
+            - Same as 'MOTION_BLOCKING', but also ignores [leaves](https://minecraft.wiki/w/Leaves).
+    Additionally, the GDMC-HTTP mod provides 2 extra height map types which can only be retrieved using this endpoint:
+        - 'MOTION_BLOCKING_NO_PLANTS'
+            - Same as 'MOTION_BLOCKING_NO_LEAVES', but also excludes various biological block types. For a full list,
+              please refer to the GDMC-HTTP documentation:
+              https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#heightmap-preset-types
+        - 'OCEAN_FLOOR_NO_PLANTS'
+            - Same as 'OCEAN_FLOOR', except it also excludes everything that is part of `MOTION_BLOCKING_NO_PLANTS'.
+
+    Instead of a height map type you can also submit a list of block IDs using the `blocks` parameter. This are the
+    block that should be considered to be "transparent" when the heightmap is calculated. Please note that air blocks
+    (minecraft:air, minecraft:cave_air) aren't included by default.
+
+    Using the `yBounds` parameter the lower and/or upper limit of the height map calculation can be constrained.
+    This can be usefull for creating heightmaps of overworld caves or The Nether dimension. The value of `yBounds`
+    needs to conform to Minecraft's "int range" syntax (https://minecraft.wiki/w/Argument_types#minecraft:int_range)
+    and only works if used in conjunction with the `blocks` parameter.
+    """
+    customBlocksQuery = ''
+    if isinstance(blocks, Iterable):
+        customBlocksQuery = ','.join(blocks)
+    elif heightMapType is None:
+        # Default to height map type WORLD_SURFACE if both `heightMapType` and `blocks` parameters aren't set.
+        heightMapType = 'WORLD_SURFACE'
+    parameters = {
+        'type': heightMapType,
+        'dimension': dimension,
+        'blocks': customBlocksQuery,
+        'yBounds': yBounds,
+    }
+    response = _request(method='GET', url=f'{host}/heightmap', params=parameters, retries=retries, timeout=timeout)
+    return np.asarray(response.json())
 
 
 def getEntities(selector: Optional[str] = None, includeData: bool = True, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> Any:
