@@ -6,6 +6,7 @@ from pathlib import Path
 
 from deprecated import deprecated
 import numpy as np
+import numpy.typing as npt
 import cv2
 from matplotlib import pyplot as plt
 
@@ -17,21 +18,21 @@ VT = TypeVar("VT")
 class _Comparable(Protocol):
     """Protocol for types that can be compared.\n
     The requirements are very loose."""
-    def __eq__(self, *args, **kwargs) -> bool:
+    def __eq__(self, *args: Any, **kwargs: Any) -> bool:
         ...
 
-    def __lt__(self, *args, **kwargs) -> bool:
+    def __lt__(self, *args: Any, **kwargs: Any) -> bool:
         ...
 
 ComparableT = TypeVar("ComparableT", bound=_Comparable)
 
 
-def sign(x) -> int:
+def sign(x: Any) -> int:
     """Returns the sign of ``x``"""
     return (x > 0) - (x < 0)
 
 
-def nonZeroSign(x) -> int:
+def nonZeroSign(x: Any) -> int:
     """Returns the sign of ``x``, except that ``nonZeroSign(0) == 1``"""
     return 1 if x >= 0 else -1
 
@@ -41,31 +42,31 @@ def clamp(x: ComparableT, minimum: ComparableT, maximum: ComparableT) -> Compara
     return max(minimum, min(maximum, x))
 
 
-def eagerAll(iterable: Iterable) -> bool:
+def eagerAll(iterable: Iterable[Any]) -> bool:
     """Like ``all()``, but always evaluates every element"""
     results = list(iterable)
     return all(results)
 
-def eagerAny(iterable: Iterable) -> bool:
+def eagerAny(iterable: Iterable[Any]) -> bool:
     """Like ``any()``, but always evaluates every element"""
     results = list(iterable)
     return any(results)
 
 
 # Based on https://stackoverflow.com/a/21032099
-def normalized(a, order=2, axis=-1):
+def normalized(a: npt.NDArray[Any], order: int = 2, axis: int = -1):
     """Normalizes ``a`` using the L<order> norm.\n
     If ``axis`` is specified, normalizes along that axis."""
-    norm = np.atleast_1d(np.linalg.norm(a, order, axis))
+    norm = np.atleast_1d(np.linalg.norm(a, order, axis)) # pyright: ignore [reportUnknownVariableType]
     norm[norm==0] = 1
-    return a / np.expand_dims(norm, axis)
+    return a / np.expand_dims(norm, axis) # pyright: ignore [reportUnknownArgumentType]
 
 
 def withRetries(
     function:      Callable[[], T],
     exceptionType: Type[Exception]                  = Exception,
     retries:       int                              = 1,
-    onRetry:       Callable[[Exception, int], None] = lambda *_: time.sleep(1),
+    onRetry:       Callable[[Exception, int], None] = lambda _1,_2: time.sleep(1),
     reRaise:       bool                             = True
 ) -> Union[T, None]:
     """Retries ``function`` up to ``retries`` times if an exception occurs.\n
@@ -84,7 +85,7 @@ def withRetries(
             retries -= 1
 
 
-def isIterable(value) -> bool:
+def isIterable(value: Any) -> bool:
     """Determine whether ``value`` is iterable."""
     try:
         _ = iter(value)
@@ -93,7 +94,7 @@ def isIterable(value) -> bool:
         return False
 
 
-def isSequence(value) -> bool:
+def isSequence(value: Any) -> bool:
     """Determine whether ``value`` is a sequence."""
     try:
         _ = value[0]
@@ -111,7 +112,7 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
     # Based on
     # https://docs.python.org/3/library/collections.html?highlight=ordereddict#collections.OrderedDict
 
-    def __init__(self, maxSize: int, *args, **kwargs):
+    def __init__(self, maxSize: int, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self._maxSize = maxSize
 
@@ -144,7 +145,7 @@ class OrderedByLookupDict(OrderedDict[KT, VT], Generic[KT, VT]):
 
 
 @deprecated
-def visualizeMaps(*arrays, title="", normalize=True) -> None:
+def visualizeMaps(*arrays: npt.NDArray[Any], title: str = "", normalize: bool = True) -> None:
     """
     .. warning::
         :title: Deprecated
@@ -158,14 +159,14 @@ def visualizeMaps(*arrays, title="", normalize=True) -> None:
     """
     for array in arrays:
         if normalize:
-            array = ((array - array.min()) / (array.max() - array.min()) * 255).astype(np.uint8)
+            array = ((array - array.min()) / (array.max() - array.min()) * 255).astype(np.uint8) # pyright: ignore [reportUnknownMemberType]
 
-        plt.figure()
+        plt.figure() # type: ignore
         if title:
-            plt.title(title)
+            plt.title(title) # type: ignore
         plt_image = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
-        plt.imshow(plt_image)
-    plt.show()
+        plt.imshow(plt_image) # type: ignore
+    plt.show() # type: ignore
 
 
 def readFileBytes(
@@ -179,7 +180,7 @@ def readFileBytes(
     return rawBytes
 
 
-def rotateSequence(sequence: Sequence, n: int = 1) -> Generator[Any, Any, None]:
+def rotateSequence(sequence: Sequence[T], n: int = 1) -> Generator[T, None, None]:
     """Rotates a sequence of elements by n positions.
 
     Args:
@@ -191,4 +192,5 @@ def rotateSequence(sequence: Sequence, n: int = 1) -> Generator[Any, Any, None]:
     """
     if not sequence:
         return
-    yield from (*sequence[n:], *sequence[:n])
+    yield from sequence[n:]
+    yield from sequence[:n]

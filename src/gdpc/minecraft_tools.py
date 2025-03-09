@@ -142,7 +142,7 @@ def signData(
     backLine4: str = "",
     backColor: str = "",
     backIsGlowing: bool = False,
-    isWaxed = False
+    isWaxed: bool = False
 ) -> str:
     """Returns an SNBT string with sign data.\n
     See also: :func:`.signBlock`, :func:`.editor_tools.placeSign`."""
@@ -176,11 +176,11 @@ def lecternData(bookData: Optional[str], page: int = 0) -> str:
 
 def bookData(
     text: str,
-    title       = "Chronicle",
-    author      = "Anonymous",
-    description = "I wonder what's inside?",
-    desccolor   = "gold",
-    descIsItalic = True
+    title: str         = "Chronicle",
+    author: str        = "Anonymous",
+    description: str   = "I wonder what's inside?",
+    desccolor: str     = "gold",
+    descIsItalic: bool = True
 ) -> str:
     r"""Returns an SNBT string with written book data
 
@@ -224,7 +224,7 @@ def bookData(
     toprint = ''
 
     @lru_cache()
-    def fontwidth(word):
+    def fontwidth(word: str) -> int:
         """Return the length of a word based on character width.
 
         If a letter is not found, a width of 9 is assumed
@@ -337,11 +337,23 @@ def bookData(
 
 
 def signBlock(
-    wood="oak", wall=False,
-    facing: str = "north", rotation: Union[str,int] = "0",
-    frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
-    backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
-    isWaxed = False
+    wood: str = "oak",
+    wall: bool = False,
+    facing: str = "north",
+    rotation: Union[str,int] = "0",
+    frontLine1: str = "",
+    frontLine2: str = "",
+    frontLine3: str = "",
+    frontLine4: str = "",
+    frontColor: str = "",
+    frontIsGlowing: bool = False,
+    backLine1: str = "",
+    backLine2: str = "",
+    backLine3: str = "",
+    backLine4: str = "",
+    backColor: str = "",
+    backIsGlowing: bool = False,
+    isWaxed: bool = False
 ) -> Block:
     """Returns a sign Block with the specified properties.\n
     If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.

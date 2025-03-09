@@ -1,6 +1,25 @@
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel"
+    "wheel",
 ]
 build-backend = "setuptools.build_meta"
+
+
+[tool.pyright]
+include = [
+    "src",
+]
+exclude = [
+    "**/__pycache__",
+    "**/site-packages/nbt/**",
+]
+stubPath = "src/stubs"
+typeCheckingMode = "strict"
+ignore = [
+    "**/site-packages/nbt/**",
+]
+
+
+[tool.mypy]
+mypy_path = "src/stubs"

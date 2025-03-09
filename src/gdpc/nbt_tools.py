@@ -57,6 +57,6 @@ def saveNbtFile(
         if isinstance(data, bytes):
             file.write(data)
             file.close()
-        elif isinstance(data, nbt.NBTFile):
+        else:
             data.write_file(fileobj=file)
         print(f"File saved to: {filePath}")

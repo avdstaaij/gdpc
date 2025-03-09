@@ -100,7 +100,7 @@ def placeStripedBox(editor: Editor, box: Box, block1: Union[Block, Sequence[Bloc
         editor.placeBlock(box.offset + pos, block1 if pos[axis] % 2 == 0 else block2, replace)
 
 
-def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], width=1, replace: Optional[Union[str, List[str]]] = None) -> None:
+def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Block, Sequence[Block]], width: int = 1, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Places a line of ``block`` blocks from ``first`` to ``last`` (inclusive).\n
     To get only the points of this shape, see :func:`.line3D`.\n
     When placing axis-aligned lines, placeCuboid and placeBox are more efficient."""
@@ -111,7 +111,7 @@ def placeLine(editor: Editor, first: Vec3iLike, last: Vec3iLike, block: Union[Bl
     editor.placeBlockGlobal(line3D(first, last, width), block, replace)
 
 
-def placeLineSequence(editor: Editor, points: Iterable[Vec3iLike], block: Union[Block, Sequence[Block]], closed=False, replace: Optional[Union[str, List[str]]] = None) -> None:
+def placeLineSequence(editor: Editor, points: Iterable[Vec3iLike], block: Union[Block, Sequence[Block]], closed: bool = False, replace: Optional[Union[str, List[str]]] = None) -> None:
     """Place lines that run from point to point.\n
     To get only the points of this shape, see :func:`.lineSequence3D`."""
     editor.placeBlock(lineSequence3D(points, closed=closed), block, replace)
@@ -121,7 +121,7 @@ def placeCylinder(
     editor: Editor,
     baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: int,
     block: Union[Block, Sequence[Block]],
-    axis=1, tube=False, hollow=False,
+    axis: int = 1, tube: bool = False, hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
 ) -> None:
     """Place blocks in the shape of a cylinder with the specified properties.\n
@@ -133,7 +133,7 @@ def placeFittingCylinder(
     editor: Editor,
     corner1: Vec3iLike, corner2: Vec3iLike,
     block: Union[Block, Sequence[Block]],
-    axis=1, tube=False, hollow=False,
+    axis: int = 1, tube: bool = False, hollow: bool = False,
     replace: Optional[Union[str, List[str]]] = None
 ) -> None:
     """Place blocks in the shape of the largest cylinder that fits between ``corner1`` and ``corner2``.\n

@@ -65,8 +65,8 @@ __copyright__        = "Copyright 2022-2025 Arthur van der Staaij, Copyright 202
 __version__          = "7.4.0"
 
 
-from .vector_tools import Rect, Box
-from .transform import Transform
-from .block import Block
-from .world_slice import WorldSlice
-from .editor import Editor
+from .vector_tools import Rect, Box # pyright: ignore [reportUnusedImport]
+from .transform import Transform # pyright: ignore [reportUnusedImport]
+from .block import Block # pyright: ignore [reportUnusedImport]
+from .world_slice import WorldSlice # pyright: ignore [reportUnusedImport]
+from .editor import Editor # pyright: ignore [reportUnusedImport]

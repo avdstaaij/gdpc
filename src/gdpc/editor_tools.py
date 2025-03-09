@@ -1,7 +1,7 @@
 """Provides various Minecraft-related utilities that require an :class:`.Editor`."""
 
 
-from typing import Optional, Iterable, Set, Tuple, Union, List, cast
+from typing import Optional, Iterable, Set, Tuple, Union, List, Dict, cast
 
 from deprecated import deprecated
 import numpy as np
@@ -11,11 +11,10 @@ from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block
 from .block_state_tools import facingToVector
 from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
-from . import lookup
 from .editor import Editor
 
 
-_INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
+_INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS: Dict[ivec2, Set[str]] = {
     ivec2(9,3): {
         'minecraft:chest',
         'minecraft:ender_chest',
@@ -44,10 +43,10 @@ _INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
     ivec2(3,1): {'minecraft:blast_furnace', 'minecraft:smoker', 'minecraft:furnace'},
 }
 
-_CONTAINER_BLOCK_TO_INVENTORY_SIZE = {}
-for size, ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCKS.items():
+_CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE: Dict[str, Vec2iLike] = {}
+for size, ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS.items():
     for bid in ids:
-        _CONTAINER_BLOCK_TO_INVENTORY_SIZE[bid] = size
+        _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE[bid] = size
 
 
 def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike) -> Box:
@@ -66,8 +65,8 @@ def flood_search_3D(
     origin: Vec3iLike,
     boundingBox: Box,
     search_block_ids: Iterable[str],
-    diagonal=False,
-    depth=256
+    diagonal: bool = False,
+    depth: int = 256
 ) -> Set[ivec3]:
     """Return a list of coordinates with blocks that fulfill the search.\n
     Activating caching (:attr:`.Editor.caching`) is *highly* recommended."""
@@ -94,11 +93,23 @@ def flood_search_3D(
 def placeSign(
     editor: Editor,
     position: Vec3iLike,
-    wood="oak", wall=False,
-    facing: str = "north", rotation: Union[str, int] = "0",
-    frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
-    backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
-    isWaxed = False
+    wood: str = "oak",
+    wall: bool = False,
+    facing: str = "north",
+    rotation: Union[str, int] = "0",
+    frontLine1: str = "",
+    frontLine2: str = "",
+    frontLine3: str = "",
+    frontLine4: str = "",
+    frontColor: str = "",
+    frontIsGlowing: bool = False,
+    backLine1: str = "",
+    backLine2: str = "",
+    backLine3: str = "",
+    backLine4: str = "",
+    backColor: str = "",
+    backIsGlowing: bool = False,
+    isWaxed: bool = False
 ) -> None:
     """Places a sign with the specified properties.\n
     If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.\n
@@ -131,11 +142,14 @@ def placeContainerBlock(
     position: Vec3iLike,
     block: Block = Block("minecraft:chest"),
     items: Optional[Iterable[Union[Tuple[Vec2iLike, str], Tuple[Vec2iLike, str, int]]]] = None,
-    replace=True
+    replace: bool = True
 ) -> None:
     """Place a container block with the specified items in the world.\n
     ``items`` should be a sequence of (position, item, [amount,])-tuples."""
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
+    if block.id is None:
+        raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
+
+    inventorySize = _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE.get(block.id)
     if inventorySize is None:
         raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
 
@@ -156,8 +170,8 @@ def placeContainerBlock(
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1) -> None:
     """Sets the item at ``itemPosition`` in the container block at ``position`` to the item with id ``item``."""
-    blockId = editor.getBlock(position).id
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(blockId)
+    blockId = cast(str, editor.getBlock(position).id)
+    inventorySize = _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE.get(blockId)
     if inventorySize is None:
         raise ValueError(f'The block at {tuple(position)} is "{blockId}", which is not a known container block.')
 
@@ -182,8 +196,8 @@ def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike) -> List[str]:
     obtrusivenesses = np.array([
         getObtrusiveness(editor.getBlock(ivec3(*pos) + facingToVector(direction)))
         for direction in directions
-    ])
-    candidates              = np.nonzero(obtrusivenesses == np.min(obtrusivenesses))[0]
+    ], dtype=np.int_)
+    candidates              = np.nonzero(obtrusivenesses == np.min(obtrusivenesses))[0] # pyright: ignore [reportUnknownMemberType]
     oppositeObtrusivenesses = obtrusivenesses[(candidates + 2) % 4]
-    winners                 = candidates[oppositeObtrusivenesses == np.max(oppositeObtrusivenesses)]
+    winners                 = candidates[oppositeObtrusivenesses == np.max(oppositeObtrusivenesses)] # pyright: ignore [reportUnknownMemberType]
     return [directions[winner] for winner in winners]
