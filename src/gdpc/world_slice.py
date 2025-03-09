@@ -1,13 +1,13 @@
 """Provides the :class:`.WorldSlice` class"""
 
-from typing import Dict, Iterable, Optional, cast
+from typing import Dict, Iterable, Optional, Any, cast
 from dataclasses import dataclass
 from io import BytesIO
 from math import floor, ceil, log2
 
 from glm import ivec2, ivec3
 from nbt import nbt
-from nbt.nbt import TAG_Compound
+from nbt.nbt import TAG_Compound, TAG_Long_Array
 import numpy as np
 import numpy.typing as npt
 
@@ -27,19 +27,17 @@ class _BitArray:
     This class performs index mapping and bit shifting to access the data.
     """
 
-    def __init__(self, bitsPerEntry: int, logicalArraySize: int, data) -> None:
+    def __init__(self, bitsPerEntry: int, logicalArraySize: int, data: TAG_Long_Array) -> None:
         """Initialise a BitArray."""
         self._logicalArraySize = logicalArraySize
         self._bitsPerEntry     = bitsPerEntry
         self._entriesPerLong   = 64 // bitsPerEntry
         self._maxEntryValue    = (1 << bitsPerEntry) - 1
-        if data is None:
-            self.longArray = []
-        else:
-            expectedLongCount = floor((logicalArraySize + self._entriesPerLong - 1) / self._entriesPerLong)
-            if len(data) != expectedLongCount:
-                raise ValueError(f"Invalid data length: got {len(data)} but expected {expectedLongCount}")
-            self.longArray = data
+
+        expectedLongCount = floor((logicalArraySize + self._entriesPerLong - 1) / self._entriesPerLong)
+        if len(data) != expectedLongCount:
+            raise ValueError(f"Invalid data length: got {len(data)} but expected {expectedLongCount}")
+        self.longArray = data
 
     def __repr__(self) -> str:
         """Represents the BitArray as a constructor."""
@@ -70,24 +68,33 @@ class _ChunkSection:
     biomesPalette:       nbt.TAG_List
     biomesBitArray:      _BitArray
 
-    def getBlockStateTagAtIndex(self, index) -> nbt.TAG_Compound:
-        return self.blockPalette[self.blockStatesBitArray[index]]
+    def getBlockStateTagAtIndex(self, index: int) -> nbt.TAG_Compound:
+        return self.blockPalette[self.blockStatesBitArray[index]] # type: ignore
 
-    def getBiomeAtIndex(self, index) -> nbt.TAG_String:
-        return self.biomesPalette[self.biomesBitArray[index]]
+    def getBiomeAtIndex(self, index: int) -> nbt.TAG_String:
+        return self.biomesPalette[self.biomesBitArray[index]] # type: ignore
 
 
 class WorldSlice:
     """Contains information on a slice of the world."""
 
-    def __init__(self, rect: Rect, dimension: Optional[str] = None, heightmapTypes: Optional[Iterable[str]] = None, retries=0, timeout=None, host=interface.DEFAULT_HOST) -> None:
+    def __init__(
+        self,
+        rect: Rect,
+        dimension:
+        Optional[str] = None,
+        heightmapTypes: Optional[Iterable[str]] = None,
+        retries: int = 0,
+        timeout: Any = None,
+        host: str = interface.DEFAULT_HOST
+    ) -> None:
         """Load a world slice.
 
         If ``heightmapTypes`` is None, all heightmaps are loaded.
         """
 
         # To protect from calling this with a Box, which can lead to very confusing bugs.
-        if not isinstance(rect, Rect):
+        if not isinstance(rect, Rect): # pyright: ignore [reportUnnecessaryIsInstance]
             raise TypeError(f"<rect> should be a Rect, not a {type(rect)}")
 
         if heightmapTypes is None:
@@ -120,20 +127,20 @@ class WorldSlice:
         inChunkRectOffset = trueMod2D(self._rect.offset, 16)
 
         # This assumes that the build bounds are the same for every chunk.
-        self._yBegin = 16 * int(self._nbt["Chunks"][0]["yPos"].value)
-        self._ySize  = 16 * len(self._nbt["Chunks"][0]["sections"])
+        self._yBegin = 16 * int(self._nbt["Chunks"][0]["yPos"].value) # type: ignore
+        self._ySize  = 16 * len(self._nbt["Chunks"][0]["sections"]) # type: ignore
 
         # Loop through chunks
         for chunkPos in loop2D(self._chunkRect.size):
             chunkID = chunkPos.x + chunkPos.y * self._chunkRect.size.x
-            chunkTag = self._nbt['Chunks'][chunkID]
+            chunkTag = self._nbt['Chunks'][chunkID] # type: ignore
 
             # Read heightmaps
-            heightmapsTag = chunkTag['Heightmaps']
+            heightmapsTag = chunkTag['Heightmaps'] # type: ignore
             for hmName in heightmapTypes:
-                hmRaw = heightmapsTag[hmName]
+                hmRaw = heightmapsTag[hmName] # type: ignore
                 hmBitsPerEntry = max(1, ceil(log2(self._ySize)))
-                hmBitArray = _BitArray(hmBitsPerEntry, 16*16, hmRaw)
+                hmBitArray = _BitArray(hmBitsPerEntry, 16*16, hmRaw) # type: ignore
                 heightmap = self._heightmaps[hmName]
                 for inChunkPos in loop2D(ivec2(16,16)):
                     try:
@@ -146,37 +153,37 @@ class WorldSlice:
                         pass
 
             # Read chunk sections
-            for sectionTag in chunkTag['sections']:
-                y = int(sectionTag['Y'].value)
+            for sectionTag in chunkTag['sections']: # type: ignore
+                y = int(sectionTag['Y'].value) # type: ignore
 
-                if (not ('block_states' in sectionTag) or len(sectionTag['block_states']) == 0):
+                if (not ('block_states' in sectionTag) or len(sectionTag['block_states']) == 0): # type: ignore
                     continue
 
-                blockPalette = sectionTag['block_states']['palette']
+                blockPalette = sectionTag['block_states']['palette'] # type: ignore
                 blockData = None
                 if 'data' in sectionTag['block_states']:
-                    blockData = sectionTag['block_states']['data']
-                blockPaletteBitsPerEntry = max(4, ceil(log2(len(blockPalette))))
-                blockDataBitArray = _BitArray(blockPaletteBitsPerEntry, 16*16*16, blockData)
+                    blockData = sectionTag['block_states']['data'] # type: ignore
+                blockPaletteBitsPerEntry = max(4, ceil(log2(len(blockPalette)))) # type: ignore
+                blockDataBitArray = _BitArray(blockPaletteBitsPerEntry, 16*16*16, blockData) # type: ignore
 
-                biomesPalette = sectionTag['biomes']['palette']
+                biomesPalette = sectionTag['biomes']['palette'] # type: ignore
                 biomesData = None
                 if 'data' in sectionTag['biomes']:
-                    biomesData = sectionTag['biomes']['data']
-                biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette))))
-                biomesDataBitArray = _BitArray(biomesBitsPerEntry, 64, biomesData)
+                    biomesData = sectionTag['biomes']['data'] # type: ignore
+                biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette)))) # type: ignore
+                biomesDataBitArray = _BitArray(biomesBitsPerEntry, 64, biomesData) # type: ignore
 
                 self._sections[addY(chunkPos, y)] = _ChunkSection(
-                    blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray
+                    blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray # type: ignore
                 )
 
             # Read block entities
             if 'block_entities' in chunkTag:
-                for blockEntityTag in chunkTag['block_entities']:
+                for blockEntityTag in chunkTag['block_entities']: # type: ignore
                     blockEntityPos = ivec3(
-                        blockEntityTag['x'].value,
-                        blockEntityTag['y'].value,
-                        blockEntityTag['z'].value
+                        blockEntityTag['x'].value, # type: ignore
+                        blockEntityTag['y'].value, # type: ignore
+                        blockEntityTag['z'].value, # type: ignore
                     )
                     self._blockEntities[blockEntityPos] = blockEntityTag
 

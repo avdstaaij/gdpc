@@ -16,6 +16,7 @@ Compatible with GDMC-HTTP **>=1.5.2, <2.0.0** and Minecraft **1.21.4**.
 - Added a `py.typed` file, which indicates that GDPC provides type hints. Some type checkers that didn't pick up GDPC's type hints before now do, most notably *Mypy*.
 - Added and refined various type hints.
 - Fixed `editor_tools.placeSign` sometimes creating `Block`s with superfluous block states (`rotation` for wall signs and `facing` for non-wall signs).
+- Fixed `editor_tools.placeContainerBlock` raising the wrong exception when passing a block with `id = None`.
 - Fixed `vector_tools.rotateSize2D` sometimes returning the input value instead of an `ivec2`.
 - Fixed `vector_tools.l1Distance` crashing when passing veclikes that don't support the `-` operator.
 - Fixed `world_slice.WorldSlice.getPrimaryBiomeInChunkGlobal` crashing if you passed a position not contained in the world slice.
