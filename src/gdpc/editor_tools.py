@@ -4,12 +4,13 @@
 from typing import Optional, Iterable, Set, Tuple, Union, List, cast
 import random
 
+from deprecated import deprecated
 import numpy as np
 from glm import ivec2, ivec3
 
 from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block
-from .block_state_tools import facingToRotation, facingToVector
+from .block_state_tools import facingToVector
 from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
 from . import lookup
 from .editor import Editor
@@ -95,27 +96,20 @@ def placeSign(
     editor: Editor,
     position: Vec3iLike,
     wood="oak", wall=False,
-    facing: Optional[str] = None, rotation: Optional[Union[str, int]] = None,
+    facing: str = "north", rotation: Union[str, int] = "0",
     frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
     backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
     isWaxed = False
 ) -> None:
     """Places a sign with the specified properties.\n
-    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
-    If the used property is ``None``, a least obstructed direction will be used.\n
+    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.\n
     See also: :func:`.minecraft_tools.signData`, :func:`.minecraft_tools.signBlock`."""
     if wall:
         rotationArg = "0"
-        if facing is None:
-            facingArg = random.choice(getOptimalFacingDirection(editor, position))
-        else:
-            facingArg = facing
+        facingArg = facing
     else:
         facingArg = "north"
-        if rotation is None:
-            rotationArg = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
-        else:
-            rotationArg = rotation
+        rotationArg = rotation
 
     editor.placeBlock(position, signBlock(
         wood, wall, facingArg, rotationArg,
@@ -125,14 +119,11 @@ def placeSign(
     ))
 
 
-def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0) -> None:
+def placeLectern(editor: Editor, position: Vec3iLike, facing: str = "north", bookData: Optional[str] = None, page: int = 0) -> None:
     """Place a lectern with the specified properties.\n
-    If ``facing`` is None, a least obstructed facing direction will be used.\n
     ``bookData`` should be an SNBT string defining a book.
     You can use :func:`.minecraft_tools.bookData` to create such a string.\n
     See also: :func:`.minecraft_tools.lecternData`, :func:`.minecraft_tools.lecternBlock`."""
-    if facing is None:
-        facing = random.choice(getOptimalFacingDirection(editor, position))
     editor.placeBlock(position, lecternBlock(facing, bookData, page))
 
 
@@ -175,9 +166,19 @@ def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLik
     editor.runCommand(f"item replace block ~ ~ ~ container.{index} with {item} {amount}", position=position, syncWithBuffer=True)
 
 
+@deprecated("Deprecated along with lookup.py. See the documentation for the lookup.py module for the reasons and for alternatives.")
 def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike) -> List[str]:
-    """Returns the least obstructed directions to have something facing (a "facing" block state value).\n
-    Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second."""
+    """
+    .. warning::
+        :title: Deprecated
+
+        Deprecated along with :mod:`.lookup`. See the warning at the top of
+        the `lookup` page for the reasons and for alternatives.
+
+    Returns the least obstructed directions to have something facing (a "facing" block state value).
+
+    Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second.
+    """
     directions = ["north", "east", "south", "west"]
     obtrusivenesses = np.array([
         getObtrusiveness(editor.getBlock(ivec3(*pos) + facingToVector(direction)))

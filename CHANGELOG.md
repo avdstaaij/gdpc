@@ -9,6 +9,7 @@ Compatible with GDMC-HTTP **>=1.5.2, <2.0.0** and Minecraft **1.21.4**.
 - Increased minimum supported GDMC-HTTP version to 1.5.2.
 - Increased supported Minecraft version to 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 - Changed the following `vector_tools` constants from `Tuple`s to `FrozenSet`s: `DIAGONALS_2D`, `DIAGONALS_3D`, `DIAGONALS`.
+- Removed feature of `editor_tools.placeSign` and `editor_tools.placeLectern` where you could pass `None` to `facing` or `rotation` and the function would select a least obstructed direction. This feature relied heavily on `lookup.py`, which is now deprecated (see "Deprecations").
 - Removed deprecated `Rect.inner` and `Box.inner`.
 
 **Fixes:**
@@ -24,7 +25,9 @@ Compatible with GDMC-HTTP **>=1.5.2, <2.0.0** and Minecraft **1.21.4**.
 - Fixed GDPC not actually being compatible with the documented miminum Python version, by increasing the minimum Python version (see "Supported Python versions").
 
 **Deprecations:**
-- Deprecated `lookup.py` and `minecraft_tools.getObtrusiveness`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
+- Deprecated `lookup.py`. See the documentation the reasons and for alternatives. Also removed example `visualize_map.py`, which heavily relied on `lookup.py`.
+- Deprecated `minecraft_tools.getObtrusiveness`, which relied on `lookup.py`.
+- Deprecated `editor_tools.getOptimalFacingDirection`, which relied on `lookup.py`.
 - Deprecated `utils.visualizeMaps`, which was only used by `visualize_map.py`, and which is currently the only user of the OpenCV dependency.
 - Deprecated all remaining in-repository examples. They have been replaced by the new [documentation website](https://gdpc.readthedocs.io).
 
