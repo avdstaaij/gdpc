@@ -11,6 +11,8 @@ from copy import copy, deepcopy
 import random
 from concurrent import futures
 import logging
+import atexit
+import weakref
 
 import numpy as np
 import numpy.typing as npt
@@ -83,17 +85,54 @@ class Editor:
         self._worldSlice: Optional[WorldSlice] = None
         self._worldSliceDecay: Optional[npt.NDArray[np.bool_]] = None
 
+        # We need to do some cleanup when the Editor gets deleted or when the program ends. In
+        # particular, we need to flush the block buffer and await any remaining buffer flush
+        # futures.
+        #
+        # The standard way to do this would be to put the cleanup code in __del__. But while this
+        # works for the editor-gets-deleted case, it does not work reliably for the program-ends
+        # case. __del__ does get called at program exit, but only when the interpreter is already
+        # half-shut-down. At that point, we can no longer send HTTP requests or schedule additional
+        # futures, so buffer flushing doesn't work anymore.
+        #
+        # One way to solve this would be to make Editor a context manager, but that would make it
+        # slightly harder to use (and it would be a breaking change). Instead, we solve it using an
+        # atexit handler. These get called early enough for buffer flushing to still work.
+        #
+        # We have to be careful about a few things:
+        # - We must use a weak reference to refer to the Editor. A normal reference would keep the
+        #   Editor alive and prevent the atexit handler from ever getting called.
+        # - We must create a new callable object for each Editor, so that when we unregister the
+        #   atexit handler, we only unregister the handler for the Editor that registered it. We
+        #   accomplish this using a lambda.
+        # - We need to store the lambda so that we can unregister it in __del__ and avoid a double
+        #   cleanup.
+
+        ref = weakref.ref(cast(Editor, self))
+        self._clean_up_handler = lambda: Editor._clean_up_at_exit(ref)
+        atexit.register(self._clean_up_handler)
+
+
+    @staticmethod
+    def _clean_up(editor: Editor) -> None:
+        """The real Editor destructor, called from both __del__ and the atexit handler."""
+        editor.flushBuffer()
+        editor.awaitBufferFlushes()
+
+
+    @staticmethod
+    def _clean_up_at_exit(editor_weakref: weakref.ref[Editor]) -> None:
+        editor = editor_weakref()
+        if editor is not None:
+            Editor._clean_up(editor)
+
 
     def __del__(self) -> None:
-        """Cleans up this Editor instance."""
-        # awaits any pending buffer flush futures and shuts down the buffer flush executor
-        self.multithreading = False
-        # Flush any remaining blocks in the buffer.
-        # This is purposefully done *after* disabling multithreading! This __del__ may be called at
-        # interpreter shutdown, and it appears that scheduling a new future at that point fails with
-        # "RuntimeError: cannot schedule new futures after shutdown" even if the executor has not
-        # actually shut down yet. For safety, the last buffer flush must be done on the main thread.
-        self.flushBuffer()
+        """Cleans up this Editor instance.\n
+        Flushes the block buffer and waits for any remaining buffer flush futures.
+        """
+        atexit.unregister(self._clean_up_handler)
+        Editor._clean_up(self)
 
 
     @property
