@@ -80,7 +80,7 @@ vector math functions. Refer to the
 Here is a small example of the syntax:
 
 ```python
-from glm import ivec3
+from pyglm.glm import ivec3
 
 v1 = ivec3(1,2,3)
 v2 = ivec3(1,0,1)
@@ -136,7 +136,7 @@ The {mod}`.vector_tools` module contains various vector constants
 (all pyGLM vectors) that may simplify computations. For example:
 
 ```python
-from glm import ivec3
+from pyglm.glm import ivec3
 from gdpc.vector_tools import SOUTH, Y, XZ
 
 pos = ivec3(0,0,0)
@@ -150,7 +150,7 @@ The {mod}`.vector_tools` module contains lots of general vector manipulation
 utilities. For example:
 
 ```python
-from glm import ivec2, ivec3
+from pyglm.glm import ivec2, ivec3
 from gdpc.vector_tools import addY, dropY, perpendicular, toAxisVector2D
 
 # addY() turns a 2D vector into a 3D one by adding a Y component.

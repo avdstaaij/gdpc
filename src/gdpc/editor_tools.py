@@ -5,7 +5,7 @@ from typing import Optional, Iterable, Set, Tuple, Union, List, Dict, cast
 
 from deprecated import deprecated
 import numpy as np
-from glm import ivec2, ivec3
+from pyglm.glm import ivec2, ivec3
 
 from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block

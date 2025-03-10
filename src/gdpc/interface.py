@@ -13,7 +13,7 @@ import logging
 import json
 import io
 
-from glm import ivec3
+from pyglm.glm import ivec3
 from nbt import nbt
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError

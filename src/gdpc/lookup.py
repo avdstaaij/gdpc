@@ -39,7 +39,7 @@
 from typing import Dict, Iterable, Optional, Set, Union
 from warnings import warn
 
-from glm import ivec2
+from pyglm.glm import ivec2
 
 from .utils import isIterable
 

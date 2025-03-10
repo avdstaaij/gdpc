@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Union
 from dataclasses import dataclass
 
-from glm import ivec3, bvec3
+from pyglm.glm import ivec3, bvec3
 
 from .vector_tools import Vec3iLike, Vec3bLike, rotate3D, flipRotation3D, flipToScale3D, rotateSize3D, Box, Tuple
 

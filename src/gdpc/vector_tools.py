@@ -28,11 +28,11 @@ from typing import (
     cast,
 )
 
-import glm
+from pyglm import glm
 import numpy as np
 import numpy.typing as npt
 import skimage.segmentation
-from glm import bvec2, bvec3, ivec2, ivec3, vec2, vec3
+from pyglm.glm import bvec2, bvec3, ivec2, ivec3, vec2, vec3
 from more_itertools import powerset
 from scipy import ndimage
 from typing_extensions import Protocol

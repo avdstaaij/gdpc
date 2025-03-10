@@ -5,7 +5,7 @@ from typing import Union, Optional, List, Dict, Sequence, cast
 from dataclasses import dataclass, field
 from copy import deepcopy
 
-from glm import bvec3
+from pyglm.glm import bvec3
 from nbt import nbt
 
 from .vector_tools import Vec3bLike

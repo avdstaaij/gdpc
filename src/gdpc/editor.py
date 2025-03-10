@@ -13,7 +13,7 @@ import logging
 
 import numpy as np
 import numpy.typing as npt
-from glm import ivec3
+from pyglm.glm import ivec3
 
 from .utils import eagerAll, OrderedByLookupDict
 from .vector_tools import Vec3iLike, Rect, Box, dropY

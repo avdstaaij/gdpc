@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from math import floor, ceil, log2
 
-from glm import ivec2, ivec3
+from pyglm.glm import ivec2, ivec3
 from nbt import nbt
 from nbt.nbt import TAG_Compound, TAG_Long_Array
 import numpy as np

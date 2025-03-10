@@ -5,7 +5,7 @@ by the :class:`.Block` class.
 """
 
 
-from glm import ivec3, bvec3
+from pyglm.glm import ivec3, bvec3
 
 from .vector_tools import Vec3iLike, Vec3bLike
 

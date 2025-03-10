@@ -4,6 +4,7 @@
 from typing import Optional, Union, List
 from functools import lru_cache
 import json
+
 from deprecated import deprecated
 
 from .vector_tools import Vec2iLike, Rect
