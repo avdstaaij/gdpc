@@ -64,8 +64,6 @@ def getBlocks(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
     ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     Returns a list of (position, block)-tuples.
-
-    If a set of coordinates is invalid, the returned block ID will be "minecraft:void_air".
     """
     url = f"{host}/blocks"
     x, y, z = position
@@ -93,7 +91,7 @@ def getBiomes(position: Vec3iLike, size: Optional[Vec3iLike] = None, dimension: 
 
     Returns a list of (position, biome id)-tuples.
 
-    If a set of coordinates is invalid, the returned biome ID will be an empty string.
+    Invalid coordinates will be omitted from the response.
     """
     url = f"{host}/biomes"
     x, y, z = position
@@ -121,11 +119,13 @@ def placeBlocks(blocks: Iterable[Tuple[Vec3iLike, Block]], dimension: Optional[s
     ``dimension`` can be one of {"overworld", "the_nether", "the_end"} (default "overworld").
 
     The ``doBlockUpdates``, ``spawnDrops`` and ``customFlags`` parameters control block update
-    behavior. See the GDMC HTTP API documentation for more info.
+    behavior. See the `GDMC HTTP API documentation
+    <https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#-place-blocks-put-blocks>`_
+    for more info.
 
     Returns a list of (success, result)-tuples, one for each block. If a block placement was
     successful, result will be 1 if the block changed, or 0 otherwise. If a block placement failed,
-    result will be the error message.
+    result, an error message will be included for that block.
     """
     url = f"{host}/blocks"
 
@@ -234,12 +234,12 @@ def placeStructure(structureData: Union[bytes, nbt.NBTFile], position: Vec3iLike
 
     ``structureData`` should be a string of bytes in the Minecraft structure file format, the format used by the
     in-game structure blocks. You can extract structures in this format in various ways, such as using the
-    GET /structure endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
+    ``GET /structure`` endpoint of GDMC-HTTP or the aformentioned in-game structure blocks.
     ``structureData`` can also be an instance of nbt.NBTFile. Using this library has the benefit of providing ways for
     modifying data before placing it in Minecraft.
 
-    See the GDMC HTTP API documentation for more information about these parameters:
-    https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#place-nbt-structure-file-post-structure
+    See the `GDMC HTTP API documentation <https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#place-nbt-structure-file-post-structure>`_
+    for more information about these parameters.
     """
     if isinstance(structureData, nbt.NBTFile):
         # If data is an instance of NBTFile instead of bytes, write out the bytes representing an NBT file to a buffer.
@@ -289,13 +289,13 @@ def getStructure(position: Vec3iLike, size: Vec3iLike, dimension: Optional[str] 
     """Returns the specified area in the Minecraft structure file format (an NBT byte string).
 
     The Minecraft structure file format is the format used by the in-game structure blocks. Structures in this format
-    are commonly saved in .nbt files, and can be placed using tools such as the POST /structure endpoint of GDMC-HTTP
-    or the aforementioned in-game structure blocks.
+    are commonly saved in .nbt files, and can be placed using tools such as the ``POST /structure`` endpoint of
+    GDMC-HTTP or the aforementioned in-game structure blocks.
 
     Setting the ``includeEntities`` to True will attach all entities present in the given area at the moment of calling
     getStructure to the resulting data. Meaning that saving a house in a Minecraft village will include the NPC
-    living inside it. Note that when placing this structure using GDMC-HTTP, the includeEntities parameter needs to
-    be set to True for these entities to be placed into the world together with the blocks making up the structure.
+    living inside it. Note that when placing this structure using GDMC-HTTP, the ``includeEntities`` parameter needs to
+    be set to ``True`` for these entities to be placed into the world together with the blocks making up the structure.
     """
     url = f"{host}/structure"
     x, y, z = position
