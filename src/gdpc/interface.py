@@ -14,13 +14,14 @@ import json
 import io
 
 import numpy as np
+import numpy.typing as npt
 from pyglm.glm import ivec3
 from nbt import nbt
 import requests
 from requests.exceptions import ConnectionError as RequestConnectionError
 
-from . import __url__, utils
-from .utils import withRetries
+from . import __url__
+from .utils import withRetries, isIterable
 from .vector_tools import Vec2iLike, Vec3iLike, Box
 from .block import Block
 from . import exceptions
@@ -383,11 +384,20 @@ def getStructure(
     return response.content
 
 
-def getHeightmap(heightmapType: Optional[str] = None, blocks: Optional[Iterable[str]] = None, yMin: Optional[int] = None, yMax: Optional[int] = None, dimension: Optional[str] = None, retries=0, timeout=None, host=DEFAULT_HOST) -> np.ndarray:
+def getHeightmap(
+    heightmapType: Optional[str] = None,
+    blocks: Optional[Iterable[str]] = None,
+    yMin: Optional[int] = None,
+    yMax: Optional[int] = None,
+    dimension: Optional[str] = None,
+    retries: int = 0,
+    timeout: Any = None,
+    host: str = DEFAULT_HOST
+) -> npt.NDArray[np.int_]:
     """
     Returns heightmap of the given type within the current build area.
 
-    This endpoint supports 4 of `Minecraft's built-in heightmap types <https://minecraft.wiki/w/Heightmap>`_:
+    This endpoint supports four of `Minecraft's built-in heightmap types <https://minecraft.wiki/w/Heightmap>`_:
 
     * ``'WORLD_SURFACE'``: Height of the surface ignoring air blocks.
     * ``'OCEAN_FLOOR'``: Height of the surface ignoring air, water, and lava.
@@ -396,7 +406,7 @@ def getHeightmap(heightmapType: Optional[str] = None, blocks: Optional[Iterable[
     * ``'MOTION_BLOCKING_NO_LEAVES'``: Same as ``'MOTION_BLOCKING'``, but also ignores
       `leaves <https://minecraft.wiki/w/Leaves>`_.
 
-    Additionally, the GDMC-HTTP mod provides 2 extra heightmap types,
+    Additionally, the GDMC-HTTP mod provides two extra heightmap types,
     which can only be retrieved using this endpoint:
 
     * ``'MOTION_BLOCKING_NO_PLANTS'``: Same as ``'MOTION_BLOCKING_NO_LEAVES'``, but also excludes various biological
@@ -413,10 +423,10 @@ def getHeightmap(heightmapType: Optional[str] = None, blocks: Optional[Iterable[
     constrained. This can be useful for creating heightmaps of overworld caves or the Nether dimension.
     **Only works if used in conjunction with the** ``blocks`` **parameter.**
     """
-    customBlocksQuery = ''
-    yBoundsQuery = ''
-    if utils.isIterable(blocks):
-        customBlocksQuery = ','.join(blocks)
+    customBlocksQuery = ""
+    yBoundsQuery = ""
+    if isIterable(blocks):
+        customBlocksQuery = ",".join(cast(Iterable[str], blocks))
         yBoundsQuery = f'{yMin if isinstance(yMin, int) else ""}..{yMax if isinstance(yMax, int) else ""}'
     elif heightmapType is None:
         # Default to heightmap type WORLD_SURFACE if both `heightMapType` and `blocks` parameters aren't set.
@@ -428,7 +438,7 @@ def getHeightmap(heightmapType: Optional[str] = None, blocks: Optional[Iterable[
         'yBounds': yBoundsQuery,
     }
     response = _request(method='GET', url=f'{host}/heightmap', params=parameters, retries=retries, timeout=timeout)
-    return np.asarray(response.json())
+    return np.asarray(response.json(), dtype=np.int_)
 
 
 def getEntities(

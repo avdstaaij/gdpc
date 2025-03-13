@@ -12,6 +12,9 @@ Compatible with GDMC-HTTP **>=1.5.2, <2.0.0** and Minecraft **1.21.4**.
 - Removed feature of `editor_tools.placeSign` and `editor_tools.placeLectern` where you could pass `None` to `facing` or `rotation` and the function would select a least obstructed direction. This feature relied heavily on `lookup.py`, which is now deprecated (see "Deprecations").
 - Removed deprecated `Rect.inner` and `Box.inner`.
 
+**Additions:**
+- Added `interface.getHeightmap`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+
 **Fixes:**
 - Added a `py.typed` file, which indicates that GDPC provides type hints. Some type checkers that didn't pick up GDPC's type hints before now do, most notably *Mypy*.
 - Added and refined various type hints.
