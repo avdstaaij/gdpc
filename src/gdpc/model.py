@@ -5,7 +5,8 @@ from __future__ import annotations
 
 from typing import Union, Optional, List, Dict
 from copy import copy
-from glm import ivec3
+
+from pyglm.glm import ivec3
 
 from .vector_tools import Vec3iLike, Box
 from .transform import TransformLike

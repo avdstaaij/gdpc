@@ -20,7 +20,7 @@ The example code snippet below builds the shapes shown in the above image:
 
 ```{code-block} python
 import numpy as np
-from glm import ivec3
+from pyglm.glm import ivec3
 from gdpc import Editor, Block, geometry
 from gdpc.vector_tools import addY
 
