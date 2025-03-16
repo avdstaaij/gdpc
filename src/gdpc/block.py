@@ -28,6 +28,7 @@ class Block:
 
     - axis
     - facing
+    - half
     - rotation
 
     Other orientation-related block states are currently not supported by the transformation
