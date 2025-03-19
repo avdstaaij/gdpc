@@ -44,9 +44,9 @@ _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS: Dict[ivec2, Set[str]] = {
 }
 
 _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE: Dict[str, Vec2iLike] = {}
-for size, ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS.items():
-    for bid in ids:
-        _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE[bid] = size
+for __size, __ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS.items():
+    for __bid in __ids:
+        _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE[__bid] = __size
 
 
 def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike) -> Box:

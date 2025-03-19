@@ -1,0 +1,29 @@
+name: Lint
+
+on:
+  push:
+    branches: [ master, future ]
+  pull_request:
+    branches: [ master, future ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    steps:
+
+    - uses: actions/checkout@v4.2.2
+
+    - name: Set up Python
+      uses: actions/setup-python@v5.4.0
+      with:
+        python-version: "3.8"
+
+    - name: Run pre-commit
+      uses: pre-commit/action@v3.0.1
+
+    - name: Run pyright
+      uses: jakebailey/pyright-action@v2
+
+    # - name: Run mypy

@@ -125,5 +125,5 @@ def transformedBlockOrPalette(block: Union[Block, Sequence[Block]], rotation: in
     """Convenience function that transforms a block or a palette of blocks."""
     if isinstance(block, Block):
         return block.transformed(rotation, flip)
-    else:
-        return [b.transformed(rotation, flip) for b in block]
+
+    return [b.transformed(rotation, flip) for b in block]

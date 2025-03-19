@@ -42,7 +42,7 @@ def parseNbtFile(
     """Create NBT object from stored NBT file."""
     if isinstance(filePath, str):
         filePath = Path(filePath)
-    fileObject = open(filePath, 'rb')
+    fileObject = open(filePath, 'rb') # pylint: disable=consider-using-with
     return nbt.NBTFile(fileobj=fileObject)
 
 

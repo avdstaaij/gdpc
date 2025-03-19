@@ -23,3 +23,32 @@ ignore = [
 
 [tool.mypy]
 mypy_path = "src/stubs"
+
+
+[tool.pylint]
+disable = [
+    # "unused-variable",
+    # "unused-argument",
+    # "unused-import",
+    # "cell-var-from-loop",
+    # "disallowed-name",
+    "redefined-outer-name", # Triggers on parameter name equal to functon name (e.g. placeLecter(bookData). TODO: reduce to info?
+    "line-too-long",
+    "invalid-name",
+    "multiple-statements",
+    "too-many-lines",
+    "design",
+    # "missing-module-docstring",
+    # "missing-class-docstring",
+    # "missing-function-docstring",
+]
+extension-pkg-allow-list = [
+    "numpy",
+    "scipy",
+    "pyglm",
+    "cv2",
+]
+generated-members = [
+    "numpy.*",
+    "cv2.*",
+]

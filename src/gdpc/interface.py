@@ -34,7 +34,7 @@ DEFAULT_HOST = "http://localhost:9000"
 logger = logging.getLogger(__name__)
 
 
-def _onRequestRetry(e: Exception, retriesLeft: int) -> None:
+def _onRequestRetry(_: Exception, retriesLeft: int) -> None:
     logger.warning(
         "HTTP request failed! I'll retry in a bit (%i retries left).",
         retriesLeft

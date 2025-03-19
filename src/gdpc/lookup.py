@@ -1,3 +1,8 @@
+# === Disable linting ===
+# type: ignore
+# pylint: disable-all
+
+
 """Stores lists of various information on blocks, biomes and more.
 
 .. warning::
