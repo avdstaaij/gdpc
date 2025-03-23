@@ -385,6 +385,8 @@ def getStructure(
 
 
 def getHeightmap(
+    position: Optional[Vec3iLike] = None,
+    size: Optional[Vec3iLike] = None,
     heightmapType: Optional[str] = None,
     blocks: Optional[Iterable[str]] = None,
     yMin: Optional[int] = None,
@@ -431,12 +433,24 @@ def getHeightmap(
     elif heightmapType is None:
         # Default to heightmap type WORLD_SURFACE if both `heightMapType` and `blocks` parameters aren't set.
         heightmapType = 'WORLD_SURFACE'
-    parameters = {
+    parameters: Dict[str, Any] = {
         'type': heightmapType,
         'dimension': dimension,
         'blocks': customBlocksQuery,
         'yBounds': yBoundsQuery,
     }
+    if position is not None:
+        parameters.update({
+            'x': position[0],
+            'y': position[1],
+            'z': position[2],
+        })
+    if size is not None:
+        parameters.update({
+            'dx': size[0],
+            'dy': size[1],
+            'dz': size[2],
+        })
     response = _request(method='GET', url=f'{host}/heightmap', params=parameters, retries=retries, timeout=timeout)
     return np.asarray(response.json(), dtype=np.int_)
 
