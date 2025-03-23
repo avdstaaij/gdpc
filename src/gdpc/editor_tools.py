@@ -1,26 +1,25 @@
 """Provides various Minecraft-related utilities that require an :class:`.Editor`."""
 
 
-from typing import Optional, Iterable, Set, Tuple, Union, List, cast
-import random
+from typing import Optional, Iterable, Set, Tuple, Union, List, Dict, cast
 
+from deprecated import deprecated
 import numpy as np
-from glm import ivec2, ivec3
+from pyglm.glm import ivec2, ivec3
 
 from .vector_tools import Vec2iLike, Vec3iLike, Box, neighbors3D
 from .block import Block
-from .block_state_tools import facingToRotation, facingToVector
+from .block_state_tools import facingToVector
 from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
-from . import lookup
 from .editor import Editor
 
 
-_INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
+_INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS: Dict[ivec2, Set[str]] = {
     ivec2(9,3): {
         'minecraft:chest',
         'minecraft:ender_chest',
-        'minecraft:trapped_chest'
-        "minecraft:barrel",
+        'minecraft:trapped_chest',
+        'minecraft:barrel',
         'minecraft:red_shulker_box',
         'minecraft:magenta_shulker_box',
         'minecraft:light_gray_shulker_box',
@@ -39,15 +38,15 @@ _INVENTORY_SIZE_TO_CONTAINER_BLOCKS = {
         'minecraft:shulker_box',
         'minecraft:orange_shulker_box',
     },
-    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper", },
-    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand", },
+    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper"},
+    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand"},
     ivec2(3,1): {'minecraft:blast_furnace', 'minecraft:smoker', 'minecraft:furnace'},
 }
 
-_CONTAINER_BLOCK_TO_INVENTORY_SIZE = {}
-for size, ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCKS.items():
+_CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE: Dict[str, Vec2iLike] = {}
+for size, ids in _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS.items():
     for bid in ids:
-        _CONTAINER_BLOCK_TO_INVENTORY_SIZE[bid] = size
+        _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE[bid] = size
 
 
 def centerBuildAreaOnPlayer(editor: Editor, size: Vec3iLike) -> Box:
@@ -66,8 +65,8 @@ def flood_search_3D(
     origin: Vec3iLike,
     boundingBox: Box,
     search_block_ids: Iterable[str],
-    diagonal=False,
-    depth=256
+    diagonal: bool = False,
+    depth: int = 256
 ) -> Set[ivec3]:
     """Return a list of coordinates with blocks that fulfill the search.\n
     Activating caching (:attr:`.Editor.caching`) is *highly* recommended."""
@@ -94,28 +93,33 @@ def flood_search_3D(
 def placeSign(
     editor: Editor,
     position: Vec3iLike,
-    wood="oak", wall=False,
-    facing: Optional[str] = None, rotation: Optional[Union[str, int]] = None,
-    frontLine1="", frontLine2="", frontLine3="", frontLine4="", frontColor="", frontIsGlowing=False,
-    backLine1="",  backLine2="",  backLine3="",  backLine4="",  backColor="",  backIsGlowing=False,
-    isWaxed = False
+    wood: str = "oak",
+    wall: bool = False,
+    facing: str = "north",
+    rotation: Union[str, int] = "0",
+    frontLine1: str = "",
+    frontLine2: str = "",
+    frontLine3: str = "",
+    frontLine4: str = "",
+    frontColor: str = "",
+    frontIsGlowing: bool = False,
+    backLine1: str = "",
+    backLine2: str = "",
+    backLine3: str = "",
+    backLine4: str = "",
+    backColor: str = "",
+    backIsGlowing: bool = False,
+    isWaxed: bool = False
 ) -> None:
     """Places a sign with the specified properties.\n
-    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.
-    If the used property is ``None``, a least obstructed direction will be used.\n
+    If ``wall`` is True, ``facing`` is used. Otherwise, ``rotation`` is used.\n
     See also: :func:`.minecraft_tools.signData`, :func:`.minecraft_tools.signBlock`."""
     if wall:
         rotationArg = "0"
-        if facing is None:
-            facingArg = random.choice(getOptimalFacingDirection(editor, position))
-        else:
-            facingArg = facing
+        facingArg = facing
     else:
         facingArg = "north"
-        if rotation is None:
-            rotationArg = facingToRotation(random.choice(getOptimalFacingDirection(editor, position)))
-        else:
-            rotationArg = rotation
+        rotationArg = rotation
 
     editor.placeBlock(position, signBlock(
         wood, wall, facingArg, rotationArg,
@@ -125,14 +129,11 @@ def placeSign(
     ))
 
 
-def placeLectern(editor: Editor, position: Vec3iLike, facing: Optional[str] = None, bookData: Optional[str] = None, page: int = 0) -> None:
+def placeLectern(editor: Editor, position: Vec3iLike, facing: str = "north", bookData: Optional[str] = None, page: int = 0) -> None:
     """Place a lectern with the specified properties.\n
-    If ``facing`` is None, a least obstructed facing direction will be used.\n
     ``bookData`` should be an SNBT string defining a book.
     You can use :func:`.minecraft_tools.bookData` to create such a string.\n
     See also: :func:`.minecraft_tools.lecternData`, :func:`.minecraft_tools.lecternBlock`."""
-    if facing is None:
-        facing = random.choice(getOptimalFacingDirection(editor, position))
     editor.placeBlock(position, lecternBlock(facing, bookData, page))
 
 
@@ -141,13 +142,16 @@ def placeContainerBlock(
     position: Vec3iLike,
     block: Block = Block("minecraft:chest"),
     items: Optional[Iterable[Union[Tuple[Vec2iLike, str], Tuple[Vec2iLike, str, int]]]] = None,
-    replace=True
+    replace: bool = True
 ) -> None:
     """Place a container block with the specified items in the world.\n
     ``items`` should be a sequence of (position, item, [amount,])-tuples."""
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(block.id)
+    if block.id is None:
+        raise ValueError(f'"{block.id}" is not a known container block. Make sure you are using its namespaced ID.')
+
+    inventorySize = _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE.get(block.id)
     if inventorySize is None:
-        raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
+        raise ValueError(f'"{block.id}" is not a known container block. Make sure you are using its namespaced ID.')
 
     if not replace and editor.getBlock(position).id != block.id:
         return
@@ -166,8 +170,8 @@ def placeContainerBlock(
 
 def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLike, item: str, amount: int = 1) -> None:
     """Sets the item at ``itemPosition`` in the container block at ``position`` to the item with id ``item``."""
-    blockId = editor.getBlock(position).id
-    inventorySize = lookup.CONTAINER_BLOCK_TO_INVENTORY_SIZE.get(blockId)
+    blockId = cast(str, editor.getBlock(position).id)
+    inventorySize = _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE.get(blockId)
     if inventorySize is None:
         raise ValueError(f'The block at {tuple(position)} is "{blockId}", which is not a known container block.')
 
@@ -175,15 +179,25 @@ def setContainerItem(editor: Editor, position: Vec3iLike, itemPosition: Vec2iLik
     editor.runCommand(f"item replace block ~ ~ ~ container.{index} with {item} {amount}", position=position, syncWithBuffer=True)
 
 
+@deprecated("Deprecated along with lookup.py. See the documentation for the lookup.py module for the reasons and for alternatives.")
 def getOptimalFacingDirection(editor: Editor, pos: Vec3iLike) -> List[str]:
-    """Returns the least obstructed directions to have something facing (a "facing" block state value).\n
-    Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second."""
+    """
+    .. warning::
+        :title: Deprecated
+
+        Deprecated along with :mod:`.lookup`. See the warning at the top of
+        the `lookup` page for the reasons and for alternatives.
+
+    Returns the least obstructed directions to have something facing (a "facing" block state value).
+
+    Ranks directions by obtrusiveness first, and by obtrusiveness of the opposite direction second.
+    """
     directions = ["north", "east", "south", "west"]
     obtrusivenesses = np.array([
         getObtrusiveness(editor.getBlock(ivec3(*pos) + facingToVector(direction)))
         for direction in directions
-    ])
-    candidates              = np.nonzero(obtrusivenesses == np.min(obtrusivenesses))[0]
+    ], dtype=np.int_)
+    candidates              = np.nonzero(obtrusivenesses == np.min(obtrusivenesses))[0] # pyright: ignore [reportUnknownMemberType]
     oppositeObtrusivenesses = obtrusivenesses[(candidates + 2) % 4]
-    winners                 = candidates[oppositeObtrusivenesses == np.max(oppositeObtrusivenesses)]
+    winners                 = candidates[oppositeObtrusivenesses == np.max(oppositeObtrusivenesses)] # pyright: ignore [reportUnknownMemberType]
     return [directions[winner] for winner in winners]

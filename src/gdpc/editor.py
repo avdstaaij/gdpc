@@ -4,7 +4,7 @@ Minecraft world through the GDMC HTTP interface."""
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator, Sized, cast
+from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator, Sized, Any, cast
 from numbers import Integral
 from contextlib import contextmanager
 from copy import copy, deepcopy
@@ -16,7 +16,7 @@ import weakref
 
 import numpy as np
 import numpy.typing as npt
-from glm import ivec3
+from pyglm.glm import ivec3
 
 from .utils import eagerAll, OrderedByLookupDict
 from .vector_tools import Vec3iLike, Rect, Box, dropY
@@ -75,7 +75,7 @@ class Editor:
         self._multithreading = False
         self._multithreadingWorkers = multithreadingWorkers
         self.multithreading = multithreading # The property setter initializes the multithreading system.
-        self._bufferFlushFutures: List[futures.Future] = []
+        self._bufferFlushFutures: List[futures.Future[None]] = []
 
         self._doBlockUpdates = True
         self._spawnDrops     = False
@@ -305,9 +305,8 @@ class Editor:
         :meth:`.placeBlock`/:meth:`.placeBlockGlobal` will be given a block update, just like if
         they were placed by a player. We recommend leaving this on in most cases.
 
-        \*: The system is actually a bit more complex than this.
+        \\*: The system is actually a bit more complex than this.
         See https://minecraft.wiki/w/Block_update for the full details.
-
         """
         return self._doBlockUpdates
 
@@ -398,7 +397,7 @@ class Editor:
         return view
 
 
-    def runCommand(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False) -> None:
+    def runCommand(self, command: str, position: Optional[Vec3iLike] = None, syncWithBuffer: bool = False) -> None:
         """Executes one or multiple Minecraft commands (separated by newlines).\n
         The leading "/" must be omitted.\n
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
@@ -417,7 +416,7 @@ class Editor:
         self.runCommandGlobal(command, position, syncWithBuffer)
 
 
-    def runCommandGlobal(self, command: str, position: Optional[Vec3iLike]=None, syncWithBuffer=False) -> None:
+    def runCommandGlobal(self, command: str, position: Optional[Vec3iLike] = None, syncWithBuffer: bool = False) -> None:
         """Executes one or multiple Minecraft commands (separated by newlines), ignoring :attr:`.transform`.\n
         The leading "/" must be omitted.\n
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
@@ -535,7 +534,7 @@ class Editor:
                 hasattr(position, "__len__")
                 and len(cast(Sized, position)) == 3
                 and hasattr(position, "__getitem__")
-                and isinstance(cast(Sequence, position)[0], Integral)
+                and isinstance(cast(Sequence[Any], position)[0], Integral)
             )
             else (self.transform * pos for pos in cast(Iterable[Vec3iLike], position))
         )
@@ -559,7 +558,7 @@ class Editor:
             hasattr(position, "__len__")
             and len(cast(Sized, position)) == 3
             and hasattr(position, "__getitem__")
-            and isinstance(cast(Sequence, position)[0], Integral)
+            and isinstance(cast(Sequence[Any], position)[0], Integral)
         ):
             return self._placeSingleBlockGlobal(ivec3(*cast(Vec3iLike, position)), block, replace)
 
@@ -686,7 +685,7 @@ class Editor:
         self._bufferFlushFutures = list(futures.wait(self._bufferFlushFutures, timeout).not_done)
 
 
-    def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache=False) -> WorldSlice:
+    def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache: bool = False) -> WorldSlice:
         """Loads the world slice for the given XZ-rectangle.\n
         The rectangle must be given in **global coordinates**; :attr:`.transform` is ignored.\n
         If ``rect`` is None, the world slice of the current build area is loaded.\n
