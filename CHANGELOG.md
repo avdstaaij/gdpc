@@ -16,6 +16,7 @@ Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 - Added `interface.getHeightmap`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 **Fixes:**
+- Fixed `Editor.__del__` sometimes crashing for some users when there were blocks in the block buffer on program exit. (Thanks [SpecificProtagonist](https://github.com/SpecificProtagonist) and [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 - Added a `py.typed` file, which indicates that GDPC provides type hints. Some type checkers that didn't pick up GDPC's type hints before now do, most notably *Mypy*.
 - Added and refined various type hints.
 - Fixed `editor_tools.placeSign` sometimes creating `Block`s with superfluous block states (`rotation` for wall signs and `facing` for non-wall signs).
