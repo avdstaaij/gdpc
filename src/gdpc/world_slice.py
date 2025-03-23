@@ -64,15 +64,15 @@ class _ChunkSection:
     """Represents a chunk section or sub-chunk (16x16x16)."""
 
     blockPalette:        nbt.TAG_List
-    blockStatesBitArray: _BitArray
+    blockStatesBitArray: Optional[_BitArray]
     biomesPalette:       nbt.TAG_List
-    biomesBitArray:      _BitArray
+    biomesBitArray:      Optional[_BitArray]
 
     def getBlockStateTagAtIndex(self, index: int) -> nbt.TAG_Compound:
-        return self.blockPalette[self.blockStatesBitArray[index]] # type: ignore
+        return self.blockPalette[0 if self.blockStatesBitArray is None else self.blockStatesBitArray[index]] # type: ignore
 
     def getBiomeAtIndex(self, index: int) -> nbt.TAG_String:
-        return self.biomesPalette[self.biomesBitArray[index]] # type: ignore
+        return self.biomesPalette[0 if self.biomesBitArray is None else self.biomesBitArray[index]] # type: ignore
 
 
 class WorldSlice:
@@ -160,18 +160,18 @@ class WorldSlice:
                     continue
 
                 blockPalette = sectionTag['block_states']['palette'] # type: ignore
-                blockData = None
+                blockDataBitArray = None
                 if 'data' in sectionTag['block_states']:
                     blockData = sectionTag['block_states']['data'] # type: ignore
-                blockPaletteBitsPerEntry = max(4, ceil(log2(len(blockPalette)))) # type: ignore
-                blockDataBitArray = _BitArray(blockPaletteBitsPerEntry, 16*16*16, blockData) # type: ignore
+                    blockPaletteBitsPerEntry = max(4, ceil(log2(len(blockPalette)))) # type: ignore
+                    blockDataBitArray = _BitArray(blockPaletteBitsPerEntry, 16*16*16, blockData) # type: ignore
 
                 biomesPalette = sectionTag['biomes']['palette'] # type: ignore
-                biomesData = None
+                biomesDataBitArray = None
                 if 'data' in sectionTag['biomes']:
                     biomesData = sectionTag['biomes']['data'] # type: ignore
-                biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette)))) # type: ignore
-                biomesDataBitArray = _BitArray(biomesBitsPerEntry, 64, biomesData) # type: ignore
+                    biomesBitsPerEntry = max(1, ceil(log2(len(biomesPalette)))) # type: ignore
+                    biomesDataBitArray = _BitArray(biomesBitsPerEntry, 64, biomesData) # type: ignore
 
                 self._sections[addY(chunkPos, y)] = _ChunkSection(
                     blockPalette, blockDataBitArray, biomesPalette, biomesDataBitArray # type: ignore

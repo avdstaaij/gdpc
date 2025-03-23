@@ -18,8 +18,8 @@ _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS: Dict[ivec2, Set[str]] = {
     ivec2(9,3): {
         'minecraft:chest',
         'minecraft:ender_chest',
-        'minecraft:trapped_chest'
-        "minecraft:barrel",
+        'minecraft:trapped_chest',
+        'minecraft:barrel',
         'minecraft:red_shulker_box',
         'minecraft:magenta_shulker_box',
         'minecraft:light_gray_shulker_box',
@@ -38,8 +38,8 @@ _INVENTORY_SIZE_TO_CONTAINER_BLOCK_IDS: Dict[ivec2, Set[str]] = {
         'minecraft:shulker_box',
         'minecraft:orange_shulker_box',
     },
-    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper", },
-    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand", },
+    ivec2(3,3): {"minecraft:dispenser", "minecraft:dropper"},
+    ivec2(5,1): {"minecraft:hopper", "minecraft:brewing_stand"},
     ivec2(3,1): {'minecraft:blast_furnace', 'minecraft:smoker', 'minecraft:furnace'},
 }
 
@@ -147,11 +147,11 @@ def placeContainerBlock(
     """Place a container block with the specified items in the world.\n
     ``items`` should be a sequence of (position, item, [amount,])-tuples."""
     if block.id is None:
-        raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
+        raise ValueError(f'"{block.id}" is not a known container block. Make sure you are using its namespaced ID.')
 
     inventorySize = _CONTAINER_BLOCK_ID_TO_INVENTORY_SIZE.get(block.id)
     if inventorySize is None:
-        raise ValueError(f'"{block}" is not a known container block. Make sure you are using its namespaced ID.')
+        raise ValueError(f'"{block.id}" is not a known container block. Make sure you are using its namespaced ID.')
 
     if not replace and editor.getBlock(position).id != block.id:
         return

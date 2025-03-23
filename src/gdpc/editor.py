@@ -5,6 +5,7 @@ Minecraft world through the GDMC HTTP interface."""
 from __future__ import annotations
 
 from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator, Sized, Any, cast
+from numbers import Integral
 from contextlib import contextmanager
 from copy import copy, deepcopy
 import random
@@ -494,7 +495,7 @@ class Editor:
                 hasattr(position, "__len__")
                 and len(cast(Sized, position)) == 3
                 and hasattr(position, "__getitem__")
-                and isinstance(cast(Sequence[Any], position)[0], int)
+                and isinstance(cast(Sequence[Any], position)[0], Integral)
             )
             else (self.transform * pos for pos in cast(Iterable[Vec3iLike], position))
         )
@@ -518,7 +519,7 @@ class Editor:
             hasattr(position, "__len__")
             and len(cast(Sized, position)) == 3
             and hasattr(position, "__getitem__")
-            and isinstance(cast(Sequence[Any], position)[0], int)
+            and isinstance(cast(Sequence[Any], position)[0], Integral)
         ):
             return self._placeSingleBlockGlobal(ivec3(*cast(Vec3iLike, position)), block, replace)
 
