@@ -2,7 +2,7 @@
 # and the examples
 -e .
 
-build==0.10.0
-twine==4.0.2
+build==1.2.2.post1
+twine==6.1.0
 
 -r ./requirements-docs.txt
