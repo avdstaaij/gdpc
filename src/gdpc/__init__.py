@@ -62,7 +62,7 @@ __copyright__        = "Copyright 2022-2025 Arthur van der Staaij, Copyright 202
 #: Package version
 #:
 #: :meta hide-value:
-__version__          = "7.4.0"
+__version__          = "8.0.0"
 
 
 from .vector_tools import Rect, Box # pyright: ignore [reportUnusedImport]
