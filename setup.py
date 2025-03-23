@@ -12,7 +12,7 @@ def get_metadata(name: str) -> str:
     with open(METADATA_FILE_PATH, encoding="utf-8") as file:
         contents = file.read()
     for line in contents.splitlines():
-        if line.startswith(f"{dunderString}"):
+        if line.startswith(dunderString):
             # __{name}__ = "{value}"
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
