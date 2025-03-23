@@ -1,6 +1,6 @@
 # In development
 
-Compatible with GDMC-HTTP **>=1.5.2, <2.0.0** and Minecraft **1.21.4**.
+Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 
 **Supported Python versions:**
 - GDPC now requires Python 3.8. (This is actually a bugfix: Python 3.8 was already required since GDPC 7.0.0.)
