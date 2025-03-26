@@ -12,7 +12,7 @@ def get_metadata(name: str) -> str:
     with open(METADATA_FILE_PATH, encoding="utf-8") as file:
         contents = file.read()
     for line in contents.splitlines():
-        if line.startswith(f"{dunderString}"):
+        if line.startswith(dunderString):
             # __{name}__ = "{value}"
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
@@ -44,8 +44,7 @@ setup(
         "NBT",
         "numpy",
         "opencv_python",
-        "PyGLM >= 2.7.0",
-        "pyglm-typing",
+        "PyGLM >= 2.8.0",
         "requests",
         "scikit-image >= 0.19.0",
         "scipy",

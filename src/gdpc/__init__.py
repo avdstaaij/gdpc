@@ -22,7 +22,7 @@ __title__            = "gdpc"
 #: Package description.
 #:
 #: :meta hide-value:
-__description__      = "GDPC (Generative Design Python Client) is a Python framework for use in conjunction with the GDMC-HTTP mod for Minecraft Java edition. It is designed for the Generative Design in Minecraft Competition (GDMC)."
+__description__      = "A python framework for procedural generation in Minecraft with the GDMC HTTP Interface mod."
 
 #: Package URL.
 #:
@@ -62,11 +62,11 @@ __copyright__        = "Copyright 2022-2025 Arthur van der Staaij, Copyright 202
 #: Package version
 #:
 #: :meta hide-value:
-__version__          = "7.4.0"
+__version__          = "8.0.0"
 
 
-from .vector_tools import Rect, Box
-from .transform import Transform
-from .block import Block
-from .world_slice import WorldSlice
-from .editor import Editor
+from .vector_tools import Rect, Box # pyright: ignore [reportUnusedImport]
+from .transform import Transform # pyright: ignore [reportUnusedImport]
+from .block import Block # pyright: ignore [reportUnusedImport]
+from .world_slice import WorldSlice # pyright: ignore [reportUnusedImport]
+from .editor import Editor # pyright: ignore [reportUnusedImport]

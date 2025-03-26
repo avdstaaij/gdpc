@@ -1,21 +1,31 @@
 # In development
 
-Compatible with GDMC-HTTP **>=1.5.2, <2.0.0** and Minecraft **1.21.4**.
+Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
+
+
+# 8.0.0
+
+Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 
 **Supported Python versions:**
 - GDPC now requires Python 3.8. (This is actually a bugfix: Python 3.8 was already required since GDPC 7.0.0.)
 
 **Breaking:**
-- Increased minimum supported GDMC-HTTP version to 1.5.2.
+- Increased minimum supported GDMC-HTTP version to 1.6.0.
 - Increased supported Minecraft version to 1.21.4. In particular, all written book-related helpers (e.g. `minecraft_tools.bookData`) have been updated to the 1.21.4 format. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 - Changed the following `vector_tools` constants from `Tuple`s to `FrozenSet`s: `DIAGONALS_2D`, `DIAGONALS_3D`, `DIAGONALS`.
 - Removed feature of `editor_tools.placeSign` and `editor_tools.placeLectern` where you could pass `None` to `facing` or `rotation` and the function would select a least obstructed direction. This feature relied heavily on `lookup.py`, which is now deprecated (see "Deprecations").
 - Removed deprecated `Rect.inner` and `Box.inner`.
 
+**Additions:**
+- Added `interface.getHeightmap`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+
 **Fixes:**
+- Fixed `Editor.__del__` sometimes crashing for some users when there were blocks in the block buffer on program exit. (Thanks [SpecificProtagonist](https://github.com/SpecificProtagonist) and [Flashing-Blinkenlights](https://github.com/Flashing-Blinkenlights)!)
 - Added a `py.typed` file, which indicates that GDPC provides type hints. Some type checkers that didn't pick up GDPC's type hints before now do, most notably *Mypy*.
 - Added and refined various type hints.
 - Fixed `editor_tools.placeSign` sometimes creating `Block`s with superfluous block states (`rotation` for wall signs and `facing` for non-wall signs).
+- Fixed `editor_tools.placeContainerBlock` raising the wrong exception when passing a block with `id = None`.
 - Fixed `vector_tools.rotateSize2D` sometimes returning the input value instead of an `ivec2`.
 - Fixed `vector_tools.l1Distance` crashing when passing veclikes that don't support the `-` operator.
 - Fixed `world_slice.WorldSlice.getPrimaryBiomeInChunkGlobal` crashing if you passed a position not contained in the world slice.

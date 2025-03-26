@@ -27,8 +27,8 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'GDPC'
-copyright = '2024, avdstaaij'
-author = 'avdstaaij'
+copyright = '2025, Arthur van der Staaij'
+author = 'Arthur van der Staaij'
 
 
 # -- General configuration ---------------------------------------------------

@@ -1,11 +1,11 @@
 """Provides the :class:`.Block` class, which represents a Minecraft block."""
 
 
-from typing import Union, Optional, Dict, Sequence
+from typing import Union, Optional, List, Dict, Sequence, cast
 from dataclasses import dataclass, field
 from copy import deepcopy
 
-from glm import bvec3
+from pyglm.glm import bvec3
 from nbt import nbt
 
 from .vector_tools import Vec3bLike
@@ -28,6 +28,7 @@ class Block:
 
     - axis
     - facing
+    - half
     - rotation
 
     Other orientation-related block states are currently not supported by the transformation
@@ -107,7 +108,7 @@ class Block:
         block = Block(str(blockStateTag["Name"]))
 
         if "Properties" in blockStateTag:
-            for tag in blockStateTag["Properties"].tags:
+            for tag in cast(List[nbt.TAG_String], cast(nbt.TAG_Compound, blockStateTag["Properties"]).tags):
                 block.states[str(tag.name)] = str(tag.value)
 
         if blockEntityTag is not None:
