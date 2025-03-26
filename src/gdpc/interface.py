@@ -531,6 +531,10 @@ def getEntities(
     timeout: Any = None,
     host: str = DEFAULT_HOST
 ) -> Any:
+    """
+    Retrieve data on entities in the world matching the given
+    `target selector query <https://minecraft.wiki/w/Target_selectors>`_.
+    """
     url = f'{host}/entities'
     parameters = {
         'selector': selector,
@@ -549,6 +553,10 @@ def getPlayers(
     timeout: Any = None,
     host: str = DEFAULT_HOST
 ) -> Any:
+    """
+    Retrieve data on player entities in the world matching the given
+    `target selector query <https://minecraft.wiki/w/Target_selectors>`_.
+    """
     url = f'{host}/players'
     parameters = {
         'selector': selector,
