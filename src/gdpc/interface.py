@@ -503,6 +503,26 @@ def updateEntities(
     return response.json()
 
 
+def removeEntities(
+    entities: Iterable[str],
+    dimension: Optional[str] = None,
+    retries: int = 0,
+    timeout: Any = None,
+    host: str = DEFAULT_HOST
+) -> Any:
+    """
+    Remove specific entities (animals, paintings, item frames, etc.) already present in the world.
+
+    Requires list of UUID strings of the entities that need to be removed.
+    """
+    parameters: Dict[str, Any] = {
+        'dimension': dimension,
+    }
+    body = json.dumps(entities)
+    response = _request(method='DELETE', url=f'{host}/entities', data=bytes(body, 'utf-8'), params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
 def getEntities(
     selector: Optional[str] = None,
     includeData: bool = True,
