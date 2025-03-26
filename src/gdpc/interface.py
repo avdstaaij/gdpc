@@ -153,8 +153,8 @@ def placeBlocks(
     for more info.
 
     Returns a list of (success, result)-tuples, one for each block. If a block placement was
-    successful, result will be ``1`` if the block at that position in the world has been placed.
-    If not, the result will be ``0`` and may also include an error message.
+    successful, result will be ``1`` if the block changed, or ``0`` otherwise. If a block placement failed,
+    result will be the error message.
     """
     url = f"{host}/blocks"
 
