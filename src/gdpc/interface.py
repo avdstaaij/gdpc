@@ -482,6 +482,27 @@ def placeEntities(
     return response.json()
 
 
+def updateEntities(
+    entities: Iterable[Dict[str, str]],
+    dimension: Optional[str] = None,
+    retries: int = 0,
+    timeout: Any = None,
+    host: str = DEFAULT_HOST
+) -> Any:
+    """
+    Update specific entities (animals, paintings, item frames, etc.) already present in the world.
+
+    Requires list of dicts, each containing the ``uuid`` string of the entity in the world and ``data`` SNBT-formatted
+    string of entity properties that need to be patched.
+    """
+    parameters: Dict[str, Any] = {
+        'dimension': dimension,
+    }
+    body = json.dumps(entities)
+    response = _request(method='PATCH', url=f'{host}/entities', data=bytes(body, 'utf-8'), params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
 def getEntities(
     selector: Optional[str] = None,
     includeData: bool = True,
