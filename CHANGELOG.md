@@ -2,6 +2,9 @@
 
 Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 
+**Breaking:**
+- The `position` and `size` parameters of `interface.getHeightmap` are now `Optional[Vec2iLike]` instead of `Optional[Vec3iLike]`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+
 
 # 8.0.0
 
