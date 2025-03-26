@@ -457,6 +457,74 @@ def getHeightmap(
     return np.asarray(response.json(), dtype=np.int_)
 
 
+def placeEntities(
+    entities: Iterable[Dict[str, Union[str, int]]],
+    position: Vec3iLike,
+    dimension: Optional[str] = None,
+    retries: int = 0,
+    timeout: Any = None,
+    host: str = DEFAULT_HOST
+) -> Any:
+    """
+    Place entities (animals, paintings, item frames, etc.).
+
+    Requires list of dicts, each containing the ``id`` string of the entity (for instance, ``'minecraft:cat'``),
+    the spawn x, y and z position (can be `relative <https://minecraft.wiki/w/Coordinates#Relative_world_coordinates>`_
+    to the ``position`` argument). Optionally, providing the ``data`` attribute with a SNBT-formatted string sets
+    non-default properties to the entity.
+    """
+    parameters: Dict[str, Any] = {
+        'x': position[0],
+        'y': position[1],
+        'z': position[2],
+        'dimension': dimension,
+    }
+    body = json.dumps(entities)
+    response = _request(method='PUT', url=f'{host}/entities', data=bytes(body, 'utf-8'), params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
+def updateEntities(
+    entities: Iterable[Dict[str, str]],
+    dimension: Optional[str] = None,
+    retries: int = 0,
+    timeout: Any = None,
+    host: str = DEFAULT_HOST
+) -> Any:
+    """
+    Update specific entities (animals, paintings, item frames, etc.) already present in the world.
+
+    Requires list of dicts, each containing the ``uuid`` string of the entity in the world and ``data`` SNBT-formatted
+    string of entity properties that need to be patched.
+    """
+    parameters: Dict[str, Any] = {
+        'dimension': dimension,
+    }
+    body = json.dumps(entities)
+    response = _request(method='PATCH', url=f'{host}/entities', data=bytes(body, 'utf-8'), params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
+def removeEntities(
+    entities: Iterable[str],
+    dimension: Optional[str] = None,
+    retries: int = 0,
+    timeout: Any = None,
+    host: str = DEFAULT_HOST
+) -> Any:
+    """
+    Remove specific entities (animals, paintings, item frames, etc.) already present in the world.
+
+    Requires list of UUID strings of the entities that need to be removed.
+    """
+    parameters: Dict[str, Any] = {
+        'dimension': dimension,
+    }
+    body = json.dumps(entities)
+    response = _request(method='DELETE', url=f'{host}/entities', data=bytes(body, 'utf-8'), params=parameters, retries=retries, timeout=timeout)
+    return response.json()
+
+
 def getEntities(
     selector: Optional[str] = None,
     includeData: bool = True,
@@ -465,6 +533,10 @@ def getEntities(
     timeout: Any = None,
     host: str = DEFAULT_HOST
 ) -> Any:
+    """
+    Retrieve data on entities in the world matching the given
+    `target selector query <https://minecraft.wiki/w/Target_selectors>`_.
+    """
     url = f'{host}/entities'
     parameters = {
         'selector': selector,
@@ -483,6 +555,10 @@ def getPlayers(
     timeout: Any = None,
     host: str = DEFAULT_HOST
 ) -> Any:
+    """
+    Retrieve data on player entities in the world matching the given
+    `target selector query <https://minecraft.wiki/w/Target_selectors>`_.
+    """
     url = f'{host}/players'
     parameters = {
         'selector': selector,
