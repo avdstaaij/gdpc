@@ -152,9 +152,16 @@ def placeBlocks(
     <https://github.com/Niels-NTG/gdmc_http_interface/blob/master/docs/Endpoints.md#-place-blocks-put-blocks>`_
     for more info.
 
-    Returns a list of (success, result)-tuples, one for each block. If a block placement was
-    successful, result will be ``1`` if the block changed, or ``0`` otherwise. If a block placement failed,
-    result will be the error message.
+    Returns a list of ``(success, result)``-tuples, one for each block. Each tuple is set according
+    to one of three scenarios:
+
+    1. Block placement succeeded, and the block at the target position was changed. In this case,
+       ``success`` is ``True`` and ``result`` is ``1``.
+    2. Block placement succeeded, but the block at the target position was not changed (the block
+       *already was* what you tried to set it to). In this case, ``success`` is ``True`` and
+       ``result`` is ``0``.
+    3. Block placement failed. In this case, ``success`` is ``False`` and ``result`` is an error
+       message.
     """
     url = f"{host}/blocks"
 
@@ -181,8 +188,7 @@ def placeBlocks(
 
     response = _request("PUT", url, data=bytes(body, "utf-8"), params=parameters, retries=retries, timeout=timeout)
 
-    result: List[Tuple[bool, Union[int, str]]] = [("message" not in entry, entry.get("message", int(entry["status"]))) for entry in response.json()]
-    return result
+    return [("message" not in entry, entry.get("message", int(entry["status"]))) for entry in response.json()]
 
 
 def runCommand(
@@ -203,8 +209,7 @@ def runCommand(
     """
     url = f"{host}/command"
     response = _request("POST", url, data=bytes(command, "utf-8"), params={'dimension': dimension}, retries=retries, timeout=timeout)
-    result: List[Tuple[bool, Optional[str]]] = [(bool(entry["status"]), entry.get("message")) for entry in response.json()]
-    return result
+    return [(bool(entry["status"]), entry.get("message")) for entry in response.json()]
 
 
 def getBuildArea(
