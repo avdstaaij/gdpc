@@ -2617,6 +2617,11 @@ def bookData(
             wordColumnCount = 0
             continue
 
+        if char == '\f':
+            cursor = cursor + 1
+            text = text[:cursor - 1] + ('\n' * (_BOOK_PIXELS_PER_LINE - lineNumber)) + text[cursor:]
+            continue
+
         if char == '\n':
             if pageStartIndex == cursor:
                 cursor = cursor + 1
