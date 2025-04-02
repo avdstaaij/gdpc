@@ -1,7 +1,7 @@
 """Provides various Minecraft-related utilities that do not require an :class:`.Editor`."""
 import re
 from typing import Optional, Union, List, Dict
-from functools import lru_cache
+from functools import cache
 import json
 
 from deprecated import deprecated
@@ -2533,6 +2533,7 @@ def bookData(
     Algorithm adapted from `Gutencraft <https://github.com/NightlyNexus/Gutencraft/blob/d04d696d8adf955d035dc393711cfdb4c508efe1/gutencraft/src/commonMain/kotlin/Gutencraft.kt>`_
     """
 
+    @cache
     def getCharacterWidth(c: str) -> int:
         if c is None:
             return 0
