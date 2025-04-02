@@ -2532,6 +2532,18 @@ def bookData(
 
     Algorithm adapted from `Gutencraft <https://github.com/NightlyNexus/Gutencraft/blob/d04d696d8adf955d035dc393711cfdb4c508efe1/gutencraft/src/commonMain/kotlin/Gutencraft.kt>`_
     """
+    pages: List[str] = []
+
+    text = text.strip()
+
+    cursor = 0
+    pageStartIndex = 0
+    lineNumber = 1
+    lineColumnCount = 0
+    wordColumnCount = 0
+    wordStartIndex = 0
+    lastWordEndIndex = 0
+    isCursorInsideWord = True
 
     @cache
     def getCharacterWidth(c: str) -> int:
@@ -2555,18 +2567,23 @@ def bookData(
                 return 9
             return 10
 
-    pages: List[str] = []
-
-    text = text.strip()
-
-    cursor = 0
-    pageStartIndex = 0
-    lineNumber = 1
-    lineColumnCount = 0
-    wordColumnCount = 0
-    wordStartIndex = 0
-    lastWordEndIndex = 0
-    isCursorInsideWord = True
+    def appendFullPage():
+        nonlocal cursor
+        nonlocal pageStartIndex
+        nonlocal lineNumber
+        nonlocal wordStartIndex
+        nonlocal lastWordEndIndex
+        cursor = cursor + 1
+        if lineNumber == _BOOK_LINES_PER_PAGE:
+            _page = text[pageStartIndex:lastWordEndIndex]
+            if len(_page) > 0:
+                pages.append(_page)
+            lineNumber = 1
+            pageStartIndex = cursor
+            wordStartIndex = cursor
+            lastWordEndIndex = cursor
+        else:
+            lineNumber = lineNumber + 1
 
     while True:
         if cursor == len(text):
@@ -2579,7 +2596,7 @@ def bookData(
             break
 
         # Skip cursor past markup tokens.
-        markupToken = re.match(r'^§[\d\w]|\\\\[scr]', text[cursor:])
+        markupToken = re.match(r'^§[a-z0-9]|\\\\[scr]', text[cursor:])
         if markupToken is not None:
             cursor = cursor + len(markupToken[0])
             continue
@@ -2593,18 +2610,7 @@ def bookData(
             nextLineColumnCount = lineColumnCount + getCharacterWidth(char)
             if nextLineColumnCount > _BOOK_PIXELS_PER_LINE:
                 lineColumnCount = 0
-                if lineNumber == _BOOK_LINES_PER_PAGE:
-                    page = text[pageStartIndex:lastWordEndIndex]
-                    if len(page) > 0:
-                        pages.append(page)
-                    lineNumber = 1
-                    cursor = cursor + 1
-                    pageStartIndex = cursor
-                    lastWordEndIndex = cursor
-                    wordStartIndex = cursor
-                else:
-                    lineNumber = lineNumber + 1
-                    cursor = cursor + 1
+                appendFullPage()
             else:
                 lineColumnCount = nextLineColumnCount
                 cursor = cursor + 1
@@ -2621,18 +2627,7 @@ def bookData(
             if isCursorInsideWord:
                 isCursorInsideWord = False
                 lastWordEndIndex = cursor
-            if lineNumber == _BOOK_LINES_PER_PAGE:
-                page = text[pageStartIndex:lastWordEndIndex]
-                if len(page) > 0:
-                    pages.append(page)
-                lineNumber = 1
-                cursor = cursor + 1
-                pageStartIndex = cursor
-                lastWordEndIndex = cursor
-                wordStartIndex = cursor
-            else:
-                lineNumber = lineNumber + 1
-                cursor = cursor + 1
+            appendFullPage()
             lineColumnCount = 0
             wordColumnCount = 0
             continue
