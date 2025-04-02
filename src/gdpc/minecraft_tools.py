@@ -2497,10 +2497,8 @@ def bookData(
 ) -> str:
     r"""Returns an SNBT string with written book data
 
-    The following special characters can be used to format the book:
-
-    - ``\n``: New line
-    - ``\f``: Form/page break
+    The following `special formatting tokens<https://minecraft.wiki/w/Formatting_codes>`_
+    can be used to add markup to the text:
     - ``§0``: Black text
     - ``§1``: Dark blue text
     - ``§2``: Dark green text
@@ -2523,9 +2521,8 @@ def bookData(
     - ``§n``: __Underline__ text
     - ``§o``: *Italic* text
     - ``§r``: Reset text formatting
-    - ``\\\\s``: When at start of page, print page as string directly
-    - ``\\c``: When at start of line, align text to center
-    - ``\\r``: When at start of line, align text to right side
+
+    Additionally, you can use ``\n`` to force a line break and ``\f`` to force a page break.
 
     NOTE: For supported special characters see
     https://minecraft.wiki/Language#Font
@@ -2595,8 +2592,8 @@ def bookData(
                 pages.append(page)
             break
 
-        # Skip cursor past markup tokens.
-        markupToken = re.match(r'^§[a-z0-9]|\\\\[scr]', text[cursor:])
+        # Skip cursor past formatting tokens.
+        markupToken = re.match(r'^§[a-z0-9]', text[cursor:])
         if markupToken is not None:
             cursor = cursor + len(markupToken[0])
             continue
