@@ -2492,8 +2492,8 @@ def bookData(
     title: str                = "Chronicle",
     author: str               = "Anonymous",
     description: str          = "I wonder what's inside?",
-    descriptionColor: str     = "gold",
-    descriptionIsItalic: bool = True
+    desccolor: str            = "gold",
+    descIsItalic: bool        = True,
 ) -> str:
     r"""Returns an SNBT string with written book data
 
@@ -2673,7 +2673,7 @@ def bookData(
             lineColumnCount = nextLineColumnCount
         cursor = cursor + 1
 
-    loreJSON = json.dumps({'text': description, 'color': descriptionColor, 'italic': descriptionIsItalic})
+    loreJSON = json.dumps({'text': description, 'color': desccolor, 'italic': descIsItalic})
     pageJSON = [json.dumps({'text': p}) for p in pages]
     book = (
         "{"
