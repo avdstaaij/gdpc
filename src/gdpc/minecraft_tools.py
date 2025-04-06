@@ -1,14 +1,13 @@
 """Provides various Minecraft-related utilities that do not require an :class:`.Editor`."""
-import re
-from typing import Optional, Union, List, Dict
-from functools import cache
 import json
+import re
+from functools import lru_cache
+from typing import Optional, Union, List, Dict
 
 from deprecated import deprecated
 
-from .vector_tools import Vec2iLike, Rect
 from .block import Block
-
+from .vector_tools import Vec2iLike, Rect
 
 # ==================================================================================================
 # Constants
@@ -2542,7 +2541,7 @@ def bookData(
     lastWordEndIndex = 0
     isCursorInsideWord = True
 
-    @cache
+    @lru_cache
     def getCharacterWidth(c: str) -> int:
         if c is None:
             return 0
