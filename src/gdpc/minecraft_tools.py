@@ -2677,12 +2677,12 @@ def bookData(
     pageJSON = [json.dumps({'text': p}) for p in pages]
     book = (
         "{"
-        "\"minecraft:written_book_content\": {"
-        f'title: {repr(title)}, '
-        f'author: {repr(author)}, '
-        f'pages: [{",".join(repr(p) for p in pageJSON)}]'
-        "},"
-        f'"lore": [{repr(loreJSON)}]'
+            "\"minecraft:written_book_content\": {"
+                f'title: {repr(title)}, '
+                f'author: {repr(author)}, '
+                f'pages: [{",".join(repr(p) for p in pageJSON)}]'
+            "},"
+            f'"lore": [{repr(loreJSON)}]'
         "}"
     )
     return book
