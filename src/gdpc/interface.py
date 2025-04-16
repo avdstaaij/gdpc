@@ -1,7 +1,9 @@
 """Provides direct wrappers for the endpoints of the GDMC HTTP interface.
 
-These functions are quite low-level. It is recommended to use the higher-level
-:class:`.editor.Editor` class instead.
+These functions are quite low-level. If possible, it is recommended to use the higher-level
+:class:`.Editor` class instead.
+However, some GDMC HTTP interface features that this module wraps may not be supported by
+``Editor`` yet. You may find this module useful for those.
 """
 
 
