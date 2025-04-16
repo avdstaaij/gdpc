@@ -2,6 +2,11 @@
 
 Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 
+
+# 8.1.0
+
+Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
+
 **Additions:**
 - Added `interface.placeEntities`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 - Added `interface.updateEntities`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
