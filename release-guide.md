@@ -23,5 +23,4 @@ Steps to make a release:
 	- Run `python3 -m build`
 	- Run `python3 -m twine upload dist/*`
 
-- Update `latest_release` branch to the "Updated version to X.X.X" commit.
 - (Optional) Make a post in #frameworks on Discord.
