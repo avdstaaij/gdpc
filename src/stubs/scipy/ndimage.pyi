@@ -1,16 +1,15 @@
-from typing import Union, Optional, Tuple, Any
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-
 def binary_dilation(
     input: npt.NDArray[Any],
-    structure: Optional[npt.NDArray[Any]] = None,
+    structure: npt.NDArray[Any] | None = None,
     iterations: int = 1,
-    mask: Optional[npt.NDArray[Any]] = None,
-    output: Optional[npt.NDArray[Any]] = None,
+    mask: npt.NDArray[Any] | None = None,
+    output: npt.NDArray[Any] | None = None,
     border_value: int = 0,
-    origin: Union[int, Tuple[int, ...]] =0,
-    brute_force: bool = False
+    origin: int | tuple[int, ...] =0,
+    brute_force: bool = False,
 ) -> npt.NDArray[np.bool_]: ...

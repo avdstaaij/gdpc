@@ -29,6 +29,9 @@ mypy_path = "src/stubs"
 [tool.ruff]
 target-version = "py38" # If we move the project setup from setup.py to pyproject.toml, replace this with project.requires-python. https://docs.astral.sh/ruff/settings/#target-version
 line-length = 100
+exclude = [
+    "src/stubs/pyglm/**",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
@@ -84,6 +87,13 @@ ignore = [
     "N815",    # mixed-case-variable-in-class-scope - PR, PA - For historical reasons, GDPC uses camelCase.
     "N816",    # mixed-case-variable-in-global-scope - PR, PA - For historical reasons, GDPC uses camelCase.
     "PGH003",  # blanket-type-ignore - PR - GDPC uses blanket type ignores for pyright-strict-mode unknown-type errors when accessing NBT data.
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**.pyi" = [
+    # These rules are inappropriate for stub files.
+    "A",       # flake8-builtins - Stub files must use the same names as the original code.
+    "N",       # pep8-naming - Stub files must use the same names as the original code.
 ]
 
 [tool.ruff.lint.flake8-builtins]
