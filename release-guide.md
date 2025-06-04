@@ -8,7 +8,7 @@ Steps to make a release:
 	- In `__init__.py`, update `__version__` to the new version number.
 	- Change the "In development" header in the changelog to the new version number, and add a new "In development" section with only the compatibility line.
 	- If necessary, update the compatible GDMC-HTTP and Minecraft versions listed on the installation page of the docs and in the changelog.
-	- If necessary, update the minimum Python version listed on the installation page of the docs.
+	- If necessary, update the minimum Python version listed in setup.py, pyproject.toml, and on the installation page of the docs.
 	- Commit the changes above with the title "Updated version to X.X.X".
 	- Push changes to GitHub (things will be public from here).
 

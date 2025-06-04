@@ -4,27 +4,26 @@ Minecraft world through the GDMC HTTP interface."""
 
 from __future__ import annotations
 
-from typing import Dict, Sequence, Union, Optional, List, Iterable, Generator, Sized, Any, cast
-from numbers import Integral
+import atexit
+import logging
+import random
+import weakref
+from concurrent import futures
 from contextlib import contextmanager
 from copy import copy, deepcopy
-import random
-from concurrent import futures
-import logging
-import atexit
-import weakref
+from numbers import Integral
+from typing import Any, Generator, Iterable, Sequence, Sized, cast
 
 import numpy as np
 import numpy.typing as npt
 from pyglm.glm import ivec3
 
-from .utils import eagerAll, OrderedByLookupDict
-from .vector_tools import Vec3iLike, Rect, Box, dropY
-from .transform import Transform, TransformLike, toTransform
-from .block import Block, transformedBlockOrPalette
 from . import interface
+from .block import Block, transformedBlockOrPalette
+from .transform import Transform, TransformLike, toTransform
+from .utils import OrderedByLookupDict, eagerAll
+from .vector_tools import Box, Rect, Vec3iLike, dropY
 from .world_slice import WorldSlice
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,23 +38,24 @@ class Editor:
 
     def __init__(
         self,
-        transformLike         : Optional[TransformLike] = None,
-        dimension             : Optional[str]           = None,
-        buffering             : bool                    = False,
-        bufferLimit           : int                     = 1024,
-        caching               : bool                    = False,
-        cacheLimit            : int                     = 8192,
-        multithreading        : bool                    = False,
-        multithreadingWorkers : int                     = 1,
-        retries               : int                     = 4,
-        timeout               : Optional[float]         = None,
-        host                  : str                     = interface.DEFAULT_HOST,
+        transformLike         : TransformLike | None = None,
+        dimension             : str | None           = None,
+        buffering             : bool                 = False,
+        bufferLimit           : int                  = 1024,
+        caching               : bool                 = False,
+        cacheLimit            : int                  = 8192,
+        multithreading        : bool                 = False,
+        multithreadingWorkers : int                  = 1,
+        retries               : int                  = 4,
+        timeout               : float | None         = None,
+        host                  : str                  = interface.DEFAULT_HOST,
     ) -> None:
         """Constructs an Editor instance with the specified transform and settings.
 
         All settings specified here can be accessed and modified through properties with the same
         name. For more information on each setting, see the documentation for the corresponding
-        property."""
+        property.
+        """
         self._retries = retries
         self._timeout = timeout
         self._host    = host
@@ -66,8 +66,8 @@ class Editor:
 
         self._buffering = buffering
         self._bufferLimit = bufferLimit
-        self._buffer: Dict[ivec3,Block] = {}
-        self._commandBuffer: List[str] = []
+        self._buffer: dict[ivec3,Block] = {}
+        self._commandBuffer: list[str] = []
 
         self._caching = caching
         self._cache = OrderedByLookupDict[ivec3,Block](cacheLimit)
@@ -75,15 +75,15 @@ class Editor:
         self._multithreading = False
         self._multithreadingWorkers = multithreadingWorkers
         self.multithreading = multithreading # The property setter initializes the multithreading system.
-        self._bufferFlushFutures: List[futures.Future[None]] = []
+        self._bufferFlushFutures: list[futures.Future[None]] = []
 
         self._doBlockUpdates = True
         self._spawnDrops     = False
         self._bufferDoBlockUpdates = self._doBlockUpdates
         self._bufferSpawnDrops     = self._spawnDrops
 
-        self._worldSlice: Optional[WorldSlice] = None
-        self._worldSliceDecay: Optional[npt.NDArray[np.bool_]] = None
+        self._worldSlice: WorldSlice | None = None
+        self._worldSliceDecay: npt.NDArray[np.bool_] | None = None
 
         # We need to do some cleanup when the Editor gets deleted or when the program ends. In
         # particular, we need to flush the block buffer and await any remaining buffer flush
@@ -108,7 +108,7 @@ class Editor:
         # - We need to store the lambda so that we can unregister it in __del__ and avoid a double
         #   cleanup.
 
-        ref = weakref.ref(cast(Editor, self))
+        ref = weakref.ref(cast("Editor", self))
         self._clean_up_handler = lambda: Editor._clean_up_at_exit(ref)
         atexit.register(self._clean_up_handler)
 
@@ -129,8 +129,7 @@ class Editor:
 
     def __del__(self) -> None:
         """Cleans up this Editor instance.\n
-        Flushes the block buffer and waits for any remaining buffer flush futures.
-        """
+        Flushes the block buffer and waits for any remaining buffer flush futures."""
         atexit.unregister(self._clean_up_handler)
         Editor._clean_up(self)
 
@@ -147,7 +146,8 @@ class Editor:
         Changing this property allows you to change the "point of view" of the editor.
 
         For a more comprehensive overview of GDPC's transformation system, see
-        :ref:`here<the-transformation-system>`."""
+        :ref:`here<the-transformation-system>`.
+        """
         return self._transform
 
     @transform.setter
@@ -155,7 +155,7 @@ class Editor:
         self._transform = toTransform(value)
 
     @property
-    def dimension(self) -> Optional[str]:
+    def dimension(self) -> str | None:
         """The Minecraft dimension this editor interacts with.
 
         Can be set to any string, though specifying an invalid dimension may cause other ``Editor``
@@ -171,11 +171,12 @@ class Editor:
         Changing the dimension will flush the block buffer and invalidate all caches.\n
         Note that :attr:`.transform` is NOT reset or modified when the dimension is changed! In
         particular, the transform's translation (if any) is NOT adjusted for the nether's 8x smaller
-        scale."""
+        scale.
+        """
         return self._dimension
 
     @dimension.setter
-    def dimension(self, value: Optional[str]) -> None:
+    def dimension(self, value: str | None) -> None:
         if value != self._dimension:
             self.flushBuffer()
             self._cache.clear()
@@ -273,7 +274,7 @@ class Editor:
                     "caches to become inconsistent with the actual world.\n"
                     "Multithreading with more than one worker thread can speed up block placement on\n"
                     "some machines, which can be nice during development, but it is NOT RECOMMENDED\n"
-                    "for production code."
+                    "for production code.",
                 )
         elif self._multithreading and not value:
             self._bufferFlushExecutor.shutdown(wait=True)
@@ -350,8 +351,8 @@ class Editor:
         self._retries = value
 
     @property
-    def timeout(self) -> Optional[float]:
-        """The timeout for requests to the GDMC HTTP interface
+    def timeout(self) -> float | None:
+        """The timeout for requests to the GDMC HTTP interface.
 
         Behaves as described by the
         `requests package <https://requests.readthedocs.io/en/latest/user/quickstart/#timeouts>`_).
@@ -359,14 +360,17 @@ class Editor:
         return self._timeout
 
     @timeout.setter
-    def timeout(self, value: Optional[float]) -> None:
+    def timeout(self, value: float | None) -> None:
         self._timeout = value
 
     @property
     def host(self) -> str:
-        """The address (hostname+port) of the GDMC HTTP interface to use.\n
-        Changing the host will flush the buffer and invalidate all caches.\n
-        Note that the :attr:`.transform` is NOT reset or modified when the host is changed!"""
+        """The address (hostname+port) of the GDMC HTTP interface to use.
+
+        Changing the host will flush the buffer and invalidate all caches.
+
+        Note that the :attr:`.transform` is NOT reset or modified when the host is changed!
+        """
         return self._host
 
     @host.setter
@@ -380,16 +384,18 @@ class Editor:
         self._host = value
 
     @property
-    def worldSlice(self) -> Optional[WorldSlice]:
+    def worldSlice(self) -> WorldSlice | None:
         """The cached WorldSlice (see :meth:`.loadWorldSlice`)."""
         return self._worldSlice
 
     @property
-    def worldSliceDecay(self) -> Optional[npt.NDArray[np.bool_]]:
+    def worldSliceDecay(self) -> npt.NDArray[np.bool_] | None:
         """3D boolean array indicating whether the block at the specified position in the cached
-        worldSlice is still valid.\n
+        worldSlice is still valid.
+
         Note that the lowest Y-layer is at ``[:,0,:]``, despite Minecraft's negative Y coordinates.
-        If :attr:`.worldSlice` is ``None``, this property will also be ``None``."""
+        If :attr:`.worldSlice` is ``None``, this property will also be ``None``.
+        """
         if self._worldSliceDecay is None:
             return None
         view = self._worldSliceDecay.view()
@@ -397,12 +403,15 @@ class Editor:
         return view
 
 
-    def runCommand(self, command: str, position: Optional[Vec3iLike] = None, syncWithBuffer: bool = False) -> None:
-        """Executes one or multiple Minecraft commands (separated by newlines).\n
-        The leading "/" must be omitted.\n
+    def runCommand(self, command: str, position: Vec3iLike | None = None, syncWithBuffer: bool = False) -> None:
+        """Executes one or multiple Minecraft commands (separated by newlines).
+
+        The leading "/" must be omitted.
+
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
         after the next buffer flush. This can be useful if the command depends on possibly buffered
-        block changes.\n
+        block changes.
+
         If ``position`` is provided, the command's execution position is set to ``position``, where
         ``position`` is interpreted as local to :attr:`.transform`.
         This means that, for example, the position "~ ~ ~" in the command will correspond to
@@ -410,24 +419,29 @@ class Editor:
         reflected in the command's execution context! This means that the use of local coordinate
         offsets (e.g. "^1 ^2 ^3") is in general not safe.
         For more details about relative and local command coordinates, see
-        https://minecraft.wiki/Coordinates#Commands"""
+        https://minecraft.wiki/Coordinates#Commands
+        """
         if position is not None:
             position = self.transform * position
         self.runCommandGlobal(command, position, syncWithBuffer)
 
 
-    def runCommandGlobal(self, command: str, position: Optional[Vec3iLike] = None, syncWithBuffer: bool = False) -> None:
-        """Executes one or multiple Minecraft commands (separated by newlines), ignoring :attr:`.transform`.\n
-        The leading "/" must be omitted.\n
+    def runCommandGlobal(self, command: str, position: Vec3iLike | None = None, syncWithBuffer: bool = False) -> None:
+        """Executes one or multiple Minecraft commands (separated by newlines), ignoring :attr:`.transform`.
+
+        The leading "/" must be omitted.
+
         If buffering is enabled and ``syncWithBuffer`` is ``True``, the command is deferred until
         after the next buffer flush. This can be useful if the command depends on possibly buffered
-        block changes.\n
+        block changes.
+
         If ``position`` is provided, the command's execution position is set to ``position``,
         ignoring :attr:`.transform`.
         This means that, for example, the position "~ ~ ~" in the command will correspond to
         ``position``.
         For more details about relative and local command coordinates, see
-        https://minecraft.wiki/Coordinates#Commands"""
+        https://minecraft.wiki/Coordinates#Commands
+        """
         if position is not None:
             command = f"execute positioned {' '.join(str(c) for c in position)} run {command}"
 
@@ -453,10 +467,13 @@ class Editor:
 
 
     def getBlock(self, position: Vec3iLike) -> Block:
-        """Returns the block at ``position``.\n
+        """Returns the block at ``position``.
+
         ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.
-        The returned block's orientation is also from the perspective of :attr:`.transform`.\n
-        If the given coordinates are invalid, returns ``Block("minecraft:void_air")``."""
+        The returned block's orientation is also from the perspective of :attr:`.transform`.
+
+        If the given coordinates are invalid, returns ``Block("minecraft:void_air")``.
+        """
         block = self.getBlockGlobal(self.transform * position)
         invTransform = ~self.transform
         block.transform(invTransform.rotation, invTransform.flip)
@@ -464,8 +481,10 @@ class Editor:
 
 
     def getBlockGlobal(self, position: Vec3iLike) -> Block:
-        """Returns the block at ``position``, ignoring :attr:`.transform`.\n
-        If the given coordinates are invalid, returns ``Block("minecraft:void_air")``."""
+        """Returns the block at ``position``, ignoring :attr:`.transform`.
+
+        If the given coordinates are invalid, returns ``Block("minecraft:void_air")``.
+        """
         _position = ivec3(*position)
 
         if self.caching:
@@ -481,7 +500,7 @@ class Editor:
         if (
             self._worldSlice is not None and
             self._worldSlice.box.contains(_position) and
-            not cast(npt.NDArray[np.bool_], self._worldSliceDecay)[tuple(_position - self._worldSlice.box.offset)]
+            not cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[tuple(_position - self._worldSlice.box.offset)]
         ):
             block = self._worldSlice.getBlockGlobal(_position)
         else:
@@ -494,19 +513,24 @@ class Editor:
 
 
     def getBiome(self, position: Vec3iLike) -> str:
-        """Returns the biome at ``position``.\n
-        ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.\n
-        If the given coordinates are invalid, returns an empty string."""
+        """Returns the biome at ``position``.
+
+        ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.
+
+        If the given coordinates are invalid, returns an empty string.
+        """
         return self.getBiomeGlobal(self.transform * position)
 
 
     def getBiomeGlobal(self, position: Vec3iLike) -> str:
-        """Returns the biome at ``position``, ignoring :attr:`.transform`.\n
-        If the given coordinates are invalid, returns an empty string."""
+        """Returns the biome at ``position``, ignoring :attr:`.transform`.
+
+        If the given coordinates are invalid, returns an empty string.
+        """
         if (
             self._worldSlice is not None and
             self._worldSlice.box.contains(position) and
-            not cast(npt.NDArray[np.bool_], self._worldSliceDecay)[tuple(ivec3(*position) - self._worldSlice.box.offset)]
+            not cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[tuple(ivec3(*position) - self._worldSlice.box.offset)]
         ):
             return self._worldSlice.getBiomeGlobal(position)
 
@@ -515,28 +539,33 @@ class Editor:
 
     def placeBlock(
         self,
-        position: Union[Vec3iLike, Iterable[Vec3iLike]],
-        block:    Union[Block, Sequence[Block]],
-        replace:  Optional[Union[str, List[str]]] = None
+        position: Vec3iLike | Iterable[Vec3iLike],
+        block:    Block | Sequence[Block],
+        replace:  str | list[str] | None = None,
     ) -> bool:
-        """Places ``block`` at ``position``.\n
-        ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.\n
+        """Places ``block`` at ``position``.
+
+        ``position`` is interpreted as local to the coordinate system defined by :attr:`.transform`.
+
         If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
-        This is more efficient than calling this method in a loop.\n
-        If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
-        Returns whether the placement succeeded fully."""
+        This is more efficient than calling this method in a loop.
+
+        If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.
+
+        Returns whether the placement succeeded fully.
+        """
         # Distinguishing between Vec3iLike and Iterable[Vec3iLike] is... not easy.
         # Perhaps we should add a differently-named function for placing multiple blocks instead.
         # (This would be a breaking change.)
         globalPosition = (
-            self.transform * cast(Vec3iLike, position)
+            self.transform * cast("Vec3iLike", position)
             if (
                 hasattr(position, "__len__")
-                and len(cast(Sized, position)) == 3
+                and len(cast("Sized", position)) == 3
                 and hasattr(position, "__getitem__")
-                and isinstance(cast(Sequence[Any], position)[0], Integral)
+                and isinstance(cast("Sequence[Any]", position)[0], Integral)
             )
-            else (self.transform * pos for pos in cast(Iterable[Vec3iLike], position))
+            else (self.transform * pos for pos in cast("Iterable[Vec3iLike]", position))
         )
         globalBlock = transformedBlockOrPalette(block, self.transform.rotation, self.transform.flip)
         return self.placeBlockGlobal(globalPosition, globalBlock, replace)
@@ -544,27 +573,30 @@ class Editor:
 
     def placeBlockGlobal(
         self,
-        position: Union[Vec3iLike, Iterable[Vec3iLike]],
-        block:    Union[Block, Sequence[Block]],
-        replace:  Optional[Union[str, Iterable[str]]] = None
+        position: Vec3iLike | Iterable[Vec3iLike],
+        block:    Block | Sequence[Block],
+        replace:  str | Iterable[str] | None = None,
     ) -> bool:
-        """Places ``block`` at ``position``, ignoring :attr:`.transform`.\n
-        If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
-        In this case, buffering is temporarily enabled for better performance.\n
-        If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
-        Returns whether the placement succeeded fully."""
+        """Places ``block`` at ``position``, ignoring :attr:`.transform`.
 
+        If ``position`` is iterable (e.g. a list), ``block`` is placed at all positions.
+        In this case, buffering is temporarily enabled for better performance.
+
+        If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.
+
+        Returns whether the placement succeeded fully.
+        """
         if (
             hasattr(position, "__len__")
-            and len(cast(Sized, position)) == 3
+            and len(cast("Sized", position)) == 3
             and hasattr(position, "__getitem__")
-            and isinstance(cast(Sequence[Any], position)[0], Integral)
+            and isinstance(cast("Sequence[Any]", position)[0], Integral)
         ):
-            return self._placeSingleBlockGlobal(ivec3(*cast(Vec3iLike, position)), block, replace)
+            return self._placeSingleBlockGlobal(ivec3(*cast("Vec3iLike", position)), block, replace)
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in cast(Iterable[Vec3iLike], position))
+        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in cast("Iterable[Vec3iLike]", position))
         self.buffering = oldBuffering
         return success
 
@@ -572,18 +604,20 @@ class Editor:
     def _placeSingleBlockGlobal(
         self,
         position: ivec3,
-        block:    Union[Block, Sequence[Block]],
-        replace:  Optional[Union[str, Iterable[str]]] = None
+        block:    Block | Sequence[Block],
+        replace:  str | Iterable[str] | None = None,
     ) -> bool:
-        """Places ``block`` at ``position``, ignoring :attr:`.transform`.\n
-        If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.\n
-        Returns whether the placement succeeded fully."""
+        """Places ``block`` at ``position``, ignoring :attr:`.transform`.
 
+        If ``block`` is a sequence (e.g. a list), blocks are sampled randomly.
+
+        Returns whether the placement succeeded fully.
+        """
         # Check replace condition
         if replace is not None:
             if isinstance(replace, str):
                 replace = [replace]
-            if cast(str, self.getBlockGlobal(position).id) not in replace:
+            if cast("str", self.getBlockGlobal(position).id) not in replace:
                 return True
 
         # Select block from palette
@@ -604,7 +638,7 @@ class Editor:
             self._cache[position] = block
 
         if self._worldSlice is not None and self._worldSlice.rect.contains(dropY(position)):
-            cast(npt.NDArray[np.bool_], self._worldSliceDecay)[tuple(position - self._worldSlice.box.offset)] = True
+            cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[tuple(position - self._worldSlice.box.offset)] = True
 
         return True
 
@@ -630,11 +664,12 @@ class Editor:
 
 
     def flushBuffer(self) -> None:
-        """Flushes the block placement buffer.\n
-        If multithreaded buffer flushing is enabled, the worker threads can be awaited with
-        :meth:`.awaitBufferFlushes`."""
+        """Flushes the block placement buffer.
 
-        def flush(blockBuffer: Dict[ivec3, Block], commandBuffer: List[str]):
+        If multithreaded buffer flushing is enabled, the worker threads can be awaited with
+        :meth:`.awaitBufferFlushes`.
+        """
+        def flush(blockBuffer: dict[ivec3, Block], commandBuffer: list[str]) -> None:
             # Flush block buffer
             if blockBuffer:
                 response = interface.placeBlocks(blockBuffer.items(), dimension=self.dimension, doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
@@ -662,7 +697,7 @@ class Editor:
             # Shallow copies are good enough here
             blockBufferCopy   = self._buffer
             commandBufferCopy = self._commandBuffer
-            def task():
+            def task() -> None:
                 flush(blockBufferCopy, commandBufferCopy)
 
             # Submit the task
@@ -677,26 +712,34 @@ class Editor:
             flush(self._buffer, self._commandBuffer)
 
 
-    def awaitBufferFlushes(self, timeout: Optional[float] = None) -> None:
-        """Awaits all pending buffer flushes.\n
-        If ``timeout`` is not ``None``, waits for at most ``timeout`` seconds.\n
+    def awaitBufferFlushes(self, timeout: float | None = None) -> None:
+        """Awaits all pending buffer flushes.
+
+        If ``timeout`` is not ``None``, waits for at most ``timeout`` seconds.
+
         Does nothing if no buffer flushes have occured while multithreaded buffer flushing was
-        enabled."""
+        enabled.
+        """
         self._bufferFlushFutures = list(futures.wait(self._bufferFlushFutures, timeout).not_done)
 
 
-    def loadWorldSlice(self, rect: Optional[Rect]=None, heightmapTypes: Optional[Iterable[str]] = None, cache: bool = False) -> WorldSlice:
-        """Loads the world slice for the given XZ-rectangle.\n
-        The rectangle must be given in **global coordinates**; :attr:`.transform` is ignored.\n
-        If ``rect`` is None, the world slice of the current build area is loaded.\n
-        If ``heightmapTypes`` is None, all heightmaps are loaded.\n
+    def loadWorldSlice(self, rect: Rect | None = None, heightmapTypes: Iterable[str] | None = None, cache: bool = False) -> WorldSlice:
+        """Loads the world slice for the given XZ-rectangle.
+
+        The rectangle must be given in **global coordinates**; :attr:`.transform` is ignored.
+
+        If ``rect`` is None, the world slice of the current build area is loaded.
+
+        If ``heightmapTypes`` is None, all heightmaps are loaded.
+
         If ``cache`` is ``True``, the loaded worldSlice is cached in this editor. It can then be
         accessed through :attr:`.worldSlice`.
         If a world slice was already cached, it is replaced.
         The cached world slice is used for faster block and biome retrieval. Note that the editor
         assumes that nothing besides itself changes the given area of the world. If the given world
         area is changed other than through this editor, call :meth:`.updateWorldSlice` to update the
-        cached world slice."""
+        cached world slice.
+        """
         if rect is None:
             rect = self.getBuildArea().toRect()
         worldSlice = WorldSlice(rect, dimension=self.dimension, heightmapTypes=heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
@@ -707,13 +750,16 @@ class Editor:
 
 
     def updateWorldSlice(self) -> WorldSlice:
-        """Updates the cached world slice.\n
+        """Updates the cached world slice.
+
         Loads and caches new world slice for the same area and with the same heightmaps as the
         currently cached one.
+
         Raises a :exc:`RuntimeError` if no world slice is cached.
         """
         if self._worldSlice is None:
-            raise RuntimeError("No world slice is cached. Call .loadWorldSlice() with cache=True first.")
+            msg = "No world slice is cached. Call .loadWorldSlice() with cache=True first."
+            raise RuntimeError(msg)
         return self.loadWorldSlice(self._worldSlice.rect, self._worldSlice.heightmaps.keys(), cache=True)
 
 
@@ -729,15 +775,15 @@ class Editor:
 
 
     @contextmanager
-    def pushTransform(self, transformLike: Optional[TransformLike] = None) -> Generator[None, None, None]:
+    def pushTransform(self, transformLike: TransformLike | None = None) -> Generator[None, None, None]:
         """Creates a context that reverts all changes to :attr:`.transform` on exit.
         If ``transformLike`` is not ``None``, it is pushed to :attr:`.transform` on enter.
 
         Can be used to create a local coordinate system on top of the current local coordinate
         system.
 
-        Not to be confused with :meth:`.Transform.push`!"""
-
+        Not to be confused with :meth:`.Transform.push`!
+        """
         originalTransform = deepcopy(self.transform)
         if transformLike is not None:
             self.transform @= toTransform(transformLike)

@@ -1,15 +1,23 @@
-"""Provides the :class:`.Transform` class and related functions"""
+"""Provides the :class:`.Transform` class and related functions."""
 
 
 from __future__ import annotations
 
-from typing import Union
 from dataclasses import dataclass
+from typing import Union
 
-from pyglm.glm import ivec3, bvec3
+from pyglm.glm import bvec3, ivec3
+from typing_extensions import Self
 
-from .vector_tools import Vec3iLike, Vec3bLike, rotate3D, flipRotation3D, flipToScale3D, rotateSize3D, Box, Tuple
-
+from .vector_tools import (
+    Box,
+    Vec3bLike,
+    Vec3iLike,
+    flipRotation3D,
+    flipToScale3D,
+    rotate3D,
+    rotateSize3D,
+)
 
 # ==================================================================================================
 # Transform class
@@ -33,20 +41,21 @@ class Transform:
     _rotation:    int
     _flip:        bvec3
 
-    def __init__(self, translation: Vec3iLike = ivec3(), rotation: int = 0, flip: Vec3bLike = bvec3()) -> None:
+    def __init__(self, translation: Vec3iLike | None = None, rotation: int = 0, flip: Vec3bLike | None = None) -> None:
         """Constructs a Transform with the given properties."""
-        self._translation = ivec3(*translation)
+        self._translation = ivec3() if translation is None else ivec3(*translation)
         self._rotation    = rotation
-        self._flip        = bvec3(*flip)
+        self._flip        = bvec3() if flip is None else bvec3(*flip)
 
 
     def __repr__(self) -> str:
+        """Returns a string representation of this transform."""
         return f"Transform(translation={tuple(self._translation)}, rotation={self._rotation}, flip={tuple(self._flip)})"
 
 
     @property
     def translation(self) -> ivec3:
-        """The translation component of this transform"""
+        """The translation component of this transform."""
         return self._translation
 
     @translation.setter
@@ -55,7 +64,7 @@ class Transform:
 
     @property
     def rotation(self) -> int:
-        """The rotation component of this transform"""
+        """The rotation component of this transform."""
         return self._rotation
 
     @rotation.setter
@@ -64,7 +73,7 @@ class Transform:
 
     @property
     def flip(self) -> bvec3:
-        """The flip component of this transform"""
+        """The flip component of this transform."""
         return self._flip
 
     @flip.setter
@@ -82,25 +91,25 @@ class Transform:
         Faster version of ``~self * vec``."""
         return rotate3D(ivec3(*vec) - self._translation, (-self._rotation + 4) % 4) * flipToScale3D(self._flip)
 
-    def compose(self, other: 'Transform') -> 'Transform':
+    def compose(self, other: Transform) -> Transform:
         """Returns a transform that applies ``self`` after ``other``.\n
         Equivalent to ``self @ other``. """
         return Transform(
             translation = self.apply(other._translation),
             rotation    = (self._rotation + flipRotation3D(other._rotation, self._flip)) % 4,
-            flip        = self._flip ^ other._flip
+            flip        = self._flip ^ other._flip,
         )
 
-    def invCompose(self, other: 'Transform') -> 'Transform':
+    def invCompose(self, other: Transform) -> Transform:
         """Returns a transform that applies ``~self`` after ``other``.\n
         Faster version of ``~self @ other``."""
         return Transform(
             translation = self.invApply(other._translation),
             rotation    = flipRotation3D((other._rotation - self._rotation + 4) % 4, self._flip),
-            flip        = self._flip ^ other._flip
+            flip        = self._flip ^ other._flip,
         )
 
-    def composeInv(self, other: 'Transform') -> 'Transform':
+    def composeInv(self, other: Transform) -> Transform:
         """Returns a transform that applies ``self`` after ``~other``.\n
         Faster version of ``self @ ~other``."""
         flip = self._flip ^ other._flip
@@ -108,24 +117,24 @@ class Transform:
         return Transform(
             translation = self._translation - rotate3D(other._translation * flipToScale3D(flip), rotation),
             rotation    = rotation,
-            flip        = flip
+            flip        = flip,
         )
 
-    def push(self, other: 'Transform') -> None:
+    def push(self, other: Transform) -> None:
         """Adds the effect of ``other`` to this transform.\n
         Equivalent to ``self @= other``."""
         self._translation += rotate3D(other._translation * flipToScale3D(self._flip), self._rotation)
         self._rotation     = (self._rotation + flipRotation3D(other._rotation, self._flip)) % 4
         self._flip         = self._flip ^ other._flip
 
-    def pop(self, other: 'Transform') -> None:
+    def pop(self, other: Transform) -> None:
         """The inverse of push. Removes the effect of ``other`` from this transform.\n
         Faster version of ``self @= ~other``."""
         self._flip         = self._flip ^ other._flip
         self._rotation     = (self._rotation - flipRotation3D(other._rotation, self._flip) + 4) % 4
         self._translation -= rotate3D(other._translation * flipToScale3D(self._flip), self._rotation)
 
-    def inverted(self) -> 'Transform':
+    def inverted(self) -> Transform:
         """Returns the inversion of this transform.\n
         Equivalent to ``~self``."""
         flip = self._flip # Flip stays unchanged
@@ -133,7 +142,7 @@ class Transform:
         return Transform(
             translation = - rotate3D(self._translation * flipToScale3D(flip), rotation),
             rotation    = rotation,
-            flip        = flip
+            flip        = flip,
         )
 
     def invert(self) -> None:
@@ -143,23 +152,23 @@ class Transform:
         self._rotation    = flipRotation3D((-self._rotation + 4) % 4, self._flip)
         self._translation = - rotate3D(self._translation * flipToScale3D(self._flip), self._rotation)
 
-    def __matmul__(self, other: 'Transform') -> 'Transform':
-        """``@`` operator. Returns a transform that applies ``self`` after ``other``\n
-        Equivalent to ``self.compose(other)``"""
+    def __matmul__(self, other: Transform) -> Transform:
+        """``@`` operator. Returns a transform that applies ``self`` after ``other``.\n
+        Equivalent to ``self.compose(other)``."""
         return self.compose(other)
 
     def __mul__(self, vec: Vec3iLike) -> ivec3:
-        """``*`` operator. Applies this transform to ``vec``\n
-        Equivalent to ``self.apply(vec)``"""
+        """``*`` operator. Applies this transform to ``vec``.\n
+        Equivalent to ``self.apply(vec)``."""
         return self.apply(vec)
 
-    def __imatmul__(self, other: 'Transform') -> 'Transform':
+    def __imatmul__(self, other: Transform) -> Self:
         """``@=`` operator. Adds the effect of ``other`` to this transform.\n
-        Equivalent to ``self.push(other)``"""
+        Equivalent to ``self.push(other)``."""
         self.push(other)
         return self
 
-    def __invert__(self) -> 'Transform':
+    def __invert__(self) -> Transform:
         """``~`` operator. Returns the inversion of this transform.\n
         Equivalent to ``self.inverted()``."""
         return self.inverted()
@@ -202,11 +211,11 @@ def rotatedBoxTransform(box: Box, rotation: int) -> Transform:
             0,
             box.size.z - 1 if rotation in [2, 3] else 0,
         ),
-        rotation = rotation
+        rotation = rotation,
     )
 
 
-def rotatedBoxTransformAndSize(box: Box, rotation: int) -> Tuple[Transform, ivec3]:
+def rotatedBoxTransformAndSize(box: Box, rotation: int) -> tuple[Transform, ivec3]:
     """Returns ``(transform, size)`` such that ``transform`` maps the box ``((0,0,0), size)`` to
     ``box``, under ``rotation``."""
     return rotatedBoxTransform(box, rotation), rotateSize3D(box.size, rotation)
@@ -216,5 +225,5 @@ def flippedBoxTransform(box: Box, flip: Vec3bLike) -> Transform:
     """Returns a transform that maps the box ``((0,0,0), box.size)`` to ``box`` under ``flip``."""
     return Transform(
         translation = box.offset + (box.size - 1) * ivec3(*flip),
-        flip = flip
+        flip = flip,
     )

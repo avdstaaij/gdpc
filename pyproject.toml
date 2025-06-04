@@ -14,12 +14,77 @@ exclude = [
     "**/__pycache__",
     "**/site-packages/nbt/**",
 ]
-stubPath = "src/stubs"
-typeCheckingMode = "strict"
 ignore = [
     "**/site-packages/nbt/**",
 ]
+stubPath = "src/stubs"
+typeCheckingMode = "strict"
+reportUnusedImport = "warning"
 
 
 [tool.mypy]
 mypy_path = "src/stubs"
+
+
+[tool.ruff]
+target-version = "py38" # If we move the project setup from setup.py to pyproject.toml, replace this with project.requires-python. https://docs.astral.sh/ruff/settings/#target-version
+line-length = 100
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Reason for ignoring:
+    # DI: Disagree         - I disagree with this rule in nearly all cases.
+    # AL: Alternative      - The rule is incompatible with an alternative rule.
+    # TB: Too broad        - The rule is sometimes useful, but gives too many false positives.
+    # PA: Public API       - The fix may require changing a public API, making this rule unusable in many cases.
+    # HI: Hint             - The rule would be useful at hint-severity, if ruff supported that.
+    # PR: Project-specific - There is a project-specific reason to not use this rule.
+
+    # Mainly DI
+    "RUF010",  # explicit-f-string-type-conversion - DI - Explicit conversion is more readable. See also https://peps.python.org/pep-0498/#s-r-and-a-are-redundant
+
+    # Mainly AL
+    "D203",    # incorrect-blank-line-before-class - AL - Disabled in favor of D211.
+    "D213",    # multi-line-summary-second-line - AL - Disabled in favor of D212.
+
+    # Mainly TB
+    "ANN401",  # any-type - TB - Any can be useful for very generic interfaces or as an acceptable temporary solution.
+    "C90",     # mccabe - TB - May be hard to fix, and real issues can be spotted manually.
+    "D105",    # undocumented-magic-method - TB - Many magic methods are self-explanatory.
+    "D202",    # blank-line-after-function - TB - Adding a blank line can improve readability when the docstring is short.
+    "D204",    # incorrect-blank-line-after-class - TB - The blank line can be unnecessary for very short classes.
+    "D205",    # missing-blank-line-after-summary - TB - A single line is sometimes too limiting, and most tools can handle multiple lines.
+    "D209",    # new-line-after-last-paragraph - TB - It's a bit nasty, but breaking this rule can help compactify short docstrings.
+    "D301",    # escape-sequence-in-docstring - TB - It's a bit nasty, but breaking this rule with "\n" can help compactify short docstrings.
+    "D400",    # missing-trailing-period - TB - Other punctuation is also acceptable. We use D415 instead.
+    "D401",    # non-imperative-mood - TB - This is very controversial. I personally prefer the descriptive mood in most cases.
+    "D404",    # docstring-starts-with-this - TB - There are valid usages of "this", such as when referring to a method's object.
+    "E501",    # line-too-long - TB - Lines occasionally need to be longer, such as when a comment contains a long link.
+    "E701",    # multiple-statements - TB - Single-line if-statements can be more readable in certain scenarios.
+    "E741",    # ambiguous-variable-name - TB - "l" is often fine, and the others may occasionally be fine as well.
+    "FBT001",  # boolean-type-hint-positional-argument - TB, PA, and mostly redundant with FBT003.
+    "FBT002",  # boolean-default-value-positional-argument - TB, PA, and mostly redundant with FBT003.
+    "ISC003",  # explicit-string-concatenation - TB - In cases where some lines are literals and some expressions, it is clearer to use + everywhere.
+    "PERF203", # try-except-in-loop - TB - The try-except can often not be taken out of the loop.
+    "PLR091",  # too-many-* - TB, PA - Real issues can be spotted manually.
+    "PLR2004", # magic-value-comparison - TB - Although this rule is often right, there are also many cases where a constant is overkill.
+    "PLW2901", # redefined-loop-name - TB - Reuse of the loop variable can help keep names simple. This rule does have a strong case, though.
+    "PTH",     # flake8-use-pathlib - TB, HI - Old-style path manipulation is acceptable, and occasionally even more readable.
+    "S311",    # suspicious-non-cryptographic-random-usage - TB - Not all random usages are cryptographic.
+
+    # Mainly HI
+    "FIX",     # flake8-fixme - HI
+    "TD",      # flake8-todos - HI
+
+    # Mainly PR
+    "N802",    # invalid-function-name - PR, PA - For historical reasons, GDPC uses camelCase.
+    "N803",    # invalid-argument-name - PR, PA - for historical reasons, GDPC uses camelCase.
+    "N806",    # non-lowercase-variable-in-function - PR - For historical reasons, GDPC uses camelCase.
+    "N815",    # mixed-case-variable-in-class-scope - PR, PA - For historical reasons, GDPC uses camelCase.
+    "N816",    # mixed-case-variable-in-global-scope - PR, PA - For historical reasons, GDPC uses camelCase.
+    "PGH003",  # blanket-type-ignore - PR - GDPC uses blanket type ignores for pyright-strict-mode unknown-type errors when accessing NBT data.
+]
+
+[tool.ruff.lint.flake8-builtins]
+ignorelist = ["id"]

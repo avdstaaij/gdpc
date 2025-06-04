@@ -16,10 +16,11 @@ def get_metadata(name: str) -> str:
             # __{name}__ = "{value}"
             delim = '"' if '"' in line else "'"
             return line.split(delim)[1]
-    raise RuntimeError(f"Unable to find {dunderString} value.")
+    msg = f"Unable to find {dunderString} value."
+    raise RuntimeError(msg)
 
 
-with open("README.md", "r", encoding="utf-8") as readme:
+with open("README.md", encoding="utf-8") as readme:
     long_description = readme.read()
 
 
@@ -73,5 +74,5 @@ setup(
         "Chat about it on Discord":     "https://discord.gg/YwpPCRQWND",
         "Source":                       "https://github.com/avdstaaij/gdpc",
     },
-    zip_safe=False
+    zip_safe=False,
 )

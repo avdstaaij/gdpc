@@ -1,16 +1,20 @@
 """Provides the :class:`.Block` class, which represents a Minecraft block."""
 
 
-from typing import Union, Optional, List, Dict, Sequence, cast
-from dataclasses import dataclass, field
+from __future__ import annotations
+
 from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Sequence, cast
 
-from pyglm.glm import bvec3
 from nbt import nbt
+from pyglm.glm import bvec3
 
-from .vector_tools import Vec3bLike
+from .block_state_tools import transformAxis, transformFacing, transformHalf, transformRotation
 from .nbt_tools import nbtToSnbt
-from .block_state_tools import transformAxis, transformFacing, transformRotation, transformHalf
+
+if TYPE_CHECKING:
+    from .vector_tools import Vec3bLike
 
 
 @dataclass
@@ -38,17 +42,17 @@ class Block:
     # TODO: Known orientation-related block states that are currently not supported:
     # - type="bottom"/"top" (e.g. slabs)  (note that slabs can also have type="double"!)
 
-    id:     Optional[str]  = "minecraft:stone" #: Block ID
-    states: Dict[str, str] = field(default_factory=dict) #: Block states
-    data:   Optional[str]  = None #: Block entity data
+    id:     str | None     = "minecraft:stone" #: Block ID
+    states: dict[str, str] = field(default_factory=lambda: cast("dict[str, str]", dict)) #: Block states
+    data:   str | None     = None #: Block entity data
 
     # We explicitly add this method instead of using @dataclass so that it looks better in the docs
     # and we can add a docstring.
     def __init__(
         self,
-        id: Optional[str] = "minecraft:stone", # pylint: disable=redefined-builtin
-        states: Optional[Dict[str, str]] = None,
-        data: Optional[str] = None
+        id: str | None = "minecraft:stone", # pylint: disable=redefined-builtin
+        states: dict[str, str] | None = None,
+        data: str | None = None,
     ) -> None:
         """Constructs a Block instance with the given properties."""
         self.id     = id
@@ -56,9 +60,11 @@ class Block:
         self.data   = data
 
 
-    def transform(self, rotation: int = 0, flip: Vec3bLike = bvec3()) -> None:
+    def transform(self, rotation: int = 0, flip: Vec3bLike | None = None) -> None:
         """Transforms this block.\n
         Flips first, rotates second."""
+        if flip is None:
+            flip = bvec3()
         axisState     = self.states.get("axis")
         facingState   = self.states.get("facing")
         rotationState = self.states.get("rotation")
@@ -69,9 +75,11 @@ class Block:
         if halfState     is not None: self.states["half"]     = transformHalf    (halfState,               flip)
 
 
-    def transformed(self, rotation: int = 0, flip: Vec3bLike = bvec3()) -> "Block":
+    def transformed(self, rotation: int = 0, flip: Vec3bLike | None = None) -> Block:
         """Returns a transformed copy of this block.\n
         Flips first, rotates second."""
+        if flip is None:
+            flip = bvec3()
         block = deepcopy(self)
         block.transform(rotation, flip)
         return block
@@ -84,12 +92,16 @@ class Block:
 
 
     def __str__(self) -> str:
+        """Returns a string representation in the technical "block state" format.\n
+        For example: "minecraft:oak_log[axis=z]"\n
+        More info: https://minecraft.wiki/w/Argument_types#block_state."""
         if not self.id:
             return ""
         return self.id + self.stateString() + (self.data if self.data else "")
 
 
     def __repr__(self) -> str:
+        """Returns a string representation that is guaranteed to `eval()` to this Block."""
         # This is used for model dumping; it needs to return a string that eval()'s to this Block.
         # The default repr includes unnecessary default values, which make model dumps way larger
         # than they need to be.
@@ -102,13 +114,13 @@ class Block:
 
 
     @staticmethod
-    def fromBlockStateTag(blockStateTag: nbt.TAG_Compound, blockEntityTag: Optional[nbt.TAG_Compound] = None) -> "Block":
+    def fromBlockStateTag(blockStateTag: nbt.TAG_Compound, blockEntityTag: nbt.TAG_Compound | None = None) -> Block:
         """Parses a block state compound tag (as found in chunk palettes) into a Block.\n
         If ``blockEntityTag`` is provided, it is parsed into the Block's :attr:`.data` attribute."""
         block = Block(str(blockStateTag["Name"]))
 
         if "Properties" in blockStateTag:
-            for tag in cast(List[nbt.TAG_String], cast(nbt.TAG_Compound, blockStateTag["Properties"]).tags):
+            for tag in cast("list[nbt.TAG_String]", cast("nbt.TAG_Compound", blockStateTag["Properties"]).tags):
                 block.states[str(tag.name)] = str(tag.value)
 
         if blockEntityTag is not None:
@@ -121,9 +133,8 @@ class Block:
         return block
 
 
-def transformedBlockOrPalette(block: Union[Block, Sequence[Block]], rotation: int, flip: Vec3bLike) -> Union[Block, Sequence[Block]]:
+def transformedBlockOrPalette(block: Block | Sequence[Block], rotation: int, flip: Vec3bLike) -> Block | Sequence[Block]:
     """Convenience function that transforms a block or a palette of blocks."""
     if isinstance(block, Block):
         return block.transformed(rotation, flip)
-    else:
-        return [b.transformed(rotation, flip) for b in block]
+    return [b.transformed(rotation, flip) for b in block]

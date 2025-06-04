@@ -5,9 +5,14 @@ by the :class:`.Block` class.
 """
 
 
-from pyglm.glm import ivec3, bvec3
+from __future__ import annotations
 
-from .vector_tools import Vec3iLike, Vec3bLike
+from typing import TYPE_CHECKING
+
+from pyglm.glm import bvec3, ivec3
+
+if TYPE_CHECKING:
+    from .vector_tools import Vec3bLike, Vec3iLike
 
 
 # ==================================================================================================
@@ -88,7 +93,8 @@ def vectorToAxis(vec: Vec3iLike) -> str:
     try:
         return __VECTOR_TO_AXIS[v]
     except KeyError as e:
-        raise ValueError("Exactly one vector component must be non-zero") from e
+        msg = "Exactly one vector component must be non-zero"
+        raise ValueError(msg) from e
 
 
 __AXIS_TO_VECTOR = {
@@ -123,7 +129,8 @@ def vectorToFacing(vec: Vec3iLike) -> str:
     try:
         return __VECTOR_TO_FACING[v]
     except KeyError as e:
-        raise ValueError("Exactly one vector component must be non-zero") from e
+        msg = "Exactly one vector component must be non-zero"
+        raise ValueError(msg) from e
 
 
 __FACING_TO_VECTOR = {
@@ -202,9 +209,11 @@ def flipFacing(facing: str, flip: Vec3bLike) -> str:
     return facing
 
 
-def transformFacing(facing: str, rotation: int = 0, flip: Vec3bLike = bvec3()) -> str:
+def transformFacing(facing: str, rotation: int = 0, flip: Vec3bLike | None = None) -> str:
     """Returns the transformed "facing" block state string.\n
     Flips first, rotates second."""
+    if flip is None:
+        flip = bvec3()
     return rotateFacing(flipFacing(facing, flip), rotation)
 
 
@@ -226,11 +235,13 @@ def invertFacing(facing: str) -> str:
 
 
 def rotateRotation(blockStateRotation: str, rotation: int) -> str:
-    """Returns the rotated "rotation" block state string.\n
+    """Returns the rotated "rotation" block state string.
+
     Yes, this name is confusing. ``blockStateRotation`` denotes a value of the "rotation" block
     state, as used by e.g. signs. ``rotation`` denotes a rotation as used by GDPC's transformation
     system, so one of {0,1,2,3}. This function name is consistent with the other block state
-    rotation functions."""
+    rotation functions.
+    """
     return str((int(blockStateRotation) + 4*rotation) % 16)
 
 
@@ -244,9 +255,11 @@ def flipRotation(rotation: str, flip: Vec3bLike) -> str:
     return str(rotationInt)
 
 
-def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLike = bvec3()) -> str:
+def transformRotation(blockStateRotation: str, rotation: int = 0, flip: Vec3bLike | None = None) -> str:
     """Returns the transformed "rotation" block state string.\n
     Flips first, rotates second."""
+    if flip is None:
+        flip = bvec3()
     return rotateRotation(flipRotation(blockStateRotation, flip), rotation)
 
 
@@ -274,6 +287,8 @@ def flipHalf(half: str, flip: Vec3bLike) -> str:
     return invertHalf(half) if flip[1] else half
 
 
-def transformHalf(half: str, flip: Vec3bLike = bvec3()) -> str:
+def transformHalf(half: str, flip: Vec3bLike | None = None) -> str:
     """Returns the transformed "half" block state string."""
+    if flip is None:
+        flip = bvec3()
     return flipHalf(half, flip)

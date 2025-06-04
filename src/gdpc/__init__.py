@@ -1,5 +1,4 @@
-"""
-GDPC top-level package.
+"""GDPC top-level package.
 
 Several important classes are re-exported here, so you can more easily import them.
 For example, you can use :python:`from gdpc import Editor` instead of :python:`from gdpc.editor import Editor`.
@@ -65,8 +64,9 @@ __copyright__        = "Copyright 2022-2025 Arthur van der Staaij, Copyright 202
 __version__          = "8.1.0"
 
 
-from .vector_tools import Rect, Box # pyright: ignore [reportUnusedImport]
-from .transform import Transform # pyright: ignore [reportUnusedImport]
-from .block import Block # pyright: ignore [reportUnusedImport]
-from .world_slice import WorldSlice # pyright: ignore [reportUnusedImport]
-from .editor import Editor # pyright: ignore [reportUnusedImport]
+# ruff: noqa: I001
+from .vector_tools import Rect as Rect, Box as Box # noqa: PLC0414
+from .transform import Transform as Transform # noqa: PLC0414
+from .block import Block as Block # noqa: PLC0414
+from .world_slice import WorldSlice as WorldSlice # noqa: PLC0414
+from .editor import Editor as Editor # noqa: PLC0414

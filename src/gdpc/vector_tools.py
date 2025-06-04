@@ -1,6 +1,5 @@
 """Various vector utilities.
 
-
 This module contains, roughly in order:
 
 - Protocols for vector-like classes.
@@ -10,30 +9,19 @@ This module contains, roughly in order:
 - Generators for various geometrical shapes.
 """
 
+from __future__ import annotations
 
 import itertools
 import math
 from dataclasses import dataclass
-from typing import (
-    Any,
-    FrozenSet,
-    Generator,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import Any, Generator, Iterable, Iterator, cast
 
-from pyglm import glm
 import numpy as np
 import numpy.typing as npt
 import skimage.segmentation
-from pyglm.glm import bvec2, bvec3, ivec2, ivec3, vec2, vec3
 from more_itertools import powerset
+from pyglm import glm
+from pyglm.glm import bvec2, bvec3, ivec2, ivec3, vec2, vec3
 from scipy import ndimage
 from typing_extensions import Protocol
 
@@ -48,7 +36,7 @@ class Vec2iLike(Protocol):
     """Protocol for a vector that contains two integers.\n
     A class is a Vec2iLike if it contains two integers, which can be accessed
     with both indexing and iteration."""
-    def __getitem__(self, __i: int) -> int: ...
+    def __getitem__(self, i: int, /) -> int: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
@@ -57,7 +45,7 @@ class Vec3iLike(Protocol):
     """Protocol for a vector that contains three integers.\n
     A class is a Vec3iLike if it contains three integers, which can be accessed
     with both indexing and iteration."""
-    def __getitem__(self, __i: int) -> int: ...
+    def __getitem__(self, i: int, /) -> int: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[int]: ...
 
@@ -66,7 +54,7 @@ class Vec2bLike(Protocol):
     """Protocol for a vector that contains two bools.\n
     A class is a Vec2iLike if it contains two bools, which can be accessed
     with both indexing and iteration."""
-    def __getitem__(self, __i: int) -> bool: ...
+    def __getitem__(self, i: int, /) -> bool: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[bool]: ...
 
@@ -75,7 +63,7 @@ class Vec3bLike(Protocol):
     """Protocol for a vector that contains three bools.\n
     A class is a Vec3iLike if it contains three bools, which can be accessed
     with both indexing and iteration."""
-    def __getitem__(self, __i: int) -> bool: ...
+    def __getitem__(self, i: int, /) -> bool: ...
     def __len__(self) -> int: ...
     def __iter__(self) -> Iterator[bool]: ...
 
@@ -106,16 +94,16 @@ NORTHEAST_2D: ivec2 = NORTH_2D + EAST_2D #:
 SOUTHEAST_2D: ivec2 = SOUTH_2D + EAST_2D #:
 SOUTHWEST_2D: ivec2 = SOUTH_2D + WEST_2D #:
 
-CARDINALS_2D:               FrozenSet[ivec2] = frozenset({NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}) #:
-INTERCARDINALS_2D:          FrozenSet[ivec2] = frozenset({NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}) #:
-CARDINALS_AND_DIAGONALS_2D: FrozenSet[ivec2] = CARDINALS_2D | INTERCARDINALS_2D #:
+CARDINALS_2D:               frozenset[ivec2] = frozenset({NORTH_2D, SOUTH_2D, EAST_2D, WEST_2D}) #:
+INTERCARDINALS_2D:          frozenset[ivec2] = frozenset({NORTHEAST_2D, NORTHWEST_2D, SOUTHEAST_2D, SOUTHWEST_2D}) #:
+CARDINALS_AND_DIAGONALS_2D: frozenset[ivec2] = CARDINALS_2D | INTERCARDINALS_2D #:
 DIAGONALS_2D              = INTERCARDINALS_2D #:
 
 # starting East, moving clockwise
 # NOTE: Use `utils.rotateSequence(...)` to start at a different point
-ORDERED_CARDINALS_2D:               Tuple[ivec2, ...] = (EAST_2D, SOUTH_2D, WEST_2D, NORTH_2D) #:
-ORDERED_INTERCARDINALS_2D:          Tuple[ivec2, ...] = (SOUTHEAST_2D, SOUTHWEST_2D, NORTHWEST_2D, NORTHEAST_2D) #:
-ORDERED_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_2D, ORDERED_INTERCARDINALS_2D))) #:
+ORDERED_CARDINALS_2D:               tuple[ivec2, ...] = (EAST_2D, SOUTH_2D, WEST_2D, NORTH_2D) #:
+ORDERED_INTERCARDINALS_2D:          tuple[ivec2, ...] = (SOUTHEAST_2D, SOUTHWEST_2D, NORTHWEST_2D, NORTHEAST_2D) #:
+ORDERED_CARDINALS_AND_DIAGONALS_2D: tuple[ivec2, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_2D, ORDERED_INTERCARDINALS_2D))) #:
 
 
 # ==== 3D values ====
@@ -125,15 +113,14 @@ ORDERED_CARDINALS_AND_DIAGONALS_2D: Tuple[ivec2, ...] = tuple(itertools.chain.fr
 
 
 def _spiraloidDirections3D(
-        top_pattern:     Optional[Tuple[ivec3, ...]],
-        center_pattern:  Optional[Tuple[ivec3, ...]],
-        bottom_pattern:  Optional[Tuple[ivec3, ...]],
+        top_pattern:     tuple[ivec3, ...] | None,
+        center_pattern:  tuple[ivec3, ...] | None,
+        bottom_pattern:  tuple[ivec3, ...] | None,
         include_up:      bool = False,
         include_center:  bool = False,
-        include_down:    bool = False
+        include_down:    bool = False,
     ) -> Generator[ivec3, None, None]:
-    """yields 3D direction vectors of a spiraloid, where patterns can be provided to be combined with a top, center and bottom vector."""
-
+    """Yields 3D direction vectors of a spiraloid, where patterns can be provided to be combined with a top, center and bottom vector."""
     # If desired, yields...
     if include_up:     yield UP_3D                                        # ...the UP vector...
     if top_pattern:    yield from (UP_3D + c for c in top_pattern)        # ...the upward diagonal vectors...
@@ -145,8 +132,8 @@ def _spiraloidDirections3D(
 
 
 def _symmetricSpiraloidDirections3D(
-        top_and_bottom_pattern: Optional[Tuple[ivec3, ...]],
-        central_pattern:        Optional[Tuple[ivec3, ...]],
+        top_and_bottom_pattern: tuple[ivec3, ...] | None,
+        central_pattern:        tuple[ivec3, ...] | None,
         include_up_and_down:    bool = False,
         include_center:         bool = False,
     ) -> Generator[ivec3, None, None]:
@@ -157,7 +144,7 @@ def _symmetricSpiraloidDirections3D(
         bottom_pattern  = top_and_bottom_pattern,
         include_up      = include_up_and_down,
         include_center  = include_center,
-        include_down    = include_up_and_down
+        include_down    = include_up_and_down,
     )
 
 
@@ -188,9 +175,9 @@ NORTHWEST_3D: ivec3 = NORTH_3D + WEST_3D #:
 SOUTHWEST_3D: ivec3 = SOUTH_3D + WEST_3D #:
 SOUTHEAST_3D: ivec3 = SOUTH_3D + EAST_3D #:
 
-CARDINALS_3D:               FrozenSet[ivec3] = frozenset({NORTH_3D, SOUTH_3D, EAST_3D, WEST_3D}) #:
-INTERCARDINALS_3D:          FrozenSet[ivec3] = frozenset({NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_3D, SOUTHWEST_3D}) #:
-CARDINALS_AND_DIAGONALS_3D: FrozenSet[ivec3] = CARDINALS_3D | INTERCARDINALS_3D #:
+CARDINALS_3D:               frozenset[ivec3] = frozenset({NORTH_3D, SOUTH_3D, EAST_3D, WEST_3D}) #:
+INTERCARDINALS_3D:          frozenset[ivec3] = frozenset({NORTHEAST_3D, NORTHWEST_3D, SOUTHEAST_3D, SOUTHWEST_3D}) #:
+CARDINALS_AND_DIAGONALS_3D: frozenset[ivec3] = CARDINALS_3D | INTERCARDINALS_3D #:
 
 # starting East, moving clockwise
 # NOTE: Use `utils.rotateSequence(ORDERED_..., n)` to change the starting point while maintaining the order of the sequence
@@ -199,31 +186,31 @@ CARDINALS_AND_DIAGONALS_3D: FrozenSet[ivec3] = CARDINALS_3D | INTERCARDINALS_3D 
 #       This does not work for sequences with differing Y-values!
 #       To achieve that, transform the values for each layer first, then recombine them.
 #       E.g. `reverse(utils.rotateSequence([UP_3D + c for c in ORDERED_CARDINALS_3D])) + reverse(utils.rotateSequence(ORDERED_CARDINALS_3D)) + ...`
-ORDERED_CARDINALS_3D:               Tuple[ivec3, ...] = (EAST_3D, SOUTH_3D, WEST_3D, NORTH_3D) #:
-ORDERED_INTERCARDINALS_3D:          Tuple[ivec3, ...] = (SOUTHEAST_3D, SOUTHWEST_3D, NORTHWEST_3D, NORTHEAST_3D) #:
-ORDERED_CARDINALS_AND_DIAGONALS_3D: Tuple[ivec3, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_3D, ORDERED_INTERCARDINALS_3D))) #:
+ORDERED_CARDINALS_3D:               tuple[ivec3, ...] = (EAST_3D, SOUTH_3D, WEST_3D, NORTH_3D) #:
+ORDERED_INTERCARDINALS_3D:          tuple[ivec3, ...] = (SOUTHEAST_3D, SOUTHWEST_3D, NORTHWEST_3D, NORTHEAST_3D) #:
+ORDERED_CARDINALS_AND_DIAGONALS_3D: tuple[ivec3, ...] = tuple(itertools.chain.from_iterable(zip(ORDERED_CARDINALS_3D, ORDERED_INTERCARDINALS_3D))) #:
 
-DIRECTIONS_3D:     FrozenSet[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D} #:
-EDGE_DIAGONALS_3D: FrozenSet[ivec3] = INTERCARDINALS_3D | {
+DIRECTIONS_3D:     frozenset[ivec3] = CARDINALS_3D | {UP_3D, DOWN_3D} #:
+EDGE_DIAGONALS_3D: frozenset[ivec3] = INTERCARDINALS_3D | {
     verticality + cardinal
     for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), CARDINALS_3D)
 } #:
-DIRECTIONS_AND_EDGE_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_3D | EDGE_DIAGONALS_3D #:
-CORNER_DIAGONALS_3D:              FrozenSet[ivec3] = frozenset({
+DIRECTIONS_AND_EDGE_DIAGONALS_3D: frozenset[ivec3] = DIRECTIONS_3D | EDGE_DIAGONALS_3D #:
+CORNER_DIAGONALS_3D:              frozenset[ivec3] = frozenset({
     verticality + cardinal
     for verticality, cardinal in itertools.product((UP_3D, DOWN_3D), INTERCARDINALS_3D)
 }) #:
-DIRECTIONS_AND_ALL_DIAGONALS_3D: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
+DIRECTIONS_AND_ALL_DIAGONALS_3D: frozenset[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
 DIAGONALS_3D                   = EDGE_DIAGONALS_3D | CORNER_DIAGONALS_3D #:
 
 # Moving Up to Down, clockwise starting East
 # NOTE: For other combinations, use `generate_[symmetric_]spiraloid_vectors_3D()`
-ORDERED_DIRECTIONS_3D:                    Tuple[ivec3, ...] = (UP_3D, *ORDERED_CARDINALS_3D, DOWN_3D)
-ORDERED_EDGE_DIAGONALS_3D:                Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_3D,               ORDERED_INTERCARDINALS_3D                                   )) #:
-ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D: Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_3D,               ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)) #:
-ORDERED_CORNER_DIAGONALS_3D:              Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_INTERCARDINALS_3D,          None                                                        )) #:
-ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D:  Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)) #:
-ORDERED_DIAGONALS:                        Tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_INTERCARDINALS_3D                                   )) #:
+ORDERED_DIRECTIONS_3D:                    tuple[ivec3, ...] = (UP_3D, *ORDERED_CARDINALS_3D, DOWN_3D)
+ORDERED_EDGE_DIAGONALS_3D:                tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_3D,               ORDERED_INTERCARDINALS_3D                                   )) #:
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D: tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_3D,               ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)) #:
+ORDERED_CORNER_DIAGONALS_3D:              tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_INTERCARDINALS_3D,          None                                                        )) #:
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D:  tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_CARDINALS_AND_DIAGONALS_3D, include_up_and_down=True)) #:
+ORDERED_DIAGONALS:                        tuple[ivec3, ...] = tuple(_symmetricSpiraloidDirections3D(ORDERED_CARDINALS_AND_DIAGONALS_3D, ORDERED_INTERCARDINALS_3D                                   )) #:
 
 
 # ==== aliases ====
@@ -247,23 +234,23 @@ NORTHEAST: ivec3 = NORTHEAST_3D #:
 NORTHWEST: ivec3 = NORTHWEST_3D #:
 SOUTHWEST: ivec3 = SOUTHWEST_3D #:
 SOUTHEAST: ivec3 = SOUTHEAST_3D #:
-CARDINALS:               FrozenSet[ivec3] = CARDINALS_3D #:
-INTERCARDINALS:          FrozenSet[ivec3] = INTERCARDINALS_3D #:
-CARDINALS_AND_DIAGONALS: FrozenSet[ivec3] = CARDINALS_AND_DIAGONALS_3D #:
-EDGE_DIAGONALS:                FrozenSet[ivec3] = EDGE_DIAGONALS_3D #:
-CORNER_DIAGONALS:              FrozenSet[ivec3] = CORNER_DIAGONALS_3D #:
-DIRECTIONS:                    FrozenSet[ivec3] = DIRECTIONS_3D #:
-DIRECTIONS_AND_EDGE_DIAGONALS: FrozenSet[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
-DIRECTIONS_AND_ALL_DIAGONALS:  FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D #:
-ORDERED_CARDINALS:               Tuple[ivec3, ...] = ORDERED_CARDINALS_3D #:
-ORDERED_INTERCARDINALS:          Tuple[ivec3, ...] = ORDERED_INTERCARDINALS_3D #:
-ORDERED_CARDINALS_AND_DIAGONALS: Tuple[ivec3, ...] = ORDERED_CARDINALS_AND_DIAGONALS_3D #:
-ORDERED_EDGE_DIAGONALS:                Tuple[ivec3, ...] = ORDERED_EDGE_DIAGONALS_3D #:
-ORDERED_CORNER_DIAGONALS:              Tuple[ivec3, ...] = ORDERED_CORNER_DIAGONALS_3D #:
-ORDERED_DIRECTIONS:                    Tuple[ivec3, ...] = ORDERED_DIRECTIONS_3D #:
-ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS: Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
-ORDERED_DIRECTIONS_AND_ALL_DIAGONALS:  Tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D #:
-DIAGONALS: FrozenSet[ivec3] = DIAGONALS_3D #:
+CARDINALS:               frozenset[ivec3] = CARDINALS_3D #:
+INTERCARDINALS:          frozenset[ivec3] = INTERCARDINALS_3D #:
+CARDINALS_AND_DIAGONALS: frozenset[ivec3] = CARDINALS_AND_DIAGONALS_3D #:
+EDGE_DIAGONALS:                frozenset[ivec3] = EDGE_DIAGONALS_3D #:
+CORNER_DIAGONALS:              frozenset[ivec3] = CORNER_DIAGONALS_3D #:
+DIRECTIONS:                    frozenset[ivec3] = DIRECTIONS_3D #:
+DIRECTIONS_AND_EDGE_DIAGONALS: frozenset[ivec3] = DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
+DIRECTIONS_AND_ALL_DIAGONALS:  frozenset[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D #:
+ORDERED_CARDINALS:               tuple[ivec3, ...] = ORDERED_CARDINALS_3D #:
+ORDERED_INTERCARDINALS:          tuple[ivec3, ...] = ORDERED_INTERCARDINALS_3D #:
+ORDERED_CARDINALS_AND_DIAGONALS: tuple[ivec3, ...] = ORDERED_CARDINALS_AND_DIAGONALS_3D #:
+ORDERED_EDGE_DIAGONALS:                tuple[ivec3, ...] = ORDERED_EDGE_DIAGONALS_3D #:
+ORDERED_CORNER_DIAGONALS:              tuple[ivec3, ...] = ORDERED_CORNER_DIAGONALS_3D #:
+ORDERED_DIRECTIONS:                    tuple[ivec3, ...] = ORDERED_DIRECTIONS_3D #:
+ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS: tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_EDGE_DIAGONALS_3D #:
+ORDERED_DIRECTIONS_AND_ALL_DIAGONALS:  tuple[ivec3, ...] = ORDERED_DIRECTIONS_AND_ALL_DIAGONALS_3D #:
+DIAGONALS: frozenset[ivec3] = DIAGONALS_3D #:
 
 
 # ==================================================================================================
@@ -272,32 +259,33 @@ DIAGONALS: FrozenSet[ivec3] = DIAGONALS_3D #:
 
 
 def dropDimension(vec: Vec3iLike, dimension: int) -> ivec2:
-    """Returns ``vec`` without its ``dimension``-th component"""
+    """Returns ``vec`` without its ``dimension``-th component."""
     if dimension == 0: return ivec2(vec[1], vec[2])
     if dimension == 1: return ivec2(vec[0], vec[2])
     if dimension == 2: return ivec2(vec[0], vec[1])
-    raise ValueError(f'Invalid dimension "{dimension}"')
+    msg = f'Invalid dimension "{dimension}"'
+    raise ValueError(msg)
 
 
 def addDimension(vec: Vec2iLike, dimension: int, value: int = 0) -> ivec3:
-    """Inserts ``value`` into ``vec`` at ``dimension`` and returns the resulting 3D vector"""
+    """Inserts ``value`` into ``vec`` at ``dimension`` and returns the resulting 3D vector."""
     l = list(vec)
     # The additional wrapping tuple is needed for the type checker.
     return ivec3(*(*l[:dimension], value, *l[dimension:]))
 
 
 def dropY(vec: Vec3iLike) -> ivec2:
-    """Returns ``vec`` without its y-component (i.e., projected on the XZ-plane)"""
+    """Returns ``vec`` without its y-component (i.e., projected on the XZ-plane)."""
     return ivec2(vec[0], vec[2])
 
 
 def addY(vec: Vec2iLike, y: int = 0) -> ivec3:
-    """Returns a 3D vector ``(vec[0], y, vec[1])``"""
+    """Returns a 3D vector ``(vec[0], y, vec[1])``."""
     return ivec3(vec[0], y, vec[1])
 
 
 def setY(vec: Vec3iLike, y: int = 0) -> ivec3:
-    """Returns ``vec`` with its y-component set to ``y``"""
+    """Returns ``vec`` with its y-component set to ``y``."""
     return ivec3(vec[0], y, vec[2])
 
 
@@ -325,27 +313,27 @@ def perpendicular(vec: Vec2iLike) -> ivec2:
 
 
 def rotate2D(vec: Vec2iLike, rotation: int) -> ivec2:
-    """Returns ``vec``, rotated by ``rotation``"""
+    """Returns ``vec``, rotated by ``rotation``."""
     if rotation == 0: return ivec2(*vec)
     if rotation == 1: return ivec2(-vec[1],  vec[0])
     if rotation == 2: return ivec2(-vec[0], -vec[1])
     if rotation == 3: return ivec2( vec[1], -vec[0])
-    raise ValueError("Rotation must be in {0,1,2,3}")
+    msg = "Rotation must be in {0,1,2,3}"
+    raise ValueError(msg)
 
 
 def rotate3D(vec: Vec3iLike, rotation: int) -> ivec3:
-    """Returns ``vec``, rotated in the XZ-plane by ``rotation``"""
+    """Returns ``vec``, rotated in the XZ-plane by ``rotation``."""
     return addY(rotate2D(dropY(vec), rotation), vec[1])
 
 
 def rotate2Ddeg(vec: Vec2iLike, degrees: int) -> ivec2:
-    """Returns ``vec``, rotated by ``rotation`` degrees.
-
-    ``degrees`` must be a multiple of 90.
-    """
+    """Returns ``vec``, rotated by ``rotation`` degrees.\n
+    ``degrees`` must be a multiple of 90."""
 
     if degrees % 90 != 0:
-        raise ValueError("Only ±90°-rotations and their multiples are valid!")
+        msg = "Only ±90°-rotations and their multiples are valid!"
+        raise ValueError(msg)
 
     rotation: int = (degrees // 90) % 4  # Convert to quarter-turns
 
@@ -368,7 +356,7 @@ def flipRotation2D(rotation: int, flip: Vec2bLike) -> int:
 
 def flipRotation3D(rotation: int, flip: Vec3bLike) -> int:
     """Returns rotation such that applying rotation after ``flip`` is equivalent to applying ``flip``
-    after ``rotation``"""
+    after ``rotation``."""
     return flipRotation2D(rotation, bvec2(*dropY(flip)))
 
 
@@ -385,121 +373,123 @@ def rotateSize3D(size: Vec3iLike, rotation: int) -> ivec3:
 
 
 def flipToScale2D(flip: Vec2bLike) -> ivec2:
-    """Returns a vector with a 1 where ``flip`` is ``False``, and -1 where ``flip`` is ``True``"""
+    """Returns a vector with a 1 where ``flip`` is ``False``, and -1 where ``flip`` is ``True``."""
     return 1 - 2*ivec2(*flip)
 
 def flipToScale3D(flip: Vec3bLike) -> ivec3:
-    """Returns a vector with a 1 where ``flip`` is ``False``, and -1 where ``flip`` is ``True``"""
+    """Returns a vector with a 1 where ``flip`` is ``False``, and -1 where ``flip`` is ``True``."""
     return 1 - 2*ivec3(*flip)
 
 
 def scaleToFlip2D(scale: Vec2iLike) -> bvec2:
-    """Returns whether ``scale`` flips space in each axis"""
+    """Returns whether ``scale`` flips space in each axis."""
     return bvec2(scale[0] < 0, scale[1] < 0)
 
 def scaleToFlip3D(scale: Vec3iLike) -> bvec3:
-    """Returns whether ``scale`` flips space in each axis"""
+    """Returns whether ``scale`` flips space in each axis."""
     return bvec3(scale[0] < 0, scale[1] < 0, scale[2] < 0)
 
 
 def toAxisVector2D(vec: Vec2iLike) -> ivec2:
-    """Returns the axis-aligned unit vector closest to ``vec``"""
+    """Returns the axis-aligned unit vector closest to ``vec``."""
     if abs(vec[0]) > abs(vec[1]): # pylint: disable=no-else-return
         return ivec2(nonZeroSign(vec[0]), 0)
-    else:
-        return ivec2(0, nonZeroSign(vec[1]))
+    return ivec2(0, nonZeroSign(vec[1]))
 
 
 def directionToRotation(direction: Vec2iLike) -> int:
-    """Returns the rotation that rotates (0,-1) closest to ``direction``"""
+    """Returns the rotation that rotates (0,-1) closest to ``direction``."""
     vec = toAxisVector2D(direction)
     if vec[1] < 0: return 0
     if vec[0] > 0: return 1
     if vec[1] > 0: return 2
     if vec[0] < 0: return 3
-    raise ValueError()
+    raise ValueError
 
 
 # For some reason, glm's length, length2, distance, distance2 and l1Norm refuse to work with integer
 # vectors. We provide some wrappers.
 
-def length(vec: Union[Vec2iLike, Vec3iLike]) -> float:
-    """Returns the length of ``vec``"""
+def length(vec: Vec2iLike | Vec3iLike) -> float:
+    """Returns the length of ``vec``."""
     if len(vec) == 2: return glm.length(vec2(*vec))
     if len(vec) == 3: return glm.length(vec3(*vec))
-    raise ValueError()
+    raise ValueError
 
-def length2(vec: Union[Vec2iLike, Vec3iLike]) -> int:
-    """Returns the squared length of ``vec``"""
+def length2(vec: Vec2iLike | Vec3iLike) -> int:
+    """Returns the squared length of ``vec``."""
     if len(vec) == 2: return int(glm.length2(vec2(*vec)))
     if len(vec) == 3: return int(glm.length2(vec3(*vec)))
-    raise ValueError()
+    raise ValueError
 
 
-def distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]) -> float:
-    """Returns the distance between ``vecA`` and ``vecB``"""
+def distance(vecA: Vec2iLike | Vec3iLike, vecB: Vec2iLike | Vec3iLike) -> float:
+    """Returns the distance between ``vecA`` and ``vecB``."""
     if len(vecA) == 2 and len(vecB) == 2: return glm.distance(vec2(*vecA), vec2(*vecB))
     if len(vecA) == 3 and len(vecB) == 3: return glm.distance(vec3(*vecA), vec3(*vecB))
-    raise ValueError()
+    raise ValueError
 
-def distance2(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]) -> int:
-    """Returns the squared distance between ``vecA`` and ``vecB``"""
+def distance2(vecA: Vec2iLike | Vec3iLike, vecB: Vec2iLike | Vec3iLike) -> int:
+    """Returns the squared distance between ``vecA`` and ``vecB``."""
     if len(vecA) == 2 and len(vecB) == 2: return int(glm.distance2(vec2(*vecA), vec2(*vecB)))
     if len(vecA) == 3 and len(vecB) == 3: return int(glm.distance2(vec3(*vecA), vec3(*vecB)))
-    raise ValueError()
+    raise ValueError
 
-def l1Norm(vec: Union[Vec2iLike, Vec3iLike]) -> int:
-    """Returns the L1 norm of ``vec``"""
+def l1Norm(vec: Vec2iLike | Vec3iLike) -> int:
+    """Returns the L1 norm of ``vec``."""
     return sum(abs(n) for n in vec)
 
-def l1Distance(vecA: Union[Vec2iLike, Vec3iLike], vecB: Union[Vec2iLike, Vec3iLike]) -> int:
+def l1Distance(vecA: Vec2iLike | Vec3iLike, vecB: Vec2iLike | Vec3iLike) -> int:
     """Returns the L1 norm distance between ``vecA`` and ``vecB``.\n
     ``vecA`` and ``vecB`` must be both ``Vec2iLike`` or both ``Vec3iLike``.
     """
-    if len(vecA) != len(vecB): raise ValueError("vecA and vecB must have the same length")
+    if len(vecA) != len(vecB):
+        msg = "vecA and vecB must have the same length"
+        raise ValueError(msg)
     if len(vecA) == 2:
-        return l1Norm(ivec2(*cast(Vec2iLike, vecA)) - ivec2(*cast(Vec2iLike, vecB)))
-    else:
-        return l1Norm(ivec3(*cast(Vec3iLike, vecA)) - ivec3(*cast(Vec3iLike, vecB)))
+        return l1Norm(ivec2(*cast("Vec2iLike", vecA)) - ivec2(*cast("Vec2iLike", vecB)))
+    return l1Norm(ivec3(*cast("Vec3iLike", vecA)) - ivec3(*cast("Vec3iLike", vecB)))
 
 
-def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> Tuple[ivec2, ivec2]:
+def orderedCorners2D(corner1: Vec2iLike, corner2: Vec2iLike) -> tuple[ivec2, ivec2]:
     """Returns two corners of the rectangle defined by ``corner1`` and ``corner2``, such that the first
-    corner is smaller than the second corner in each axis"""
+    corner is smaller than the second corner in each axis."""
     return (
         ivec2(
-            corner1[0] if corner1[0] <= corner2[0] else corner2[0],
-            corner1[1] if corner1[1] <= corner2[1] else corner2[1],
+            min(corner1[0], corner2[0]),
+            min(corner1[1], corner2[1]),
         ),
         ivec2(
-            corner1[0] if corner1[0] > corner2[0] else corner2[0],
-            corner1[1] if corner1[1] > corner2[1] else corner2[1],
+            max(corner2[0], corner1[0]),
+            max(corner2[1], corner1[1]),
         ),
     )
 
 
-def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Tuple[ivec3, ivec3]:
+def orderedCorners3D(corner1: Vec3iLike, corner2: Vec3iLike) -> tuple[ivec3, ivec3]:
     """Returns two corners of the box defined by ``corner1`` and ``corner2``, such that the first
-    corner is smaller than the second corner in each axis"""
+    corner is smaller than the second corner in each axis."""
     return (
         ivec3(
-            corner1[0] if corner1[0] <= corner2[0] else corner2[0],
-            corner1[1] if corner1[1] <= corner2[1] else corner2[1],
-            corner1[2] if corner1[2] <= corner2[2] else corner2[2],
+            min(corner1[0], corner2[0]),
+            min(corner1[1], corner2[1]),
+            min(corner1[2], corner2[2]),
         ),
         ivec3(
-            corner1[0] if corner1[0] > corner2[0] else corner2[0],
-            corner1[1] if corner1[1] > corner2[1] else corner2[1],
-            corner1[2] if corner1[2] > corner2[2] else corner2[2],
+            max(corner2[0], corner1[0]),
+            max(corner2[1], corner1[1]),
+            max(corner2[2], corner1[2]),
         ),
     )
 
 
-def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2iLike, Vec3iLike]) -> Tuple[int, List[int]]:
+def getDimensionality(corner1: Vec2iLike | Vec3iLike, corner2: Vec2iLike | Vec3iLike) -> tuple[int, list[int]]:
     """Determines the number of dimensions for which ``corner1`` and ``corner2`` are in general
-    position, i.e. the number of dimensions for which the volume they define is not flat.\n
+    position, i.e. the number of dimensions for which the volume they define is not flat.
+
     Returns (dimensionality, list of indices of dimensions for which the volume is flat).
-    For example: ``(2, [0,2])`` means that the volume is flat in the x and z axes."""
+    For example: ``(2, [0,2])`` means that the volume is flat in the x and z axes.
+    """
     difference = np.array(corner1) - np.array(corner2)
     flatSides: npt.NDArray[np.intp] = np.argwhere(difference == 0).flatten()
     return int(len(corner1) - np.sum(flatSides)), list(flatSides) # pyright: ignore [reportUnknownMemberType]
@@ -515,24 +505,25 @@ def getDimensionality(corner1: Union[Vec2iLike, Vec3iLike], corner2: Union[Vec2i
 
 @dataclass
 class Rect:
-    """A rectangle, defined by an offset and a size"""
+    """A rectangle, defined by an offset and a size."""
 
     _offset: ivec2
     _size: ivec2
 
     def __init__(self, offset: Vec2iLike = (0,0), size: Vec2iLike = (0,0)) -> None:
+        """Initializes a Rect with the specified ``offset`` and ``size``."""
         self._offset = ivec2(*offset)
         self._size = ivec2(*size)
 
     def __hash__(self) -> int:
-        """Returns the hash of this Rect"""
+        """Returns the hash of this Rect."""
         return hash((self.offset, self.size))
 
     def __repr__(self) -> str:
         return f"Rect({tuple(self._offset)}, {tuple(self._size)})"
 
-    def __iter__(self) -> Generator[ivec2, None, None]:
-        """Yields all points contained in this Rect"""
+    def __iter__(self) -> Iterator[ivec2]:
+        """Yields all points contained in this Rect."""
         return (
             ivec2(x, y)
             for x in range(self.begin.x, self.end.x)
@@ -541,7 +532,7 @@ class Rect:
 
     @property
     def offset(self) -> ivec2:
-        """This Rect's offset"""
+        """This Rect's offset."""
         return self._offset
 
     @offset.setter
@@ -550,7 +541,7 @@ class Rect:
 
     @property
     def size(self) -> ivec2:
-        """This Rect's size"""
+        """This Rect's size."""
         return self._size
 
     @size.setter
@@ -586,37 +577,37 @@ class Rect:
 
     @property
     def middle(self) -> ivec2:
-        """This Rect's middle point, rounded down"""
+        """This Rect's middle point, rounded down."""
         return self._offset + self._size // 2
 
     @property
     def center(self) -> ivec2:
-        """Equivalent to :attr:`.middle`"""
+        """Equivalent to :attr:`.middle`."""
         return self.middle
 
     @property
     def area(self) -> int:
-        """This Rect's surface area"""
+        """This Rect's surface area."""
         return self._size.x * self._size.y
 
     @property
     def corners(self) -> Generator[ivec2, None, None]:
-        """Yields this Rect's corner points"""
+        """Yields this Rect's corner points."""
         return (
             self._offset + sum(subset)
             for subset in powerset(
-                [ivec2(self._size.x - 1, 0), ivec2(0, self._size.y - 1)]
+                [ivec2(self._size.x - 1, 0), ivec2(0, self._size.y - 1)],
             )
         )
 
     def contains(self, vec: Vec2iLike) -> bool:
-        """Returns whether this Rect contains ``vec``"""
+        """Returns whether this Rect contains ``vec``."""
         return (
             self.begin.x <= vec[0] < self.end.x and self.begin.y <= vec[1] < self.end.y
         )
 
-    def collides(self, other: 'Rect') -> bool:
-        """Returns whether this Rect and ``other`` have any overlap"""
+    def collides(self, other: Rect) -> bool:
+        """Returns whether this Rect and ``other`` have any overlap."""
         return (
                 self.begin.x <= other.end  .x
             and self.end  .x >= other.begin.x
@@ -625,69 +616,69 @@ class Rect:
         )
 
     def squaredDistanceToVec(self, vec: Vec2iLike) -> int:
-        """Returns the squared distance between this Rect and ``vec``"""
+        """Returns the squared distance between this Rect and ``vec``."""
         dx = max(self.begin.x - vec[0], 0, vec[0] - (self.end[0] - 1))
         dy = max(self.begin.y - vec[1], 0, vec[1] - (self.end[1] - 1))
         return dx*dx + dy*dy
 
     def distanceToVec(self, vec: Vec2iLike) -> float:
-        """Returns the distance between this Rect and ``vec``"""
+        """Returns the distance between this Rect and ``vec``."""
         return math.sqrt(self.squaredDistanceToVec(vec))
 
-    def translated(self, translation: Union[Vec2iLike, int]) -> 'Rect':
-        """Returns a copy of this Rect, translated by ``translation``"""
+    def translated(self, translation: Vec2iLike | int) -> Rect:
+        """Returns a copy of this Rect, translated by ``translation``."""
         return Rect(self._offset + ivec2(*translation), self._size)
 
     # TODO: transformed()?
 
     def dilate(self, dilation: int = 1) -> None:
-        """Morphologically dilates this rect by ``dilation``"""
+        """Morphologically dilates this rect by ``dilation``."""
         self._offset  -= dilation
         self._size    += dilation*2
 
-    def dilated(self, dilation: int = 1) -> 'Rect':
-        """Returns a copy of this Rect, morphologically dilated by ``dilation``"""
+    def dilated(self, dilation: int = 1) -> Rect:
+        """Returns a copy of this Rect, morphologically dilated by ``dilation``."""
         return Rect(self._offset - dilation, self._size + dilation*2)
 
     def erode(self, erosion: int = 1) -> None:
-        """Morphologically erodes this rect by ``erosion``"""
+        """Morphologically erodes this rect by ``erosion``."""
         self.dilate(-erosion)
 
-    def eroded(self, erosion: int = 1) -> 'Rect':
-        """Returns a copy of this Rect, morphologically eroded by ``erosion``"""
+    def eroded(self, erosion: int = 1) -> Rect:
+        """Returns a copy of this Rect, morphologically eroded by ``erosion``."""
         return self.dilated(-erosion)
 
     def centeredSubRectOffset(self, size: Vec2iLike) -> ivec2:
-        """Returns an offset such that ``Rect(offset, <size>).middle == self.middle``"""
+        """Returns an offset such that ``Rect(offset, <size>).middle == self.middle``."""
         difference = self._size - ivec2(*size)
         return self._offset + difference/2
 
-    def centeredSubRect(self, size: Vec2iLike) -> 'Rect':
-        """Returns a rect of size ``size`` with the same middle as this rect"""
+    def centeredSubRect(self, size: Vec2iLike) -> Rect:
+        """Returns a rect of size ``size`` with the same middle as this rect."""
         return Rect(self.centeredSubRectOffset(size), size)
 
     @staticmethod
-    def between(cornerA: Vec2iLike, cornerB: Vec2iLike) -> 'Rect':
+    def between(cornerA: Vec2iLike, cornerB: Vec2iLike) -> Rect:
         """Returns the Rect between ``cornerA`` and ``cornerB`` (inclusive),
         which may be any opposing corners."""
         first, last = orderedCorners2D(cornerA, cornerB)
         return Rect(first, (last - first) + 1)
 
     @staticmethod
-    def bounding(points: Iterable[Vec2iLike]) -> 'Rect':
-        """Returns the smallest Rect containing all ``points``"""
+    def bounding(points: Iterable[Vec2iLike]) -> Rect:
+        """Returns the smallest Rect containing all ``points``."""
         pointArray = np.fromiter(points, dtype=np.dtype((int, 2)))
         minPoint = np.min(pointArray, axis=0) # pyright: ignore [reportUnknownMemberType]
         maxPoint = np.max(pointArray, axis=0) # pyright: ignore [reportUnknownMemberType]
         return Rect(minPoint, maxPoint - minPoint + 1)
 
-    def toBox(self, offsetY: int = 0, sizeY: int = 0) -> 'Box':
-        """Returns a corresponding Box"""
+    def toBox(self, offsetY: int = 0, sizeY: int = 0) -> Box:
+        """Returns a corresponding Box."""
         return Box(addY(self.offset, offsetY), addY(self._size, sizeY))
 
     @property
     def outline(self) -> Generator[ivec2, None, None]:
-        """Yields this Rect's outline points"""
+        """Yields this Rect's outline points."""
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
         first = self.begin
         last = self.end - 1
@@ -699,24 +690,25 @@ class Rect:
 
 @dataclass()
 class Box:
-    """A box, defined by an offset and a size"""
+    """A box, defined by an offset and a size."""
 
     _offset: ivec3
     _size: ivec3
 
     def __init__(self, offset: Vec3iLike = (0, 0, 0), size: Vec3iLike = (0, 0, 0)) -> None:
+        """Initializes a Box with the specified ``offset`` and ``size``."""
         self._offset = ivec3(*offset)
         self._size = ivec3(*size)
 
     def __hash__(self) -> int:
-        """Returns the hash of this Box"""
+        """Returns the hash of this Box."""
         return hash((self.offset, self.size))
 
     def __repr__(self) -> str:
         return f"Box({tuple(self._offset)}, {tuple(self._size)})"
 
-    def __iter__(self) -> Generator[ivec3, None, None]:
-        """Yields all points contained in this Box"""
+    def __iter__(self) -> Iterator[ivec3]:
+        """Yields all points contained in this Box."""
         return (
             ivec3(x, y, z)
             for x in range(self.begin.x, self.end.x)
@@ -726,7 +718,7 @@ class Box:
 
     @property
     def offset(self) -> ivec3:
-        """This Box's offset"""
+        """This Box's offset."""
         return self._offset
 
     @offset.setter
@@ -735,7 +727,7 @@ class Box:
 
     @property
     def size(self) -> ivec3:
-        """This Box's size"""
+        """This Box's size."""
         return self._size
 
     @size.setter
@@ -771,22 +763,22 @@ class Box:
 
     @property
     def middle(self) -> ivec3:
-        """This Box's middle point, rounded down"""
+        """This Box's middle point, rounded down."""
         return self.begin + self._size // 2
 
     @property
     def center(self) -> ivec3:
-        """Equivalent to ``.middle``"""
+        """Equivalent to ``.middle``."""
         return self.middle
 
     @property
     def volume(self) -> int:
-        """This Box's volume"""
+        """This Box's volume."""
         return self._size.x * self._size.y * self._size.z
 
     @property
-    def corners(self) -> List[ivec3]:
-        """Yields this Box's corner points"""
+    def corners(self) -> list[ivec3]:
+        """Yields this Box's corner points."""
         return [
             self._offset + sum(subset)
             for subset in powerset(
@@ -794,20 +786,20 @@ class Box:
                     ivec3(self._size.x - 1, 0, 0),
                     ivec3(0, self._size.y - 1, 0),
                     ivec3(0, 0, self._size.z - 1),
-                ]
+                ],
             )
         ]
 
     def contains(self, vec: Vec3iLike) -> bool:
-        """Returns whether this Box contains ``vec``"""
+        """Returns whether this Box contains ``vec``."""
         return (
                 self.begin.x <= vec[0] < self.end.x
             and self.begin.y <= vec[1] < self.end.y
             and self.begin.z <= vec[2] < self.end.z
         )
 
-    def collides(self, other: 'Box') -> bool:
-        """Returns whether this Box and ``other`` have any overlap"""
+    def collides(self, other: Box) -> bool:
+        """Returns whether this Box and ``other`` have any overlap."""
         return (
                 self.begin.x <= other.end  .x
             and self.end  .x >= other.begin.x
@@ -818,70 +810,70 @@ class Box:
         )
 
     def squaredDistanceToVec(self, vec: Vec3iLike) -> int:
-        """Returns the squared distance between this Box and ``vec``"""
+        """Returns the squared distance between this Box and ``vec``."""
         dx = max(self.begin.x - vec[0], 0, vec[0] - (self.end.x - 1))
         dy = max(self.begin.y - vec[1], 0, vec[1] - (self.end.y - 1))
         dz = max(self.begin.z - vec[2], 0, vec[2] - (self.end.z - 1))
         return dx*dx + dy*dy + dz*dz
 
     def distanceToVec(self, vec: Vec3iLike) -> float:
-        """Returns the distance between this Box and ``vec``"""
+        """Returns the distance between this Box and ``vec``."""
         return math.sqrt(self.squaredDistanceToVec(vec))
 
-    def translated(self, translation: Union[Vec3iLike, int]) -> 'Box':
-        """Returns a copy of this Box, translated by ``translation``"""
+    def translated(self, translation: Vec3iLike | int) -> Box:
+        """Returns a copy of this Box, translated by ``translation``."""
         return Box(self._offset + ivec3(*translation), self._size)
 
     # TODO: transformed()?
 
     def dilate(self, dilation: int = 1) -> None:
-        """Morphologically dilates this box by ``dilation``"""
+        """Morphologically dilates this box by ``dilation``."""
         self._offset -= dilation
         self._size += dilation * 2
 
-    def dilated(self, dilation: int = 1) -> 'Box':
-        """Returns a copy of this Box, morphologically dilated by ``dilation``"""
+    def dilated(self, dilation: int = 1) -> Box:
+        """Returns a copy of this Box, morphologically dilated by ``dilation``."""
         return Box(self._offset - dilation, self._size + dilation*2)
 
     def erode(self, erosion: int = 1) -> None:
-        """Morphologically erodes this box by ``erosion``"""
+        """Morphologically erodes this box by ``erosion``."""
         self.dilate(-erosion)
 
-    def eroded(self, erosion: int = 1) -> 'Box':
-        """Returns a copy of this Box, morphologically eroded by ``erosion``"""
+    def eroded(self, erosion: int = 1) -> Box:
+        """Returns a copy of this Box, morphologically eroded by ``erosion``."""
         return self.dilated(-erosion)
 
     def centeredSubBoxOffset(self, size: Vec3iLike) -> ivec3:
-        """Returns an offset such that ``Box(offset, size).middle == self.middle``"""
+        """Returns an offset such that ``Box(offset, size).middle == self.middle``."""
         difference = self._size - ivec3(*size)
         return self._offset + difference/2
 
-    def centeredSubBox(self, size: Vec3iLike) -> 'Box':
-        """Returns an box of size ``size`` with the same middle as this box"""
+    def centeredSubBox(self, size: Vec3iLike) -> Box:
+        """Returns an box of size ``size`` with the same middle as this box."""
         return Box(self.centeredSubBoxOffset(size), size)
 
     @staticmethod
-    def between(cornerA: Vec3iLike, cornerB: Vec3iLike) -> 'Box':
+    def between(cornerA: Vec3iLike, cornerB: Vec3iLike) -> Box:
         """Returns the Box between ``cornerA`` and ``cornerB`` (both inclusive),
-        which may be any opposing corners"""
+        which may be any opposing corners."""
         first, last = orderedCorners3D(cornerA, cornerB)
         return Box(first, last - first + 1)
 
     @staticmethod
-    def bounding(points: Iterable[Vec3iLike]) -> 'Box':
-        """Returns the smallest Box containing all ``points``"""
+    def bounding(points: Iterable[Vec3iLike]) -> Box:
+        """Returns the smallest Box containing all ``points``."""
         pointArray = np.fromiter(points, dtype=np.dtype((np.int_, 3)))
         minPoint = np.min(pointArray, axis=0) # pyright: ignore [reportUnknownMemberType]
         maxPoint = np.max(pointArray, axis=0) # pyright: ignore [reportUnknownMemberType]
         return Box(minPoint, maxPoint - minPoint + 1)
 
     def toRect(self) -> Rect:
-        """Returns this Box's XZ-plane as a Rect"""
+        """Returns this Box's XZ-plane as a Rect."""
         return Rect(dropY(self._offset), dropY(self._size))
 
     @property
     def shell(self) -> Generator[ivec3, None, None]:
-        """Yields all points on this Box's surface"""
+        """Yields all points on this Box's surface."""
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
         first: ivec3 = self.begin
         last: ivec3 = self.end - 1
@@ -917,7 +909,7 @@ class Box:
 
     @property
     def wireframe(self) -> Generator[ivec3, None, None]:
-        """Yields all points on this Box's edges"""
+        """Yields all points on this Box's edges."""
         # It's surprisingly difficult to get this right without duplicates. (Think of the corners!)
         first: ivec3 = self.begin
         last: ivec3 = self.end - 1
@@ -977,22 +969,22 @@ class Box:
 
 
 def rectSlice(array: npt.NDArray[Any], rect: Rect) -> npt.NDArray[Any]:
-    """Returns the slice from ``array`` defined by ``rect``"""
+    """Returns the slice from ``array`` defined by ``rect``."""
     return array[rect.begin.x:rect.end.x, rect.begin.y:rect.end.y]
 
 
 def setRectSlice(array: npt.NDArray[Any], rect: Rect, value: Any) -> None:
-    """Sets the slice from ``array`` defined by ``rect`` to ``value``"""
+    """Sets the slice from ``array`` defined by ``rect`` to ``value``."""
     array[rect.begin.x:rect.end.x, rect.begin.y:rect.end.y] = value
 
 
 def boxSlice(array: npt.NDArray[Any], box: Box) -> npt.NDArray[Any]:
-    """Returns the slice from ``array`` defined by ``box``"""
+    """Returns the slice from ``array`` defined by ``box``."""
     return array[box.begin.x:box.end.x, box.begin.y:box.end.y, box.begin.z:box.end.z]
 
 
 def setBoxSlice(array: npt.NDArray[Any], box: Box, value: Any) -> None:
-    """Sets the slice from ``array`` defined by ``box`` to ``value``"""
+    """Sets the slice from ``array`` defined by ``box`` to ``value``."""
     array[box.begin.x:box.end.x, box.begin.y:box.end.y, box.begin.z:box.end.z] = value
 
 
@@ -1001,7 +993,7 @@ def setBoxSlice(array: npt.NDArray[Any], box: Box, value: Any) -> None:
 # ==================================================================================================
 
 
-def loop2D(begin: Vec2iLike, end: Optional[Vec2iLike] = None) -> Generator[ivec2, None, None]:
+def loop2D(begin: Vec2iLike, end: Vec2iLike | None = None) -> Generator[ivec2, None, None]:
     """Yields all points between ``begin`` and ``end`` (end-exclusive).\n
     If ``end`` is not given, yields all points between (0,0) and ``begin``."""
     if end is None:
@@ -1012,7 +1004,7 @@ def loop2D(begin: Vec2iLike, end: Optional[Vec2iLike] = None) -> Generator[ivec2
             yield ivec2(x, y)
 
 
-def loop3D(begin: Vec3iLike, end: Optional[Vec3iLike] = None) -> Generator[ivec3, None, None]:
+def loop3D(begin: Vec3iLike, end: Vec3iLike | None = None) -> Generator[ivec3, None, None]:
     """Yields all points between ``begin`` and ``end`` (end-exclusive).\n
     If ``end`` is not given, yields all points between (0,0,0) and ``begin``."""
     if end is None:
@@ -1034,7 +1026,7 @@ def cuboid3D(corner1: Vec3iLike, corner2: Vec3iLike) -> Generator[ivec3, None, N
     yield from Box.between(corner1, corner2)
 
 
-def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints: bool = True) -> npt.NDArray[np.intp]:
+def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Rect | None = None, includeInputPoints: bool = True) -> npt.NDArray[np.intp]:
     """Fills the shape defined by ``points``, starting at ``seedPoint`` and returns a (n,2) numpy array
     containing the resulting points.\n
     ``boundingRect`` should contain all ``points``. If not provided, it is calculated."""
@@ -1050,13 +1042,13 @@ def filled2DArray(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRec
     return np.argwhere(filled) + np.array(boundingRect.offset)
 
 
-def filled2D(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Optional[Rect] = None, includeInputPoints: bool = True) -> Generator[ivec2, None, None]:
+def filled2D(points: Iterable[Vec2iLike], seedPoint: Vec2iLike, boundingRect: Rect | None = None, includeInputPoints: bool = True) -> Generator[ivec2, None, None]:
     """Fills the shape defined by ``points``, starting at ``seedPoint`` and yields the resulting points.\n
     ``boundingRect`` should contain all ``points``. If not provided, it is calculated."""
     return (ivec2(*point) for point in filled2DArray(points, seedPoint, boundingRect, includeInputPoints))
 
 
-def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Optional[Box] = None, includeInputPoints: bool = True) -> npt.NDArray[np.intp]:
+def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Box | None = None, includeInputPoints: bool = True) -> npt.NDArray[np.intp]:
     """Fills the shape defined by ``points``, starting at ``seedPoint`` and returns a (n,3) numpy array
     containing the resulting points.\n
     ``boundingBox`` should contain all ``points``. If not provided, it is calculated."""
@@ -1071,14 +1063,14 @@ def filled3DArray(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox
     return np.argwhere(filled) + np.array(boundingBox.offset)
 
 
-def filled3D(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Optional[Box] = None, includeInputPoints: bool = True) -> Generator[ivec3, None, None]:
+def filled3D(points: Iterable[Vec3iLike], seedPoint: Vec3iLike, boundingBox: Box | None = None, includeInputPoints: bool = True) -> Generator[ivec3, None, None]:
     """Fills the shape defined by ``points``, starting at ``seedPoint`` and yields the resulting points.\n
     ``boundingBox`` should contain all ``points``. If not provided, it is calculated."""
     return (ivec3(*point) for point in filled3DArray(points, seedPoint, boundingBox, includeInputPoints))
 
 
 # TODO: separate out thickening code?
-def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLike], width: int = 1) -> npt.NDArray[np.intp]:
+def _lineArray(begin: Vec2iLike | Vec3iLike, end: Vec2iLike | Vec3iLike, width: int = 1) -> npt.NDArray[np.intp]:
     begin = np.array(begin)
     end = np.array(end)
     delta = end - begin
@@ -1105,34 +1097,34 @@ def _lineArray(begin: Union[Vec2iLike, Vec3iLike], end: Union[Vec2iLike, Vec3iLi
 
 
 def line2DArray(begin: Vec2iLike, end: Vec2iLike, width: int = 1) -> npt.NDArray[np.intp]:
-    """Returns (n,2) numpy array of points on the line between ``begin`` and ``end`` (inclusive)"""
+    """Returns (n,2) numpy array of points on the line between ``begin`` and ``end`` (inclusive)."""
     return _lineArray(begin, end, width)
 
 
 def line2D(begin: Vec2iLike, end: Vec2iLike, width: int = 1) -> Generator[ivec2, None, None]:
-    """Yields the points on the line between ``begin`` and ``end`` (inclusive)"""
+    """Yields the points on the line between ``begin`` and ``end`` (inclusive)."""
     return (ivec2(*point) for point in _lineArray(begin, end, width))
 
 
 def line3Darray(begin: Vec3iLike, end: Vec3iLike, width: int = 1) -> npt.NDArray[np.intp]:
-    """Returns (n,3) numpy array of points on the line between ``begin`` and ``end`` (inclusive)"""
+    """Returns (n,3) numpy array of points on the line between ``begin`` and ``end`` (inclusive)."""
     return _lineArray(begin, end, width)
 
 
 def line3D(begin: Vec3iLike, end: Vec3iLike, width: int = 1) -> Generator[ivec3, None, None]:
-    """Yields the points on the line between ``begin`` and ``end`` (inclusive)"""
+    """Yields the points on the line between ``begin`` and ``end`` (inclusive)."""
     return (ivec3(*point) for point in _lineArray(begin, end, width))
 
 
 def lineSequence2D(points: Iterable[Vec2iLike], closed: bool = False) -> Generator[ivec2, None, None]:
-    """Yields all points on the lines that connect ``points``"""
+    """Yields all points on the lines that connect ``points``."""
     pointList = list(points)
     for i in range((-1 if closed else 0), len(pointList) - 1):
         yield from line2D(pointList[i], pointList[i + 1])
 
 
 def lineSequence3D(points: Iterable[Vec3iLike], closed: bool = False) -> Generator[ivec3, None, None]:
-    """Yields all points on the lines that connect ``points``"""
+    """Yields all points on the lines that connect ``points``."""
     pointList = list(points)
     for i in range((-1 if closed else 0), len(pointList) - 1):
         yield from line3D(pointList[i], pointList[i + 1])
@@ -1152,9 +1144,9 @@ def circle(center: Vec2iLike, diameter: int, filled: bool = False) -> Generator[
         yield # Unreachable, but teeds to be here so the function is recognized as a generator
 
     e: int = 1 - (diameter % 2)  # for even centers
-    points: Set[ivec2] = set()
+    points: set[ivec2] = set()
 
-    def eightPoints(x: int, y: int):
+    def eightPoints(x: int, y: int) -> None:
         points.add(centerVec + ivec2(e + x, e + y))
         points.add(centerVec + ivec2(0 - x, e + y))
         points.add(centerVec + ivec2(e + x, 0 - y))
@@ -1186,7 +1178,7 @@ def circle(center: Vec2iLike, diameter: int, filled: bool = False) -> Generator[
 
     if filled:
         yield from filled2D(
-            points, centerVec, Rect(centerVec - radius, ivec2(diameter, diameter))
+            points, centerVec, Rect(centerVec - radius, ivec2(diameter, diameter)),
         )
         return
     yield from points
@@ -1220,7 +1212,7 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled: bool = False) -> Ge
 
     e: ivec2 = 1 - (diametersVec % 2)
 
-    points: Set[ivec2] = set()
+    points: set[ivec2] = set()
 
     def fourpoints(x: int, y: int) -> None:
         points.add(centerVec + ivec2(e.x + x, e.y + y))
@@ -1292,7 +1284,7 @@ def fittingEllipse(corner1: Vec2iLike, corner2: Vec2iLike, filled: bool = False)
     return ellipse((_corner1 + _corner2) // 2, diameters, filled)
 
 
-def cylinder(baseCenter: Vec3iLike, diameters: Union[Vec2iLike, int], length: int, axis: int = 1, tube: bool = False, hollow: bool = False) -> Generator[ivec3, None, None]:
+def cylinder(baseCenter: Vec3iLike, diameters: Vec2iLike | int, length: int, axis: int = 1, tube: bool = False, hollow: bool = False) -> Generator[ivec3, None, None]:
     """Yields the points from the specified cylinder.\n
     If a ``diameter`` is even, ``center`` will be the lower center point in that axis.\n
     ``tube`` has precedence over ``hollow``."""
@@ -1332,10 +1324,10 @@ def fittingCylinder(corner1: Vec3iLike, corner2: Vec3iLike, axis: int = 1, tube:
     hn: int = _corner2[axis]
 
     ellipsePoints2D = list(fittingEllipse(baseCorner1, baseCorner2, filled=False))
-    ellipsePoints3D: List[ivec3] = [addDimension(point, axis, h0) for point in ellipsePoints2D]
+    ellipsePoints3D: list[ivec3] = [addDimension(point, axis, h0) for point in ellipsePoints2D]
 
-    basePoints: List[ivec3] = ellipsePoints3D
-    bodyPoints: List[ivec3] = ellipsePoints3D
+    basePoints: list[ivec3] = ellipsePoints3D
+    bodyPoints: list[ivec3] = ellipsePoints3D
 
     if not tube:
         basePoints = [
@@ -1372,19 +1364,19 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
     e: ivec3 = 1 - (diametersVec % 2)
 
     def are_points_in_line(center: Vec3iLike, point: Vec3iLike) -> bool:
-        """Checks if two 3D points are the same on 2 or more axis"""
+        """Checks if two 3D points are the same on 2 or more axis."""
         count = 0
         for i in range(3):
             if point[i] == center[i]: count += 1
         return count >= 2
 
-    def generate_octants(center: Vec3iLike, point: Vec3iLike) -> List[ivec3]:
-        """Generates octants for a point around a center"""
+    def generate_octants(center: Vec3iLike, point: Vec3iLike) -> list[ivec3]:
+        """Generates octants for a point around a center."""
         x0, y0, z0 = center
         x, y, z = point
         dx, dy, dz = x - x0, y - y0, z - z0
 
-        octants: List[ivec3] = [
+        octants: list[ivec3] = [
             ivec3(x0 + e.x + dx, y0 + e.y + dy, z0 + e.z + dz),
             ivec3(x0       - dx, y0 + e.y + dy, z0 + e.z + dz),
             ivec3(x0 + e.x + dx, y0       - dy, z0 + e.z + dz),
@@ -1411,7 +1403,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
         e_val: float = (x**2 / rx**2) + (y**2 / ry**2) + (z**2 / rz**2)
         # Check if it is in-line with the center point
         in_line_with_center: bool = are_points_in_line(
-            centerVec, (x + x0, y + y0, z + z0)
+            centerVec, (x + x0, y + y0, z + z0),
         )
 
         # If the point satisfies the ellipsoid equation
@@ -1421,7 +1413,7 @@ def ellipsoid(center: Vec3iLike, diameters: Vec3iLike, hollow: bool = False) -> 
             # Otherwise, yield it for all octants
             else:
                 yield from generate_octants(
-                    centerVec, ivec3(x + x0, y + y0, z + z0)
+                    centerVec, ivec3(x + x0, y + y0, z + z0),
                 )
 
     # If the ellipsoid should be hollow
@@ -1477,7 +1469,7 @@ def neighbors2D(point: Vec2iLike, boundingRect: Rect, diagonal: bool = False, st
     """Yields the neighbors of ``point`` within ``bounding_rect``.\n
     Useful for pathfinding."""
     point = ivec2(*point)
-    vectors: FrozenSet[ivec2] = CARDINALS_AND_DIAGONALS_2D if diagonal else CARDINALS_2D
+    vectors: frozenset[ivec2] = CARDINALS_AND_DIAGONALS_2D if diagonal else CARDINALS_2D
     yield from _boundedNeighborsFromVectors2D(point, boundingRect, vectors, stride)
 
 
@@ -1493,5 +1485,5 @@ def neighbors3D(point: Vec3iLike, boundingBox: Box, diagonal: bool = False, stri
     """Yields the neighbors of ``point`` within ``bounding_box``.\n
     Useful for pathfinding."""
     point = ivec3(*point)
-    vectors: FrozenSet[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D if diagonal else DIRECTIONS_3D
+    vectors: frozenset[ivec3] = DIRECTIONS_AND_ALL_DIAGONALS_3D if diagonal else DIRECTIONS_3D
     yield from _boundedNeighborsFromVectors3D(point, boundingBox, vectors, stride)
