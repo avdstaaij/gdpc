@@ -29,6 +29,7 @@ from .block import Block
 from .utils import isIterable, withRetries
 from .vector_tools import Box, Vec2iLike, Vec3iLike
 
+
 DEFAULT_HOST = "http://localhost:9000"
 """Default host"""
 

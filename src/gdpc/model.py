@@ -10,6 +10,7 @@ from pyglm.glm import ivec3
 
 from .vector_tools import Box, Vec3iLike
 
+
 if TYPE_CHECKING:
     from .block import Block
     from .editor import Editor

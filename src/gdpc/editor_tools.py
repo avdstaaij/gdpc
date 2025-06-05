@@ -14,6 +14,7 @@ from .block_state_tools import facingToVector
 from .minecraft_tools import getObtrusiveness, lecternBlock, positionToInventoryIndex, signBlock
 from .vector_tools import Box, Vec2iLike, Vec3iLike, neighbors3D
 
+
 if TYPE_CHECKING:
     from .editor import Editor
 

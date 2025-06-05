@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 
+
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 

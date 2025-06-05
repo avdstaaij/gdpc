@@ -16,6 +16,7 @@ from . import interface
 from .block import Block
 from .vector_tools import Box, Rect, Vec3iLike, addY, loop2D, loop3D, trueMod2D
 
+
 if TYPE_CHECKING:
     from nbt.nbt import TAG_Compound, TAG_Long_Array
 

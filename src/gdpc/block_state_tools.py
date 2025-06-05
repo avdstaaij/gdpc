@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from pyglm.glm import bvec3, ivec3
 
+
 if TYPE_CHECKING:
     from .vector_tools import Vec3bLike, Vec3iLike
 

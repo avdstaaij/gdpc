@@ -24,6 +24,7 @@ from .vector_tools import (
     lineSequence3D,
 )
 
+
 if TYPE_CHECKING:
     from .editor import Editor
 
