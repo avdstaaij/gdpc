@@ -5,8 +5,8 @@
 
 
 import os
-import shutil
 import re
+import shutil
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -26,9 +26,9 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'GDPC'
-copyright = '2025, Arthur van der Staaij'
-author = 'Arthur van der Staaij'
+project = "GDPC"
+copyright = "2025, Arthur van der Staaij"
+author = "Arthur van der Staaij"
 
 
 # -- General configuration ---------------------------------------------------
@@ -43,7 +43,7 @@ extensions = [
     "myst_parser",
 ]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 
 rst_prolog = """
@@ -127,7 +127,7 @@ html_theme_options = {
                 "icon": "material/weather-night",
                 "name": "Switch to dark mode",
             },
-        }
+        },
     ],
     # "version_dropdown": True,
     # "version_info": [
@@ -168,13 +168,13 @@ html_css_files = ["styles.css"]
 
 # -- API Reference -----------------------------------------------------------
 
-def generate_reference():
+def generate_reference() -> None:
     shutil.rmtree(f"{SCRIPT_DIR}/api/", ignore_errors=True)
     os.makedirs(f"{SCRIPT_DIR}/api/", exist_ok=True)
 
     # TODO: adjust this if we add subpackages
 
-    target_names = []
+    target_names: list[str] = []
     for filename in sorted(os.listdir(f"{SCRIPT_DIR}/../../src/gdpc")):
         if filename == "__pycache__":
             continue
@@ -208,7 +208,7 @@ generate_reference()
 # Function 1: separate pages
 # Function 2: single page with downgraded headers
 
-# def generate_changelog():
+# def generate_changelog() -> None:
 #     with open(f"{SCRIPT_DIR}/../../CHANGELOG.md", "r") as file:
 #         changelog = file.read()
 
@@ -244,8 +244,8 @@ generate_reference()
 #     with open(f"{SCRIPT_DIR}/changelog/index.md", "w") as file:
 #         file.write(index)
 
-def generate_changelog():
-    with open(f"{SCRIPT_DIR}/../../CHANGELOG.md", "r") as file:
+def generate_changelog() -> None:
+    with open(f"{SCRIPT_DIR}/../../CHANGELOG.md") as file:
         changelog = file.read()
 
     # Cut off "In Development" section
@@ -253,6 +253,7 @@ def generate_changelog():
     # update on a version release, in which case the section is always
     # empty.
     lines = changelog.splitlines()
+    i = 0
     for i, line in enumerate(lines[1:]):
         if line.startswith("# "):
             break

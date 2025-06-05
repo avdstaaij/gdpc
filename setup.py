@@ -1,6 +1,6 @@
 import os
-from setuptools import setup
 
+from setuptools import setup
 
 SCRIPT_DIR         = os.path.abspath(os.path.dirname(__file__))
 METADATA_FILE_PATH = os.path.join(SCRIPT_DIR, "src/gdpc/__init__.py")
