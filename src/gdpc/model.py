@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from pyglm.glm import ivec3
 
+from .editor import BlockGetterMixin, BlockPlacerMixin
 from .vector_tools import Box, Vec3iLike
 
 
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
     from .transform import TransformLike
 
 
-class Model:
+class Model(BlockGetterMixin, BlockPlacerMixin):
     """A 3D model of Minecraft blocks.
 
     Can be used to store a structure in memory, allowing it to be built under different
@@ -36,7 +37,6 @@ class Model:
         else:
             self._blocks: list[Block | None] = [None] * volume
 
-
     @property
     def size(self) -> ivec3:
         """This Model's size."""
@@ -45,8 +45,7 @@ class Model:
     @property
     def blocks(self) -> list[Block | None]:
         """This Model's block list."""
-        return copy(self._blocks) # Allows block modification, but not resizing
-
+        return copy(self._blocks)  # Allows block modification, but not resizing
 
     def getBlock(self, position: Vec3iLike) -> Block | None:
         """Returns the block at ``vec``."""

@@ -8,6 +8,7 @@ The following classes are re-exported:
 - :class:`.Editor` (from module :mod:`.gdpc.editor`)
 - :class:`.WorldSlice` (from module :mod:`.gdpc.world_slice`)
 - :class:`.Block` (from module :mod:`.gdpc.block`)
+- :class:`.Model` (from module :mod:`.gdpc.model`)
 - :class:`.Transform` (from module :mod:`.gdpc.transform`)
 - :class:`.Rect`, :class:`.Box` (from module :mod:`.gdpc.vector_tools`)
 """
@@ -65,8 +66,9 @@ __version__          = "8.1.0"
 
 
 # ruff: noqa: I001
-from .vector_tools import Rect as Rect, Box as Box # noqa: PLC0414
-from .transform import Transform as Transform # noqa: PLC0414
-from .block import Block as Block # noqa: PLC0414
-from .world_slice import WorldSlice as WorldSlice # noqa: PLC0414
-from .editor import Editor as Editor # noqa: PLC0414
+from .vector_tools import Rect as Rect, Box as Box  # noqa: PLC0414
+from .transform import Transform as Transform  # noqa: PLC0414
+from .block import Block as Block  # noqa: PLC0414
+from .model import Model as Model  # noqa: PLC0414
+from .world_slice import WorldSlice as WorldSlice  # noqa: PLC0414
+from .editor import Editor as Editor  # noqa: PLC0414

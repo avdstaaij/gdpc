@@ -496,6 +496,11 @@ def getDimensionality(corner1: Vec2iLike | Vec3iLike, corner2: Vec2iLike | Vec3i
     return int(len(corner1) - np.sum(flatSides)), list(flatSides) # pyright: ignore [reportUnknownMemberType]
 
 
+def anyComponentSmaller(v1: Vec2iLike | Vec3iLike, v2: Vec2iLike | Vec3iLike) -> bool:
+    """Checks if any component of v1 is smaller than the corresponding component in v2."""
+    return glm.any(glm.smallerThan(v1, v2))
+
+
 # ==================================================================================================
 # Rect and Box
 # ==================================================================================================
@@ -968,6 +973,13 @@ class Box:
             ivec3(first.x, last.y - 1, last.z) + 1,
         )
 
+    def getDiagonal(self):
+        """Returns the diagonal vector of this Box, representing its size."""
+        return self.size
+
+    def getOriginDiagonal(self):
+        """Returns the diagonal vector from the origin to the end of the box."""
+        return self.end
 
 def rectSlice(array: npt.NDArray[Any], rect: Rect) -> npt.NDArray[Any]:
     """Returns the slice from ``array`` defined by ``rect``."""
@@ -1142,7 +1154,7 @@ def circle(center: Vec2iLike, diameter: int, filled: bool = False) -> Generator[
 
     if diameter == 0:
         return
-        yield # Unreachable, but teeds to be here so the function is recognized as a generator
+        yield # Unreachable, but needs to be here so the function is recognized as a generator
 
     e: int = 1 - (diameter % 2)  # for even centers
     points: set[ivec2] = set()
@@ -1205,7 +1217,7 @@ def ellipse(center: Vec2iLike, diameters: Vec2iLike, filled: bool = False) -> Ge
 
     if diametersVec.x == 0 or diametersVec.y == 0:
         return
-        yield # Unreachable, but teeds to be here so the function is recognized as a generator
+        yield # Unreachable, but needs to be here so the function is recognized as a generator
 
     if diametersVec.x == diametersVec.y:
         yield from circle(centerVec, diametersVec.x, filled)
@@ -1297,7 +1309,7 @@ def cylinder(baseCenter: Vec3iLike, diameters: Vec2iLike | int, length: int, axi
 
     if diametersVec.x == 0 or diametersVec.y == 0 or length == 0:
         return
-        yield # Unreachable, but teeds to be here so the function is recognized as a generator
+        yield # Unreachable, but needs to be here so the function is recognized as a generator
 
     corner1 = baseCenterVec - addDimension((diametersVec - 1) / 2, axis, 0)
     corner2 = corner1 + addDimension(diametersVec - 1, axis, length - 1)

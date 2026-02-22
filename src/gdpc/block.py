@@ -17,6 +17,7 @@ from .nbt_tools import nbtToSnbt
 if TYPE_CHECKING:
     from .vector_tools import Vec3bLike
 
+BlockName = str
 
 @dataclass
 class Block:
@@ -89,7 +90,7 @@ class Block:
     def stateString(self) -> str:
         """Returns a string containing the block states of this block, including the outer brackets."""
         stateString = ",".join([f"{key}={value}" for key, value in self.states.items()])
-        return "" if stateString == "" else f"[{stateString}]"
+        return f"[{stateString}]" if stateString else ""
 
 
     def __str__(self) -> str:

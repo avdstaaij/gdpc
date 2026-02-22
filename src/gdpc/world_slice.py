@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass
 from io import BytesIO
 from math import ceil, floor, log2
@@ -14,6 +15,7 @@ from pyglm.glm import ivec2, ivec3
 
 from . import interface
 from .block import Block
+from .editor import BlockGetterMixin
 from .vector_tools import Box, Rect, Vec3iLike, addY, loop2D, loop3D, trueMod2D
 
 
@@ -81,7 +83,7 @@ class _ChunkSection:
         return cast("nbt.TAG_String", self.biomesPalette[0 if self.biomesBitArray is None else self.biomesBitArray[index]])
 
 
-class WorldSlice:
+class WorldSlice(BlockGetterMixin):
     """Contains information on a slice of the world."""
 
     def __init__(
@@ -150,15 +152,12 @@ class WorldSlice:
                 hmBitArray = _BitArray(hmBitsPerEntry, 16*16, hmRaw) # pyright: ignore
                 heightmap = self._heightmaps[hmName]
                 for inChunkPos in loop2D(ivec2(16,16)):
-                    try:
+                    with contextlib.suppress(IndexError):
                         # In the heightmap data, the lowest point is encoded as 0, while since
                         # Minecraft 1.18 the actual lowest y position is below zero. We subtract
                         # yBegin from the heightmap value to compensate for this difference.
                         hmPos = -inChunkRectOffset + chunkPos * 16 + inChunkPos # pylint: disable=invalid-unary-operand-type
                         heightmap[hmPos.x, hmPos.y] = hmBitArray[inChunkPos.y * 16 + inChunkPos.x] + self._yBegin
-                    except IndexError:
-                        pass
-
             # Read chunk sections
             for sectionTag in chunkTag["sections"]: # pyright: ignore
                 y = int(sectionTag["Y"].value) # pyright: ignore

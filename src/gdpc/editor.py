@@ -1,7 +1,6 @@
 """Provides the :class:`.Editor` class, which provides high-level functions to interact with the
 Minecraft world through the GDMC HTTP interface."""
 
-
 from __future__ import annotations
 
 import atexit
@@ -12,25 +11,83 @@ from concurrent import futures
 from contextlib import contextmanager
 from copy import copy, deepcopy
 from numbers import Integral
-from typing import Any, Generator, Iterable, Sequence, Sized, cast
+from typing import Any, Generator, Iterable, Protocol, Sequence, Sized, cast
 
 import numpy as np
 import numpy.typing as npt
 from pyglm.glm import ivec3
 
 from . import interface
-from .block import Block, transformedBlockOrPalette
+from .block import Block, BlockName, transformedBlockOrPalette
+from .model import Model
 from .transform import Transform, TransformLike, toTransform
 from .utils import OrderedByLookupDict, eagerAll
-from .vector_tools import Box, Rect, Vec3iLike, dropY
+from .vector_tools import ZERO_3D, Box, Rect, Vec3iLike, dropY
 from .world_slice import WorldSlice
 
 
 logger = logging.getLogger(__name__)
 
 
-class Editor:
-    """Provides high-level functions to interact with the Minecraft world through the GDMC HTTP
+class BlockGetterMixin(Protocol):
+    """Protocol for objects that can retrieve blocks from a finite 3D space."""
+
+    @property
+    def size(self) -> ivec3:
+        """Returns the size of the 3D space."""
+        ...
+
+    def getBlock(self, position: Vec3iLike) -> Block | None:
+        """Returns the block at the specified position, or ``None``."""
+        ...
+
+    def getBlocks(self, box: Box) -> Model:
+        """Returns a Model containing a cuboid of blocks, as defined by box."""
+        if box.getOriginDiagonal > self.size:
+            # FIXME: Out-of-bounds handling
+            raise NotImplementedError
+
+        return Model(box.size, [self.getBlock(v) for v in box.inner])
+
+
+class BlockPlacerMixin(Protocol):
+    """Protocol for objects that can place blocks in a finite 3D space."""
+
+    def placeBlock(
+        self,
+        position: Vec3iLike | Iterable[Vec3iLike],
+        block: Block | Sequence[Block],
+        replace: BlockName | list[BlockName] | None = None,
+    ) -> None:
+        """Places the specified block at the specified position(s)."""
+        ...
+
+    def placeBlocks(
+        self,
+        source: BlockGetterMixin,
+        destination_target: Box = None,  # if unspecified, assumes equal to source
+        source_target: Box = None,  # if unspecified, assumes equal to destination
+    ) -> None:
+        """Places a cuboid of blocks from the source BlockGetterMixin into this BlockPlacerMixin."""
+        if destination_target is None:
+            destination_target = Box(size=source.size)
+
+        if source_target is None:
+            source_target = destination_target
+
+        if (
+            destination_target.size < source_target.size
+            or source.size < source_target.getOriginDiagonal()
+        ):
+            # FIXME: Out-of-bounds handling
+            raise NotImplementedError
+
+        for source_v, destination_v in zip(source_target.inner, destination_target.inner):
+            self.placeBlock(destination_v, source.getBlock(source_v))
+
+
+class Editor(BlockGetterMixin, BlockPlacerMixin):
+    """Provides a high-level functions to interact with the Minecraft world through the GDMC HTTP
     interface.
 
     Stores various settings, resources, buffers and caches related to world interaction, and a
@@ -39,17 +96,17 @@ class Editor:
 
     def __init__(
         self,
-        transformLike         : TransformLike | None = None,
-        dimension             : str | None           = None,
-        buffering             : bool                 = False,
-        bufferLimit           : int                  = 1024,
-        caching               : bool                 = False,
-        cacheLimit            : int                  = 8192,
-        multithreading        : bool                 = False,
-        multithreadingWorkers : int                  = 1,
-        retries               : int                  = 4,
-        timeout               : float | None         = None,
-        host                  : str                  = interface.DEFAULT_HOST,
+        transformLike: TransformLike | None = None,
+        dimension: str | None = None,
+        buffering: bool = False,
+        bufferLimit: int = 1024,
+        caching: bool = False,
+        cacheLimit: int = 8192,
+        multithreading: bool = False,
+        multithreadingWorkers: int = 1,
+        retries: int = 4,
+        timeout: float | None = None,
+        host: str = interface.DEFAULT_HOST,
     ) -> None:
         """Constructs an Editor instance with the specified transform and settings.
 
@@ -59,7 +116,7 @@ class Editor:
         """
         self._retries = retries
         self._timeout = timeout
-        self._host    = host
+        self._host = host
 
         self._transform = Transform() if transformLike is None else toTransform(transformLike)
 
@@ -67,21 +124,23 @@ class Editor:
 
         self._buffering = buffering
         self._bufferLimit = bufferLimit
-        self._buffer: dict[ivec3,Block] = {}
+        self._buffer: dict[ivec3, Block] = {}
         self._commandBuffer: list[str] = []
 
         self._caching = caching
-        self._cache = OrderedByLookupDict[ivec3,Block](cacheLimit)
+        self._cache = OrderedByLookupDict[Vec3iLike, Block](cacheLimit)
 
         self._multithreading = False
         self._multithreadingWorkers = multithreadingWorkers
-        self.multithreading = multithreading # The property setter initializes the multithreading system.
+        self.multithreading = (
+            multithreading  # The property setter initializes the multithreading system.
+        )
         self._bufferFlushFutures: list[futures.Future[None]] = []
 
         self._doBlockUpdates = True
-        self._spawnDrops     = False
+        self._spawnDrops = False
         self._bufferDoBlockUpdates = self._doBlockUpdates
-        self._bufferSpawnDrops     = self._spawnDrops
+        self._bufferSpawnDrops = self._spawnDrops
 
         self._worldSlice: WorldSlice | None = None
         self._worldSliceDecay: npt.NDArray[np.bool_] | None = None
@@ -113,13 +172,11 @@ class Editor:
         self._clean_up_handler = lambda: Editor._clean_up_at_exit(ref)
         atexit.register(self._clean_up_handler)
 
-
     @staticmethod
     def _clean_up(editor: Editor) -> None:
         """The real Editor destructor, called from both __del__ and the atexit handler."""
         editor.flushBuffer()
         editor.awaitBufferFlushes()
-
 
     @staticmethod
     def _clean_up_at_exit(editor_weakref: weakref.ref[Editor]) -> None:
@@ -127,13 +184,31 @@ class Editor:
         if editor is not None:
             Editor._clean_up(editor)
 
-
     def __del__(self) -> None:
         """Cleans up this Editor instance.\n
         Flushes the block buffer and waits for any remaining buffer flush futures."""
         atexit.unregister(self._clean_up_handler)
         Editor._clean_up(self)
 
+    @property
+    def offset(self) -> ivec3:
+        """An alias for the Editor's translation."""
+        return self.transform.translation
+
+    @offset.setter
+    def offset(self, value: Vec3iLike) -> None:
+        self.transform.translation = value
+
+    @property
+    def size(self) -> ivec3:
+        """An alias for the size of the build area."""
+        return self.getBuildArea().size
+
+    @size.setter
+    def size(self, size: Vec3iLike) -> None:
+        build_area = self.getBuildArea()
+        build_area.size = size
+        self.setBuildArea(build_area)
 
     @property
     def transform(self) -> Transform:
@@ -181,7 +256,7 @@ class Editor:
         if value != self._dimension:
             self.flushBuffer()
             self._cache.clear()
-            self._worldSlice      = None
+            self._worldSlice = None
             self._worldSliceDecay = None
         self._dimension = value
 
@@ -380,7 +455,7 @@ class Editor:
             self.flushBuffer()
             self.awaitBufferFlushes()
             self._cache.clear()
-            self._worldSlice      = None
+            self._worldSlice = None
             self._worldSliceDecay = None
         self._host = value
 
@@ -403,8 +478,12 @@ class Editor:
         view.flags.writeable = False
         return view
 
-
-    def runCommand(self, command: str, position: Vec3iLike | None = None, syncWithBuffer: bool = False) -> None:
+    def runCommand(
+        self,
+        command: str,
+        position: Vec3iLike | None = None,
+        syncWithBuffer: bool = False,
+    ) -> None:
         """Executes one or multiple Minecraft commands (separated by newlines).
 
         The leading "/" must be omitted.
@@ -426,8 +505,12 @@ class Editor:
             position = self.transform * position
         self.runCommandGlobal(command, position, syncWithBuffer)
 
-
-    def runCommandGlobal(self, command: str, position: Vec3iLike | None = None, syncWithBuffer: bool = False) -> None:
+    def runCommandGlobal(
+        self,
+        command: str,
+        position: Vec3iLike | None = None,
+        syncWithBuffer: bool = False,
+    ) -> None:
         """Executes one or multiple Minecraft commands (separated by newlines), ignoring :attr:`.transform`.
 
         The leading "/" must be omitted.
@@ -449,23 +532,28 @@ class Editor:
         if self.buffering and syncWithBuffer:
             self._commandBuffer.append(command)
             return
-        result = interface.runCommand(command, dimension=self.dimension, retries=self.retries, timeout=self.timeout, host=self.host)
+        result = interface.runCommand(
+            command,
+            dimension=self.dimension,
+            retries=self.retries,
+            timeout=self.timeout,
+            host=self.host,
+        )
         if not result[0][0]:
             logger.error("Server returned error upon running command:\n  %s", result[0][1])
-
 
     def getBuildArea(self) -> Box:
         """Returns the build area that was specified by ``/setbuildarea`` in-game.\n
         The build area is always in **global coordinates**; :attr:`.transform` is ignored."""
         return interface.getBuildArea(retries=self.retries, timeout=self.timeout, host=self.host)
 
-
     def setBuildArea(self, buildArea: Box) -> Box:
         """Sets the build area to ``buildArea``, and returns it.\n
         The build area must be given in **global coordinates**; :attr:`.transform` is ignored."""
-        self.runCommandGlobal(f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}")
+        self.runCommandGlobal(
+            f"setbuildarea {buildArea.begin.x} {buildArea.begin.y} {buildArea.begin.z} {buildArea.end.x} {buildArea.end.y} {buildArea.end.z}",
+        )
         return self.getBuildArea()
-
 
     def getBlock(self, position: Vec3iLike) -> Block:
         """Returns the block at ``position``.
@@ -479,7 +567,6 @@ class Editor:
         invTransform = ~self.transform
         block.transform(invTransform.rotation, invTransform.flip)
         return block
-
 
     def getBlockGlobal(self, position: Vec3iLike) -> Block:
         """Returns the block at ``position``, ignoring :attr:`.transform`.
@@ -499,19 +586,28 @@ class Editor:
                 return copy(block)
 
         if (
-            self._worldSlice is not None and
-            self._worldSlice.box.contains(_position) and
-            not cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[tuple(_position - self._worldSlice.box.offset)]
+            self._worldSlice is not None
+            and self._worldSlice.box.contains(_position)
+            and not cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[
+                tuple(_position - self._worldSlice.box.offset)
+            ]
         ):
             block = self._worldSlice.getBlockGlobal(_position)
         else:
-            block = interface.getBlocks(_position, dimension=self.dimension, includeState=True, includeData=True, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
+            block = interface.getBlocks(
+                _position,
+                dimension=self.dimension,
+                includeState=True,
+                includeData=True,
+                retries=self.retries,
+                timeout=self.timeout,
+                host=self.host,
+            )[0][1]
 
         if self.caching:
             self._cache[_position] = copy(block)
 
         return block
-
 
     def getBiome(self, position: Vec3iLike) -> str:
         """Returns the biome at ``position``.
@@ -522,27 +618,33 @@ class Editor:
         """
         return self.getBiomeGlobal(self.transform * position)
 
-
     def getBiomeGlobal(self, position: Vec3iLike) -> str:
         """Returns the biome at ``position``, ignoring :attr:`.transform`.
 
         If the given coordinates are invalid, returns an empty string.
         """
         if (
-            self._worldSlice is not None and
-            self._worldSlice.box.contains(position) and
-            not cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[tuple(ivec3(*position) - self._worldSlice.box.offset)]
+            self._worldSlice is not None
+            and self._worldSlice.box.contains(position)
+            and not cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[
+                tuple(ivec3(*position) - self._worldSlice.box.offset)
+            ]
         ):
             return self._worldSlice.getBiomeGlobal(position)
 
-        return interface.getBiomes(position, dimension=self.dimension, retries=self.retries, timeout=self.timeout, host=self.host)[0][1]
-
+        return interface.getBiomes(
+            position,
+            dimension=self.dimension,
+            retries=self.retries,
+            timeout=self.timeout,
+            host=self.host,
+        )[0][1]
 
     def placeBlock(
         self,
         position: Vec3iLike | Iterable[Vec3iLike],
-        block:    Block | Sequence[Block],
-        replace:  str | list[str] | None = None,
+        block: Block | Sequence[Block],
+        replace: str | list[str] | None = None,
     ) -> bool:
         """Places ``block`` at ``position``.
 
@@ -571,12 +673,11 @@ class Editor:
         globalBlock = transformedBlockOrPalette(block, self.transform.rotation, self.transform.flip)
         return self.placeBlockGlobal(globalPosition, globalBlock, replace)
 
-
     def placeBlockGlobal(
         self,
         position: Vec3iLike | Iterable[Vec3iLike],
-        block:    Block | Sequence[Block],
-        replace:  str | Iterable[str] | None = None,
+        block: Block | Sequence[Block],
+        replace: str | Iterable[str] | None = None,
     ) -> bool:
         """Places ``block`` at ``position``, ignoring :attr:`.transform`.
 
@@ -597,16 +698,18 @@ class Editor:
 
         oldBuffering = self.buffering
         self.buffering = True
-        success = eagerAll(self._placeSingleBlockGlobal(ivec3(*pos), block, replace) for pos in cast("Iterable[Vec3iLike]", position))
+        success = eagerAll(
+            self._placeSingleBlockGlobal(ivec3(*pos), block, replace)
+            for pos in cast("Iterable[Vec3iLike]", position)
+        )
         self.buffering = oldBuffering
         return success
-
 
     def _placeSingleBlockGlobal(
         self,
         position: ivec3,
-        block:    Block | Sequence[Block],
-        replace:  str | Iterable[str] | None = None,
+        block: Block | Sequence[Block],
+        replace: str | Iterable[str] | None = None,
     ) -> bool:
         """Places ``block`` at ``position``, ignoring :attr:`.transform`.
 
@@ -616,7 +719,7 @@ class Editor:
         """
         # Check replace condition
         if replace is not None:
-            if isinstance(replace, str):
+            if isinstance(replace, BlockName):
                 replace = [replace]
             if cast("str", self.getBlockGlobal(position).id) not in replace:
                 return True
@@ -639,30 +742,40 @@ class Editor:
             self._cache[position] = block
 
         if self._worldSlice is not None and self._worldSlice.rect.contains(dropY(position)):
-            cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[tuple(position - self._worldSlice.box.offset)] = True
+            cast("npt.NDArray[np.bool_]", self._worldSliceDecay)[
+                tuple(position - self._worldSlice.box.offset)
+            ] = True
 
         return True
-
 
     def _placeSingleBlockGlobalDirect(self, position: ivec3, block: Block) -> bool:
         """Place a single block in the world directly.\n
         Returns whether the placement succeeded."""
-        result = interface.placeBlocks([(position, block)], dimension=self.dimension, doBlockUpdates=self.doBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
+        result = interface.placeBlocks(
+            [(position, block)],
+            dimension=self.dimension,
+            doBlockUpdates=self.doBlockUpdates,
+            spawnDrops=self.spawnDrops,
+            retries=self.retries,
+            timeout=self.timeout,
+            host=self.host,
+        )
         if not result[0][0]:
             logger.error("Server returned error upon placing block:\n  %s", result[0][1])
             return False
         return True
-
 
     def _placeSingleBlockGlobalBuffered(self, position: ivec3, block: Block) -> bool:
         """Place a block in the buffer and send once limit is exceeded.\n
         Returns whether placement succeeded."""
         if len(self._buffer) >= self.bufferLimit:
             self.flushBuffer()
-        self._buffer.pop(position, None) # Ensure the new block is added at the *end* of the buffer.
+        self._buffer.pop(
+            position,
+            None,
+        )  # Ensure the new block is added at the *end* of the buffer.
         self._buffer[position] = block
         return True
-
 
     def flushBuffer(self) -> None:
         """Flushes the block placement buffer.
@@ -670,24 +783,45 @@ class Editor:
         If multithreaded buffer flushing is enabled, the worker threads can be awaited with
         :meth:`.awaitBufferFlushes`.
         """
+
         def flush(blockBuffer: dict[ivec3, Block], commandBuffer: list[str]) -> None:
             # Flush block buffer
             if blockBuffer:
-                response = interface.placeBlocks(blockBuffer.items(), dimension=self.dimension, doBlockUpdates=self._bufferDoBlockUpdates, spawnDrops=self.spawnDrops, retries=self.retries, timeout=self.timeout, host=self.host)
+                response = interface.placeBlocks(
+                    blockBuffer.items(),
+                    dimension=self.dimension,
+                    doBlockUpdates=self._bufferDoBlockUpdates,
+                    spawnDrops=self.spawnDrops,
+                    retries=self.retries,
+                    timeout=self.timeout,
+                    host=self.host,
+                )
                 blockBuffer.clear()
 
                 for entry in response:
                     if not entry[0]:
-                        logger.error("Server returned error upon placing buffered block:\n  %s", entry[1])
+                        logger.error(
+                            "Server returned error upon placing buffered block:\n  %s",
+                            entry[1],
+                        )
 
             # Flush command buffer
             if commandBuffer:
-                response = interface.runCommand("\n".join(commandBuffer), dimension=self.dimension, retries=self.retries, timeout=self.timeout, host=self.host)
+                response = interface.runCommand(
+                    "\n".join(commandBuffer),
+                    dimension=self.dimension,
+                    retries=self.retries,
+                    timeout=self.timeout,
+                    host=self.host,
+                )
                 commandBuffer.clear()
 
                 for entry in response:
                     if not entry[0]:
-                        logger.error("Server returned error upon running buffered command:\n  %s", entry[1])
+                        logger.error(
+                            "Server returned error upon running buffered command:\n  %s",
+                            entry[1],
+                        )
 
         if self._multithreading:
             # Clean up finished buffer flush futures
@@ -696,8 +830,9 @@ class Editor:
             ]
 
             # Shallow copies are good enough here
-            blockBufferCopy   = self._buffer
+            blockBufferCopy = self._buffer
             commandBufferCopy = self._commandBuffer
+
             def task() -> None:
                 flush(blockBufferCopy, commandBufferCopy)
 
@@ -709,9 +844,8 @@ class Editor:
             self._buffer = {}
             self._commandBuffer = []
 
-        else: # No multithreading
+        else:  # No multithreading
             flush(self._buffer, self._commandBuffer)
-
 
     def awaitBufferFlushes(self, timeout: float | None = None) -> None:
         """Awaits all pending buffer flushes.
@@ -723,8 +857,12 @@ class Editor:
         """
         self._bufferFlushFutures = list(futures.wait(self._bufferFlushFutures, timeout).not_done)
 
-
-    def loadWorldSlice(self, rect: Rect | None = None, heightmapTypes: Iterable[str] | None = None, cache: bool = False) -> WorldSlice:
+    def loadWorldSlice(
+        self,
+        rect: Rect | None = None,
+        heightmapTypes: Iterable[str] | None = None,
+        cache: bool = False,
+    ) -> WorldSlice:
         """Loads the world slice for the given XZ-rectangle.
 
         The rectangle must be given in **global coordinates**; :attr:`.transform` is ignored.
@@ -743,12 +881,18 @@ class Editor:
         """
         if rect is None:
             rect = self.getBuildArea().toRect()
-        worldSlice = WorldSlice(rect, dimension=self.dimension, heightmapTypes=heightmapTypes, retries=self.retries, timeout=self.timeout, host=self.host)
+        worldSlice = WorldSlice(
+            rect,
+            dimension=self.dimension,
+            heightmapTypes=heightmapTypes,
+            retries=self.retries,
+            timeout=self.timeout,
+            host=self.host,
+        )
         if cache:
-            self._worldSlice      = worldSlice
+            self._worldSlice = worldSlice
             self._worldSliceDecay = np.zeros(tuple(self._worldSlice.box.size), dtype=np.bool_)
         return worldSlice
-
 
     def updateWorldSlice(self) -> WorldSlice:
         """Updates the cached world slice.
@@ -761,22 +905,26 @@ class Editor:
         if self._worldSlice is None:
             msg = "No world slice is cached. Call .loadWorldSlice() with cache=True first."
             raise RuntimeError(msg)
-        return self.loadWorldSlice(self._worldSlice.rect, self._worldSlice.heightmaps.keys(), cache=True)
-
+        return self.loadWorldSlice(
+            self._worldSlice.rect,
+            self._worldSlice.heightmaps.keys(),
+            cache=True,
+        )
 
     def getMinecraftVersion(self) -> str:
         """Returns the Minecraft version as a string."""
         return interface.getVersion(retries=self.retries, timeout=self.timeout, host=self.host)
-
 
     def checkConnection(self) -> None:
         """Raises an :exc:`InterfaceConnectionError` if the GDMC HTTP interface cannot be reached.\n
         Does not perform any retries."""
         interface.getVersion(retries=0, timeout=self.timeout, host=self.host)
 
-
     @contextmanager
-    def pushTransform(self, transformLike: TransformLike | None = None) -> Generator[None, None, None]:
+    def pushTransform(
+        self,
+        transformLike: TransformLike | None = None,
+    ) -> Generator[None, None, None]:
         """Creates a context that reverts all changes to :attr:`.transform` on exit.
         If ``transformLike`` is not ``None``, it is pushed to :attr:`.transform` on enter.
 
@@ -792,3 +940,11 @@ class Editor:
             yield
         finally:
             self.transform = originalTransform
+
+    def toBox(self) -> Box:
+        """Returns a Box representing the build area of this editor."""
+        return Box(self.offset, self.size)
+
+    def toModel(self) -> Model:
+        """Returns a Model representing the build area of this editor."""
+        return self.getBlocks(Box(ZERO_3D, self.size))
