@@ -1,14 +1,15 @@
-"""Utilities for working with Minecraft's NBT and SNBT formats"""
+"""Utilities for working with Minecraft's NBT and SNBT formats."""
 
 
-from typing import Union
+from __future__ import annotations
+
 from pathlib import Path
 
 from nbt import nbt
 
 
 def nbtToSnbt(tag: nbt.TAG) -> str:
-    """Recursively converts an NBT tag to an SNBT string"""
+    """Recursively converts an NBT tag to an SNBT string."""
     if isinstance(tag, nbt.TAG_List):
         return f"[{','.join(nbtToSnbt(t) for t in tag)}]"
     if isinstance(tag, nbt.TAG_Compound):
@@ -33,31 +34,30 @@ def nbtToSnbt(tag: nbt.TAG) -> str:
         return f"{tag.value}d"
     if isinstance(tag, nbt.TAG_String):
         return repr(tag.value)
-    raise TypeError(f"Unrecognized tag type: {type(tag)}")
+    msg = f"Unrecognized tag type: {type(tag)}"
+    raise TypeError(msg)
 
 
 def parseNbtFile(
-    filePath: Union[Path, str]
+    filePath: Path | str,
 ) -> nbt.NBTFile:
     """Create NBT object from stored NBT file."""
-    if isinstance(filePath, str):
-        filePath = Path(filePath)
-    fileObject = open(filePath, 'rb')
-    return nbt.NBTFile(fileobj=fileObject)
+    if isinstance(filePath, Path):
+        filePath = str(filePath)
+    return nbt.NBTFile(filename=filePath)
 
 
 def saveNbtFile(
-    filePath: Union[Path, str],
-    data: Union[bytes, nbt.NBTFile]
+    filePath: Path | str,
+    data: bytes | nbt.NBTFile,
 ) -> None:
     """Save string of bytes or NBTFile object to a file."""
     if isinstance(filePath, str):
         filePath = Path(filePath)
 
-    with open(filePath, 'wb') as file:
+    with filePath.open("wb") as file:
         if isinstance(data, bytes):
             file.write(data)
             file.close()
         else:
             data.write_file(fileobj=file)
-        print(f"File saved to: {filePath}")

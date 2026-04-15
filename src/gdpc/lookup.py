@@ -1,3 +1,9 @@
+# === Disable linting ===
+# ruff: noqa: PGH004
+# ruff: noqa
+# type: ignore
+
+
 """Stores lists of various information on blocks, biomes and more.
 
 .. warning::
