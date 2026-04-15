@@ -3,6 +3,9 @@
 Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 
 **Breaking:**
+- Revised book-writing functions. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
+  - Paraphrased from PR: The previous implementation didn't break the pages as expected, resulting in pages with needless empty lines at the end of the page. It also couldn't deal that well with certain escape characters. The revised functions deal with these shortcomings, inspired by the algorithm used by [Gutencraft](https://github.com/NightlyNexus/Gutencraft/blob/master/gutencraft/src/commonMain/kotlin/Gutencraft.kt).
+  - Removed support for special characters `\\\\s`, `\\c`, and `\\r`. These were too difficult to re-implement, and Minecraft itself may drop support for them in the future anyway.
 - The `position` and `size` parameters of `interface.getHeightmap` are now `Optional[Vec2iLike]` instead of `Optional[Vec3iLike]`. (Thanks [Niels-NTG](https://github.com/Niels-NTG)!)
 
 **Fixes:**
