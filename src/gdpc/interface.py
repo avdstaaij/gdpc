@@ -36,6 +36,8 @@ DEFAULT_HOST = "http://localhost:9000"
 
 logger = logging.getLogger(__name__)
 
+_session = requests.Session()
+
 
 def _onRequestRetry(_: Exception, retriesLeft: int) -> None:
     logger.warning(
@@ -47,7 +49,7 @@ def _onRequestRetry(_: Exception, retriesLeft: int) -> None:
 
 def _request(method: str, url: str, *args: Any, retries: int, **kwargs: Any) -> requests.Response:
     try:
-        response = cast("requests.Response", withRetries(partial(requests.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry))
+        response = cast("requests.Response", withRetries(partial(_session.request, method, url, *args, **kwargs), RequestConnectionError, retries=retries, onRetry=_onRequestRetry))
     except RequestConnectionError as e:
         u = urlparse(url)
         msg = (
