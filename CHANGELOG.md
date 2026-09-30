@@ -3,6 +3,7 @@
 Compatible with GDMC-HTTP **>=1.6.0, <2.0.0** and Minecraft **1.21.4**.
 
 **Fixes:**
+- Requests are now done through a persistent TCP connection, which may improve performance and avoids exhaustion of ephemeral ports. (Thanks [jortvanleenen](https://github.com/jortvanleenen)!)
 - The re-exports in the `gdpc` top-level package are now formatted in a more standard way, which may prevent issues with static analysis tools when importing them.
 
 
