@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Sequence, cast
 from nbt import nbt
 from pyglm.glm import bvec3
 
-from .block_state_tools import transformAxis, transformFacing, transformHalf, transformRotation
+from .block_state_tools import transformAxis, transformFacing, transformHalf, transformRotation, transformShape
 from .nbt_tools import nbtToSnbt
 
 
@@ -70,10 +70,12 @@ class Block:
         facingState   = self.states.get("facing")
         rotationState = self.states.get("rotation")
         halfState     = self.states.get("half")
-        if axisState     is not None: self.states["axis"]     = transformAxis    (axisState,     rotation)
-        if facingState   is not None: self.states["facing"]   = transformFacing  (facingState,   rotation, flip)
-        if rotationState is not None: self.states["rotation"] = transformRotation(rotationState, rotation, flip)
-        if halfState     is not None: self.states["half"]     = transformHalf    (halfState,               flip)
+        shapeState    = self.states.get("shape")
+        if axisState     is not None: self.states["axis"]     = transformAxis    (axisState,                  rotation)
+        if facingState   is not None: self.states["facing"]   = transformFacing  (facingState,                rotation, flip)
+        if rotationState is not None: self.states["rotation"] = transformRotation(rotationState,              rotation, flip)
+        if halfState     is not None: self.states["half"]     = transformHalf    (halfState,                            flip)
+        if shapeState    is not None: self.states["shape"]    = transformShape   (shapeState,    facingState, rotation, flip)
 
 
     def transformed(self, rotation: int = 0, flip: Vec3bLike | None = None) -> Block:

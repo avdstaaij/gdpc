@@ -30,6 +30,8 @@ FACING_VALUES   = ("up", "down", "north", "east", "south", "west")
 ROTATION_VALUES = ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15")
 """The possible values for the "rotation" block state."""
 
+SHAPE_VALUES = ("straight", "inner_left", "inner_right", "outer_left", "outer_right", "east_west", "north_east", "north_south", "north_west", "south_east", "south_west", "ascending_east", "ascending_north", "ascending_south", "ascending_west")
+"""The possible values for the "shape" block state."""
 
 # ==================================================================================================
 # Conversions between different block states
@@ -69,6 +71,61 @@ def rotationToFacing(rotation: str) -> str:
     """Converts ``rotation`` to the nearest corresponding "facing" block state string."""
     return __ROTATION_TO_FACING[rotation]
 
+# --------------------------------------------------------------------------------------------------
+# shape
+
+__SHAPE_STAIR_FLIP = {
+    "inner_left": "inner_right",
+    "inner_right": "inner_left",
+    "outer_left": "outer_right",
+    "outer_right": "outer_left",
+    "straight": "straight"
+}
+
+__SHAPE_RAIL_STRAIGHT = [
+    "east_west",
+    "north_south"
+]
+
+__SHAPE_RAIL_CORNER = [
+    "north_east",
+    "south_east",
+    "south_west",
+    "north_west"
+]
+
+__SHAPE_RAIL_FLIP_X = {
+    "north_east": "north_west",
+    "north_west": "north_east",
+    "south_east": "south_west",
+    "south_west": "south_east",
+    "ascending_east": "ascending_west",
+    "ascending_west": "ascending_east",
+    "ascending_north": "ascending_north",
+    "ascending_south": "ascending_south",
+    "east_west": "east_west",
+    "north_south": "north_south"
+}
+
+__SHAPE_RAIL_FLIP_Z = {
+    "north_east": "south_east",
+    "south_east": "north_east",
+    "north_west": "south_west",
+    "south_west": "north_west",
+    "ascending_east": "ascending_east",
+    "ascending_west": "ascending_west",
+    "ascending_north": "ascending_south",
+    "ascending_south": "ascending_north",
+    "east_west": "east_west",
+    "north_south": "north_south"
+}
+
+__SHAPE_RAIL_ASCENDING = [
+    "ascending_east",
+    "ascending_north",
+    "ascending_south",
+    "ascending_west"
+]
 
 # ==================================================================================================
 # String <-> vector conversion functions
@@ -293,3 +350,60 @@ def transformHalf(half: str, flip: Vec3bLike | None = None) -> str:
     if flip is None:
         flip = bvec3()
     return flipHalf(half, flip)
+
+
+# --------------------------------------------------------------------------------------------------
+# Shape
+
+# Note: We transform Rail and Stair blocks separately, as they have different sets of blockstate
+# options. The flip transformation for Stairs is such that the 'shape' only changes if the 'facing'
+# would not be changed by the flip. Stairs always have both 'shape' and 'facing' blockstates. Rails, however,
+# only have the 'shape' blockstate, and can be transformed with a simple lookup
+
+
+def rotateShapeRail(shape: str, rotation: int) -> str:
+    """Returns the rotated "shape" block state string for Rail blocks."""
+    if shape in __SHAPE_RAIL_STRAIGHT:
+        return __SHAPE_RAIL_STRAIGHT[(__SHAPE_RAIL_STRAIGHT.index(shape) + rotation) % 2]
+    
+    elif shape in __SHAPE_RAIL_CORNER:
+        return __SHAPE_RAIL_CORNER[(__SHAPE_RAIL_CORNER.index(shape) + rotation) % 4]
+    
+    elif shape in __SHAPE_RAIL_ASCENDING:
+        return __SHAPE_RAIL_ASCENDING[(__SHAPE_RAIL_ASCENDING.index(shape) + rotation) % 4]
+    
+    else:
+        return shape # Should not happen
+
+def flipShapeRail(shape: str, flip: Vec3bLike) -> str:
+    """Returns the flipped "shape" block state string for Rail blocks."""
+    if flip[0]:
+        shape = __SHAPE_RAIL_FLIP_X[shape]
+    if flip[2]:
+        shape = __SHAPE_RAIL_FLIP_Z[shape]
+    return shape
+
+def flipShapeStair(shape: str, facing: str, flip: Vec3bLike) -> str:
+    """Returns the flipped "shape" block state string for Stair blocks."""
+    facing_x = ["east", "west"]
+    facing_z = ["north", "south"]
+    
+    # If the flip doesn't change the 'facing' state, it should change the 'shape' state
+    if flip[0] and facing not in facing_x:
+        shape = __SHAPE_STAIR_FLIP[shape]
+    if flip[2] and facing not in facing_z:
+        shape = __SHAPE_STAIR_FLIP[shape]
+    return shape
+
+def transformShape(shape: str, facing: str | None = None, rotation: int = 0, flip: Vec3bLike | None = None) -> str:
+    """Returns the transformed "shape" block state string.\n
+    Flips first, rotates second."""
+    if flip is None:
+        flip = bvec3()
+    
+    # Rail Case
+    if facing is None:
+        return rotateShapeRail(flipShapeRail(shape, flip), rotation)
+    # Stair Case
+    else:
+        return flipShapeStair(shape, facing, flip)
